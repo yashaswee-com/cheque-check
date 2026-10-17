@@ -41,7 +41,8 @@ export class DispatcherOrchestrator {
 
   private async dispatchVoice(job: ClaimedJob): Promise<DispatchResult> {
     const profile = await this.db.fetchProfile(job.user_id)
-    if (!profile?.phone) {
+    const recipient = job.payload.to_override || profile?.phone
+    if (!profile || !recipient) {
       await this.db.markSkipped(job.id, 'Profile has no phone number')
       return { jobId: job.id, status: 'skipped' }
     }
@@ -62,7 +63,7 @@ export class DispatcherOrchestrator {
           language,
         )
     const twiml = this.twilio.generateTwiML(message, language)
-    const to = this.testMode.enabled ? this.testMode.phone : profile.phone
+    const to = this.testMode.enabled ? this.testMode.phone : recipient
 
     const call = await this.twilio.initiateCall(to, twiml)
 
@@ -73,7 +74,7 @@ export class DispatcherOrchestrator {
         user_id: job.user_id,
         channel: 'voice',
         purpose: job.purpose,
-        recipient: profile.phone,
+        recipient: to,
         status: 'success',
         provider: 'twilio_voice',
         provider_message_id: call.sid,
@@ -89,7 +90,7 @@ export class DispatcherOrchestrator {
       user_id: job.user_id,
       channel: 'voice',
       purpose: job.purpose,
-      recipient: profile.phone,
+      recipient: to,
       status: 'failed',
       provider: 'twilio_voice',
       error: errorMessage,

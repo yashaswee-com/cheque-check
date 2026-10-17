@@ -23,6 +23,41 @@ export class SchedulerDatabaseService {
     return (data || []) as unknown as ReminderProfile[]
   }
 
+  async fetchProfile(userId: string): Promise<ReminderProfile | null> {
+    const { data, error } = await this.supabase
+      .from(TABLES.PROFILES)
+      .select(
+        'user_id, name, time_zone, reminders_per_day, voice_call_enabled, phone',
+      )
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (error) throw error
+    return (data as unknown as ReminderProfile) ?? null
+  }
+
+  async fetchBusinessOwner(businessId: string): Promise<string | null> {
+    const { data, error } = await this.supabase
+      .from(TABLES.BUSINESSES)
+      .select('user_id')
+      .eq('id', businessId)
+      .is('deleted_at', null)
+      .maybeSingle()
+
+    if (error) throw error
+    return (data?.user_id as string | undefined) ?? null
+  }
+
+  async insertJobs(jobs: NewNotificationJob[]): Promise<void> {
+    if (jobs.length === 0) return
+
+    const { error } = await this.supabase
+      .from(TABLES.NOTIFICATION_JOBS)
+      .insert(jobs)
+
+    if (error) throw error
+  }
+
   /**
    * Broad candidate set for a user: deposit_date hasn't passed yet, or (no
    * deposit_date) cheque_date is today. The remind_before_days countdown

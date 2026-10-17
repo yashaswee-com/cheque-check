@@ -4,6 +4,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { SchedulerDatabaseService } from './services/database.service.ts'
 import { SchedulerOrchestrator } from './orchestrators/scheduler.orchestrator.ts'
 import { Logger } from '../_shared/logger.ts'
+import { TargetedRunRequest } from './types.ts'
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const E164_PATTERN = /^\+[1-9]\d{6,14}$/
 
 serve(async (req) => {
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || ''
@@ -41,6 +46,26 @@ serve(async (req) => {
     const orchestrator = new SchedulerOrchestrator(
       new SchedulerDatabaseService(supabase),
     )
+
+    const body = (await req.json().catch(() => ({}))) as TargetedRunRequest
+    if (body && (body.userId || body.businessId)) {
+      if (
+        (body.userId && !UUID_PATTERN.test(body.userId)) ||
+        (body.businessId && !UUID_PATTERN.test(body.businessId)) ||
+        (body.toOverride !== undefined &&
+          !E164_PATTERN.test(String(body.toOverride)))
+      ) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid targeted run request' }),
+          { status: 400 },
+        )
+      }
+      const result = await orchestrator.runTargeted(body, new Date())
+      return new Response(JSON.stringify({ success: true, ...result }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
 
     const result = await orchestrator.run(new Date(), FORCE_RUN)
     return new Response(JSON.stringify({ success: true, ...result }), {

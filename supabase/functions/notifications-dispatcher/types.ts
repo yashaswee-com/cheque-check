@@ -7,7 +7,13 @@ export interface ClaimedJob {
   business_id: string | null
   channel: NotificationChannel
   purpose: string
-  payload: { cheque_ids?: string[]; slot?: string }
+  payload: {
+    cheque_ids?: string[]
+    slot?: string
+    trigger?: string
+    /** Set only by service-role callers (ops CLI); users cannot insert jobs. */
+    to_override?: string
+  }
   attempts: number
 }
 
