@@ -90,6 +90,7 @@ through a `NEXT_PUBLIC_` variable.
 | `npm run supabase:setup`     | Link a hosted project and apply setup           |
 | `npm run supabase:reset`     | Destructively reset an allowlisted test project |
 | `npm run supabase:gen-types` | Regenerate committed database types             |
+| `npm run ops`                | Support & ops CLI (see `scripts/README.md`)     |
 
 The E2E runner is scaffolded but intentionally has no external-service flows
 yet. See `e2e/README.md` before adding tests.

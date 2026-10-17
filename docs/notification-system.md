@@ -156,7 +156,7 @@ exact concern this review was asked to check): `voice_reminder`,
 `ai_scan`/`lifetime_premium` siblings were separately retyped in
 `src/app/(dashboard)/features/page.tsx`, `src/lib/payments.ts`,
 `src/features/monetization/lib/payment-product-icons.ts`, and
-`scripts/admin-monetization.ts` (each with its **own** duplicated
+the old `scripts/admin-monetization.ts` (each with its **own** duplicated
 `FeatureType`/product-id list). A future rename in one place without updating
 the others would fail silently (e.g. a Razorpay button calling a `productId`
 that no longer exists in `payment_products`).
@@ -211,7 +211,7 @@ against `Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')`. Supabase now has two key
 systems — **legacy JWT** (`eyJ...`) and **new** (`sb_secret_...`). Whichever
 one is actually auto-injected as `SUPABASE_SERVICE_ROLE_KEY` for your project
 is the one your caller (e.g. `.env.local` used by
-`scripts/notifications-test.ts`) must also use. Check both Settings → API
+`npm run ops -- voice ...`) must also use. Check both Settings → API
 Keys sections if one doesn't work.
 
 **A cheque isn't getting reminded even though it looks "due"**
@@ -235,8 +235,8 @@ don't drift.
 **Windows: `spawnSync npx.cmd EINVAL` running `npm run supabase:setup`**
 A Node-on-Windows bug spawning `.cmd` shims. Fixed in this repo by invoking
 the Supabase CLI's resolved JS entry point via `node` directly (see
-`scripts/supabase-setup.ts`, `scripts/supabase-reset.ts`,
-`scripts/run-e2e-qa.ts`).
+`runSupabase` in
+`scripts/lib/supabase-cli.ts`, used by every `npm run ops -- dev ...` command).
 
 ## 10. Extending to new channels (Email / Push / WhatsApp)
 

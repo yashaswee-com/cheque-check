@@ -5,7 +5,7 @@ feature coverage matrix.
 
 Playwright specs run against the **hosted QA Supabase project** (`.env.qa`),
 not local `supabase start`. Each run fully resets that project (migrate +
-seed) first, so it's always a clean slate — see `scripts/run-e2e-qa.ts`.
+seed) first, so it's always a clean slate — see `scripts/commands/dev/e2e-qa.ts`.
 
 ## One-time setup
 
@@ -63,12 +63,12 @@ Use `example.com` for synthetic user addresses; it is reserved for examples.
 
 ## Data reset & cleanup
 
-**Primary (QA):** `scripts/run-e2e-qa.ts` fully resets the QA database before
+**Primary (QA):** `npm run test:e2e:qa` fully resets the QA database before
 every run (see above) — this is the normal path and requires no manual
 cleanup.
 
 **Alternative (a genuinely shared, non-resettable project):**
-`scripts/e2e-cleanup.ts` surgically deletes only `e2e-*@example.com`
+`npm run test:e2e:cleanup` surgically deletes only `e2e-*@example.com`
 tagged users (FK cascades remove their businesses/cheques/parties/accounts)
 instead of wiping the whole project:
 

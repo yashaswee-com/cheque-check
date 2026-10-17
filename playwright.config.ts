@@ -34,7 +34,7 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        // QA runs (scripts/run-e2e-qa.ts) set PLAYWRIGHT_PROD_BUILD to test
+        // QA runs (scripts/commands/dev/e2e-qa.ts) set PLAYWRIGHT_PROD_BUILD to test
         // against a real production build instead of the dev server.
         command: process.env.PLAYWRIGHT_PROD_BUILD
           ? `npm run build && npm run start -- --hostname 127.0.0.1 --port ${port}`
