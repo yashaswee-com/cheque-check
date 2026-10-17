@@ -491,6 +491,29 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['nps_responses']['Row']>
         Relationships: []
       }
+      admin_audit_log: {
+        Row: {
+          id: string
+          created_at: string
+          operator: string
+          action: string
+          target_user_id: string | null
+          target_type: string | null
+          target_id: string | null
+          reason: string | null
+          before: Json | null
+          after: Json | null
+          metadata: Json
+        }
+        Insert: Partial<
+          Database['public']['Tables']['admin_audit_log']['Row']
+        > & {
+          operator: string
+          action: string
+        }
+        Update: Partial<Database['public']['Tables']['admin_audit_log']['Row']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -573,8 +596,83 @@ export interface Database {
         Args: {
           razorpay_order: string
           razorpay_payment: string
+          order_user_id: string
+          requested_product_id: string
+          paid_amount: number
+          paid_currency: string
         }
         Returns: Database['public']['Tables']['transactions']['Row']
+      }
+      admin_write_audit: {
+        Args: {
+          p_operator: string
+          p_action: string
+          p_target_user_id: string | null
+          p_target_type: string | null
+          p_target_id: string | null
+          p_reason: string | null
+          p_before: Json | null
+          p_after: Json | null
+          p_metadata?: Json
+        }
+        Returns: string
+      }
+      admin_set_entitlement: {
+        Args: {
+          p_user_id: string
+          p_feature_id: Database['public']['Enums']['feature_type']
+          p_status: Database['public']['Enums']['entitlement_status']
+          p_valid_until: string | null
+          p_operator: string
+          p_action: string
+          p_reason?: string | null
+          p_record_transaction?: boolean
+        }
+        Returns: Json
+      }
+      admin_grant_subscription: {
+        Args: {
+          p_user_id: string
+          p_feature_id: Database['public']['Enums']['feature_type']
+          p_days: number
+          p_quota: number
+          p_operator: string
+          p_reason?: string | null
+          p_record_transaction?: boolean
+        }
+        Returns: Json
+      }
+      admin_topup_quota: {
+        Args: {
+          p_user_id: string
+          p_feature_id: Database['public']['Enums']['feature_type']
+          p_amount: number
+          p_operator: string
+          p_reason?: string | null
+          p_record_transaction?: boolean
+        }
+        Returns: Json
+      }
+      admin_set_quota: {
+        Args: {
+          p_user_id: string
+          p_feature_id: Database['public']['Enums']['feature_type']
+          p_limit: number
+          p_used: number
+          p_reset_at: string | null
+          p_operator: string
+          p_reason?: string | null
+        }
+        Returns: Json
+      }
+      admin_refund_transaction: {
+        Args: {
+          p_transaction_id: string
+          p_operator: string
+          p_reason?: string | null
+          p_revoke?: boolean
+        }
+        Returns: Json
       }
       consume_api_rate_limit: {
         Args: {

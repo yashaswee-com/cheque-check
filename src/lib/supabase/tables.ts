@@ -22,6 +22,7 @@ export const TABLES = {
   NOTIFICATION_JOBS: 'notification_jobs',
   NOTIFICATION_LOGS: 'notification_logs',
   PUSH_SUBSCRIPTIONS: 'push_subscriptions',
+  ADMIN_AUDIT_LOG: 'admin_audit_log',
 } as const satisfies Record<string, PublicTableName>
 
 export type TableName = (typeof TABLES)[keyof typeof TABLES]
