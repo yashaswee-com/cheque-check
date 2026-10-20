@@ -4,6 +4,7 @@ import { PRODUCT_IDS } from '@/features/monetization/constants'
 import { useRazorpay } from './use-razorpay'
 
 const mocks = vi.hoisted(() => ({ order: vi.fn(), open: vi.fn() }))
+vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 vi.mock('@/lib/env/client', () => ({ getRazorpayPublicKey: () => 'test-key' }))
 vi.mock('@/features/monetization/services/payment.service', () => ({
   paymentService: { createOrder: mocks.order },

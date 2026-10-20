@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { chequeSchema } from '@/validators'
 import { toast } from '@/components/ui/toast'
 import { logger } from '@/lib/logger'
+import { monitoredFetch } from '@/lib/monitoring/telemetry'
 import { getSimilarityScore } from '@/lib/utils'
 import { partyService } from '@/features/parties/services/party.service'
 import { accountService } from '@/features/accounts/services/account.service'
@@ -72,7 +73,7 @@ export function useOcrExtraction({
     })
 
     try {
-      const response = await fetch('/api/ocr/cheque', {
+      const response = await monitoredFetch('/api/ocr/cheque', {
         method: 'POST',
         body: JSON.stringify({ imageUrl: url }),
         headers: { 'Content-Type': 'application/json' },

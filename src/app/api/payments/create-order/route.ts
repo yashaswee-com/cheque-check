@@ -8,6 +8,7 @@ import { getRazorpayEnv, getSupabaseAdminEnv } from '@/lib/env/server'
 import { CreatePaymentOrderSchema } from '@/lib/payments'
 import { logger } from '@/lib/logger'
 import { TABLES } from '@/lib/supabase/tables'
+import { setRequestUser, withMonitoringRequest } from '@/lib/monitoring/server'
 
 type PaymentProduct = {
   id: string
@@ -23,7 +24,7 @@ function isEntitlementActive(validUntil: string | null) {
   return validUntil === null || new Date(validUntil).getTime() > Date.now()
 }
 
-export async function POST(request: Request) {
+async function createPaymentOrder(request: Request) {
   try {
     let requestBody: unknown
     try {
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    setRequestUser(user)
 
     const { data: rateAllowed, error: rateError } = await supabase.rpc(
       'consume_api_rate_limit',
@@ -165,4 +167,10 @@ export async function POST(request: Request) {
       { status: 500 },
     )
   }
+}
+
+export async function POST(request: Request) {
+  return withMonitoringRequest(request, 'payment.create_order', () =>
+    createPaymentOrder(request),
+  )
 }

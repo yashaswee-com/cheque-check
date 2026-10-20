@@ -21,6 +21,7 @@ import {
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { logger } from '@/lib/logger'
+import { recordFeedbackSubmission } from '@/lib/monitoring/telemetry'
 import {
   getNpsService,
   npsCategory,
@@ -137,6 +138,11 @@ function NpsForm({
         comment,
         businessId: context.businessId,
         chequeId: context.chequeId,
+      })
+      recordFeedbackSubmission({
+        business_id: context.businessId,
+        entity_type: 'cheque',
+        entity_id: context.chequeId,
       })
       toast.add({
         title: t('thanksTitle'),

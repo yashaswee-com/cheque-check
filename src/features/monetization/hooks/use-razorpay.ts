@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import { getRazorpayPublicKey } from '@/lib/env/client'
 import { type PaymentProductId } from '@/lib/payments'
 import { paymentService } from '@/features/monetization/services/payment.service'
+import { recordOperation } from '@/lib/monitoring/telemetry'
+import { logger } from '@/lib/logger'
 
 type RazorpaySuccess = {
   razorpay_payment_id: string
@@ -46,6 +48,7 @@ export function useRazorpay() {
     if (processing.current) return
     processing.current = true
     setIsProcessing(true)
+    recordOperation('payment.checkout', 'started')
     try {
       const order = await paymentService.createOrder(productId)
       const checkout = new window.Razorpay({
@@ -56,16 +59,25 @@ export function useRazorpay() {
         description: order.name,
         order_id: order.id,
         handler: () => {
+          recordOperation('payment.checkout_callback', 'success')
           finish()
           onSuccess?.()
         },
-        modal: { ondismiss: finish },
+        modal: {
+          ondismiss: () => {
+            recordOperation('payment.checkout_dismissed', 'success')
+            finish()
+          },
+        },
         theme: { color: '#000000' },
       })
       checkout.open()
     } catch (error) {
       finish()
-      console.error('Payment error:', error)
+      recordOperation('payment.checkout', 'failure')
+      logger.error('Payment checkout failed', error, {
+        operation: 'payment.checkout',
+      })
       alert(
         error instanceof Error ? error.message : 'Failed to initiate payment',
       )

@@ -3,6 +3,7 @@ import {
   PaymentOrderSchema,
   type PaymentProductId,
 } from '@/lib/payments'
+import { monitoredFetch } from '@/lib/monitoring/telemetry'
 
 let defaultPaymentService: PaymentService | undefined
 
@@ -16,7 +17,7 @@ function getDefaultPaymentService(): PaymentService {
 
 export class PaymentService {
   async createOrder(productId: PaymentProductId): Promise<PaymentOrder> {
-    const response = await fetch('/api/payments/create-order', {
+    const response = await monitoredFetch('/api/payments/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ productId }),

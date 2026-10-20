@@ -1,6 +1,18 @@
 import type { QueryKey } from '@tanstack/react-query'
 import { useOptimisticMutation } from './use-optimistic-mutation'
 import type { MutationFunction } from '@tanstack/react-query'
+import { monitorOperation } from '@/lib/monitoring/telemetry'
+
+function entityOperation(key: QueryKey, action: string) {
+  const entity =
+    typeof key[0] === 'string' &&
+    ['cheques', 'accounts', 'parties', 'businesses', 'tags', 'drafts'].includes(
+      key[0],
+    )
+      ? key[0]
+      : 'entity'
+  return `${entity}.${action}`
+}
 
 interface UseEntityMutationsOptions<TEntity, TUpdate, TUpdateResult> {
   listQueryKey: QueryKey
@@ -48,14 +60,21 @@ export function useEntityMutations<TEntity, TUpdate, TUpdateResult>({
   >({
     queryKey: listQueryKey,
     additionalQueryKeys: detailQueryKey ? [detailQueryKey] : [],
-    mutationFn: update.mutationFn,
+    mutationFn: (variables) =>
+      monitorOperation(entityOperation(listQueryKey, 'update'), () =>
+        update.mutationFn(variables),
+      ),
     update: update.updateList,
   })
 
   const deleteMutation = useOptimisticMutation<TEntity[], void, void>({
     queryKey: listQueryKey,
     additionalQueryKeys: deleteQueryKeys,
-    mutationFn: remove.mutationFn,
+    mutationFn: () =>
+      monitorOperation(
+        entityOperation(listQueryKey, 'delete'),
+        remove.mutationFn,
+      ),
     update: (current) => remove.updateList(current),
   })
 
@@ -71,7 +90,10 @@ export function useEntityCreateMutation<TEntity, TCreate, TResult>({
 }: UseEntityCreateMutationOptions<TEntity, TCreate, TResult>) {
   return useOptimisticMutation<TEntity[], TCreate, TResult>({
     queryKey,
-    mutationFn,
+    mutationFn: (variables, mutationContext) =>
+      monitorOperation(entityOperation(queryKey, 'create'), () =>
+        mutationFn(variables, mutationContext),
+      ),
     update: addToList,
     onSuccess,
     onError,

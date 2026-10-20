@@ -7,6 +7,7 @@ import { cookies } from 'next/headers'
 import { publicEnv } from '@/lib/env/client'
 import { getOpenAiEnv } from '@/lib/env/server'
 import { parsePrivateMediaUrl, PRIVATE_CHEQUE_BUCKET } from '@/lib/storage'
+import { setRequestUser, withMonitoringRequest } from '@/lib/monitoring/server'
 
 /**
  * Schema for extracting cheque details.
@@ -152,6 +153,7 @@ class OcrController {
       if (!user) {
         return this.respondWithError('Unauthorized', 401)
       }
+      setRequestUser(user)
 
       const { data: rateAllowed, error: rateError } = await supabase.rpc(
         'consume_api_rate_limit',
@@ -249,5 +251,7 @@ const ocrController = new OcrController(ocrProvider)
  * Main POST route handler for the Cheque OCR API.
  */
 export async function POST(req: Request) {
-  return ocrController.handleRequest(req)
+  return withMonitoringRequest(req, 'ocr.extract', () =>
+    ocrController.handleRequest(req),
+  )
 }

@@ -3,6 +3,7 @@ import {
   BrowserReportRepository,
   IReportRepository,
 } from '@/features/reports/repositories/report.repository'
+import { recordOperation } from '@/lib/monitoring/telemetry'
 
 let defaultReportService: ReportService | undefined
 
@@ -21,6 +22,7 @@ export class ReportService {
     filename = 'cheques_report.csv',
   ): void {
     this.repository.exportToCSV(cheques, filename)
+    recordOperation('report.export_csv', 'success')
   }
 
   exportToJSON(
@@ -28,6 +30,7 @@ export class ReportService {
     filename = 'cheques_report.json',
   ): void {
     this.repository.exportToJSON(cheques, filename)
+    recordOperation('report.export_json', 'success')
   }
 
   exportToPDF(
@@ -35,6 +38,7 @@ export class ReportService {
     filename = 'cheques_report.pdf',
   ): void {
     this.repository.exportToPDF(cheques, filename)
+    recordOperation('report.export_pdf', 'success')
   }
 
   exportToExcel(
@@ -42,6 +46,7 @@ export class ReportService {
     filename = 'cheques_report.xlsx',
   ): void {
     this.repository.exportToExcel(cheques, filename)
+    recordOperation('report.export_excel', 'success')
   }
 }
 

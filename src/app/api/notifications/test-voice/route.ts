@@ -7,13 +7,14 @@ import { publicEnv } from '@/lib/env/client'
 import { getSupabaseAdminEnv } from '@/lib/env/server'
 import { logger } from '@/lib/logger'
 import { TABLES } from '@/lib/supabase/tables'
+import { setRequestUser, withMonitoringRequest } from '@/lib/monitoring/server'
 
 const RATE_LIMIT_ENDPOINT = 'notifications-test-voice'
 const RATE_LIMIT_REQUESTS = 1
 const RATE_LIMIT_WINDOW_SECONDS = 300
 const QUOTA_EXHAUSTED_ERROR = 'Voice reminder quota exhausted'
 
-export async function POST() {
+async function testVoice() {
   try {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -28,6 +29,7 @@ export async function POST() {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    setRequestUser(user)
 
     const { data: rateAllowed, error: rateError } = await supabase.rpc(
       'consume_api_rate_limit',
@@ -143,4 +145,8 @@ export async function POST() {
       { status: 500 },
     )
   }
+}
+
+export async function POST(request: Request) {
+  return withMonitoringRequest(request, 'notification.test_voice', testVoice)
 }
