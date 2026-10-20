@@ -1,58 +1,68 @@
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Shield01Icon as Shield } from "@hugeicons/core-free-icons"
-import { useTranslations } from "next-intl"
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Shield01Icon as Shield } from '@hugeicons/core-free-icons'
+import { useTranslations } from 'next-intl'
 
 export default function PrivacyPolicyPage() {
-  const t = useTranslations("Settings")
+  const t = useTranslations('Settings')
+  const tm = useTranslations('Monitoring')
 
   return (
     <div className="max-w-2xl space-y-8 pb-20">
       <div className="prose prose-sm dark:prose-invert max-w-none px-2">
         <div className="rounded-lg border bg-card p-6 space-y-4">
           <div className="flex items-center gap-3 text-primary mb-4">
-            <HugeiconsIcon icon={Shield} className="h-6 w-6"/>
-            <span className="font-semibold uppercase tracking-wider text-xs">{t("lastUpdated", { date: "August 2026"})}</span>
+            <HugeiconsIcon icon={Shield} className="h-6 w-6" />
+            <span className="font-semibold uppercase tracking-wider text-xs">
+              {t('lastUpdated', { date: 'August 2026' })}
+            </span>
           </div>
-          
+
           <section className="space-y-2">
-            <h2 className="text-lg font-bold">1. {t("intro")}</h2>
+            <h2 className="text-lg font-bold">1. {t('intro')}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t("privacyIntroContent")}
+              {t('privacyIntroContent')}
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-lg font-bold">2. {t("dataCollect")}</h2>
+            <h2 className="text-lg font-bold">2. {t('dataCollect')}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t("privacyDataCollectContent")}
+              {t('privacyDataCollectContent')}
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-lg font-bold">3. {t("howUse")}</h2>
+            <h2 className="text-lg font-bold">3. {t('howUse')}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t("privacyHowUseContent")}
+              {t('privacyHowUseContent')}
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-lg font-bold">4. {t("dataSecurity")}</h2>
+            <h2 className="text-lg font-bold">4. {t('dataSecurity')}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t("privacyDataSecurityContent")}
+              {t('privacyDataSecurityContent')}
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-lg font-bold">5. {t("yourRights")}</h2>
+            <h2 className="text-lg font-bold">5. {t('yourRights')}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t("privacyYourRightsContent")}
+              {t('privacyYourRightsContent')}
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-lg font-bold">6. {t("contactUs")}</h2>
+            <h2 className="text-lg font-bold">6. {tm('trackingLabel')}</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t("privacyContactUsContent")}
+              {tm('privacyDisclosure')}
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-lg font-bold">7. {t('contactUs')}</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              {t('privacyContactUsContent')}
             </p>
           </section>
         </div>

@@ -1,7 +1,15 @@
-import { Provider, SupabaseClient } from '@supabase/supabase-js'
+import {
+  Provider,
+  SupabaseClient,
+  type AuthChangeEvent,
+  type Session,
+} from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 
 export interface IAuthRepository {
+  onAuthStateChange(
+    callback: (event: AuthChangeEvent, session: Session | null) => void,
+  ): ReturnType<SupabaseClient['auth']['onAuthStateChange']>
   loginWithPassword(
     email: string,
     password: string,
@@ -26,6 +34,12 @@ export interface IAuthRepository {
 
 export class SupabaseAuthRepository implements IAuthRepository {
   private readonly supabase = createClient()
+
+  onAuthStateChange(
+    callback: (event: AuthChangeEvent, session: Session | null) => void,
+  ) {
+    return this.supabase.auth.onAuthStateChange(callback)
+  }
 
   loginWithPassword(email: string, password: string) {
     return this.supabase.auth.signInWithPassword({ email, password })

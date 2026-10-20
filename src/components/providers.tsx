@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { BusinessProvider } from '@/hooks/use-business'
 import { ProfileProvider } from '@/hooks/use-profile'
 import { CelebrationHost } from '@/components/celebration-host'
+import { MonitoringProvider } from '@/components/monitoring-provider'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -22,6 +23,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ProfileProvider>
         <BusinessProvider>
+          <MonitoringProvider />
           {children}
           <CelebrationHost />
         </BusinessProvider>

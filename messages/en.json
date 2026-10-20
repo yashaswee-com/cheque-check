@@ -1,4 +1,13 @@
 {
+  "Monitoring": {
+    "trackingLabel": "Usage Analytics and Session Recordings",
+    "trackingDescription": "Allow masked recordings and usage analytics linked to your user ID, email and name. This preference applies to this browser only. Essential error reporting stays enabled. Turning this off may reload the app.",
+    "unavailable": "Analytics and recordings are disabled for this deployment.",
+    "supportReference": "Support Reference",
+    "copyReference": "Copy Support Reference",
+    "copied": "Copied",
+    "privacyDisclosure": "We use Sentry for error diagnostics and Microsoft Clarity for usage analytics and masked session recordings. Diagnostics may include your user ID, email, display name, business ID, subscription state and language preferences. We exclude financial details, uploaded documents and form values. You can disable analytics and recordings in Settings for this browser; essential sanitized error reporting is separate. Clearing browser data resets your preference. Previously collected information is subject to each provider's retention and deletion policies."
+  },
   "PremiumWorkspace": {
     "title": "Premium workspace",
     "description": "Account-synced tools for imports, reusable workflows and business insights.",

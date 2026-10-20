@@ -1,4 +1,13 @@
 {
+  "Monitoring": {
+    "trackingLabel": "Usage Analytics aur Session Recordings",
+    "trackingDescription": "User ID, email aur naam se judi masked recordings aur usage analytics allow karein. Yeh preference sirf is browser par lagu hai. Zaroori error reporting enabled rahegi. Off karne par app reload ho sakti hai.",
+    "unavailable": "Is deployment par analytics aur recordings disabled hain.",
+    "supportReference": "Support Reference",
+    "copyReference": "Support Reference Copy Karein",
+    "copied": "Copy Ho Gaya",
+    "privacyDisclosure": "Hum error diagnostics ke liye Sentry aur usage analytics aur masked session recordings ke liye Microsoft Clarity use karte hain. Diagnostics mein user ID, email, naam, business ID, subscription state aur language preferences shamil ho sakte hain. Financial details, uploaded documents aur form values shamil nahi hain. Settings mein is browser ke liye analytics aur recordings off kar sakte hain; zaroori sanitized error reporting alag hai. Browser data clear karne par preference reset hoti hai. Pehle collect ki gayi information providers ki retention aur deletion policies ke anusar rakhi jati hai."
+  },
   "PremiumWorkspace": {
     "title": "Premium workspace",
     "description": "Imports, reusable workflows aur business insights ke account-synced tools.",

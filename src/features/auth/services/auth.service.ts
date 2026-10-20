@@ -46,6 +46,12 @@ export class AuthService {
     return this.repository.getSession()
   }
 
+  onAuthStateChange(
+    callback: Parameters<IAuthRepository['onAuthStateChange']>[0],
+  ) {
+    return this.repository.onAuthStateChange(callback)
+  }
+
   async getUser() {
     const {
       data: { user },
@@ -54,10 +60,13 @@ export class AuthService {
   }
 }
 
-export const authService = new Proxy(Object.create(AuthService.prototype), {
-  get(_target, property, receiver) {
-    const service = getDefaultAuthService()
-    const value = Reflect.get(service, property, receiver)
-    return typeof value === 'function' ? value.bind(service) : value
+export const authService: AuthService = new Proxy(
+  Object.create(AuthService.prototype),
+  {
+    get(_target, property, receiver) {
+      const service = getDefaultAuthService()
+      const value = Reflect.get(service, property, receiver)
+      return typeof value === 'function' ? value.bind(service) : value
+    },
   },
-})
+)
