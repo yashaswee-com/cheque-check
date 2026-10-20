@@ -72,6 +72,10 @@ can work on core CRUD without payment or OCR credentials.
 Never expose service-role, Razorpay secret, OpenAI, Twilio, or webhook secrets
 through a `NEXT_PUBLIC_` variable.
 
+Sentry and Clarity are explicitly gated by environment/release configuration and
+tracking policy. See [Monitoring and Session Lookup](docs/monitoring.md) for
+Vercel settings, masking, browser opt-out, user/session searches and QA rollout.
+
 ## Commands
 
 | Command                      | Purpose                                         |
