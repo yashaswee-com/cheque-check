@@ -101,7 +101,7 @@ export function TagSelector({
         />
       </PopoverTrigger>
       <PopoverContent
-        className="w-[min(22rem,calc(100vw-2rem))] p-3"
+        className="w-(--anchor-width) max-w-[calc(100vw-2rem)] p-3"
         align="start"
       >
         <div className="space-y-3">

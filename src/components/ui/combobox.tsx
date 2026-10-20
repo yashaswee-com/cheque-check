@@ -110,7 +110,7 @@ export function Combobox({
         />
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 rounded-lg overflow-hidden border border-primary/5"
+        className="w-(--anchor-width) p-0 rounded-lg overflow-hidden border border-primary/5"
         align="start"
       >
         <Command className="rounded-none">
