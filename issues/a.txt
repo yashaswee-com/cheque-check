@@ -1,0 +1,26 @@
+So the Currecny, Language, Date Format, Time Format and Time Zone and Tag Selectors are doing layout shift as well, when they are clicked and opened.
+Landing Page for Marketing is Required
+
+## Error Type
+Console Error
+
+## Error Message
+MISSING_MESSAGE: Could not resolve `Onboarding.businessLogo` in messages for locale `en`.
+
+
+    at OnboardingPage (src/app/onboarding/page.tsx:619:24)
+
+## Code Frame
+  617 |                     />
+  618 |                     <p className="text-xs text-muted-foreground">
+> 619 |                       {t('businessLogo')}
+      |                        ^
+  620 |                     </p>
+  621 |                   </div>
+  622 |                   <div className="space-y-2">
+
+Next.js version: 16.4.1 (Turbopack)
+
+
+In the Storage, the cheque-images and avatars are coming twice for the sotrage location.
+Can you check why this is so? I only need the private-avatars and private-cheque0images
