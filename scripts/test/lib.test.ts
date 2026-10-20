@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -60,6 +60,24 @@ describe('loadEnv / requireEnv', () => {
     expect(loadEnv('qa', { root, applyToProcess: false }).values[KEY]).toBe(
       'exported',
     )
+  })
+
+  it('loads a production file from env/ when the root file is absent', () => {
+    mkdirSync(join(root, 'env'))
+    writeFileSync(join(root, 'env', '.env.production'), `${KEY}=production\n`)
+    const env = loadEnv('prod', { root, applyToProcess: false })
+    expect(env.values[KEY]).toBe('production')
+    expect(env.file).toBe(join('env', '.env.production'))
+    expect(env.fileExists).toBe(true)
+  })
+
+  it('prefers the root env file without merging the env/ copy', () => {
+    mkdirSync(join(root, 'env'))
+    writeFileSync(join(root, 'env', '.env.production'), `${KEY}=nested\n`)
+    writeFileSync(join(root, '.env.production'), `${KEY}=root\n`)
+    const env = loadEnv('prod', { root, applyToProcess: false })
+    expect(env.values[KEY]).toBe('root')
+    expect(env.file).toBe('.env.production')
   })
 
   it('names the missing variables and the file to fix', () => {

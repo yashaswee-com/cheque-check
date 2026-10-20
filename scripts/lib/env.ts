@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { relative, resolve } from 'node:path'
 import { parse } from 'dotenv'
 import { UsageError } from './errors'
 import { ROOT_DIR } from './paths'
@@ -25,7 +25,8 @@ export function parseEnvName(value: string | undefined): EnvName {
 }
 
 export function envFilePath(name: EnvName, root = ROOT_DIR) {
-  return resolve(root, ENV_FILES[name])
+  const primary = resolve(root, ENV_FILES[name])
+  return existsSync(primary) ? primary : resolve(root, 'env', ENV_FILES[name])
 }
 
 /** Environments whose env file exists, for the interactive picker. */
@@ -74,7 +75,12 @@ export function loadEnv(
     }
   }
 
-  return { name, file: ENV_FILES[name], fileExists: existsSync(file), values }
+  return {
+    name,
+    file: relative(root, file),
+    fileExists: existsSync(file),
+    values,
+  }
 }
 
 export function requireEnv<K extends string>(

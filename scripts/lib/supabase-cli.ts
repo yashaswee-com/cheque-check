@@ -29,7 +29,7 @@ export function runSupabase(
     const shown = options.secretArgs ? args[0] : args.join(' ')
     throw new OpsError(`supabase ${shown} failed.`, {
       hint: 'See the Supabase CLI output above. Never share database passwords or URLs when asking for help.',
-      cause: error,
+      cause: options.secretArgs ? undefined : error,
     })
   }
 }

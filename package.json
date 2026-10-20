@@ -30,6 +30,10 @@
     "storage:migrate": "tsx scripts/cli.ts dev storage-migrate",
     "supabase:setup": "tsx scripts/cli.ts dev setup",
     "supabase:reset": "tsx scripts/cli.ts dev reset",
+    "db:reset": "tsx scripts/cli.ts dev db-reset",
+    "db:migrate": "tsx scripts/cli.ts dev db-migrate",
+    "db:reset:production": "tsx scripts/cli.ts dev db-reset --env prod",
+    "db:migrate:production": "tsx scripts/cli.ts dev db-migrate --env prod",
     "supabase:gen-types": "supabase gen types typescript --linked --schema public > src/types/database.types.ts",
     "supabase:gen-types:local": "supabase gen types typescript --local --schema public > src/types/database.types.ts",
     "supabase:functions:deploy": "supabase functions deploy notifications-scheduler && supabase functions deploy notifications-dispatcher && supabase functions deploy razorpay-webhook"

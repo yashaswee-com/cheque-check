@@ -67,7 +67,10 @@ so scripts never hang.
 
 `--env local|qa|staging|prod` picks the env file (`.env.local`, `.env.qa`,
 `.env.staging`, `.env.production`). Variables already exported in your
-shell win over the file. Default: `local`.
+shell win over the file. Default: `local`. If the root env file is absent,
+the CLI reads the same filename from `env/` (for example
+`env/.env.production`). Root files take precedence; the two are not merged.
+This fallback is CLI-specific; Next.js still expects env files at the root.
 
 A target is **production** when `--env prod` is used, **or** its project
 ref is not listed in `supabase/.dev-projects.json` (shared, committed) or
@@ -244,6 +247,46 @@ These keep their npm aliases and are hidden from the interactive menu.
 
 Extra Playwright arguments go after `--`:
 `npm run test:e2e:qa -- --skip-reset -- --project=chromium e2e/specs/auth.spec.ts`.
+
+### Production database reset and migrations
+
+The implementation is in [commands/dev/database.ts](commands/dev/database.ts).
+Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_DB_URL` in `.env.production`
+(or `env/.env.production` if the root file is absent). Use the Supabase
+direct or session-pooler Postgres connection string, with a percent-encoded
+password, not the API URL or service-role key. The commands refuse to run
+if the API and database project refs differ. Exported shell variables still
+take precedence, so check the previewed project ref.
+
+```bash
+# Preview only: no database connection or writes.
+npm run db:reset:production -- --dry-run
+
+# DESTRUCTIVE: delete application data, replay all migrations, load seed.sql.
+npm run db:reset:production
+
+# Apply pending migrations only (no reset, no seed reload).
+npm run db:migrate:production
+
+# Non-interactive production confirmation; replace with your actual project ref.
+npm run db:reset:production -- --confirm-ref <project-ref>
+
+# Other hosted environments use the same commands.
+npm run db:migrate -- --env qa
+```
+
+Production requires typing the project ref (or `--confirm-ref`); `--yes`
+cannot bypass it. Take and verify a backup and stop application writes
+before a reset. Remote resets do **not** wipe managed Auth users or Storage
+files. Seed data currently contains only the reference bank list. Reset
+reapplies migrations itself; a separate migrate command is not required
+afterward. If a migration fails, the command exits with an error and the
+database may be partially rebuilt.
+
+These commands never use or change the CLI's linked project. The original
+`supabase:reset` remains restricted to linked, allowlisted dev projects.
+Unlike support mutations, these external CLI operations are not atomic
+`admin_*` RPCs and do not write an admin audit row.
 
 ## Code layout and conventions
 

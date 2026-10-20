@@ -1,4 +1,5 @@
 import type { GroupDef } from '../../lib/action'
+import { databaseMigrate, databaseReset } from './database'
 import { e2eCleanup } from './e2e-cleanup'
 import { e2eQa } from './e2e-qa'
 import { reset } from './reset'
@@ -10,5 +11,13 @@ export const devGroup: GroupDef = {
   title: 'Developer tooling: project setup, resets, e2e, migrations',
   description:
     'Project setup and maintenance tasks for developers (not support).',
-  actions: [setup, reset, e2eQa, e2eCleanup, storageMigrate],
+  actions: [
+    setup,
+    reset,
+    databaseReset,
+    databaseMigrate,
+    e2eQa,
+    e2eCleanup,
+    storageMigrate,
+  ],
 }
