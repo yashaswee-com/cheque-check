@@ -34,6 +34,11 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
+        env: {
+          NEXT_PUBLIC_OBSERVABILITY_ENABLED: 'false',
+          NEXT_PUBLIC_CLARITY_ENABLED: 'false',
+          NEXT_PUBLIC_REPLAY_ENABLED: 'false',
+        },
         // QA runs (scripts/commands/dev/e2e-qa.ts) set PLAYWRIGHT_PROD_BUILD to test
         // against a real production build instead of the dev server.
         command: process.env.PLAYWRIGHT_PROD_BUILD
