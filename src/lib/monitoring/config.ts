@@ -1,0 +1,48 @@
+import { monitoringEnvSchema } from '@/lib/env/schema'
+
+const values = monitoringEnvSchema.parse({
+  NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
+  NEXT_PUBLIC_APP_RELEASE: process.env.NEXT_PUBLIC_APP_RELEASE,
+  NEXT_PUBLIC_DEPLOYMENT_KIND: process.env.NEXT_PUBLIC_DEPLOYMENT_KIND,
+  NEXT_PUBLIC_OBSERVABILITY_ENABLED:
+    process.env.NEXT_PUBLIC_OBSERVABILITY_ENABLED,
+  NEXT_PUBLIC_PREVIEW_MONITORING_ENABLED:
+    process.env.NEXT_PUBLIC_PREVIEW_MONITORING_ENABLED,
+  NEXT_PUBLIC_MONITORING_POLICY_APPROVED:
+    process.env.NEXT_PUBLIC_MONITORING_POLICY_APPROVED,
+  NEXT_PUBLIC_CLARITY_ENABLED: process.env.NEXT_PUBLIC_CLARITY_ENABLED,
+  NEXT_PUBLIC_REPLAY_ENABLED: process.env.NEXT_PUBLIC_REPLAY_ENABLED,
+  NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE:
+    process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE,
+  NEXT_PUBLIC_SENTRY_REPLAY_SAMPLE_RATE:
+    process.env.NEXT_PUBLIC_SENTRY_REPLAY_SAMPLE_RATE,
+  NEXT_PUBLIC_SENTRY_ERROR_REPLAY_SAMPLE_RATE:
+    process.env.NEXT_PUBLIC_SENTRY_ERROR_REPLAY_SAMPLE_RATE,
+  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  NEXT_PUBLIC_CLARITY_PROJECT_ID:
+    process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || undefined,
+})
+
+const enabled =
+  process.env.NODE_ENV !== 'test' &&
+  values.NEXT_PUBLIC_OBSERVABILITY_ENABLED === 'true' &&
+  (values.NEXT_PUBLIC_DEPLOYMENT_KIND !== 'preview' ||
+    values.NEXT_PUBLIC_PREVIEW_MONITORING_ENABLED === 'true')
+
+export const monitoringConfig = {
+  enabled,
+  environment: values.NEXT_PUBLIC_APP_ENV,
+  release: values.NEXT_PUBLIC_APP_RELEASE,
+  deploymentKind:
+    values.NEXT_PUBLIC_DEPLOYMENT_KIND ??
+    values.NEXT_PUBLIC_APP_ENV ??
+    'development',
+  dsn: values.NEXT_PUBLIC_SENTRY_DSN,
+  clarityProjectId: values.NEXT_PUBLIC_CLARITY_PROJECT_ID,
+  policyApproved: values.NEXT_PUBLIC_MONITORING_POLICY_APPROVED === 'true',
+  clarityEnabled: enabled && values.NEXT_PUBLIC_CLARITY_ENABLED === 'true',
+  replayEnabled: enabled && values.NEXT_PUBLIC_REPLAY_ENABLED === 'true',
+  tracesSampleRate: values.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE,
+  replaySampleRate: values.NEXT_PUBLIC_SENTRY_REPLAY_SAMPLE_RATE,
+  errorReplaySampleRate: values.NEXT_PUBLIC_SENTRY_ERROR_REPLAY_SAMPLE_RATE,
+}

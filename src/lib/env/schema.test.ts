@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  monitoringEnvSchema,
   openAiEnvSchema,
   publicEnvSchema,
   razorpayEnvSchema,
@@ -34,6 +35,49 @@ describe('publicEnvSchema', () => {
     })
 
     expect(result.NEXT_PUBLIC_RAZORPAY_KEY_ID).toBeUndefined()
+  })
+})
+
+describe('monitoringEnvSchema', () => {
+  it('disables monitoring unless explicitly configured', () => {
+    const config = monitoringEnvSchema.parse({})
+    expect(config.NEXT_PUBLIC_OBSERVABILITY_ENABLED).toBe('false')
+    expect(config.NEXT_PUBLIC_MONITORING_POLICY_APPROVED).toBe('false')
+    expect(config.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE).toBe(0.05)
+    expect(config.NEXT_PUBLIC_SENTRY_REPLAY_SAMPLE_RATE).toBe(0.01)
+    expect(config.NEXT_PUBLIC_SENTRY_ERROR_REPLAY_SAMPLE_RATE).toBe(0.25)
+  })
+
+  it('requires explicit environment and release when enabled', () => {
+    expect(
+      monitoringEnvSchema.safeParse({
+        NEXT_PUBLIC_OBSERVABILITY_ENABLED: 'true',
+      }).success,
+    ).toBe(false)
+    const config = monitoringEnvSchema.parse({
+      NEXT_PUBLIC_OBSERVABILITY_ENABLED: 'true',
+      NEXT_PUBLIC_APP_ENV: 'qa',
+      NEXT_PUBLIC_APP_RELEASE: 'cheque-check@test-sha',
+    })
+    expect(config.NEXT_PUBLIC_APP_ENV).toBe('qa')
+  })
+
+  it('rejects invalid rates, flags, project IDs and production previews', () => {
+    for (const value of [
+      { NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE: '1.1' },
+      { NEXT_PUBLIC_SENTRY_REPLAY_SAMPLE_RATE: '-1' },
+      { NEXT_PUBLIC_SENTRY_ERROR_REPLAY_SAMPLE_RATE: 'invalid' },
+      { NEXT_PUBLIC_OBSERVABILITY_ENABLED: 'yes' },
+      { NEXT_PUBLIC_CLARITY_PROJECT_ID: '../secret' },
+      {
+        NEXT_PUBLIC_OBSERVABILITY_ENABLED: 'true',
+        NEXT_PUBLIC_APP_ENV: 'production',
+        NEXT_PUBLIC_APP_RELEASE: 'test',
+        NEXT_PUBLIC_DEPLOYMENT_KIND: 'preview',
+      },
+    ]) {
+      expect(monitoringEnvSchema.safeParse(value).success).toBe(false)
+    }
   })
 })
 
