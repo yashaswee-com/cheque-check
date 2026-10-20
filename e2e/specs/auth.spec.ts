@@ -87,7 +87,7 @@ test.describe('authentication', () => {
     await signupPage.signup(user.name, user.email, user.password)
 
     await expect.poll(() => dialogMessage).not.toBe('')
-    await expect(page).not.toHaveURL('/')
+    await expect(page).not.toHaveURL('/dashboard')
   })
 
   test.describe('signup form success', () => {

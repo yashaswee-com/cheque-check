@@ -44,7 +44,7 @@ export default function LoginPage() {
       if (error) {
         alert(error.message)
       } else {
-        router.push('/')
+        router.push('/dashboard')
       }
     } catch (error: unknown) {
       alert(error instanceof Error ? error.message : String(error))

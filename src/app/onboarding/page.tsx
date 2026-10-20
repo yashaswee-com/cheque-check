@@ -723,7 +723,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <Button
-                  onClick={() => router.push('/')}
+                  onClick={() => router.push('/dashboard')}
                   data-testid="onboarding-enter-dashboard"
                   className="w-full max-w-sm rounded-pill h-14 text-xl font-semibold hover:scale-105 active:scale-95 transition-all"
                 >

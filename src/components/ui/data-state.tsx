@@ -55,7 +55,7 @@ export function DataState({
           description={t('notAuthorizedDesc')}
           action={{
             label: t('backToDashboard'),
-            onClick: () => router.push('/'),
+            onClick: () => router.push('/dashboard'),
           }}
         />
       )

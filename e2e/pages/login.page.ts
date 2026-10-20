@@ -28,6 +28,6 @@ export class LoginPage {
   }
 
   async expectRedirectedToDashboard() {
-    await expect(this.page).toHaveURL('/')
+    await expect(this.page).toHaveURL('/dashboard')
   }
 }

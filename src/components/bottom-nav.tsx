@@ -14,7 +14,7 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 
 const navItems = [
-  { name: 'dashboard', href: '/', icon: Home },
+  { name: 'dashboard', href: '/dashboard', icon: Home },
   { name: 'cheques', href: '/cheques', icon: FileText },
   { name: 'parties', href: '/parties', icon: Users },
   { name: 'accounts', href: '/accounts', icon: Landmark },
@@ -35,7 +35,7 @@ export function BottomNav() {
   // Only show bottom nav on main top-level routes
   const currentPath = optimisticPath || pathname
   const isMainTab = [
-    '/',
+    '/dashboard',
     '/cheques',
     '/parties',
     '/accounts',

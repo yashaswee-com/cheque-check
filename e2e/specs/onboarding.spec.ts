@@ -47,7 +47,7 @@ test.describe('onboarding', () => {
     await expect(page.getByTestId('onboarding-enter-dashboard')).toBeVisible()
     await page.getByTestId('onboarding-enter-dashboard').click()
 
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/dashboard')
     await expect(page.getByTestId('bottom-nav-dashboard')).toBeVisible()
     await page.goto('/cheques')
     await expect(page.getByTestId('cheques-empty-state')).toBeVisible()
