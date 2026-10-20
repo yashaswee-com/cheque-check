@@ -32,16 +32,23 @@ public so the migration can be verified before cleanup.
 
 ## Copy, update, and remove sources
 
-After validating the dry run in staging, a production migration can remove each
-legacy source immediately after its database update:
+After validating the dry run in staging, copy records and remove each legacy
+source after its database URL has been updated:
 
 ```bash
 npm run storage:migrate -- --apply --delete-source
 ```
 
-Do not run `--delete-source` without verified backups. If the copy-only mode was
-already used, inspect and remove the now-unreferenced legacy objects through the
-Supabase storage inventory rather than rerunning the script.
+Do not run `--delete-source` without verified backups. If copy-only mode was
+already used, remove only verified, unreferenced legacy objects through the
+Supabase storage inventory.
+
+After confirming both legacy buckets are empty, apply
+`20261019000000_retire_legacy_public_media_buckets.sql` (for example, with
+`npx supabase db push`). The migration removes the old public bucket records
+and policies, and fails without deleting anything if either bucket still
+contains objects. The supported storage buckets are then only
+`private-avatars` and `private-cheque-images`.
 
 ## Verification
 
