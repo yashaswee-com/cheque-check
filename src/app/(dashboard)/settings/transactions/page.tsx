@@ -32,12 +32,16 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
+import { transactionProductId } from '@/features/monetization/lib/transaction-product'
+import { PaymentReferences } from '@/features/monetization/components/payment-references'
 
 export default function TransactionsPage() {
   const t = useTranslations('Transactions')
   const tp = useTranslations('Premium')
   const tf = useTranslations('Features')
-  const { transactions, isLoading, error, refresh } = useTransactions()
+  const productNames = useTranslations('ProductNames')
+  const { transactions, isLoading, isRefreshing, error, refresh } =
+    useTransactions()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
@@ -55,6 +59,9 @@ export default function TransactionsPage() {
       result = result.filter(
         (tx) =>
           tx.id.toLowerCase().includes(q) ||
+          (transactionProductId(tx)
+            ? productNames(transactionProductId(tx)!).toLowerCase().includes(q)
+            : false) ||
           tx.razorpay_order_id?.toLowerCase().includes(q) ||
           tx.razorpay_payment_id?.toLowerCase().includes(q),
       )
@@ -84,7 +91,15 @@ export default function TransactionsPage() {
     })
 
     return result
-  }, [transactions, searchQuery, filterType, filterStatus, sortOrder, sortBy])
+  }, [
+    transactions,
+    searchQuery,
+    filterType,
+    filterStatus,
+    sortOrder,
+    sortBy,
+    productNames,
+  ])
 
   if (isLoading) {
     return (
@@ -163,7 +178,12 @@ export default function TransactionsPage() {
     return (
       <div role="alert" className="space-y-4 rounded-lg border p-5">
         <p className="text-sm">{tf('activityFailed')}</p>
-        <Button variant="outline" size="pill" onClick={() => void refresh()}>
+        <Button
+          variant="outline"
+          size="pill"
+          loading={isRefreshing}
+          onClick={() => void refresh()}
+        >
           {tp('retry')}
         </Button>
       </div>
@@ -192,6 +212,7 @@ export default function TransactionsPage() {
               <Button
                 variant="outline"
                 size="icon"
+                aria-label={t('sortAndFilter')}
                 className="rounded-full h-11 w-11 shrink-0 bg-white dark:bg-zinc-900 border-none shadow-sm"
               >
                 <HugeiconsIcon icon={Filter} className="h-5 w-5" />
@@ -354,6 +375,7 @@ export default function TransactionsPage() {
           {filteredAndSortedTransactions.map((tx) => {
             const statusConfig = getStatusConfig(tx.status)
             const StatusIcon = statusConfig.icon
+            const productId = transactionProductId(tx)
 
             return (
               <Card
@@ -361,13 +383,15 @@ export default function TransactionsPage() {
                 className="group p-4 flex flex-col gap-4 border-zinc-200 dark:border-zinc-800 shadow-sm transition-all active:scale-[0.98] bg-card rounded-xl"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
                       <HugeiconsIcon icon={Money03Icon} className="h-5 w-5" />
                     </div>
-                    <div>
-                      <h4 className="font-bold text-base truncate">
-                        {getTypeLabel(tx.type)}
+                    <div className="min-w-0">
+                      <h4 className="text-base font-semibold leading-snug">
+                        {productId
+                          ? productNames(productId)
+                          : (tx.product_id ?? getTypeLabel(tx.type))}
                       </h4>
                       <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">
                         {format(new Date(tx.created_at), 'PPP at p')}
@@ -383,7 +407,8 @@ export default function TransactionsPage() {
                           : tx.currency}{' '}
                       {(tx.amount / 100).toLocaleString('en-IN', {
                         minimumFractionDigits: 2,
-                      })}
+                      })}{' '}
+                      <span className="text-xs font-normal">{tx.currency}</span>
                     </p>
                     <Badge
                       variant="outline"
@@ -395,24 +420,20 @@ export default function TransactionsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs bg-muted/30 p-3 rounded-lg border border-transparent">
-                  <div className="min-w-0">
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider block mb-0.5">
-                      {t('orderId')}
-                    </span>
-                    <span className="font-mono text-[11px] font-medium break-all text-foreground/80">
-                      {tx.razorpay_order_id || t('notAvailable')}
-                    </span>
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider block mb-0.5">
-                      {t('paymentId')}
-                    </span>
-                    <span className="font-mono text-[11px] font-medium break-all text-foreground/80">
-                      {tx.razorpay_payment_id || t('notAvailable')}
-                    </span>
-                  </div>
-                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {tf(
+                    tx.status === 'captured'
+                      ? 'paymentCapturedHelp'
+                      : tx.status === 'authorized'
+                        ? 'paymentAuthorizedHelp'
+                        : tx.status === 'created'
+                          ? 'paymentCreatedHelp'
+                          : tx.status === 'failed'
+                            ? 'paymentFailedHelp'
+                            : 'paymentRefundedHelp',
+                  )}
+                </p>
+                <PaymentReferences transaction={tx} />
               </Card>
             )
           })}

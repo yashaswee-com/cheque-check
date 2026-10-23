@@ -24,6 +24,7 @@ export interface Quota {
 
 export interface Transaction {
   id: string
+  product_id?: string
   user_id: string
   razorpay_order_id: string | null
   razorpay_payment_id: string | null

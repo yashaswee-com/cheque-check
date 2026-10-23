@@ -21,6 +21,7 @@ export function useTransactions() {
   return {
     transactions: query.data ?? [],
     isLoading: query.isPending,
+    isRefreshing: query.isFetching,
     error: query.error,
     refresh: query.refetch,
   }
