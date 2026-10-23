@@ -57,3 +57,5 @@ contains objects. The supported storage buckets are then only
 - Run an OCR scan against a migrated cheque image.
 - Confirm database media fields begin with `/api/storage/`.
 - Review script failures before deleting either legacy bucket.
+
+Buckets and storage policies are created entirely by migrations; no manual SQL-editor step is required. See `docs/environment.md` for the deployment sequence.
