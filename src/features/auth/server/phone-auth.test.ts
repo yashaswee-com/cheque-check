@@ -57,8 +57,50 @@ describe('sendPhoneOtp', () => {
     expect(result).toMatchObject({ ok: true, phone: '+919876543210' })
     expect(auth.signInWithOtp).toHaveBeenCalledWith({
       phone: '+919876543210',
-      options: { channel: 'sms', shouldCreateUser: true, captchaToken: 'tok' },
+      options: { channel: 'sms', shouldCreateUser: false, captchaToken: 'tok' },
     })
+  })
+
+  it('stores a validated signup name in Supabase Auth metadata', async () => {
+    const { client, auth } = makeClient()
+    const result = await sendPhoneOtp(client, {
+      phone: '98765 43210',
+      purpose: 'signup',
+      name: '  Asha Rao  ',
+    })
+    expect(result).toMatchObject({ ok: true })
+    expect(auth.signInWithOtp).toHaveBeenCalledWith({
+      phone: '+919876543210',
+      options: {
+        channel: 'sms',
+        shouldCreateUser: true,
+        captchaToken: undefined,
+        data: { name: 'Asha Rao' },
+      },
+    })
+  })
+
+  it('rejects an explicitly blank signup name before contacting Auth', async () => {
+    const { client, auth } = makeClient()
+    expect(
+      await sendPhoneOtp(client, {
+        phone: '98765 43210',
+        purpose: 'signup',
+        name: '   ',
+      }),
+    ).toMatchObject({ ok: false, code: 'invalid_request' })
+    expect(auth.signInWithOtp).not.toHaveBeenCalled()
+  })
+
+  it('requires a name for phone signup and does not allow login to create users', async () => {
+    const { client, auth } = makeClient()
+    expect(
+      await sendPhoneOtp(client, {
+        phone: '9876543210',
+        purpose: 'signup',
+      }),
+    ).toMatchObject({ ok: false, code: 'invalid_request' })
+    expect(auth.signInWithOtp).not.toHaveBeenCalled()
   })
 
   it('link send requires a session', async () => {
@@ -170,6 +212,21 @@ describe('verifyPhoneOtp', () => {
       phone: '+919876543210',
       purpose: 'login',
     })
+    expect(auth.verifyOtp).toHaveBeenCalledWith({
+      phone: '+919876543210',
+      token: '123456',
+      type: 'sms',
+    })
+  })
+
+  it('verifies signup codes through Supabase SMS OTP', async () => {
+    const { client, auth } = makeClient()
+    const result = await verifyPhoneOtp(client, {
+      phone: '9876543210',
+      token: '123456',
+      purpose: 'signup',
+    })
+    expect(result).toMatchObject({ ok: true, purpose: 'signup' })
     expect(auth.verifyOtp).toHaveBeenCalledWith({
       phone: '+919876543210',
       token: '123456',
@@ -296,6 +353,29 @@ describe('deactivateAccount', () => {
     })
     expect(result).toEqual({ ok: false, status: 500 })
     expect(updateUserById).not.toHaveBeenCalled()
+  })
+
+  it('reports incomplete provider cleanup after the database barrier is active', async () => {
+    const signOut = vi.fn().mockResolvedValue({ error: null })
+    const supabase = {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } } }),
+        signOut,
+      },
+      rpc: vi.fn().mockResolvedValue({ error: null }),
+    } as unknown as SupabaseClient
+    const result = await deactivateAccount(supabase, {
+      auth: {
+        admin: {
+          updateUserById: vi
+            .fn()
+            .mockResolvedValue({ error: { message: 'provider unavailable' } }),
+        },
+      },
+    })
+
+    expect(result).toEqual({ ok: true, providerCleanup: false })
+    expect(signOut).toHaveBeenCalledWith({ scope: 'global' })
   })
 
   it('reports unauthenticated callers', async () => {

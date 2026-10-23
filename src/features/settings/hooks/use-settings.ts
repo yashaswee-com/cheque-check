@@ -3,9 +3,11 @@ import { authService } from '@/features/auth/services/auth.service'
 import { reportService } from '@/features/reports/services/report.service'
 import { profileService } from '@/features/profile/services/profile.service'
 import { ChequeWithRelations } from '@/types'
+import { useTranslations } from 'next-intl'
 
 export function useSettings() {
   const router = useRouter()
+  const t = useTranslations('Settings')
 
   const handleExport = (
     cheques: ChequeWithRelations[] | undefined,
@@ -27,8 +29,9 @@ export function useSettings() {
   }
 
   const handleDeleteProfile = async () => {
-    await profileService.delete()
-    router.push('/login')
+    const result = await profileService.delete()
+    if (!result.providerCleanup) alert(t('deactivationCleanupWarning'))
+    router.replace('/login')
   }
 
   return {

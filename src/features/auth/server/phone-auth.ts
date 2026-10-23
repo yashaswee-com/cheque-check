@@ -19,13 +19,24 @@ export const LINK_SEND_RATE_LIMIT = {
   windowSeconds: 3600,
 } as const
 
-const purposeSchema = z.enum(['login', 'link'])
+const purposeSchema = z.enum(['login', 'signup', 'link'])
 
-const sendSchema = z.object({
-  phone: z.string().min(1).max(32),
-  purpose: purposeSchema,
-  captchaToken: z.string().min(1).max(4096).optional(),
-})
+const sendSchema = z
+  .object({
+    phone: z.string().min(1).max(32),
+    purpose: purposeSchema,
+    captchaToken: z.string().min(1).max(4096).optional(),
+    name: z.string().trim().min(1).max(120).optional(),
+  })
+  .superRefine(({ purpose, name }, context) => {
+    if (purpose === 'signup' && !name) {
+      context.addIssue({
+        code: 'custom',
+        path: ['name'],
+        message: 'Name is required for phone sign-up',
+      })
+    }
+  })
 
 const verifySchema = z.object({
   phone: z.string().min(1).max(32),
@@ -126,7 +137,7 @@ export async function sendPhoneOtp(
 ): Promise<PhoneOtpSendResult> {
   const parsed = sendSchema.safeParse(body)
   if (!parsed.success) return failure('invalid_request')
-  const { purpose, captchaToken } = parsed.data
+  const { purpose, captchaToken, name } = parsed.data
 
   const checked = checkIndianMobile(parsed.data.phone)
   if (!checked.ok) {
@@ -144,10 +155,15 @@ export async function sendPhoneOtp(
   } as const
 
   try {
-    if (purpose === 'login') {
+    if (purpose !== 'link') {
       const { error } = await supabase.auth.signInWithOtp({
         phone,
-        options: { channel: 'sms', shouldCreateUser: true, captchaToken },
+        options: {
+          channel: 'sms',
+          shouldCreateUser: purpose === 'signup',
+          captchaToken,
+          ...(name ? { data: { name } } : {}),
+        },
       })
       return error ? mapPhoneAuthError(error) : done
     }
@@ -229,7 +245,7 @@ export async function verifyPhoneOtp(
     const { data, error } = await supabase.auth.verifyOtp({
       phone,
       token,
-      type: purpose === 'login' ? 'sms' : 'phone_change',
+      type: purpose === 'link' ? 'phone_change' : 'sms',
     })
     if (error) return mapPhoneAuthError(error)
 

@@ -25,6 +25,7 @@ export interface PhoneOtpSendInput {
   phone: string
   purpose: PhoneAuthPurpose
   captchaToken?: string
+  name?: string
 }
 
 export interface PhoneOtpVerifyInput {

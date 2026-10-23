@@ -92,8 +92,7 @@ export default function LoginPage() {
           {PHONE_AUTH_ENABLED && usePhone ? (
             <PhoneAuthForm
               purpose="login"
-              showSignupHint
-              onVerified={() => window.location.assign('/dashboard')}
+              onVerified={() => router.replace('/dashboard')}
             />
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">

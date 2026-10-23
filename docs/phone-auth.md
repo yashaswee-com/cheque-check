@@ -5,9 +5,12 @@ Phone OTP uses Supabase Auth as the provider. Email/password and OAuth
 
 ## Flows
 
-- **Login / sign-up**: `POST /api/auth/phone/send` then `/verify` with
-  `purpose: "login"`. A verified new number creates a phone-only account
-  (`profiles.email` is null; nothing is fabricated).
+- **Login**: `POST /api/auth/phone/send` then `/verify` with
+  `purpose: "login"`. Login does not create accounts.
+- **Sign-up**: the same routes with `purpose: "signup"` and a required name.
+  A verified new number creates a phone-only account (`profiles.email` is null;
+  nothing is fabricated). The name is stored in Auth metadata for the profile
+  creation trigger.
 - **Link / change login phone** (profile page): same routes with
   `purpose: "link"`, signed-in users only. The number is attached to the
   authenticated user via `updateUser({ phone })` and `phone_change` verify.

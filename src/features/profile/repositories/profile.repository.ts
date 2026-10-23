@@ -43,7 +43,7 @@ export function toProfileUpdate(profile: Partial<Profile>): ProfileUpdate {
 export interface IProfileRepository {
   get(): Promise<Profile | null>
   update(profile: Partial<Profile>): Promise<Profile>
-  delete(): Promise<void>
+  delete(): Promise<{ providerCleanup: boolean }>
 }
 
 export class SupabaseProfileRepository
@@ -111,12 +111,49 @@ export class SupabaseProfileRepository
     )
   }
 
-  async delete(): Promise<void> {
+  async delete(): Promise<{ providerCleanup: boolean }> {
     // The route runs lifecycle_deactivate() first, then bans the Auth user and
     // revokes provider sessions.
     const response = await fetch('/api/account/deactivate', { method: 'POST' })
     if (!response.ok) throw new Error('Unable to deactivate your account')
 
-    await this.supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
+    let result: unknown
+    let parseError: unknown
+    try {
+      result = await response.json()
+    } catch (error) {
+      parseError = error
+    }
+
+    const { error: signOutError } = await this.supabase.auth.signOut({
+      scope: 'local',
+    })
+    if (signOutError) {
+      throw new Error('Account deactivated, but local sign-out failed', {
+        cause: signOutError,
+      })
+    }
+    if (parseError) {
+      throw new Error(
+        'The account was deactivated, but cleanup status is unknown',
+        {
+          cause: parseError,
+        },
+      )
+    }
+    if (
+      !result ||
+      typeof result !== 'object' ||
+      !('success' in result) ||
+      result.success !== true ||
+      !('providerCleanup' in result) ||
+      typeof result.providerCleanup !== 'boolean'
+    ) {
+      throw new Error(
+        'The account was deactivated, but cleanup status is unknown',
+      )
+    }
+
+    return { providerCleanup: result.providerCleanup }
   }
 }

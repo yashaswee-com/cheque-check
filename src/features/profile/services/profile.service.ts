@@ -27,7 +27,7 @@ export class ProfileService {
     return this.repository.update(profile)
   }
 
-  async delete(): Promise<void> {
+  async delete(): Promise<{ providerCleanup: boolean }> {
     return this.repository.delete()
   }
 }

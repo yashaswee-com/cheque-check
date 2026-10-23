@@ -4,7 +4,7 @@ export const PHONE_AUTH_COUNTRY_CODE = '+91'
 export const OTP_LENGTH = 6
 export const OTP_RESEND_COOLDOWN_SECONDS = 60
 
-export type PhoneAuthPurpose = 'login' | 'link'
+export type PhoneAuthPurpose = 'login' | 'signup' | 'link'
 
 export type PhoneNumberCheck =
   | { ok: true; e164: string }

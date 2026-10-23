@@ -402,6 +402,7 @@
     "cancel": "Cancel",
     "noEmail": "Is account par email nahi hai",
     "errors": {
+      "name_required": "Account banane ke liye apna naam enter karein.",
       "invalid_request": "Request mein kuch galat tha. Dobara try karein.",
       "invalid_phone": "10-digit ka sahi Indian mobile number daalein.",
       "unsupported_country": "Abhi sirf Indian (+91) mobile numbers chalte hain.",
@@ -1000,6 +1001,7 @@
     "refundPolicyDesc": "Refunds aur payments par hamari policy",
     "deleteMyAccount": "Mera Account Delete karein",
     "deleteMyAccountDesc": "Apna account aur data hamesha ke liye hatayein",
+    "deactivationCleanupWarning": "Aapka account deactivate ho gaya hai aur app access block hai, lekin Auth cleanup poora nahi hua. Provider cleanup dobara karwane ke liye support se sampark karein.",
     "profile": "Profile",
     "fullName": "Poora naam",
     "fullNamePlaceholder": "Apna naam likhein",

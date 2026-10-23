@@ -29,7 +29,7 @@ async function deactivate() {
       logger.error('Account deactivated but provider cleanup was incomplete')
     }
     return NextResponse.json(
-      { success: true },
+      { success: true, providerCleanup: result.providerCleanup },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   } catch (error) {

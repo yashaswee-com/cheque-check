@@ -19,7 +19,7 @@ import { TurnstileWidget } from '@/features/auth/components/turnstile-widget'
 
 type Step = 'phone' | 'code'
 type Pending = 'send' | 'resend' | 'verify' | null
-type FormError = PhoneAuthErrorCode | 'captcha_required'
+type FormError = PhoneAuthErrorCode | 'captcha_required' | 'name_required'
 
 interface PhoneAuthFormProps {
   purpose: PhoneAuthPurpose
@@ -35,16 +35,20 @@ export function PhoneAuthForm({
   showSignupHint = false,
 }: PhoneAuthFormProps) {
   const t = useTranslations('PhoneAuth')
+  const tc = useTranslations('Common')
+  const ta = useTranslations('Auth')
   const ids = useId()
+  const nameId = `${ids}-name`
   const phoneId = `${ids}-phone`
   const codeId = `${ids}-code`
   const errorId = `${ids}-error`
 
   const siteKey = publicEnv.NEXT_PUBLIC_TURNSTILE_SITE_KEY
-  const needsCaptcha = purpose === 'login' && Boolean(siteKey)
+  const needsCaptcha = purpose !== 'link' && Boolean(siteKey)
 
   const [step, setStep] = useState<Step>('phone')
   const [national, setNational] = useState('')
+  const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
   const [pending, setPending] = useState<Pending>(null)
@@ -90,6 +94,7 @@ export function PhoneAuthForm({
         phone: target,
         purpose,
         captchaToken: captchaToken ?? undefined,
+        ...(purpose === 'signup' ? { name: name.trim() } : {}),
       })
       if (result.ok) {
         setPhone(result.phone)
@@ -116,6 +121,11 @@ export function PhoneAuthForm({
 
   const handleSend = (event: React.FormEvent) => {
     event.preventDefault()
+    if (purpose === 'signup' && !name.trim()) {
+      setError('name_required')
+      focusField(nameId)
+      return
+    }
     const checked = checkIndianMobile(national)
     if (!checked.ok) {
       setError(
@@ -195,6 +205,27 @@ export function PhoneAuthForm({
   if (step === 'phone') {
     return (
       <form onSubmit={handleSend} className="space-y-4" noValidate>
+        {purpose === 'signup' && (
+          <div className="space-y-2">
+            <Label htmlFor={nameId}>{tc('fullName')}</Label>
+            <Input
+              id={nameId}
+              type="text"
+              autoComplete="name"
+              data-testid="phone-auth-name-input"
+              placeholder={ta('namePlaceholder')}
+              value={name}
+              maxLength={120}
+              onChange={(event) => {
+                setName(event.target.value)
+                setError(null)
+              }}
+              aria-invalid={error === 'name_required'}
+              aria-describedby={error === 'name_required' ? errorId : undefined}
+              className="h-12 rounded-sm border-none bg-canvas-parchment"
+            />
+          </div>
+        )}
         <div className="space-y-2">
           <Label htmlFor={phoneId}>{t('phoneLabel')}</Label>
           <div className="flex items-center gap-2">

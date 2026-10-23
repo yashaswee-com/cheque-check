@@ -402,6 +402,7 @@
     "cancel": "Cancel",
     "noEmail": "No email on this account",
     "errors": {
+      "name_required": "Enter your name to create an account.",
       "invalid_request": "Something was wrong with that request. Please try again.",
       "invalid_phone": "Enter a valid 10-digit Indian mobile number.",
       "unsupported_country": "Only Indian (+91) mobile numbers are supported right now.",
@@ -989,6 +990,7 @@
     "deleteProfileDescription": "This will permanently delete your account and all associated data.",
     "deleteMyAccount": "Delete My Account",
     "deleteMyAccountDesc": "Permanently remove your account and data",
+    "deactivationCleanupWarning": "Your account is deactivated and app access is blocked, but Auth cleanup did not fully complete. Contact support to retry provider cleanup.",
     "profile": "Profile",
     "fullName": "Full name",
     "fullNamePlaceholder": "Enter your name",

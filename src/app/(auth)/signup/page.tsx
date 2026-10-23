@@ -97,9 +97,9 @@ export default function SignupPage() {
         <div className="space-y-4 rounded-lg bg-white p-8 dark:bg-surface-tile-1 border border-primary/5">
           {PHONE_AUTH_ENABLED && usePhone ? (
             <PhoneAuthForm
-              purpose="login"
+              purpose="signup"
               showSignupHint
-              onVerified={() => window.location.assign('/dashboard')}
+              onVerified={() => router.replace('/dashboard')}
             />
           ) : (
             <form onSubmit={handleSignup} className="space-y-4">

@@ -63,7 +63,10 @@ RPCs. The server Auth flow then bans login and revokes sessions. Provider
 cleanup failures must be visible and retryable; signing out alone is not the
 authorization boundary. Recovering a profile in the database is not permission
 to silently remove an independent Auth ban: explicit administrator review is
-required. No hard-erasure or purge policy is introduced.
+required. If provider cleanup is incomplete, the user is warned after access is
+blocked. An operator can safely retry the Auth ban with the audited command
+`npm run ops -- account ban --user <uuid> --duration permanent`; do not lift the
+ban as part of a cleanup retry. No hard-erasure or purge policy is introduced.
 
 ## Private media
 
