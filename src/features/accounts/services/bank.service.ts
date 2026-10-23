@@ -1,4 +1,6 @@
 import { Bank } from '@/types'
+import { ValidationError } from '@/lib/errors'
+import { isValidBankName } from '../lib/bank-name'
 import {
   IBankRepository,
   SupabaseBankRepository,
@@ -22,12 +24,28 @@ export class BankService {
   async getAll(): Promise<Bank[]> {
     return this.repository.getAll()
   }
+
+  async create(name: string): Promise<Bank> {
+    if (!isValidBankName(name)) {
+      throw new ValidationError(
+        'Enter a bank name between 2 and 120 characters.',
+      )
+    }
+    return this.repository.create(name.trim())
+  }
+
+  async delete(id: string): Promise<void> {
+    return this.repository.delete(id)
+  }
 }
 
-export const bankService = new Proxy(Object.create(BankService.prototype), {
-  get(_target, property, receiver) {
-    const service = getDefaultBankService()
-    const value = Reflect.get(service, property, receiver)
-    return typeof value === 'function' ? value.bind(service) : value
+export const bankService = new Proxy<BankService>(
+  Object.create(BankService.prototype),
+  {
+    get(_target, property, receiver) {
+      const service = getDefaultBankService()
+      const value = Reflect.get(service, property, receiver)
+      return typeof value === 'function' ? value.bind(service) : value
+    },
   },
-})
+)
