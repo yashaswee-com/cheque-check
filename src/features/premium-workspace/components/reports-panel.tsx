@@ -59,6 +59,7 @@ export function ReportsPanel({
   busy,
   run,
   initialPartyId,
+  onlyPartyId,
 }: {
   businessId: string
   businessName: string
@@ -69,12 +70,16 @@ export function ReportsPanel({
   busy: boolean
   run: RunAction
   initialPartyId?: string
+  onlyPartyId?: string
 }) {
   const t = useTranslations('PremiumWorkspace')
   const locale = useLocale()
-  const [partyId, setPartyId] = useState(() =>
-    context.parties.some((p) => p.id === initialPartyId) ? initialPartyId! : '',
-  )
+  const [partyId, setPartyId] = useState(() => {
+    const selected = onlyPartyId ?? initialPartyId
+    return context.parties.some((party) => party.id === selected)
+      ? selected!
+      : ''
+  })
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [scope, setScope] = useState(businesses.map((b) => b.id))
@@ -94,7 +99,12 @@ export function ReportsPanel({
       <p className="text-sm text-muted-foreground">
         {t(mode === 'statement' ? 'statementHelp' : 'consolidatedHelp')}
       </p>
-      {mode === 'statement' ? (
+      {mode === 'statement' && onlyPartyId ? (
+        <p className="rounded-md border bg-muted/30 p-3 text-sm">
+          {context.parties.find((party) => party.id === partyId)?.name ??
+            t('choose')}
+        </p>
+      ) : mode === 'statement' ? (
         <SelectField
           disabled={busy}
           label={t('fields.party_id')}
@@ -167,6 +177,8 @@ export function ReportsPanel({
       <div className="flex flex-wrap gap-2">
         <Button
           disabled={disabled}
+          loading={busy}
+          loadingText={t('working')}
           onClick={() =>
             void run(async () => setSnapshot(await fetchSnapshot()))
           }
@@ -177,6 +189,8 @@ export function ReportsPanel({
           <Button
             variant="outline"
             disabled={disabled}
+            loading={busy}
+            loadingText={t('working')}
             onClick={() =>
               void run(async () => {
                 // Never export a cached report after entitlement expiry.

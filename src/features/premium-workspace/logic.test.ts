@@ -29,6 +29,8 @@ const cheque = (overrides: Partial<ChequeRow> = {}): ChequeRow => ({
   is_draft: false,
   created_at: null,
   updated_at: null,
+  deleted_at: null,
+  deletion_batch_id: null,
   ...overrides,
 })
 const context: WorkspaceContext = {

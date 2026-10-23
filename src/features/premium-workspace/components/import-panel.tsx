@@ -15,14 +15,18 @@ export function ImportPanel({
   context,
   run,
   busy,
+  initialKind = 'parties',
+  allowedKinds = ['parties', 'cheques'],
 }: {
   businessId: string
   context: WorkspaceContext
   run: RunAction
   busy: boolean
+  initialKind?: ImportKind
+  allowedKinds?: readonly ImportKind[]
 }) {
   const t = useTranslations('PremiumWorkspace')
-  const [kind, setKind] = useState<ImportKind>('parties')
+  const [kind, setKind] = useState<ImportKind>(initialKind)
   const [rows, setRows] = useState<ImportRow[]>([])
   const [fileError, setFileError] = useState(false)
   const [reading, setReading] = useState(false)
@@ -32,19 +36,24 @@ export function ImportPanel({
   return (
     <section className="space-y-4">
       <p className="text-sm text-muted-foreground">{t('importHelp')}</p>
-      <SelectField
-        label={t('importKind')}
-        value={kind}
-        disabled={busy || reading}
-        onChange={(event) => {
-          setKind(event.target.value as ImportKind)
-          setRows([])
-          setConfirming(false)
-        }}
-      >
-        <option value="parties">{t('parties')}</option>
-        <option value="cheques">{t('cheques')}</option>
-      </SelectField>
+      {allowedKinds.length > 1 && (
+        <SelectField
+          label={t('importKind')}
+          value={kind}
+          disabled={busy || reading}
+          onChange={(event) => {
+            setKind(event.target.value as ImportKind)
+            setRows([])
+            setConfirming(false)
+          }}
+        >
+          {allowedKinds.map((allowedKind) => (
+            <option key={allowedKind} value={allowedKind}>
+              {t(allowedKind)}
+            </option>
+          ))}
+        </SelectField>
+      )}
       <Button variant="outline" onClick={() => downloadImportSample(kind)}>
         {t('downloadSample')}
       </Button>

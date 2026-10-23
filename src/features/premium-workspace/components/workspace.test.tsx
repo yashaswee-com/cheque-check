@@ -50,6 +50,8 @@ const cheque: ChequeRow = {
   remind_before_days: null,
   created_at: null,
   updated_at: null,
+  deleted_at: null,
+  deletion_batch_id: null,
 }
 const context: WorkspaceContext = {
   cheques: [cheque],
@@ -155,6 +157,7 @@ describe('workspace workflows', () => {
   })
   it('applies a persisted view through the backend and filters the actual cheque list', async () => {
     applyTool.mockResolvedValue({ status: 'Cleared' })
+    const onFiltersChange = vi.fn()
     const tools: SavedTool[] = [
       {
         id: 'v1',
@@ -165,11 +168,22 @@ describe('workspace workflows', () => {
         payload: { status: 'Cleared' },
         created_at: '2026-10-17',
         updated_at: '2026-10-17',
+        deleted_at: null,
+        deletion_batch_id: null,
       },
     ]
-    wrap(<FiltersPanel {...common} tools={tools} currency="₹" mode="views" />)
+    wrap(
+      <FiltersPanel
+        {...common}
+        tools={tools}
+        currency="₹"
+        mode="views"
+        onFiltersChange={onFiltersChange}
+      />,
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
     await waitFor(() => expect(applyTool).toHaveBeenCalledWith('v1'))
+    expect(onFiltersChange).toHaveBeenCalledWith({ status: 'Cleared' })
     expect(
       await screen.findByText('No cheques match this scope.'),
     ).toBeInTheDocument()

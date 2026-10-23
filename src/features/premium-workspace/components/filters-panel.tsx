@@ -24,6 +24,7 @@ export function FiltersPanel({
   busy,
   mode,
   currency,
+  onFiltersChange,
 }: {
   businessId: string
   context: WorkspaceContext
@@ -32,6 +33,7 @@ export function FiltersPanel({
   busy: boolean
   mode: 'bulk' | 'views'
   currency: string
+  onFiltersChange?: (filters: ChequeFilters) => void
 }) {
   const t = useTranslations('PremiumWorkspace')
   const [filters, setFilters] = useState<ChequeFilters>({})
@@ -41,6 +43,7 @@ export function FiltersPanel({
   const [confirming, setConfirming] = useState(false)
   const updateFilters = (next: ChequeFilters) => {
     setFilters(next)
+    onFiltersChange?.(next)
     setSelected([])
     setConfirming(false)
   }

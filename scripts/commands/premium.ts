@@ -32,12 +32,15 @@ export type EntitlementOutcome =
     }
 
 const FEATURE_CHOICES = [
-  { value: FEATURE_IDS.LIFETIME_PREMIUM, name: 'Lifetime Premium' },
+  { value: FEATURE_IDS.LIFETIME_PREMIUM, name: 'Premium - Lifetime' },
   {
     value: FEATURE_IDS.VOICE_REMINDER_SUB,
-    name: 'Voice Reminder subscription',
+    name: 'Voice Reminders - 30-Day Pack (100 calls)',
   },
-  { value: FEATURE_IDS.AI_SCANNER_SUB, name: 'AI Scanner subscription' },
+  {
+    value: FEATURE_IDS.AI_SCANNER_SUB,
+    name: 'AI Scanner - 30-Day Pack (250 scans)',
+  },
 ] as const satisfies { value: EntitlementFeature; name: string }[]
 
 const FEATURE_OPTION: OptionDef = {
@@ -151,8 +154,8 @@ function noop(
 
 const grantLifetime = defineAction<EntitlementOutcome>({
   name: 'grant-lifetime',
-  title: 'Grant Lifetime Premium',
-  description: 'Activates Lifetime Premium (never expires) for a user.',
+  title: 'Grant Premium - Lifetime',
+  description: 'Activates Premium - Lifetime (never expires) for a user.',
   mutates: true,
   options: [USER_OPTION, NO_TRANSACTION_OPTION],
   examples: [
@@ -167,7 +170,11 @@ const grantLifetime = defineAction<EntitlementOutcome>({
       FEATURE_IDS.LIFETIME_PREMIUM,
     )
     if (before?.status === 'active' && before.valid_until === null) {
-      return noop(user.userId, 'the user already has Lifetime Premium.', before)
+      return noop(
+        user.userId,
+        'the user already has Premium - Lifetime.',
+        before,
+      )
     }
     return applyEntitlementChange(ctx, {
       user,
@@ -176,7 +183,7 @@ const grantLifetime = defineAction<EntitlementOutcome>({
       status: 'active',
       validUntil: null,
       action: 'premium.grant_lifetime',
-      title: 'Grant Lifetime Premium',
+      title: 'Grant Premium - Lifetime',
       recordTransaction: options.transaction !== false,
     })
   },
@@ -186,7 +193,7 @@ const grantLifetime = defineAction<EntitlementOutcome>({
 const trial = defineAction<EntitlementOutcome>({
   name: 'trial',
   title: 'Start a Premium trial',
-  description: 'Gives Lifetime Premium features as a time-limited trial.',
+  description: 'Gives Premium - Lifetime features as a time-limited trial.',
   mutates: true,
   options: [
     USER_OPTION,
@@ -422,8 +429,7 @@ const setExpiry = defineAction<EntitlementOutcome>({
 export const premiumGroup: GroupDef = {
   name: 'premium',
   title: 'Premium: lifetime, trials, pause/resume, expiry',
-  description:
-    'Grant and manage Lifetime Premium and subscription entitlements.',
+  description: 'Grant and manage Premium - Lifetime and pack entitlements.',
   actions: [
     grantLifetime,
     trial,

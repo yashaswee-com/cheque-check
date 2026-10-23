@@ -83,5 +83,12 @@ describe('workspace localization', () => {
   it('has the same complete translation keys in all three catalogs', () => {
     expect(keys(hi.PremiumWorkspace)).toEqual(keys(en.PremiumWorkspace))
     expect(keys(hiEn.PremiumWorkspace)).toEqual(keys(en.PremiumWorkspace))
+    expect(keys(hi.NativeTools)).toEqual(keys(en.NativeTools))
+    expect(keys(hiEn.NativeTools)).toEqual(keys(en.NativeTools))
+    for (const catalog of [en, hi, hiEn]) {
+      expect(catalog.Parties.contactImportHelp).toBeTruthy()
+      expect(catalog.Parties.optionalDetails).toBeTruthy()
+      expect(catalog.Parties.possibleDuplicateWarning).toContain('{names}')
+    }
   })
 })

@@ -44,6 +44,8 @@ export function SavedTools({
         </div>
         <Button
           disabled={busy || disabled || !name.trim()}
+          loading={busy}
+          loadingText={t('working')}
           onClick={() =>
             void run(async () => {
               await premiumWorkspaceService.saveTool(
@@ -72,6 +74,8 @@ export function SavedTools({
                 <Button
                   variant="outline"
                   disabled={busy}
+                  loading={busy}
+                  loadingText={t('working')}
                   onClick={() =>
                     void run(async () => {
                       onApply(await premiumWorkspaceService.applyTool(tool.id))

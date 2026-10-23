@@ -1,11 +1,20 @@
 # Premium workspace
 
-`/premium` contains seven mobile-friendly, translated tools. Deep links:
-`/premium?partyId=<uuid>#party-statements` and `/premium#consolidated-dashboard`.
-An initial party is selected only if present in the active owned business.
-The locked route shows neutral workspace context and selects the gate's feature
-from the entry fragment, so statement and consolidation links do not advertise
-bulk imports instead. Paid data components remain behind the gate.
+Premium workflows are integrated into the authenticated product screens:
+
+- Cheque imports, templates, saved views, and batch status actions are in
+  Cheques. Saved-view filters also update the surrounding native cheque list.
+- Party imports are in Parties; statements are available on a party detail.
+- Message templates are in business detail, print layouts are in account
+  detail and the cheque print workflow, and consolidated reports are in
+  Businesses.
+
+`/premium` remains a compatibility route. It redirects old fragments to the
+matching native screen. `/premium?partyId=<uuid>#party-statements` checks the
+party against each user's owned business before selecting its detail; unknown
+or foreign IDs fall back to the Parties screen without retaining the ID.
+Premium panels remain behind their existing feature gates, and mutations
+continue to use fresh server-side entitlement checks.
 
 ## Integration
 
@@ -34,11 +43,12 @@ use the existing local layout only when no synced row exists, and write to sync
 only on an explicit save. Stored tools remain directly owner-readable after
 expiration, while execution and mutations are gated.
 
-The workspace's templates create actual new cheques after confirmation, without
-requiring changes to existing create pages. Saved views apply to the workspace
-list. Existing individual cheque links/actions remain unchanged. The latest saved
-message per business is the default; applying a saved template only loads the
-editor, and re-saving makes it latest.
+Templates create actual new cheques after confirmation, without requiring
+changes to existing create pages. Saved views update the native Cheques list.
+Batch actions use an explicit selected set and confirmation. Existing individual
+cheque links/actions remain unchanged. The latest saved message per business is
+the default; applying a saved template only loads the editor, and re-saving
+makes it latest.
 
 ## Database
 
@@ -46,8 +56,10 @@ Apply `20261017030000_premium_workspace.sql` **after** the parent's enum and
 `has_lifetime_premium()` migrations (`010000`, `020000`). It adds
 `premium_workspace_tools`, `premium_workspace_print_layouts` and validating,
 authenticated RPCs. No core table/RLS policies or AI/voice quota consumers change.
-Database types were extended manually, not generated against a remote database.
-Regenerate types after migration in the normal deployment workflow.
+Premium saved-tool and print-layout records participate in the lifecycle
+deletion policy; reads and mutations continue through the owner's authorized
+RPC and row-level policies. Keep generated database types synchronized with the
+forward migrations through the normal local workflow.
 
 Imports are atomic (1–500 records), reject unknown columns and duplicates, and
 check party/account ownership. Cheque imports always derive initial status from
@@ -58,9 +70,10 @@ Saved tools are validated again when applied.
 
 Statements are cheque activity, not invoice ledgers. Period net cleared movement
 starts at zero within the selected period; it is not an opening or overall party
-balance. The UI and PDF label this explicitly. Consolidation uses account display currency
-without currency conversion. PDF text is rendered with browser fonts and embedded
-as page images so Hindi labels and names are preserved without a remote font.
+balance. The UI and PDF label this explicitly. Consolidation uses account display
+currency without currency conversion. PDF text is rendered with browser fonts
+and embedded as page images so Hindi labels and names are preserved without a
+remote font.
 
 ## Validation
 

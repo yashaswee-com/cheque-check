@@ -178,10 +178,23 @@ export function validateImport(
   })
 }
 
-export function filterCheques(
-  cheques: ChequeRow[],
+type FilterableCheque = Partial<
+  Pick<
+    ChequeRow,
+    | 'is_draft'
+    | 'cheque_number'
+    | 'notes'
+    | 'status'
+    | 'type'
+    | 'party_id'
+    | 'cheque_date'
+  >
+>
+
+export function filterCheques<T extends FilterableCheque>(
+  cheques: T[],
   filters: ChequeFilters,
-): ChequeRow[] {
+): T[] {
   return cheques.filter(
     (c) =>
       !c.is_draft &&
