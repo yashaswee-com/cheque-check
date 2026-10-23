@@ -248,6 +248,79 @@ describe('PostgreSQL lifecycle migrations', () => {
     ).toBeGreaterThan(0)
   })
 
+  it('restores only tag attachments deleted in the selected lifecycle batch', async () => {
+    const source = (
+      await asUser<{ id: string }>(
+        owner,
+        `INSERT INTO cheques(business_id,party_id,account_id,cheque_number,amount,cheque_date,type,status)
+        VALUES('${business}','${party}','${account}','444444',10,'2026-10-21','Outward','Issued') RETURNING id`,
+      )
+    ).rows[0].id
+    const tag = (
+      await asUser<{ id: string }>(
+        owner,
+        `INSERT INTO tags(business_id,name) VALUES('${business}','Lifecycle tag') RETURNING id`,
+      )
+    ).rows[0].id
+
+    await asUser(
+      owner,
+      `SELECT lifecycle_set_tag('${tag}','cheque','${source}',true)`,
+    )
+    await asUser(owner, `SELECT lifecycle_delete('tags','${tag}')`)
+    const firstDeletedLink = (
+      await db.query<{ tag_id: string; deletion_batch_id: string }>(
+        `SELECT tag_id,deletion_batch_id FROM entity_tags WHERE tag_id = '${tag}'`,
+      )
+    ).rows[0]
+    expect(firstDeletedLink.deletion_batch_id).toBeTruthy()
+
+    await db.exec(`SELECT lifecycle_restore('tags','${tag}')`)
+    expect(
+      (
+        await asUser(
+          owner,
+          `SELECT * FROM entity_tags WHERE tag_id = '${tag}' AND entity_id = '${source}'`,
+        )
+      ).rows,
+    ).toHaveLength(1)
+
+    await asUser(
+      owner,
+      `SELECT lifecycle_set_tag('${tag}','cheque','${source}',false)`,
+    )
+    await asUser(owner, `SELECT lifecycle_delete('tags','${tag}')`)
+    const independentlyDeletedLink = (
+      await db.query<{ tag_id: string; deletion_batch_id: string }>(
+        `SELECT tag_id,deletion_batch_id FROM entity_tags WHERE tag_id = '${tag}'`,
+      )
+    ).rows[0]
+    expect(independentlyDeletedLink.tag_id).toBe(firstDeletedLink.tag_id)
+    expect(independentlyDeletedLink.deletion_batch_id).not.toBe(
+      firstDeletedLink.deletion_batch_id,
+    )
+
+    await db.exec(`SELECT lifecycle_restore('tags','${tag}')`)
+    expect(
+      (
+        await db.query<{ deleted_at: string | null }>(
+          `SELECT deleted_at FROM entity_tags WHERE tag_id = '${tag}' AND entity_id = '${source}'`,
+        )
+      ).rows[0].deleted_at,
+    ).not.toBeNull()
+    await asUser(
+      owner,
+      `SELECT lifecycle_set_tag('${tag}','cheque','${source}',true)`,
+    )
+    expect(
+      (
+        await db.query<{ tag_id: string; deleted_at: string | null }>(
+          `SELECT tag_id,deleted_at FROM entity_tags WHERE tag_id = '${tag}' AND entity_id = '${source}'`,
+        )
+      ).rows[0],
+    ).toEqual({ tag_id: firstDeletedLink.tag_id, deleted_at: null })
+  })
+
   it('requires fresh Premium access, skips deleted tags, and rolls back a tag-copy failure', async () => {
     const source = (
       await db.query<{ id: string }>(

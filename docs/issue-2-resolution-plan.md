@@ -520,5 +520,7 @@ Completion requires implemented, persistent changes and recorded validation,
 not just a passing build or a configuration checklist. Each release should
 report changes, tests, remaining operational gates and deployment status.
 
-This planning deliverable changes documentation only. No application tests or
-live infrastructure operations were performed during planning.
+Code-level work and focused validation are recorded in the commits on this
+branch. Production migrations, Vercel environment updates, hosted Supabase Auth
+configuration, and real provider sends remain gated on the operational
+prerequisites above; no live infrastructure changes are implied by local tests.
