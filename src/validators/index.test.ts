@@ -51,6 +51,29 @@ describe('partySchema', () => {
 })
 
 describe('accountSchema', () => {
+  const account = {
+    bank_id: 'bank',
+    account_name: 'Owner',
+    account_number: '123456789',
+    opening_balance: 0,
+  }
+
+  it('normalizes valid IFSC and keeps it optional', () => {
+    expect(
+      accountSchema.parse({ ...account, ifsc_code: ' hdfc0001234 ' }).ifsc_code,
+    ).toBe('HDFC0001234')
+    expect(accountSchema.safeParse({ ...account, ifsc_code: '' }).success).toBe(
+      true,
+    )
+    expect(accountSchema.safeParse(account).success).toBe(true)
+    expect(
+      accountSchema.safeParse({ ...account, ifsc_code: 'HDFC1001234' }).success,
+    ).toBe(false)
+    expect(
+      accountSchema.safeParse({ ...account, ifsc_code: '123' }).success,
+    ).toBe(false)
+  })
+
   it('requires a bank, account holder, and account number', () => {
     expect(
       accountSchema.safeParse({

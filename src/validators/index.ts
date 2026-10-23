@@ -39,7 +39,13 @@ export const accountSchema = z.object({
   bank_id: z.string().min(1, 'Bank is required'),
   account_name: z.string().min(1, 'Account holder name is required'),
   account_number: z.string().min(1, 'Account number is required'),
-  ifsc_code: z.string().optional().or(z.literal('')),
+  ifsc_code: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Enter a valid 11-character IFSC code')
+    .optional()
+    .or(z.literal('')),
   color: z.string().optional(),
   icon: z.string().optional(),
   notes: z.string().optional().or(z.literal('')),
