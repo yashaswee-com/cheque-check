@@ -47,13 +47,19 @@ export class SupabaseDraftRepository<TDraft, TFields>
         .select(this.selection)
         .eq('business_id', businessId)
         .eq('is_draft', true)
+        .is('deleted_at', null)
         .order('updated_at', { ascending: false }),
     ) as Promise<TDraft[]>
   }
 
   async getById(id: string): Promise<TDraft> {
     return this.handle(
-      this.db.select(this.selection).eq('id', id).eq('is_draft', true).single(),
+      this.db
+        .select(this.selection)
+        .eq('id', id)
+        .eq('is_draft', true)
+        .is('deleted_at', null)
+        .single(),
     ) as Promise<TDraft>
   }
 
@@ -78,7 +84,13 @@ export class SupabaseDraftRepository<TDraft, TFields>
   }
 
   async delete(id: string): Promise<void> {
-    await this.handleVoid(this.db.delete().eq('id', id).eq('is_draft', true))
+    await this.getById(id)
+    await this.handleVoid(
+      this.supabase.rpc('lifecycle_delete', {
+        requested_table: this.table,
+        requested_id: id,
+      }),
+    )
   }
 
   async publish<TPublished>(
@@ -104,6 +116,7 @@ export interface IChequeDraftRepository extends IDraftRepository<
   ChequeDraft,
   ChequeDraftFields
 > {
+  duplicate?(sourceId: string): Promise<ChequeDraft>
   hasNumberConflict(
     businessId: string,
     accountId: string,
@@ -122,6 +135,14 @@ export class SupabaseChequeDraftRepository
     )
   }
 
+  async duplicate(sourceId: string): Promise<ChequeDraft> {
+    return this.handle(
+      this.supabase.rpc('duplicate_cheque_draft', {
+        requested_cheque: sourceId,
+      }),
+    ) as unknown as Promise<ChequeDraft>
+  }
+
   async hasNumberConflict(
     businessId: string,
     accountId: string,
@@ -134,6 +155,7 @@ export class SupabaseChequeDraftRepository
         .eq('account_id', accountId)
         .eq('cheque_number', chequeNumber)
         .eq('is_draft', false)
+        .is('deleted_at', null)
         .limit(1),
     )
     return (rows as unknown[]).length > 0

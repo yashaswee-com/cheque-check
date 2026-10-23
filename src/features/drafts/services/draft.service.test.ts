@@ -62,7 +62,7 @@ describe('ChequeDraftService', () => {
     expect(repository.publish).not.toHaveBeenCalled()
   })
 
-  it('deletes the draft image along with the draft', async () => {
+  it('retains the draft image when logically deleting the draft', async () => {
     const repository = chequeRepository({
       getById: vi.fn().mockResolvedValue({ id: 'd1', image_url: '/img' }),
     })
@@ -72,7 +72,7 @@ describe('ChequeDraftService', () => {
     await service.delete('d1')
 
     expect(repository.delete).toHaveBeenCalledWith('d1')
-    expect(storage.deleteChequeImage).toHaveBeenCalledWith('/img')
+    expect(storage.deleteChequeImage).not.toHaveBeenCalled()
   })
 
   it('still deletes the draft when image cleanup fails', async () => {
@@ -114,6 +114,43 @@ describe('ChequeDraftService', () => {
       'a1',
       '123456',
     )
+  })
+
+  it('preserves copied reminder settings when publishing after reload', async () => {
+    const repository = chequeRepository({
+      getById: vi.fn().mockResolvedValue({ remind_before_days: 7 }),
+    })
+    await new ChequeDraftService(repository).publish('d1', completeCheque, 3)
+    expect(repository.publish).toHaveBeenCalledWith(
+      'd1',
+      expect.objectContaining({
+        remind_before_days: 7,
+        status: 'Received',
+      }),
+    )
+  })
+
+  it('preserves a copied null reminder rather than rewriting it to the profile default', async () => {
+    const repository = chequeRepository({
+      getById: vi.fn().mockResolvedValue({ remind_before_days: null }),
+    })
+    await new ChequeDraftService(repository).publish('d1', completeCheque, 3)
+    expect(repository.publish).toHaveBeenCalledWith(
+      'd1',
+      expect.objectContaining({
+        remind_before_days: null,
+      }),
+    )
+  })
+
+  it('duplicates through the single transactional operation and propagates failure', async () => {
+    const duplicate = vi.fn().mockRejectedValue(new Error('Tag copy failed'))
+    const repository = chequeRepository({ duplicate })
+    await expect(
+      new ChequeDraftService(repository).duplicate('source'),
+    ).rejects.toThrow('Tag copy failed')
+    expect(duplicate).toHaveBeenCalledWith('source')
+    expect(repository.create).not.toHaveBeenCalled()
   })
 })
 

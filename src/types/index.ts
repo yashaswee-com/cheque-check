@@ -1,5 +1,7 @@
-export type ChequeStatus = 'Issued' | 'Received' | 'Cleared' | 'Bounced'
-export type ChequeType = 'Outward' | 'Inward'
+import type { Database } from './database.types'
+type ClosedChoice = Database['public']['Enums']
+export type ChequeStatus = ClosedChoice['cheque_status']
+export type ChequeType = ClosedChoice['cheque_type']
 export type IconType = any // For now, to be safe with HugeIcons and Lucide
 
 export interface Profile {
@@ -64,11 +66,16 @@ export interface Bank {
   id: string
   name: string
   logo_url: string | null
-  created_at: string
-  updated_at: string
+  created_at: string | null
+  updated_at: string | null
+  owner_id?: string | null
+  deleted_at?: string | null
+  category?: ClosedChoice['bank_category'] | null
+  source_url?: string | null
+  verified_on?: string | null
 }
 
-export type TagEntityType = 'cheque' | 'account' | 'party' | 'business'
+export type TagEntityType = ClosedChoice['tag_entity_type']
 
 export interface Tag {
   id: string
@@ -77,6 +84,8 @@ export interface Tag {
   color: string
   created_at: string
   updated_at: string
+  deleted_at?: string | null
+  deletion_batch_id?: string | null
 }
 
 export interface TagWithUsage extends Tag {
@@ -123,6 +132,8 @@ export interface Cheque {
   is_draft?: boolean
   created_at: string
   updated_at: string
+  deleted_at?: string | null
+  deletion_batch_id?: string | null
 }
 
 export interface ChequeWithRelations extends Cheque {
@@ -141,18 +152,17 @@ export interface ChequeWithRelations extends Cheque {
   }
 }
 
-export type NotificationChannel =
-  'voice' | 'whatsapp' | 'email' | 'push' | 'sms'
+export type NotificationChannel = ClosedChoice['notification_channel']
 
-export type NotificationJobStatus =
-  'pending' | 'processing' | 'sent' | 'failed' | 'skipped' | 'cancelled'
+export type NotificationJobStatus = ClosedChoice['notification_job_status']
+export type NotificationPurpose = ClosedChoice['notification_purpose']
 
 export interface NotificationJob {
   id: string
   user_id: string
   business_id: string | null
   channel: NotificationChannel
-  purpose: string
+  purpose: NotificationPurpose
   payload: Record<string, unknown>
   scheduled_at: string
   status: NotificationJobStatus
@@ -168,7 +178,7 @@ export interface NotificationLog {
   job_id: string | null
   user_id: string
   channel: NotificationChannel
-  purpose: string
+  purpose: NotificationPurpose
   recipient: string | null
   status: 'success' | 'failed'
   provider: string
@@ -196,6 +206,7 @@ export type ChequeDraftFields = {
   type: ChequeType | null
   notes: string | null
   image_url: string | null
+  remind_before_days?: number | null
 }
 
 export type ChequeDraft = DraftBase &

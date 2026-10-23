@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import {
   buildPrivateMediaUrl,
-  parsePrivateMediaUrl,
   PRIVATE_AVATAR_BUCKET,
   PRIVATE_CHEQUE_BUCKET,
   type PrivateMediaBucket,
@@ -40,16 +39,11 @@ export class SupabaseStorageRepository implements IStorageRepository {
   }
 
   private async deletePrivateImage(
-    url: string,
-    bucket: PrivateMediaBucket,
+    _url: string,
+    _bucket: PrivateMediaBucket,
   ): Promise<void> {
-    const media = parsePrivateMediaUrl(url)
-    if (!media || media.bucket !== bucket) return
-
-    const { error } = await this.supabase.storage
-      .from(media.bucket)
-      .remove([media.path.join('/')])
-    if (error) throw mapSupabaseError(error)
+    // Unlinking/replacing media changes its owning row, never the retained object.
+    // Storage RLS grants reads only while at least one active reference remains.
   }
 
   private async uploadPrivateImage(

@@ -8,6 +8,7 @@ import {
 } from '../lib/errors'
 import type { AdminClient } from '../lib/supabase'
 import type { ProfileRow } from './users'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export const EDITABLE_PROFILE_FIELDS = [
   'phone',
@@ -134,9 +135,15 @@ export async function setBan(
 }
 
 export const RESTORABLE = {
+  profile: TABLES.PROFILES,
   business: TABLES.BUSINESSES,
   party: TABLES.PARTIES,
   account: TABLES.ACCOUNTS,
+  cheque: TABLES.CHEQUES,
+  tag: TABLES.TAGS,
+  tool: 'premium_workspace_tools',
+  layout: 'premium_workspace_print_layouts',
+  bank: TABLES.BANKS,
 } as const
 export type RestorableKind = keyof typeof RESTORABLE
 
@@ -148,6 +155,20 @@ export interface RestorableRecord {
   ownerId: string | null
   deletedAt: string | null
   parentDeletedAt: string | null
+  deletionBatchId?: string | null
+}
+
+type LifecycleRow = {
+  id?: string
+  account_id?: string
+  user_id?: string
+  owner_id?: string | null
+  business_id?: string
+  name?: string | null
+  account_name?: string | null
+  cheque_number?: string | null
+  deleted_at: string | null
+  deletion_batch_id?: string | null
 }
 
 export async function getRestorable(
@@ -155,11 +176,55 @@ export async function getRestorable(
   kind: RestorableKind,
   id: string,
 ): Promise<RestorableRecord> {
+  if (!['business', 'party', 'account'].includes(kind)) {
+    const key = kind === 'layout' ? 'account_id' : 'id'
+    const row = unwrap(
+      await (db as unknown as SupabaseClient)
+        .from(RESTORABLE[kind])
+        .select('*')
+        .eq(key, id)
+        .maybeSingle(),
+      `Loading ${kind}`,
+    ) as LifecycleRow | null
+    if (!row) throw new NotFoundError(`No ${kind} with id ${id}.`)
+    let businessId = row.business_id
+    if (kind === 'layout') {
+      const account = unwrap(
+        await db
+          .from(TABLES.ACCOUNTS)
+          .select('business_id')
+          .eq('id', id)
+          .maybeSingle(),
+        'Loading layout account',
+      )
+      businessId = account?.business_id
+    }
+    const parent = businessId
+      ? unwrap(
+          await db
+            .from(TABLES.BUSINESSES)
+            .select('user_id,deleted_at')
+            .eq('id', businessId)
+            .maybeSingle(),
+          'Loading parent business',
+        )
+      : null
+    return {
+      kind,
+      id,
+      name: row.name ?? row.cheque_number ?? id,
+      businessId: businessId ?? id,
+      ownerId: row.user_id ?? row.owner_id ?? parent?.user_id ?? null,
+      deletedAt: row.deleted_at,
+      parentDeletedAt: parent?.deleted_at ?? null,
+      deletionBatchId: row.deletion_batch_id ?? null,
+    }
+  }
   if (kind === 'business') {
     const row = unwrap(
       await db
         .from(TABLES.BUSINESSES)
-        .select('id, name, user_id, deleted_at')
+        .select('id, name, user_id, deleted_at, deletion_batch_id')
         .eq('id', id)
         .maybeSingle(),
       'Loading business',
@@ -173,6 +238,7 @@ export async function getRestorable(
       ownerId: row.user_id,
       deletedAt: row.deleted_at,
       parentDeletedAt: null,
+      deletionBatchId: row.deletion_batch_id,
     }
   }
 
@@ -221,6 +287,46 @@ export async function listDeleted(
   kind: RestorableKind,
   ownerId: string,
 ): Promise<RestorableRecord[]> {
+  if (!['business', 'party', 'account'].includes(kind)) {
+    let query = (db as unknown as SupabaseClient)
+      .from(RESTORABLE[kind])
+      .select('*')
+      .not('deleted_at', 'is', null)
+    if (kind === 'profile' || kind === 'bank') {
+      query = query.eq(kind === 'profile' ? 'user_id' : 'owner_id', ownerId)
+    } else {
+      const businesses = unwrapRows(
+        await db.from(TABLES.BUSINESSES).select('id').eq('user_id', ownerId),
+        'Loading businesses',
+      )
+      const ids = businesses.map((row) => row.id)
+      if (!ids.length) return []
+      if (kind === 'layout') {
+        const accounts = unwrapRows(
+          await db.from(TABLES.ACCOUNTS).select('id').in('business_id', ids),
+          'Loading layout accounts',
+        )
+        if (!accounts.length) return []
+        query = query.in(
+          'account_id',
+          accounts.map((row) => row.id),
+        )
+      } else query = query.in('business_id', ids)
+    }
+    const response = await query
+    const rows = unwrapRows<LifecycleRow>(
+      {
+        data: response.data as LifecycleRow[] | null,
+        error: response.error,
+      },
+      `Loading deleted ${kind}`,
+    )
+    return Promise.all(
+      rows.map((row) =>
+        getRestorable(db, kind, (kind === 'layout' ? row.account_id : row.id)!),
+      ),
+    )
+  }
   const businesses = unwrapRows(
     await db
       .from(TABLES.BUSINESSES)
@@ -280,18 +386,13 @@ export async function restoreRecord(
   kind: RestorableKind,
   id: string,
 ): Promise<void> {
-  const rows = unwrapRows(
-    await db
-      .from(RESTORABLE[kind])
-      .update({ deleted_at: null, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .not('deleted_at', 'is', null)
-      .select('id'),
-    `Restoring ${kind}`,
+  unwrap(
+    await db.rpc('lifecycle_restore', {
+      requested_table: RESTORABLE[kind],
+      requested_id: id,
+    }),
+    `Restoring ${kind} deletion batch`,
   )
-  if (rows.length === 0) {
-    throw new OpsError(`The ${kind} is no longer deleted; nothing to restore.`)
-  }
 }
 
 export async function listRateLimits(db: AdminClient, userId: string) {

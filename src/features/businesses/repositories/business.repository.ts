@@ -86,10 +86,10 @@ export class SupabaseBusinessRepository
 
   async delete(id: string): Promise<void> {
     await this.handleVoid(
-      this.supabase
-        .from(TABLES.BUSINESSES)
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id),
+      this.supabase.rpc('lifecycle_delete', {
+        requested_table: TABLES.BUSINESSES,
+        requested_id: id,
+      }),
     )
   }
 }

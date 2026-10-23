@@ -33,6 +33,7 @@ export class SupabaseChequeRepository
           '*, party:parties(name, contact, color, icon, avatar_url), account:accounts(account_name, color, icon, bank:banks(name, logo_url))',
         )
         .eq('business_id', businessId)
+        .is('deleted_at', null)
         .eq('is_draft', false)
         .order('cheque_date', { ascending: true }),
     ) as Promise<ChequeWithRelations[]>
@@ -46,6 +47,7 @@ export class SupabaseChequeRepository
           '*, party:parties(name, contact, color, icon, avatar_url), account:accounts(account_name, color, icon, bank:banks(name, logo_url))',
         )
         .eq('id', id)
+        .is('deleted_at', null)
         .single(),
     ) as Promise<ChequeWithRelations>
   }
@@ -90,7 +92,10 @@ export class SupabaseChequeRepository
 
   async delete(id: string): Promise<void> {
     await this.handleVoid(
-      this.supabase.from(TABLES.CHEQUES).delete().eq('id', id),
+      this.supabase.rpc('lifecycle_delete', {
+        requested_table: TABLES.CHEQUES,
+        requested_id: id,
+      }),
     )
   }
 }

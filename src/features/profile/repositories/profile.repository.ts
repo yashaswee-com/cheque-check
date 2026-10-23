@@ -1,6 +1,44 @@
+import { z } from 'zod'
 import { Profile } from '@/types'
+import type { Database } from '@/types/database.types'
 import { TABLES } from '@/lib/supabase/tables'
 import { SupabaseRepository } from '@/repositories/base.repository'
+
+type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
+
+const closedProfileChoices = z
+  .object({
+    currency: z.enum(['₹', '$', '€', '£']),
+    date_format: z.enum(['dd/MM/yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd']),
+    time_format: z.enum(['12h', '24h']),
+    language: z.enum(['en', 'hi', 'hi-en']),
+  })
+  .partial()
+
+// Lifecycle and identity columns change only through trusted RPCs.
+const PROTECTED_PROFILE_FIELDS = [
+  'id',
+  'user_id',
+  'deleted_at',
+  'deletion_batch_id',
+  'created_at',
+] as const
+
+/** Validates closed choices at runtime and strips lifecycle-owned columns. */
+export function toProfileUpdate(profile: Partial<Profile>): ProfileUpdate {
+  const update: Record<string, unknown> = { ...profile }
+  for (const field of PROTECTED_PROFILE_FIELDS) delete update[field]
+  const choices = closedProfileChoices.parse({
+    currency: update.currency,
+    date_format: update.date_format,
+    time_format: update.time_format,
+    language: update.language,
+  })
+  for (const key of Object.keys(choices) as (keyof typeof choices)[]) {
+    update[key] = choices[key]
+  }
+  return update as ProfileUpdate
+}
 
 export interface IProfileRepository {
   get(): Promise<Profile | null>
@@ -33,22 +71,12 @@ export class SupabaseProfileRepository
     const existing = (await this.query(
       this.supabase
         .from(TABLES.PROFILES)
-        .select('*')
+        .select('id')
         .eq('user_id', user.id)
         .maybeSingle(),
-    )) as (Profile & { deleted_at: string | null }) | null
+    )) as { id: string } | null
 
-    if (existing && existing.deleted_at) {
-      return this.handle<Profile>(
-        this.supabase
-          .from(TABLES.PROFILES)
-          .update({ deleted_at: null })
-          .eq('user_id', user.id)
-          .select()
-          .single(),
-      )
-    }
-
+    // A deactivated profile is never restored by signing in again.
     if (!existing) {
       return this.handle<Profile>(
         this.supabase
@@ -56,7 +84,7 @@ export class SupabaseProfileRepository
           .insert([
             {
               user_id: user.id,
-              email: user.email,
+              email: user.email ?? null,
               name: user.user_metadata?.name || '',
             },
           ])
@@ -76,7 +104,7 @@ export class SupabaseProfileRepository
     return this.handle<Profile>(
       this.supabase
         .from(TABLES.PROFILES)
-        .update(profile)
+        .update(toProfileUpdate(profile))
         .eq('user_id', user.id)
         .select()
         .single(),
@@ -84,17 +112,11 @@ export class SupabaseProfileRepository
   }
 
   async delete(): Promise<void> {
-    const { data: userData } = await this.supabase.auth.getUser()
-    const user = userData?.user
-    if (!user) throw new Error('Not authenticated')
+    // The route runs lifecycle_deactivate() first, then bans the Auth user and
+    // revokes provider sessions.
+    const response = await fetch('/api/account/deactivate', { method: 'POST' })
+    if (!response.ok) throw new Error('Unable to deactivate your account')
 
-    await this.handleVoid(
-      this.supabase
-        .from(TABLES.PROFILES)
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('user_id', user.id),
-    )
-
-    await this.supabase.auth.signOut()
+    await this.supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
   }
 }

@@ -62,7 +62,7 @@ export function DeleteConfirmationDialog({
   const t = useTranslations('Common')
 
   const handleConfirm = async () => {
-    if (inputValue !== confirmName) return
+    if (inputValue !== confirmName || loading) return
     setLoading(true)
     try {
       await onDelete()
@@ -126,10 +126,12 @@ export function DeleteConfirmationDialog({
             variant="destructive"
             onClick={handleConfirm}
             disabled={inputValue !== confirmName || loading}
+            loading={loading}
+            loadingText={t('deleting')}
             data-testid="delete-dialog-confirm-button"
             className="w-full rounded-pill h-14 font-bold text-lg"
           >
-            {loading ? t('deleting') : t('deletePermanently')}
+            {t('delete')}
           </Button>
         </div>
       </SheetContent>

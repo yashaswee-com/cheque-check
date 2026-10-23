@@ -35,6 +35,7 @@ export class SupabaseTagRepository
         .from(TABLES.TAGS)
         .select('*')
         .eq('business_id', businessId)
+        .is('deleted_at', null)
         .order('name', { ascending: true }),
     ) as Promise<Tag[]>
   }
@@ -45,6 +46,7 @@ export class SupabaseTagRepository
         .from(TABLES.TAGS)
         .select('*, entity_tags(entity_type)')
         .eq('business_id', businessId)
+        .is('deleted_at', null)
         .order('name', { ascending: true }),
     )) as unknown as Array<Tag & { entity_tags: unknown[] | null }>
     return rows.map(({ entity_tags, ...tag }) => ({
@@ -55,7 +57,12 @@ export class SupabaseTagRepository
 
   async getById(id: string): Promise<Tag> {
     return this.handle(
-      this.supabase.from(TABLES.TAGS).select('*').eq('id', id).single(),
+      this.supabase
+        .from(TABLES.TAGS)
+        .select('*')
+        .eq('id', id)
+        .is('deleted_at', null)
+        .single(),
     ) as Promise<Tag>
   }
 
@@ -105,7 +112,12 @@ export class SupabaseTagRepository
   }
 
   async delete(id: string): Promise<void> {
-    await this.handleVoid(this.supabase.from(TABLES.TAGS).delete().eq('id', id))
+    await this.handleVoid(
+      this.supabase.rpc('lifecycle_delete', {
+        requested_table: TABLES.TAGS,
+        requested_id: id,
+      }),
+    )
   }
 
   async getForEntity(
@@ -125,20 +137,23 @@ export class SupabaseTagRepository
 
   async attach(link: TagLink): Promise<void> {
     await this.handleVoid(
-      this.supabase.from(TABLES.ENTITY_TAGS).upsert([link], {
-        onConflict: 'tag_id,entity_type,entity_id',
+      this.supabase.rpc('lifecycle_set_tag', {
+        requested_tag: link.tag_id,
+        requested_type: link.entity_type,
+        requested_entity: link.entity_id,
+        requested_attached: true,
       }),
     )
   }
 
   async detach(link: TagLink): Promise<void> {
     await this.handleVoid(
-      this.supabase
-        .from(TABLES.ENTITY_TAGS)
-        .delete()
-        .eq('tag_id', link.tag_id)
-        .eq('entity_type', link.entity_type)
-        .eq('entity_id', link.entity_id),
+      this.supabase.rpc('lifecycle_set_tag', {
+        requested_tag: link.tag_id,
+        requested_type: link.entity_type,
+        requested_entity: link.entity_id,
+        requested_attached: false,
+      }),
     )
   }
 }

@@ -445,9 +445,9 @@ const RESTORE_KINDS = Object.keys(RESTORABLE) as RestorableKind[]
 
 const restore = defineAction<RestorableRecord>({
   name: 'restore',
-  title: 'Restore a deleted business, party, or account',
+  title: 'Restore a deleted record and its deletion batch',
   description:
-    "Undoes a soft delete. Without --id, lists the user's deleted records of that kind to pick from.",
+    'Restores only the selected deletion batch, rejecting inactive parents or active-name conflicts. Without --id, lists deleted records to pick from.',
   mutates: true,
   options: [
     {
@@ -497,7 +497,7 @@ const restore = defineAction<RestorableRecord>({
       throw new UsageError(`The ${kind} "${record.name ?? id}" is not deleted.`)
     const notes = record.parentDeletedAt
       ? [
-          `Its business is also deleted (${formatDateTime(record.parentDeletedAt)}); restore the business too or it stays hidden.`,
+          `Its business is deleted (${formatDateTime(record.parentDeletedAt)}); restore that business batch first. This restore will otherwise fail.`,
         ]
       : []
     await confirmMutation(ctx, {
@@ -517,7 +517,10 @@ const restore = defineAction<RestorableRecord>({
       targetUserId: record.ownerId,
       targetType: kind,
       targetId: id,
-      before: { deleted_at: record.deletedAt },
+      before: {
+        deleted_at: record.deletedAt,
+        deletion_batch_id: record.deletionBatchId,
+      },
       after: { deleted_at: null },
     })
     return record

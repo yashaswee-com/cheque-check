@@ -37,6 +37,17 @@ export async function GET(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
+  const { data: accessible, error: accessError } = await supabase.rpc(
+    'lifecycle_media_active',
+    {
+      requested_bucket: bucket,
+      requested_path: path.join('/'),
+    },
+  )
+  if (accessError || !accessible) {
+    return NextResponse.json({ error: 'Media not found' }, { status: 404 })
+  }
+
   const { data, error } = await supabase.storage
     .from(bucket)
     .createSignedUrl(path.join('/'), 60)

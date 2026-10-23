@@ -112,7 +112,7 @@ const show = defineAction<UserSnapshot>({
     })
     ui.section('Premium')
     ui.kv({
-      'Lifetime Premium': snapshot.premium.state,
+      'Premium - Lifetime': snapshot.premium.state,
       Expires:
         snapshot.premium.state === 'free'
           ? ''

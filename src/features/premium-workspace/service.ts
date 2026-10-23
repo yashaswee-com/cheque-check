@@ -70,6 +70,8 @@ export const premiumWorkspaceService = {
           .select('*')
           .eq('business_id', businessId)
           .eq('is_draft', false)
+          .is('deleted_at', null)
+          .eq('is_draft', false)
           .order('cheque_date')
           .order('id')
           .range(from, to),
@@ -83,6 +85,7 @@ export const premiumWorkspaceService = {
         .from('premium_workspace_tools')
         .select('*')
         .eq('business_id', businessId)
+        .is('deleted_at', null)
         .order('updated_at', { ascending: false })
         .order('id')
         .range(from, to),

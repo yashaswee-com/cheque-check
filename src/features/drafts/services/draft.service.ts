@@ -1,7 +1,6 @@
 import type { z } from 'zod'
 import { accountSchema, chequeSchema, partySchema } from '@/validators'
 import { ValidationError } from '@/lib/errors'
-import { logger } from '@/lib/logger'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { storageService } from '@/services/storage.service'
 import type {
@@ -77,13 +76,13 @@ export class ChequeDraftService extends DraftService<
   }
 
   async delete(id: string) {
-    const draft = await this.repository.getById(id)
     await this.repository.delete(id)
-    if (draft.image_url) {
-      await this.storage.deleteChequeImage(draft.image_url).catch((error) => {
-        logger.error('Failed to delete draft cheque image', error)
-      })
-    }
+  }
+
+  duplicate(sourceId: string): Promise<ChequeDraft> {
+    if (!this.repository.duplicate)
+      throw new Error('Duplicate operation unavailable')
+    return this.repository.duplicate(sourceId)
   }
 
   async publish(
@@ -92,11 +91,15 @@ export class ChequeDraftService extends DraftService<
     remindBeforeDays: number | null,
   ): Promise<ChequeEntity> {
     const data = parseOrThrow(chequeSchema, values)
+    const draft = await this.repository.getById(id)
     const row = await this.repository.publish<ChequeWithRelations>(id, {
       ...data,
       notes: data.notes || null,
       image_url: data.image_url ?? null,
-      remind_before_days: remindBeforeDays,
+      remind_before_days:
+        draft?.remind_before_days !== undefined
+          ? draft.remind_before_days
+          : remindBeforeDays,
       status: ChequeEntity.initialStatusFor(data.type),
     })
     return ChequeEntity.fromRow(row)

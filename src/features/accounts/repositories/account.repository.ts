@@ -41,7 +41,7 @@ export class SupabaseAccountRepository
         .eq('is_draft', false)
         .is('deleted_at', null)
         .order('account_name', { ascending: true }),
-    ) as Promise<Account[]>
+    ) as unknown as Promise<Account[]>
   }
 
   async getById(id: string): Promise<Account> {
@@ -91,10 +91,10 @@ export class SupabaseAccountRepository
 
   async delete(id: string): Promise<void> {
     await this.handleVoid(
-      this.supabase
-        .from(TABLES.ACCOUNTS)
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id),
+      this.supabase.rpc('lifecycle_delete', {
+        requested_table: TABLES.ACCOUNTS,
+        requested_id: id,
+      }),
     )
   }
 }
