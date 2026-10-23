@@ -1,55 +1,42 @@
 import { ChequeWithRelations } from '@/types'
 import { useMemo } from 'react'
+import {
+  activeStatisticsCheques,
+  localDay,
+} from '@/features/cheques/lib/statistics'
 
-export function useChequeStats(cheques: ChequeWithRelations[] | undefined) {
+export function useChequeStats(
+  cheques: ChequeWithRelations[] | undefined,
+  timeZone?: string,
+) {
+  const todayDate = localDay(new Date(), timeZone)
   return useMemo(() => {
-    if (!cheques)
-      return {
-        todayCheques: [],
-        outstanding: 0,
-        payable: 0,
-        receivable: 0,
-        currentBalance: 0,
-        issuedCount: 0,
-        receivedCount: 0,
-        clearedCount: 0,
-        bouncedCount: 0,
-        upcomingCount: 0,
-        overdueCount: 0,
-      }
-
-    const todayDate = new Date().toISOString().split('T')[0]
-    const todayCheques = cheques.filter((c) => c.cheque_date === todayDate)
-
-    const outstanding = cheques.reduce((acc: number, curr) => {
-      if (curr.status === 'Cleared') return acc
-      return curr.type === 'Outward' ? acc + curr.amount : acc - curr.amount
-    }, 0)
-
-    const uncleared = cheques.filter((c) => c.status !== 'Cleared')
-    const payable = uncleared
+    const active = activeStatisticsCheques(cheques)
+    const todayCheques = active.filter((c) => c.cheque_date === todayDate)
+    const pending = active.filter(
+      (c) => c.status === 'Issued' || c.status === 'Received',
+    )
+    const payable = pending
       .filter((c) => c.type === 'Outward')
       .reduce((acc, c) => acc + c.amount, 0)
-    const receivable = uncleared
+    const receivable = pending
       .filter((c) => c.type === 'Inward')
       .reduce((acc, c) => acc + c.amount, 0)
     const currentBalance = receivable - payable
 
-    const issuedCount = cheques.filter((c) => c.type === 'Outward').length
-    const receivedCount = cheques.filter((c) => c.type === 'Inward').length
-    const clearedCount = cheques.filter((c) => c.status === 'Cleared').length
-    const bouncedCount = cheques.filter((c) => c.status === 'Bounced').length
+    const issuedCount = active.filter((c) => c.status === 'Issued').length
+    const receivedCount = active.filter((c) => c.status === 'Received').length
+    const clearedCount = active.filter((c) => c.status === 'Cleared').length
+    const bouncedCount = active.filter((c) => c.status === 'Bounced').length
 
-    const upcomingCount = cheques.filter(
-      (c) => c.cheque_date > todayDate && c.status !== 'Cleared',
+    const upcomingCount = pending.filter(
+      (c) => c.cheque_date > todayDate,
     ).length
-    const overdueCount = cheques.filter(
-      (c) => c.cheque_date < todayDate && c.status !== 'Cleared',
-    ).length
+    const overdueCount = pending.filter((c) => c.cheque_date < todayDate).length
 
     return {
       todayCheques,
-      outstanding,
+      outstanding: payable - receivable,
       payable,
       receivable,
       currentBalance,
@@ -60,5 +47,5 @@ export function useChequeStats(cheques: ChequeWithRelations[] | undefined) {
       upcomingCount,
       overdueCount,
     }
-  }, [cheques])
+  }, [cheques, todayDate])
 }

@@ -37,9 +37,11 @@ export function useCreateCheque(
   {
     draftId = null,
     onCreated,
+    beforePublish,
   }: {
     draftId?: string | null
     onCreated?: (cheque: ChequeEntity) => void | Promise<void>
+    beforePublish?: (draftId: string | null) => void | Promise<void>
   } = {},
 ) {
   const [step, setStep] = useState(1)
@@ -75,7 +77,13 @@ export function useCreateCheque(
     businessId,
     form,
     initialDraftId: draftId,
-    toFields: toChequeDraftFields,
+    toFields: (values) => ({
+      ...toChequeDraftFields(values),
+      // A resumed/duplicated draft already owns its persisted reminder setting.
+      ...(!draftId
+        ? { remind_before_days: profile?.default_reminder_days ?? null }
+        : {}),
+    }),
     toFormValues: chequeDraftToFormValues,
     onHydrated: (loaded) => setStep(firstIncompleteChequeStep(loaded)),
     draftsHref: '/cheques/drafts',
@@ -257,6 +265,13 @@ export function useCreateCheque(
       if (data.type === 'Inward' && !premium.requireAccess('inward-tracking'))
         return
       const publishedDraftId = await draft.beginPublish()
+      try {
+        await beforePublish?.(publishedDraftId)
+      } catch (error) {
+        draft.failPublish()
+        showCreateError(error)
+        return
+      }
       if (publishedDraftId) {
         await publishDraft(publishedDraftId, data)
         return

@@ -21,13 +21,18 @@ interface ChartData {
 interface ChequeStatsChartProps {
   chartData: ChartData[]
   totalCheques: number
+  totalLabel?: string
+  formatValue?: (value: number) => string
 }
 
 export function ChequeStatsChart({
   chartData,
   totalCheques,
+  totalLabel,
+  formatValue = (value) => value.toLocaleString(),
 }: ChequeStatsChartProps) {
   const t = useTranslations('Common')
+  const total = chartData.reduce((sum, slice) => sum + slice.value, 0)
 
   if (chartData.length === 0) {
     return (
@@ -52,7 +57,7 @@ export function ChequeStatsChart({
             cy="50%"
             innerRadius={70}
             outerRadius={90}
-            paddingAngle={5}
+            paddingAngle={chartData.length > 1 ? 5 : 0}
             dataKey="value"
           >
             {chartData.map((entry, index) => (
@@ -60,6 +65,11 @@ export function ChequeStatsChart({
             ))}
           </Pie>
           <Tooltip
+            formatter={(value) => {
+              const amount = Number(value)
+              const percentage = total > 0 ? (amount / total) * 100 : 0
+              return `${formatValue(amount)} (${percentage.toFixed(1)}%)`
+            }}
             contentStyle={{ borderRadius: '11px', border: 'none' }}
             itemStyle={{ fontWeight: '600' }}
           />
@@ -80,7 +90,9 @@ export function ChequeStatsChart({
         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
           {t('total')}
         </p>
-        <p className="text-2xl font-semibold leading-none">{totalCheques}</p>
+        <p className="text-xl font-semibold leading-none">
+          {totalLabel ?? totalCheques}
+        </p>
       </div>
     </div>
   )

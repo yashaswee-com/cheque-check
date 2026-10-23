@@ -16,7 +16,7 @@ const cheque = (
   }) as ChequeWithRelations
 
 describe('useChequeStats', () => {
-  it('splits uncleared cheques into payable and receivable', () => {
+  it('includes only pending cheques in payable and receivable', () => {
     const { result } = renderHook(() =>
       useChequeStats([
         cheque('Outward', 1000, 'Issued'),
@@ -27,13 +27,27 @@ describe('useChequeStats', () => {
       ]),
     )
 
-    expect(result.current.payable).toBe(1500)
+    expect(result.current.payable).toBe(1000)
     expect(result.current.receivable).toBe(2000)
-    expect(result.current.currentBalance).toBe(500)
+    expect(result.current.currentBalance).toBe(1000)
+    expect(result.current.issuedCount).toBe(1)
+    expect(result.current.receivedCount).toBe(1)
   })
 
   it('returns zeros without cheques', () => {
     const { result } = renderHook(() => useChequeStats(undefined))
     expect(result.current.currentBalance).toBe(0)
+  })
+
+  it('does not count bounced cheques as upcoming or overdue', () => {
+    const { result } = renderHook(() =>
+      useChequeStats([
+        cheque('Outward', 500, 'Bounced'),
+        { ...cheque('Inward', 200, 'Cleared'), cheque_date: '2999-01-01' },
+      ]),
+    )
+    expect(result.current.payable).toBe(0)
+    expect(result.current.overdueCount).toBe(0)
+    expect(result.current.upcomingCount).toBe(0)
   })
 })
