@@ -26,9 +26,15 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslations } from 'next-intl'
+import { publicEnv } from '@/lib/env/client'
+import { PhoneAuthForm } from '@/features/auth/components/phone-auth-form'
+
+const PHONE_AUTH_ENABLED = publicEnv.NEXT_PUBLIC_PHONE_AUTH_ENABLED === 'true'
 
 export default function LoginPage() {
   const t = useTranslations('Auth')
+  const tp = useTranslations('PhoneAuth')
+  const [usePhone, setUsePhone] = useState(false)
   const tc = useTranslations('Common')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -83,65 +89,85 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-4 rounded-lg bg-white p-8 dark:bg-surface-tile-1 border border-primary/5">
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('email')}</Label>
-              <Input
-                leftIcon={Mail}
-                id="email"
-                type="email"
-                data-testid="login-email-input"
-                placeholder={t('emailPlaceholder')}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-12 bg-canvas-parchment border-none rounded-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">{t('password')}</Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs font-medium text-primary hover:underline"
-                >
-                  {t('forgotPassword')}
-                </Link>
-              </div>
-              <div className="relative">
+          {PHONE_AUTH_ENABLED && usePhone ? (
+            <PhoneAuthForm
+              purpose="login"
+              showSignupHint
+              onVerified={() => window.location.assign('/dashboard')}
+            />
+          ) : (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">{t('email')}</Label>
                 <Input
-                  leftIcon={Lock}
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  data-testid="login-password-input"
-                  placeholder={t('passwordPlaceholder')}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  leftIcon={Mail}
+                  id="email"
+                  type="email"
+                  data-testid="login-email-input"
+                  placeholder={t('emailPlaceholder')}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-12 bg-canvas-parchment border-none rounded-sm pr-10"
+                  className="h-12 bg-canvas-parchment border-none rounded-sm"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? (
-                    <HugeiconsIcon icon={EyeOff} className="h-5 w-5" />
-                  ) : (
-                    <HugeiconsIcon icon={Eye} className="h-5 w-5" />
-                  )}
-                </button>
               </div>
-            </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">{t('password')}</Label>
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
+                    {t('forgotPassword')}
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Input
+                    leftIcon={Lock}
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    data-testid="login-password-input"
+                    placeholder={t('passwordPlaceholder')}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="h-12 bg-canvas-parchment border-none rounded-sm pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? (
+                      <HugeiconsIcon icon={EyeOff} className="h-5 w-5" />
+                    ) : (
+                      <HugeiconsIcon icon={Eye} className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              <Button
+                type="submit"
+                data-testid="login-submit-button"
+                className="w-full rounded-full h-12 text-lg"
+                disabled={loading}
+              >
+                {loading ? t('signingIn') : t('signIn')}
+              </Button>
+            </form>
+          )}
+
+          {PHONE_AUTH_ENABLED && (
             <Button
-              type="submit"
-              data-testid="login-submit-button"
-              className="w-full rounded-full h-12 text-lg"
-              disabled={loading}
+              type="button"
+              variant="ghost"
+              className="w-full"
+              data-testid="login-toggle-phone-button"
+              onClick={() => setUsePhone((value) => !value)}
             >
-              {loading ? t('signingIn') : t('signIn')}
+              {usePhone ? tp('useEmail') : tp('usePhone')}
             </Button>
-          </form>
+          )}
 
           <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">

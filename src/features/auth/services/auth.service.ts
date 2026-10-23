@@ -1,4 +1,8 @@
 import { Provider } from '@supabase/supabase-js'
+import type {
+  PhoneOtpSendInput,
+  PhoneOtpVerifyInput,
+} from '@/features/auth/phone-auth.types'
 import {
   IAuthRepository,
   SupabaseAuthRepository,
@@ -29,6 +33,14 @@ export class AuthService {
       provider,
       `${window.location.origin}/auth/callback`,
     )
+  }
+
+  sendPhoneOtp(input: PhoneOtpSendInput) {
+    return this.repository.sendPhoneOtp(input)
+  }
+
+  verifyPhoneOtp(input: PhoneOtpVerifyInput) {
+    return this.repository.verifyPhoneOtp(input)
   }
 
   signOut() {

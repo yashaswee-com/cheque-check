@@ -59,17 +59,55 @@ export const monitoringEnvSchema = z
     }
   })
 
-export const publicEnvSchema = z.object({
-  NEXT_PUBLIC_SUPABASE_URL: z.url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-  NEXT_PUBLIC_LOG_LEVEL: z
-    .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
-    .optional(),
-  NEXT_PUBLIC_RAZORPAY_KEY_ID: optionalString,
-  NEXT_PUBLIC_SENTRY_DSN: optionalString,
-  NEXT_PUBLIC_WHATSAPP_SUPPORT_NUMBER: optionalString,
-  NEXT_PUBLIC_CLARITY_PROJECT_ID: optionalString,
-})
+const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost', '::1', '[::1]'])
+
+export const publicEnvSchema = z
+  .object({
+    NEXT_PUBLIC_SUPABASE_URL: z.url(),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+    NEXT_PUBLIC_APP_ENV: z.enum(['production', 'qa', 'development']).optional(),
+    NEXT_PUBLIC_DEPLOYMENT_KIND: z
+      .enum(['production', 'qa', 'preview', 'development'])
+      .optional(),
+    NEXT_PUBLIC_PHONE_AUTH_ENABLED: monitoringFlag,
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: optionalString,
+    NEXT_PUBLIC_LOG_LEVEL: z
+      .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+      .optional(),
+    NEXT_PUBLIC_RAZORPAY_KEY_ID: optionalString,
+    NEXT_PUBLIC_SENTRY_DSN: optionalString,
+    NEXT_PUBLIC_WHATSAPP_SUPPORT_NUMBER: optionalString,
+    NEXT_PUBLIC_CLARITY_PROJECT_ID: optionalString,
+  })
+  .superRefine((value, context) => {
+    const deployed =
+      value.NEXT_PUBLIC_APP_ENV === 'production' ||
+      value.NEXT_PUBLIC_APP_ENV === 'qa' ||
+      value.NEXT_PUBLIC_DEPLOYMENT_KIND === 'production' ||
+      value.NEXT_PUBLIC_DEPLOYMENT_KIND === 'qa' ||
+      value.NEXT_PUBLIC_DEPLOYMENT_KIND === 'preview'
+    if (
+      deployed &&
+      LOCAL_HOSTS.has(new URL(value.NEXT_PUBLIC_SUPABASE_URL).hostname)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['NEXT_PUBLIC_SUPABASE_URL'],
+        message: 'Deployed environments must not point at a local Supabase',
+      })
+    }
+    if (
+      value.NEXT_PUBLIC_PHONE_AUTH_ENABLED === 'true' &&
+      value.NEXT_PUBLIC_APP_ENV === 'production' &&
+      !value.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['NEXT_PUBLIC_TURNSTILE_SITE_KEY'],
+        message: 'Required when phone sign-in is enabled in production',
+      })
+    }
+  })
 
 export const openAiEnvSchema = z.object({
   OPENAI_API_KEY: z.string().min(1),

@@ -6,7 +6,12 @@ export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
     // if "next" is in search params, use it as the redirection URL
-    const next = searchParams.get('next') ?? '/'
+    const requestedNext = searchParams.get('next') ?? '/'
+    // Only same-origin paths; "//host" and "/\host" would redirect off-site.
+    const next =
+      requestedNext.startsWith('/') && !/^\/[/\\]/.test(requestedNext)
+        ? requestedNext
+        : '/'
 
     if (code) {
       const supabase = await createClient()
@@ -15,13 +20,19 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${origin}${next}`)
       }
       console.error('Auth error during exchange:', error)
-      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`)
+      return NextResponse.redirect(
+        `${origin}/login?error=${encodeURIComponent(error.message)}`,
+      )
     }
 
     console.error('No code found in search params')
-    return NextResponse.redirect(`${origin}/login?error=Authentication code missing`)
+    return NextResponse.redirect(
+      `${origin}/login?error=Authentication code missing`,
+    )
   } catch (err) {
     console.error('Unexpected error in auth callback:', err)
-    return NextResponse.redirect(`${new URL(request.url).origin}/login?error=Internal server error`)
+    return NextResponse.redirect(
+      `${new URL(request.url).origin}/login?error=Internal server error`,
+    )
   }
 }

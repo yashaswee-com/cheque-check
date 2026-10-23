@@ -38,6 +38,57 @@ describe('publicEnvSchema', () => {
   })
 })
 
+describe('publicEnvSchema phone auth and environment guards', () => {
+  const base = {
+    NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co',
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon-key',
+  }
+
+  it('defaults phone auth off', () => {
+    const result = publicEnvSchema.parse(base)
+    expect(result.NEXT_PUBLIC_PHONE_AUTH_ENABLED).toBe('false')
+  })
+
+  it('allows a local Supabase URL for local development', () => {
+    expect(
+      publicEnvSchema.safeParse({
+        ...base,
+        NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
+        NEXT_PUBLIC_PHONE_AUTH_ENABLED: 'true',
+      }).success,
+    ).toBe(true)
+  })
+
+  it.each([
+    { NEXT_PUBLIC_APP_ENV: 'production' },
+    { NEXT_PUBLIC_APP_ENV: 'qa' },
+    { NEXT_PUBLIC_DEPLOYMENT_KIND: 'preview' },
+  ])('rejects a local Supabase URL when %j', (extra) => {
+    expect(
+      publicEnvSchema.safeParse({
+        ...base,
+        NEXT_PUBLIC_SUPABASE_URL: 'http://localhost:54321',
+        ...extra,
+      }).success,
+    ).toBe(false)
+  })
+
+  it('requires a Turnstile site key for production phone auth', () => {
+    const production = {
+      ...base,
+      NEXT_PUBLIC_APP_ENV: 'production',
+      NEXT_PUBLIC_PHONE_AUTH_ENABLED: 'true',
+    }
+    expect(publicEnvSchema.safeParse(production).success).toBe(false)
+    expect(
+      publicEnvSchema.safeParse({
+        ...production,
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: 'site-key',
+      }).success,
+    ).toBe(true)
+  })
+})
+
 describe('monitoringEnvSchema', () => {
   it('disables monitoring unless explicitly configured', () => {
     const config = monitoringEnvSchema.parse({})

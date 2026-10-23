@@ -139,9 +139,10 @@ should import from the relevant feature entry point.
 - Deploy `razorpay-webhook`, `notifications-scheduler`, and
   `notifications-dispatcher` Edge Functions separately from the Next.js
   application (`npm run supabase:functions:deploy`). The notification
-  functions also require two one-time Supabase Vault secrets (`project_url`,
-  `service_role_key`) so `pg_cron` can authenticate to them - see the comment
-  at the top of `supabase/migrations/20261017000000_notification_platform.sql`.
+  functions need Vault credentials (`project_url`, `service_role_key`) so
+  `pg_cron` can authenticate to them. `npm run ops -- dev setup` provisions
+  them through the service-role-only `configure_cron_credentials` RPC; no SQL
+  editor step is needed. See `docs/environment.md` and `docs/phone-auth.md`.
 
 `supabase/seed.sql` contains idempotent bank reference data. The reset command
 requires the linked project ref to be in `supabase/.dev-projects.json` or the
