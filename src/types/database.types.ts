@@ -11,14 +11,39 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      lifecycle_events: {
+        Row: {
+          id: string
+          batch_id: string
+          actor_id: string | null
+          action: 'delete' | 'restore' | 'deactivate'
+          entity_table: string
+          entity_id: string
+          created_at: string
+        }
+        Insert: Partial<
+          Database['public']['Tables']['lifecycle_events']['Row']
+        > & {
+          batch_id: string
+          action: 'delete' | 'restore' | 'deactivate'
+          entity_table: string
+          entity_id: string
+        }
+        Update: Partial<Database['public']['Tables']['lifecycle_events']['Row']>
+        Relationships: []
+      }
       premium_workspace_print_layouts: {
         Row: {
+          deleted_at: string | null
+          deletion_batch_id: string | null
           account_id: string
           user_id: string
           layout: Json
           updated_at: string
         }
         Insert: {
+          deleted_at?: string | null
+          deletion_batch_id?: string | null
           account_id: string
           user_id: string
           layout: Json
@@ -31,10 +56,12 @@ export interface Database {
       }
       premium_workspace_tools: {
         Row: {
+          deleted_at: string | null
+          deletion_batch_id: string | null
           id: string
           user_id: string
           business_id: string
-          kind: 'cheque-template' | 'saved-view' | 'message-template'
+          kind: Database['public']['Enums']['premium_tool_kind']
           name: string
           payload: Json
           created_at: string
@@ -56,18 +83,19 @@ export interface Database {
       }
       profiles: {
         Row: {
+          deletion_batch_id: string | null
           id: string
           user_id: string
           name: string | null
           email: string | null
-          currency: string | null
-          date_format: string | null
+          currency: Database['public']['Enums']['profile_currency'] | null
+          date_format: Database['public']['Enums']['profile_date_format'] | null
           reminders_per_day: number | null
           default_reminder_days: number | null
           received_cheques_enabled: boolean | null
-          time_format: string | null
+          time_format: Database['public']['Enums']['profile_time_format'] | null
           time_zone: string | null
-          language: string | null
+          language: Database['public']['Enums']['profile_language'] | null
           avatar_url: string | null
           phone: string | null
           voice_call_enabled: boolean | null
@@ -88,6 +116,8 @@ export interface Database {
       }
       tags: {
         Row: {
+          deleted_at: string | null
+          deletion_batch_id: string | null
           id: string
           business_id: string
           name: string
@@ -112,14 +142,16 @@ export interface Database {
       }
       entity_tags: {
         Row: {
+          deleted_at: string | null
+          deletion_batch_id: string | null
           tag_id: string
-          entity_type: string
+          entity_type: Database['public']['Enums']['tag_entity_type']
           entity_id: string
           created_at: string
         }
         Insert: Partial<Database['public']['Tables']['entity_tags']['Row']> & {
           tag_id: string
-          entity_type: string
+          entity_type: Database['public']['Enums']['tag_entity_type']
           entity_id: string
         }
         Update: Partial<Database['public']['Tables']['entity_tags']['Row']>
@@ -135,6 +167,7 @@ export interface Database {
       }
       businesses: {
         Row: {
+          deletion_batch_id: string | null
           id: string
           user_id: string
           name: string
@@ -157,6 +190,7 @@ export interface Database {
       }
       parties: {
         Row: {
+          deletion_batch_id: string | null
           id: string
           business_id: string
           name: string | null
@@ -180,6 +214,11 @@ export interface Database {
       }
       banks: {
         Row: {
+          owner_id: string | null
+          deleted_at: string | null
+          category: Database['public']['Enums']['bank_category'] | null
+          source_url: string | null
+          verified_on: string | null
           id: string
           name: string
           logo_url: string | null
@@ -194,6 +233,7 @@ export interface Database {
       }
       accounts: {
         Row: {
+          deletion_batch_id: string | null
           id: string
           business_id: string
           account_name: string | null
@@ -226,6 +266,8 @@ export interface Database {
       }
       cheques: {
         Row: {
+          deleted_at: string | null
+          deletion_batch_id: string | null
           id: string
           business_id: string
           party_id: string | null
@@ -276,17 +318,11 @@ export interface Database {
           id: string
           user_id: string
           business_id: string | null
-          channel: 'voice' | 'whatsapp' | 'email' | 'push' | 'sms'
-          purpose: string
+          channel: Database['public']['Enums']['notification_channel']
+          purpose: Database['public']['Enums']['notification_purpose']
           payload: Json
           scheduled_at: string
-          status:
-            | 'pending'
-            | 'processing'
-            | 'sent'
-            | 'failed'
-            | 'skipped'
-            | 'cancelled'
+          status: Database['public']['Enums']['notification_job_status']
           attempts: number
           last_error: string | null
           idempotency_key: string
@@ -297,8 +333,8 @@ export interface Database {
           Database['public']['Tables']['notification_jobs']['Row']
         > & {
           user_id: string
-          channel: 'voice' | 'whatsapp' | 'email' | 'push' | 'sms'
-          purpose: string
+          channel: Database['public']['Enums']['notification_channel']
+          purpose: Database['public']['Enums']['notification_purpose']
           idempotency_key: string
         }
         Update: Partial<
@@ -311,10 +347,10 @@ export interface Database {
           id: string
           job_id: string | null
           user_id: string
-          channel: 'voice' | 'whatsapp' | 'email' | 'push' | 'sms'
-          purpose: string
+          channel: Database['public']['Enums']['notification_channel']
+          purpose: Database['public']['Enums']['notification_purpose']
           recipient: string | null
-          status: 'success' | 'failed'
+          status: Database['public']['Enums']['notification_log_status']
           provider: string
           provider_message_id: string | null
           provider_response: Json | null
@@ -325,8 +361,8 @@ export interface Database {
           Database['public']['Tables']['notification_logs']['Row']
         > & {
           user_id: string
-          channel: 'voice' | 'whatsapp' | 'email' | 'push' | 'sms'
-          purpose: string
+          channel: Database['public']['Enums']['notification_channel']
+          purpose: Database['public']['Enums']['notification_purpose']
           status: 'success' | 'failed'
           provider: string
         }
@@ -517,6 +553,66 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      configure_cron_credentials: {
+        Args: {
+          requested_project_url: string
+          requested_service_role_key: string
+        }
+        Returns: undefined
+      }
+      cron_credentials_status: {
+        Args: Record<string, never>
+        Returns: { project_url: boolean; service_role_key: boolean }[]
+      }
+      delete_private_bank: {
+        Args: { requested_id: string }
+        Returns: undefined
+      }
+      lifecycle_delete: {
+        Args: { requested_table: string; requested_id: string }
+        Returns: string
+      }
+      lifecycle_restore: {
+        Args: { requested_table: string; requested_id: string }
+        Returns: string | null
+      }
+      lifecycle_deactivate: {
+        Args: Record<string, never>
+        Returns: string
+      }
+      lifecycle_user_active: {
+        Args: { requested_user?: string }
+        Returns: boolean
+      }
+      lifecycle_business_active: {
+        Args: { requested_business: string }
+        Returns: boolean
+      }
+      lifecycle_entity_active: {
+        Args: {
+          requested_type: string
+          requested_id: string
+          requested_business: string
+        }
+        Returns: boolean
+      }
+      lifecycle_set_tag: {
+        Args: {
+          requested_tag: string
+          requested_type: string
+          requested_entity: string
+          requested_attached: boolean
+        }
+        Returns: undefined
+      }
+      lifecycle_media_active: {
+        Args: { requested_bucket: string; requested_path: string }
+        Returns: boolean
+      }
+      duplicate_cheque_draft: {
+        Args: { requested_cheque: string }
+        Returns: Database['public']['Tables']['cheques']['Row']
+      }
       premium_workspace_assert_owner: {
         Args: { requested_business: string }
         Returns: undefined
@@ -691,7 +787,9 @@ export interface Database {
       }
       claim_notification_jobs: {
         Args: {
-          p_batch_size: number
+          p_batch_size?: number
+          p_job_ids?: string[] | null
+          p_user_id?: string | null
         }
         Returns: Database['public']['Tables']['notification_jobs']['Row'][]
       }
@@ -704,6 +802,28 @@ export interface Database {
       }
     }
     Enums: {
+      bank_category:
+        | 'public'
+        | 'private'
+        | 'small_finance'
+        | 'regional_rural'
+        | 'foreign'
+        | 'urban_cooperative'
+        | 'state_cooperative'
+        | 'district_cooperative'
+        | 'custom'
+      profile_currency: '₹' | '$' | '€' | '£'
+      profile_date_format: 'dd/MM/yyyy' | 'MM/dd/yyyy' | 'yyyy-MM-dd'
+      profile_time_format: '12h' | '24h'
+      profile_language: 'en' | 'hi' | 'hi-en'
+      tag_entity_type: 'cheque' | 'account' | 'party' | 'business'
+      notification_channel: 'voice' | 'whatsapp' | 'email' | 'push' | 'sms'
+      notification_job_status:
+        'pending' | 'processing' | 'sent' | 'failed' | 'skipped' | 'cancelled'
+      notification_log_status: 'success' | 'failed'
+      notification_purpose: 'cheque_reminder' | 'sample_voice_test'
+      premium_tool_kind: 'cheque-template' | 'saved-view' | 'message-template'
+      lifecycle_action: 'delete' | 'restore' | 'deactivate'
       cheque_status: 'Issued' | 'Received' | 'Cleared' | 'Bounced'
       cheque_type: 'Outward' | 'Inward'
       feature_type:
