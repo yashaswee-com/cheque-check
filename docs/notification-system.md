@@ -102,8 +102,16 @@ channel.
    `UPDATE ... WHERE status='pending' ... FOR UPDATE SKIP LOCKED` that also
    increments `attempts` and sets `status='processing'`. This is what makes
    it safe to run every 2 minutes without double-sending if a previous
-   invocation is still running.
+   invocation is still running. A service-role manual run may pass
+   `p_user_id` and `p_job_ids` (migration `20261021060000`): the claim then
+   only touches those pending jobs of that user, inside the same `UPDATE`.
+   Without a scope it is the unchanged global cron claim. The ops CLI
+   dispatches this way after queuing a manual reminder.
 2. For each claimed job:
+   - Skip (job marked `skipped` with the reason) when the user is deactivated,
+     voice reminders are off (sample test calls too), the recipient is not a
+     valid E.164 number, the business is deleted, or none of the job's
+     cheques is still active.
    - Fetch the profile; skip (no log entry, job marked `skipped`) if no phone.
    - Call `admin_increment_quota(user_id, 'voice_reminder')` — **reserves**
      quota atomically _before_ calling Twilio. If it returns `false` (no
@@ -111,7 +119,7 @@ channel.
    - Build the voice message (real cheque summary, or the canned sample-test
      message — see §6) in the user's `language`.
    - Call Twilio's Voice API directly via `fetch` (no SDK).
-   - On success: mark `sent`, write a `notification_logs` row with the Twilio
+   - On success (the provider accepted the call; not proof it was answered): mark `sent`, write a `notification_logs` row with the Twilio
      Call SID.
    - On failure: write a `failed` log row, and either reschedule with backoff
      (10min → 30min → 2h, max 3 attempts) or mark `failed` permanently.

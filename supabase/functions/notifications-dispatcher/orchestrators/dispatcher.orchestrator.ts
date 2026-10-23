@@ -2,7 +2,14 @@ import { DispatcherDatabaseService } from '../services/database.service.ts'
 import { TwilioVoiceService } from '../../_shared/twilio-voice.service.ts'
 import { Logger } from '../../_shared/logger.ts'
 import { NOTIFICATION_PURPOSE } from '../../_shared/notifications.ts'
-import { ClaimedJob, DispatchCheque, DispatchResult } from '../types.ts'
+import {
+  ClaimedJob,
+  DispatchCheque,
+  DispatchResult,
+  DispatchScope,
+} from '../types.ts'
+
+const E164_PATTERN = /^\+[1-9]\d{6,14}$/
 
 export interface TestModeConfig {
   enabled: boolean
@@ -16,15 +23,33 @@ export class DispatcherOrchestrator {
     private testMode: TestModeConfig = { enabled: false, phone: '' },
   ) {}
 
-  async run(batchSize = 50): Promise<DispatchResult[]> {
-    const jobs = await this.db.claimJobs(batchSize)
+  /** Without a scope this is the global cron claim; a scope limits the claim itself. */
+  async run(batchSize = 50, scope?: DispatchScope): Promise<DispatchResult[]> {
+    const jobs = await this.db.claimJobs(batchSize, scope)
     const results: DispatchResult[] = []
 
     for (const job of jobs) {
-      results.push(await this.dispatch(job))
+      results.push(await this.dispatchSafely(job))
     }
 
     return results
+  }
+
+  /** A thrown error must not leave a claimed job stuck in 'processing'. */
+  private async dispatchSafely(job: ClaimedJob): Promise<DispatchResult> {
+    try {
+      return await this.dispatch(job)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      Logger.error(`Dispatch crashed for job ${job.id}`, message)
+      await this.db.markFailedOrRetry(job, message)
+      return { jobId: job.id, status: 'failed', error: message }
+    }
+  }
+
+  private async skip(job: ClaimedJob, reason: string): Promise<DispatchResult> {
+    await this.db.markSkipped(job.id, reason)
+    return { jobId: job.id, status: 'skipped', error: reason }
   }
 
   private async dispatch(job: ClaimedJob): Promise<DispatchResult> {
@@ -41,27 +66,47 @@ export class DispatcherOrchestrator {
 
   private async dispatchVoice(job: ClaimedJob): Promise<DispatchResult> {
     const profile = await this.db.fetchProfile(job.user_id)
-    const recipient = job.payload.to_override || profile?.phone
-    if (!profile || !recipient) {
-      await this.db.markSkipped(job.id, 'Profile has no phone number')
-      return { jobId: job.id, status: 'skipped' }
+    if (!profile || profile.deleted_at) {
+      return this.skip(job, 'User account is unavailable')
+    }
+    const recipient = job.payload.to_override || profile.phone
+    if (!recipient) return this.skip(job, 'Profile has no phone number')
+    if (!E164_PATTERN.test(recipient)) {
+      return this.skip(
+        job,
+        'Recipient phone number is not a valid E.164 number',
+      )
+    }
+
+    const isSample = job.purpose === NOTIFICATION_PURPOSE.SAMPLE_VOICE_TEST
+    if (!profile.voice_call_enabled) {
+      return this.skip(job, 'Voice reminders are turned off')
+    }
+
+    let cheques: DispatchCheque[] = []
+    if (!isSample) {
+      if (
+        !job.business_id ||
+        !(await this.db.isBusinessActive(job.business_id, job.user_id))
+      ) {
+        return this.skip(job, 'Business is unavailable')
+      }
+      cheques = await this.db.fetchCheques(
+        job.payload.cheque_ids ?? [],
+        job.business_id,
+      )
+      if (cheques.length === 0) {
+        return this.skip(job, 'No active cheques remain for this reminder')
+      }
     }
 
     const hasQuota = await this.db.consumeVoiceQuota(job.user_id)
-    if (!hasQuota) {
-      await this.db.markSkipped(job.id, 'Voice reminder quota exhausted')
-      return { jobId: job.id, status: 'skipped' }
-    }
+    if (!hasQuota) return this.skip(job, 'Voice reminder quota exhausted')
 
     const language = profile.language || 'en'
-    const isSample = job.purpose === NOTIFICATION_PURPOSE.SAMPLE_VOICE_TEST
     const message = isSample
       ? this.buildSampleMessage(profile.name || 'User', language)
-      : this.buildMessage(
-          profile.name || 'User',
-          await this.db.fetchCheques(job.payload.cheque_ids ?? []),
-          language,
-        )
+      : this.buildMessage(profile.name || 'User', cheques, language)
     const twiml = this.twilio.generateTwiML(message, language)
     const to = this.testMode.enabled ? this.testMode.phone : recipient
 
@@ -80,7 +125,7 @@ export class DispatcherOrchestrator {
         provider_message_id: call.sid,
       })
       Logger.info(`Voice call sent for job ${job.id}`, { sid: call.sid })
-      return { jobId: job.id, status: 'sent' }
+      return { jobId: job.id, status: 'sent', providerMessageId: call.sid }
     }
 
     const errorMessage = call.error || 'Twilio call failed'

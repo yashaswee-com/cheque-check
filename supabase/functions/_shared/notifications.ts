@@ -10,6 +10,9 @@ export const NOTIFICATION_PURPOSE = {
   SAMPLE_VOICE_TEST: 'sample_voice_test',
 } as const
 
+export type NotificationPurpose =
+  (typeof NOTIFICATION_PURPOSE)[keyof typeof NOTIFICATION_PURPOSE]
+
 /** Reminder slots within a day, keyed by profiles.reminders_per_day (1-3). */
 export const REMINDER_SLOTS: Record<
   number,

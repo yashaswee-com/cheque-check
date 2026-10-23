@@ -7,6 +7,9 @@ import { DispatcherDatabaseService } from './services/database.service.ts'
 import { DispatcherOrchestrator } from './orchestrators/dispatcher.orchestrator.ts'
 
 const BATCH_SIZE = 50
+const MAX_TARGETED_JOBS = 50
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 serve(async (req) => {
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || ''
@@ -57,6 +60,28 @@ serve(async (req) => {
     )
   }
 
+  const body = (await req.json().catch(() => ({}))) as {
+    userId?: unknown
+    jobIds?: unknown
+  } | null
+  let scope: { userId: string; jobIds: string[] } | undefined
+  if (body && (body.userId !== undefined || body.jobIds !== undefined)) {
+    const { userId, jobIds } = body
+    if (
+      typeof userId !== 'string' ||
+      !UUID_PATTERN.test(userId) ||
+      !Array.isArray(jobIds) ||
+      jobIds.length === 0 ||
+      jobIds.length > MAX_TARGETED_JOBS ||
+      !jobIds.every((id) => typeof id === 'string' && UUID_PATTERN.test(id))
+    ) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid targeted dispatch request' }),
+        { status: 400 },
+      )
+    }
+    scope = { userId, jobIds: [...new Set(jobIds as string[])] }
+  }
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -72,7 +97,7 @@ serve(async (req) => {
       { enabled: TEST_MODE_ENABLED, phone: TEST_MODE_PHONE },
     )
 
-    const results = await orchestrator.run(BATCH_SIZE)
+    const results = await orchestrator.run(BATCH_SIZE, scope)
     return new Response(
       JSON.stringify({ success: true, processed: results.length, results }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },

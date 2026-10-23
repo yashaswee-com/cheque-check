@@ -6,6 +6,10 @@ import { ENV_FILES } from '../../lib/env'
 import { OpsError, UsageError } from '../../lib/errors'
 import { ROOT_DIR } from '../../lib/paths'
 import { addLocalAllowlistRef } from '../../lib/project'
+import {
+  createCronCredentialsClient,
+  provisionCronCredentials,
+} from '../../lib/cron-credentials'
 import { EDGE_FUNCTIONS } from '../../lib/supabase'
 import { runSupabase } from '../../lib/supabase-cli'
 
@@ -50,7 +54,11 @@ function parseApiKeys(output: string) {
   }
 }
 
-async function deployFunctions(ctx: OpsContext, supabaseUrl: string) {
+async function deployFunctions(
+  ctx: OpsContext,
+  supabaseUrl: string,
+  serviceRoleKey: string,
+) {
   // SUPABASE_* names are reserved for auto-injected function secrets.
   const secrets: Record<string, string> = {
     RAZORPAY_WEBHOOK_SECRET: await ctx.prompt.secret({
@@ -87,13 +95,18 @@ async function deployFunctions(ctx: OpsContext, supabaseUrl: string) {
       unlinkSync(SECRETS_FILE)
     }
   }
-  ctx.ui.warn(
-    'Run these once in the Supabase SQL editor so pg_cron can reach the functions:',
+  if (!serviceRoleKey) {
+    ctx.ui.warn(
+      'No service-role key available; pg_cron credentials were not provisioned. Re-run setup with the key.',
+    )
+    return
+  }
+  await provisionCronCredentials(
+    createCronCredentialsClient(supabaseUrl, serviceRoleKey),
+    supabaseUrl,
+    serviceRoleKey,
   )
-  ctx.ui.print(`  select vault.create_secret('${supabaseUrl}', 'project_url');`)
-  ctx.ui.print(
-    "  select vault.create_secret('<paste your service-role key>', 'service_role_key');",
-  )
+  ctx.ui.success('Provisioned pg_cron credentials in Vault.')
 }
 
 export const setup = defineAction<{ projectRef: string }>({
@@ -149,16 +162,17 @@ export const setup = defineAction<{ projectRef: string }>({
       message: 'Supabase URL',
       default: `https://${projectRef}.supabase.co`,
     })
+    const serviceRoleKey =
+      keys.serviceRole ||
+      (await ctx.prompt.secret({
+        message: 'Supabase service-role key (optional)',
+      }))
     writeEnvFile({
       NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
       NEXT_PUBLIC_SUPABASE_ANON_KEY:
         keys.anon ||
         (await ctx.prompt.secret({ message: 'Supabase anon key' })),
-      SUPABASE_SERVICE_ROLE_KEY:
-        keys.serviceRole ||
-        (await ctx.prompt.secret({
-          message: 'Supabase service-role key (optional)',
-        })),
+      SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey,
     })
     addLocalAllowlistRef(projectRef)
 
@@ -175,7 +189,7 @@ export const setup = defineAction<{ projectRef: string }>({
         false,
       )
     ) {
-      await deployFunctions(ctx, supabaseUrl)
+      await deployFunctions(ctx, supabaseUrl, serviceRoleKey)
     }
     return { projectRef }
   },

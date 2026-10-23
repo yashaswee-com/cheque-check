@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { defineAction, type GroupDef, type OptionDef } from '../lib/action'
 import { writeAudit } from '../lib/audit'
 import type { OpsContext, SelectedUser } from '../lib/context'
@@ -21,6 +22,7 @@ import {
   insertSampleJob,
   JOB_STATUSES,
   listJobs,
+  planReminderCalls,
   runDispatcher,
   runScheduler,
   runTargetedSchedule,
@@ -60,6 +62,11 @@ const NO_DISPATCH_OPTION: OptionDef = {
   flags: '--no-dispatch',
   description:
     'Only queue the job; let the dispatcher cron (every 2 min) place the call',
+}
+const REQUEST_ID_OPTION: OptionDef = {
+  flags: '--request-id <uuid>',
+  description:
+    'Idempotency key: repeating a request with the same id never queues a second call',
 }
 const JOB_OPTION: OptionDef = {
   flags: '--id <job_id>',
@@ -138,7 +145,7 @@ async function dispatchAndWait(
   jobIds: string[],
   options: Record<string, unknown>,
 ): Promise<CallOutcome> {
-  if (options.dispatch === false) {
+  if (options.dispatch === false || jobIds.length === 0) {
     return { userId, jobIds, dispatched: false, jobs: [], timedOut: false }
   }
   const waitSeconds = parseInteger(String(options.wait ?? 45), '--wait', {
@@ -146,7 +153,7 @@ async function dispatchAndWait(
     max: 600,
   })
   const dispatch = await ctx.ui.spin('Running the dispatcher', () =>
-    runDispatcher(ctx.credentials()),
+    runDispatcher(ctx.credentials(), { userId, jobIds }),
   )
   const { jobs, timedOut } = await ctx.ui.spin(
     'Waiting for the call result',
@@ -166,7 +173,10 @@ function renderCall(ctx: OpsContext, outcome: CallOutcome) {
     return
   }
   for (const job of outcome.jobs) {
-    const line = `${job.id}: ${describeJobOutcome(job)}`
+    const providerId = outcome.dispatch?.results.find(
+      (result) => result.jobId === job.id,
+    )?.providerMessageId
+    const line = `${job.id}: ${describeJobOutcome(job)}${providerId ? ` (provider id ${providerId})` : ''}`
     if (job.status === 'sent') ctx.ui.success(line)
     else if (job.status === 'failed' || job.status === 'skipped')
       ctx.ui.warn(line)
@@ -190,6 +200,121 @@ function blockerError(preview: TargetedRunResult): OpsError {
   )
 }
 
+interface TriggerScope {
+  user: SelectedUser
+  /** One business, or null for every eligible business of the user. */
+  business: { id: string; name: string } | null
+}
+
+async function triggerReminders(
+  ctx: OpsContext,
+  options: Record<string, unknown>,
+  scope: TriggerScope,
+): Promise<CallOutcome> {
+  const { user, business } = scope
+  const toOverride = await askOptional(ctx, options.to, {
+    message: 'Call a different number instead of the profile phone?',
+    parse: (value) => parsePhone(value, '--to'),
+  })
+  const requestId = options.requestId
+    ? parseUuid(String(options.requestId), '--request-id')
+    : randomUUID()
+  const request = {
+    userId: user.userId,
+    businessId: business?.id,
+    toOverride,
+    requestId,
+  }
+  const [preview, quota, profile] = await ctx.ui.spin(
+    'Checking eligibility',
+    () =>
+      Promise.all([
+        runTargetedSchedule(ctx.credentials(), { ...request, dryRun: true }),
+        getQuota(ctx.db(), user.userId, VOICE.quotaFeature),
+        getProfile(ctx.db(), user.userId),
+      ]),
+  )
+  if (preview.blockers.length > 0) throw blockerError(preview)
+  const plan = planReminderCalls(
+    preview,
+    quota && quotaUsable(quota) ? quotaRemaining(quota) : null,
+  )
+
+  await confirmMutation(ctx, {
+    title: `Call about ${plan.cheques} due cheque(s) in ${plan.businesses} business(es) � ${user.label}`,
+    notes: [
+      ...quotaNotes(quota, plan.calls),
+      ...(plan.quotaShortfall > 0
+        ? [
+            `${plan.quotaShortfall} of ${plan.calls} call(s) will be skipped for lack of quota.`,
+          ]
+        : []),
+      ...preview.businesses.map(
+        (item) =>
+          `Business ${item.businessId}: ${item.chequeIds.length} due cheque(s)`,
+      ),
+      `Request id ${requestId} (repeat with --request-id to avoid duplicate calls).`,
+    ],
+    changes: [
+      { field: 'environment', before: '', after: ctx.envName },
+      {
+        field: 'recipient',
+        before: '',
+        after: toOverride ?? profile?.phone ?? '',
+      },
+      { field: 'calls', before: '', after: plan.calls },
+      { field: 'local date', before: '', after: preview.localDate ?? '' },
+      {
+        field: 'voice quota',
+        before: quotaSummary(quota),
+        after: quota
+          ? `${quota.used + plan.calls}/${quota.limit} used`
+          : 'none',
+      },
+    ],
+  })
+  const result = await ctx.ui.spin('Queuing reminder', () =>
+    runTargetedSchedule(ctx.credentials(), { ...request, dryRun: false }),
+  )
+  if (result.blockers.length > 0) throw blockerError(result)
+  await writeAudit(ctx, {
+    action: business ? 'voice.trigger' : 'voice.trigger_user',
+    targetUserId: user.userId,
+    targetType: business ? 'business' : 'user',
+    targetId: business?.id ?? user.userId,
+    after: { jobIds: result.jobIds, businesses: result.businesses },
+    metadata: {
+      requestId,
+      toOverride: toOverride ?? null,
+      existingJobIds: result.existingJobIds ?? [],
+      dispatch: options.dispatch !== false,
+    },
+  })
+  const outcome = await dispatchAndWait(
+    ctx,
+    user.userId,
+    result.jobIds,
+    options,
+  )
+  if (outcome.dispatched) {
+    await writeAudit(ctx, {
+      action: 'voice.dispatch',
+      targetUserId: user.userId,
+      targetType: 'notification_job',
+      targetId: outcome.jobIds.join(','),
+      after: {
+        results: outcome.dispatch?.results ?? [],
+        statuses: outcome.jobs.map((job) => ({
+          id: job.id,
+          status: job.status,
+        })),
+      },
+      metadata: { requestId },
+    })
+  }
+  return outcome
+}
+
 const triggerBusiness = defineAction<CallOutcome>({
   name: 'trigger-business',
   title: 'Trigger a voice reminder for a business now',
@@ -203,6 +328,7 @@ const triggerBusiness = defineAction<CallOutcome>({
       description: 'Business id (asked if the user has several)',
     },
     TO_OPTION,
+    REQUEST_ID_OPTION,
     NO_DISPATCH_OPTION,
     WAIT_OPTION,
   ],
@@ -213,60 +339,34 @@ const triggerBusiness = defineAction<CallOutcome>({
   async run(ctx, options) {
     const user = await selectUser(ctx, options.user)
     const business = await askBusiness(ctx, user, options.business)
-    const toOverride = await askOptional(ctx, options.to, {
-      message: 'Call a different number instead of the profile phone?',
-      parse: (value) => parsePhone(value, '--to'),
-    })
-    const request = { userId: user.userId, businessId: business.id, toOverride }
-    const [preview, quota, profile] = await ctx.ui.spin(
-      'Checking eligibility',
-      () =>
-        Promise.all([
-          runTargetedSchedule(ctx.credentials(), { ...request, dryRun: true }),
-          getQuota(ctx.db(), user.userId, VOICE.quotaFeature),
-          getProfile(ctx.db(), user.userId),
-        ]),
-    )
-    if (preview.blockers.length > 0) throw blockerError(preview)
-    const cheques = preview.businesses.reduce(
-      (total, item) => total + item.chequeIds.length,
-      0,
-    )
-
-    await confirmMutation(ctx, {
-      title: `Call about ${cheques} due cheque(s) · ${business.name}`,
-      notes: quotaNotes(quota, preview.businesses.length),
-      changes: [
-        {
-          field: 'calls',
-          before: '',
-          after: toOverride ?? profile?.phone ?? '',
-        },
-        { field: 'local date', before: '', after: preview.localDate ?? '' },
-        {
-          field: 'voice quota',
-          before: quotaSummary(quota),
-          after: quota ? `${quota.used + 1}/${quota.limit} used` : 'none',
-        },
-      ],
-    })
-    const result = await ctx.ui.spin('Queuing reminder', () =>
-      runTargetedSchedule(ctx.credentials(), { ...request, dryRun: false }),
-    )
-    if (result.blockers.length > 0) throw blockerError(result)
-    await writeAudit(ctx, {
-      action: 'voice.trigger',
-      targetUserId: user.userId,
-      targetType: 'business',
-      targetId: business.id,
-      after: { jobIds: result.jobIds, businesses: result.businesses },
-      metadata: { toOverride: toOverride ?? null },
-    })
-    return dispatchAndWait(ctx, user.userId, result.jobIds, options)
+    return triggerReminders(ctx, options, { user, business })
   },
   render: renderCall,
 })
 
+const triggerUser = defineAction<CallOutcome>({
+  name: 'trigger-user',
+  title: 'Trigger voice reminders for all of a user�s due businesses now',
+  description:
+    'Previews, then places one reminder call per business that has due cheques for one user, with the same eligibility rules as the scheduled run. Consumes one Voice Reminder per call; only this user�s jobs are dispatched. Use the global --dry-run to preview only.',
+  mutates: true,
+  options: [
+    USER_OPTION,
+    TO_OPTION,
+    REQUEST_ID_OPTION,
+    NO_DISPATCH_OPTION,
+    WAIT_OPTION,
+  ],
+  examples: [
+    'voice trigger-user --user priya@example.com --dry-run',
+    'voice trigger-user --user <uuid> --reason "Support #42" --yes',
+  ],
+  async run(ctx, options) {
+    const user = await selectUser(ctx, options.user)
+    return triggerReminders(ctx, options, { user, business: null })
+  },
+  render: renderCall,
+})
 const sample = defineAction<CallOutcome>({
   name: 'sample',
   title: 'Place a sample (test) call',
@@ -288,6 +388,12 @@ const sample = defineAction<CallOutcome>({
       getProfile(ctx.db(), user.userId),
       getQuota(ctx.db(), user.userId, VOICE.quotaFeature),
     ])
+    if (!profile?.voice_call_enabled) {
+      throw new UsageError(
+        'Voice reminders are turned off for this user.',
+        'Turn them on with ccount profile --voice true; sample calls respect the opt-in.',
+      )
+    }
     const recipient = toOverride ?? profile?.phone
     if (!recipient) {
       throw new UsageError(
@@ -669,6 +775,7 @@ export const voiceGroup: GroupDef = {
     'Place reminder calls on demand and troubleshoot the notification pipeline.',
   actions: [
     triggerBusiness,
+    triggerUser,
     sample,
     diagnose,
     jobs,

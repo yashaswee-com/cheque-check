@@ -52,6 +52,8 @@ serve(async (req) => {
       if (
         (body.userId && !UUID_PATTERN.test(body.userId)) ||
         (body.businessId && !UUID_PATTERN.test(body.businessId)) ||
+        (body.requestId !== undefined &&
+          !UUID_PATTERN.test(String(body.requestId))) ||
         (body.toOverride !== undefined &&
           !E164_PATTERN.test(String(body.toOverride)))
       ) {

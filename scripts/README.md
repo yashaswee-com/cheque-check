@@ -155,8 +155,22 @@ Notes:
   time zone, no due cheques…). The call consumes one Voice Reminder from the
   user's quota, like a scheduled one. `--to` calls a different number (e.g.
   yours) and skips the "no phone" blocker. `--no-dispatch` only queues the job.
-- **Dispatching** processes up to 50 pending jobs for _all_ users, not just
-  the one you queued.
+- **`voice trigger-user`** does the same for _every_ business of one user that
+  has due cheques: it previews recipient, businesses, due-cheque and call
+  counts, quota effect and environment, then queues one call per business.
+  Use the global `--dry-run` to preview only. Each run has a request id
+  (printed in the preview; pass `--request-id <uuid>` to repeat a request
+  without queuing a second call). `--reason` is stored in the admin audit
+  log together with the operator, target, request id and job ids.
+- **Dispatching** from `trigger-business`, `trigger-user` and `sample` is
+  scoped: the dispatcher only claims the jobs just queued for that user (the
+  scope is enforced in the `claim_notification_jobs` database function and
+  needs the service role). Only `voice pipeline` and the cron process jobs
+  for _all_ users, up to 50 at a time.
+- **Outcomes**: `sent` means the call provider accepted the call (the provider
+  id is printed), not that the user answered. `skipped` jobs say why
+  (deactivated user, voice off - sample calls included -, invalid number, deleted business or cheques,
+  no quota).
 - **Refunds** are database-only: the transaction is marked refunded and
   what it bought is revoked (skipped if a newer purchase covers it; top-ups
   reduce the limit, never below what is used). Use `--no-revoke` to keep
@@ -183,6 +197,7 @@ Notes:
 | `quota sub` W                 | Grant or extend the Voice / AI subscription                     |
 | `quota set` W                 | Set limit / used / reset date exactly (corrections)             |
 | `voice trigger-business` W    | Reminder call for one business now                              |
+| `voice trigger-user` W        | Reminder calls for all of one user's due businesses             |
 | `voice sample` W              | Sample test call                                                |
 | `voice diagnose`              | Checklist of why reminders are not happening                    |
 | `voice jobs`                  | List jobs (`--user`, `--status`)                                |

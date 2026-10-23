@@ -16,6 +16,7 @@ export class SchedulerDatabaseService {
         'user_id, name, time_zone, reminders_per_day, voice_call_enabled, phone',
       )
       .eq('voice_call_enabled', true)
+      .is('deleted_at', null)
       .not('phone', 'is', null)
       .not('time_zone', 'is', null)
 
@@ -30,6 +31,7 @@ export class SchedulerDatabaseService {
         'user_id, name, time_zone, reminders_per_day, voice_call_enabled, phone',
       )
       .eq('user_id', userId)
+      .is('deleted_at', null)
       .maybeSingle()
 
     if (error) throw error
@@ -77,6 +79,8 @@ export class SchedulerDatabaseService {
       `,
       )
       .eq('business.user_id', userId)
+      .is('business.deleted_at', null)
+      .is('deleted_at', null)
       .eq('status', 'Issued')
       .eq('is_draft', false)
       .or(
@@ -85,6 +89,24 @@ export class SchedulerDatabaseService {
 
     if (error) throw error
     return (data || []) as unknown as ReminderCheque[]
+  }
+
+  /** Existing jobs for idempotency keys, so a repeated request reports the original jobs. */
+  async fetchJobIdsByKeys(keys: string[]): Promise<Map<string, string>> {
+    if (keys.length === 0) return new Map()
+
+    const { data, error } = await this.supabase
+      .from(TABLES.NOTIFICATION_JOBS)
+      .select('id, idempotency_key')
+      .in('idempotency_key', keys)
+
+    if (error) throw error
+    return new Map(
+      (data || []).map((row: { id: string; idempotency_key: string }) => [
+        row.idempotency_key,
+        row.id,
+      ]),
+    )
   }
 
   async enqueueJobs(jobs: NewNotificationJob[]): Promise<void> {

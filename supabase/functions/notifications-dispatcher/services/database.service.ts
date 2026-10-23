@@ -1,7 +1,12 @@
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { TABLES } from '../../_shared/tables.ts'
 import { FEATURE_IDS } from '../../_shared/feature-ids.ts'
-import { ClaimedJob, DispatchCheque, DispatchProfile } from '../types.ts'
+import {
+  ClaimedJob,
+  DispatchCheque,
+  DispatchProfile,
+  DispatchScope,
+} from '../types.ts'
 
 const RETRY_BACKOFF_MINUTES = [10, 30, 120]
 const MAX_ATTEMPTS = 3
@@ -23,9 +28,13 @@ export class DispatcherDatabaseService {
   constructor(private supabase: SupabaseClient) {}
 
   /** Atomically claims+locks a batch of due jobs (safe across overlapping ticks). */
-  async claimJobs(batchSize: number): Promise<ClaimedJob[]> {
+  async claimJobs(
+    batchSize: number,
+    scope?: DispatchScope,
+  ): Promise<ClaimedJob[]> {
     const { data, error } = await this.supabase.rpc('claim_notification_jobs', {
       p_batch_size: batchSize,
+      ...(scope ? { p_job_ids: scope.jobIds, p_user_id: scope.userId } : {}),
     })
     if (error) throw error
     return (data || []) as unknown as ClaimedJob[]
@@ -34,7 +43,7 @@ export class DispatcherDatabaseService {
   async fetchProfile(userId: string): Promise<DispatchProfile | null> {
     const { data, error } = await this.supabase
       .from(TABLES.PROFILES)
-      .select('user_id, name, phone, language')
+      .select('user_id, name, phone, language, voice_call_enabled, deleted_at')
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -42,13 +51,33 @@ export class DispatcherDatabaseService {
     return data as DispatchProfile | null
   }
 
-  async fetchCheques(chequeIds: string[]): Promise<DispatchCheque[]> {
+  async isBusinessActive(businessId: string, userId: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from(TABLES.BUSINESSES)
+      .select('id')
+      .eq('id', businessId)
+      .eq('user_id', userId)
+      .is('deleted_at', null)
+      .maybeSingle()
+
+    if (error) throw error
+    return data !== null
+  }
+
+  async fetchCheques(
+    chequeIds: string[],
+    businessId: string,
+  ): Promise<DispatchCheque[]> {
     if (chequeIds.length === 0) return []
 
     const { data, error } = await this.supabase
       .from(TABLES.CHEQUES)
       .select('id, amount, account:accounts(bank:banks(name))')
       .in('id', chequeIds)
+      .eq('business_id', businessId)
+      .eq('status', 'Issued')
+      .eq('is_draft', false)
+      .is('deleted_at', null)
 
     if (error) throw error
     return (data || []) as unknown as DispatchCheque[]
@@ -64,6 +93,7 @@ export class DispatcherDatabaseService {
     return Boolean(data)
   }
 
+  /** 'sent' means the provider accepted the call, not that anyone answered. */
   async markSent(jobId: string): Promise<void> {
     const { error } = await this.supabase
       .from(TABLES.NOTIFICATION_JOBS)

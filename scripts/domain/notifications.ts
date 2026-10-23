@@ -31,7 +31,7 @@ export type ReminderBlocker =
   | 'no_due_cheques'
 
 export const BLOCKER_HELP: Record<ReminderBlocker, string> = {
-  profile_not_found: 'The user has no profile row.',
+  profile_not_found: 'The user has no active profile (missing or deactivated).',
   business_not_found:
     'The business does not exist, is deleted, or belongs to another user.',
   voice_disabled:
@@ -50,6 +50,8 @@ export interface TargetedRunResult {
   blockers: ReminderBlocker[]
   businesses: { businessId: string; chequeIds: string[] }[]
   jobIds: string[]
+  /** Jobs that already existed for the request id (nothing new was queued for them). */
+  existingJobIds?: string[]
   dryRun: boolean
 }
 
@@ -61,6 +63,7 @@ export async function runTargetedSchedule(
     businessId?: string
     dryRun: boolean
     toOverride?: string
+    requestId?: string
   },
 ): Promise<TargetedRunResult> {
   const { body } = await invokeFunction<
@@ -80,17 +83,70 @@ export interface DispatchSummary {
     jobId: string
     status: 'sent' | 'skipped' | 'failed'
     error?: string
+    providerMessageId?: string
   }[]
 }
 
+/** Claim scope for a manual dispatch; omit it for the global cron-style run. */
+export interface DispatchScope {
+  userId: string
+  jobIds: string[]
+}
+
+/**
+ * Runs the dispatcher. With a scope the database claim itself is limited to
+ * those jobs of that user, so nobody else's queued calls can be placed.
+ */
 export async function runDispatcher(
   credentials: SupabaseCredentials,
+  scope?: DispatchScope,
 ): Promise<DispatchSummary> {
+  if (scope && (!scope.userId || scope.jobIds.length === 0)) {
+    throw new OpsError(
+      'A scoped dispatch needs a user and at least one job id; refusing to fall back to a global run.',
+    )
+  }
   const { body } = await invokeFunction<DispatchSummary>(
     credentials,
     'notifications-dispatcher',
+    scope ? { userId: scope.userId, jobIds: scope.jobIds } : {},
   )
-  return { processed: body?.processed ?? 0, results: body?.results ?? [] }
+  if (!body || !Array.isArray(body.results)) {
+    throw new OpsError('The dispatcher did not return a result.', {
+      hint: 'Redeploy notifications-dispatcher and check its logs.',
+    })
+  }
+  return {
+    processed: body.processed ?? body.results.length,
+    results: body.results,
+  }
+}
+
+export interface ReminderPlan {
+  businesses: number
+  cheques: number
+  calls: number
+  quotaRemaining: number | null
+  quotaShortfall: number
+}
+
+/** What a targeted run will cost: one call (one quota unit) per business with due cheques. */
+export function planReminderCalls(
+  preview: Pick<TargetedRunResult, 'businesses'>,
+  quotaRemaining: number | null,
+): ReminderPlan {
+  const calls = preview.businesses.length
+  return {
+    businesses: calls,
+    cheques: preview.businesses.reduce(
+      (total, item) => total + item.chequeIds.length,
+      0,
+    ),
+    calls,
+    quotaRemaining,
+    quotaShortfall:
+      quotaRemaining === null ? calls : Math.max(0, calls - quotaRemaining),
+  }
 }
 
 export async function runScheduler(credentials: SupabaseCredentials) {
@@ -234,7 +290,7 @@ export function describeJobOutcome(
 ): string {
   switch (job.status) {
     case 'sent':
-      return 'Call placed.'
+      return 'Accepted by the call provider. That does not prove the user answered; check the provider log.'
     case 'skipped':
       return job.last_error === QUOTA_EXHAUSTED_ERROR
         ? 'Skipped: the user has no Voice Reminder quota left (quota topup voice).'

@@ -35,6 +35,7 @@ export class SchedulerOrchestrator {
       blockers: [],
       businesses: [],
       jobIds: [],
+      existingJobIds: [],
       dryRun,
     }
 
@@ -106,16 +107,30 @@ export class SchedulerOrchestrator {
             cheque_ids: chequeIds,
             slot: 'manual',
             trigger: 'manual',
+            ...(request.requestId ? { request_id: request.requestId } : {}),
             ...(request.toOverride ? { to_override: request.toOverride } : {}),
           },
           scheduled_at: now.toISOString(),
-          idempotency_key: `${NOTIFICATION_PURPOSE.CHEQUE_REMINDER}:voice:${businessId}:${localDate}:manual:${id}`,
+          idempotency_key: `${NOTIFICATION_PURPOSE.CHEQUE_REMINDER}:voice:${businessId}:${localDate}:manual:${request.requestId ?? id}`,
         }
       },
     )
 
-    await this.db.insertJobs(jobs)
-    result.jobIds = jobs.map((job) => job.id as string)
+    if (request.requestId) {
+      await this.db.enqueueJobs(jobs)
+      const stored = await this.db.fetchJobIdsByKeys(
+        jobs.map((job) => job.idempotency_key),
+      )
+      result.jobIds = jobs.map(
+        (job) => stored.get(job.idempotency_key) ?? (job.id as string),
+      )
+      result.existingJobIds = result.jobIds.filter(
+        (id, index) => id !== jobs[index].id,
+      )
+    } else {
+      await this.db.insertJobs(jobs)
+      result.jobIds = jobs.map((job) => job.id as string)
+    }
     Logger.info(
       `Enqueued ${jobs.length} manual voice job(s) for user ${userId}`,
     )
