@@ -38,8 +38,8 @@ import {
 
 const ChequeStatsChart = dynamic(
   () =>
-    import('@/components/cheque-stats-chart').then(
-      (mod) => mod.ChequeStatsChart,
+    import('@/features/cheques/components/cheque-distribution').then(
+      (mod) => mod.ChequeDistribution,
     ),
   {
     loading: () => <Skeleton className="h-full w-full rounded-lg" />,
@@ -51,7 +51,8 @@ export default function HomePage() {
   const tDashboard = useTranslations('Dashboard')
   const tCheques = useTranslations('Cheques')
   const tCommon = useTranslations('Common')
-  const tp = useTranslations('Premium')
+  const tReports = useTranslations('Reports')
+  const tStats = useTranslations('ChartStats')
   const { activeBusiness } = useBusiness()
   const { profile } = useProfile()
   const router = useRouter()
@@ -78,7 +79,7 @@ export default function HomePage() {
     currentBalance,
     upcomingCount,
     overdueCount,
-  } = useChequeStats(cheques)
+  } = useChequeStats(cheques, profile?.time_zone)
 
   const [statsPreset, setStatsPreset] = useState<DateRangePreset>('all')
   const [customRange, setCustomRange] = useState<DateRange>()
@@ -90,28 +91,13 @@ export default function HomePage() {
       ),
     [cheques, statsPreset, customRange],
   )
-  const { issuedCount, receivedCount, clearedCount, bouncedCount } =
-    useChequeStats(statsCheques)
 
   const currency = profile?.currency || '₹'
   const formatAmount = (value: number) =>
     `${value < 0 ? '-' : ''}${currency}${Math.abs(value).toLocaleString()}`
 
-  const chartData = [
-    { name: tDashboard('issued'), value: issuedCount, color: '#0066cc' }, // Action Blue
-    { name: tDashboard('received'), value: receivedCount, color: '#2997ff' }, // Sky Blue
-    { name: tDashboard('cleared'), value: clearedCount, color: '#34C759' }, // iOS Green
-    { name: tDashboard('bounced'), value: bouncedCount, color: '#FF3B30' }, // iOS Red
-  ].filter((d) => d.value > 0)
-
   return (
     <div className="max-w-2xl space-y-8 pb-20 pt-2">
-      <Link
-        href="/premium#consolidated-dashboard"
-        className="inline-flex min-h-11 items-center text-sm text-primary hover:underline"
-      >
-        {tp('features.consolidated-dashboard')}
-      </Link>
       <DataState
         isLoading={isLoading}
         data={activeBusiness ? [activeBusiness] : []}
@@ -147,7 +133,7 @@ export default function HomePage() {
           <div className="rounded-lg bg-primary p-5 text-primary-foreground relative overflow-hidden">
             <div className="relative z-10">
               <p className="text-[10px] font-semibold opacity-70 uppercase tracking-wider">
-                {tDashboard('currentBalance')}
+                {tStats('pendingNet')}
               </p>
               <p
                 className={cn(
@@ -158,6 +144,9 @@ export default function HomePage() {
                 data-testid="dashboard-current-balance"
               >
                 {formatAmount(currentBalance)}
+              </p>
+              <p className="mt-1 text-xs opacity-80">
+                {tStats('pendingNetHelp')}
               </p>
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <div className="rounded-md bg-white/10 p-2">
@@ -194,7 +183,10 @@ export default function HomePage() {
                 {tDashboard('quickActions')}
               </h2>
             </div>
-            <div className="flex gap-4">
+            <div
+              className="flex max-w-full gap-3 overflow-x-auto overscroll-x-contain snap-x snap-proximity px-1 py-2"
+              data-testid="dashboard-quick-actions"
+            >
               <input
                 type="file"
                 ref={fileInputRef}
@@ -205,9 +197,9 @@ export default function HomePage() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 transition-transform active:scale-95"
+                className="w-36 shrink-0 snap-start rounded-lg transition-transform focus-visible:outline-2 focus-visible:outline-primary active:scale-95"
               >
-                <div className="flex flex-col items-center gap-2 rounded-lg bg-canvas-parchment p-4 border border-primary/5">
+                <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-4 border border-primary/5">
                   <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary/10 text-primary">
                     <HugeiconsIcon icon={Camera} className="h-6 w-6" />
                   </div>
@@ -216,23 +208,29 @@ export default function HomePage() {
                   </span>
                 </div>
               </button>
-              <Link href="/businesses" className="flex-1">
-                <div className="flex flex-col items-center gap-2 rounded-lg bg-canvas-parchment p-4 transition-transform active:scale-95 border border-primary/5">
+              <Link
+                href="/businesses"
+                className="w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
+              >
+                <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-4 transition-transform active:scale-95 border border-primary/5">
                   <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary/10 text-primary">
                     <HugeiconsIcon icon={Building03Icon} className="h-6 w-6" />
                   </div>
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-                    Businesses
+                    {tCommon('businesses')}
                   </span>
                 </div>
               </Link>
-              <Link href="/reports" className="flex-1">
-                <div className="flex flex-col items-center gap-2 rounded-lg bg-canvas-parchment p-4 transition-transform active:scale-95 border border-primary/5">
+              <Link
+                href="/reports"
+                className="w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
+              >
+                <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-4 transition-transform active:scale-95 border border-primary/5">
                   <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary/10 text-primary">
                     <HugeiconsIcon icon={FileText} className="h-6 w-6" />
                   </div>
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-                    Reports
+                    {tReports('title')}
                   </span>
                 </div>
               </Link>
@@ -323,12 +321,7 @@ export default function HomePage() {
                 />
               </div>
             </div>
-            <div className="rounded-lg border bg-card p-6 h-[300px] relative">
-              <ChequeStatsChart
-                chartData={chartData}
-                totalCheques={statsCheques?.length || 0}
-              />
-            </div>
+            <ChequeStatsChart cheques={statsCheques} currency={currency} />
           </div>
         </>
       </DataState>

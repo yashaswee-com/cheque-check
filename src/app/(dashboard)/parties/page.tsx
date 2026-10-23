@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils'
 import type { Party } from '@/types'
 import { TagChips } from '@/features/tags/components/tag-chips'
 import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
+import { NativeTools } from '@/features/premium-workspace/components/native-tools'
 
 export default function PartiesPage() {
   const t = useTranslations('Parties')
@@ -174,6 +175,7 @@ export default function PartiesPage() {
       </div>
 
       <DraftsLink entity="party" />
+      <NativeTools destination="parties" businessId={businessId} />
 
       <div className="space-y-4">
         <DataState

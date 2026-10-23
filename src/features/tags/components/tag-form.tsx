@@ -44,7 +44,8 @@ export function TagForm({
       className="space-y-10"
       onSubmit={(event) => {
         event.preventDefault()
-        if (trimmedName) void onSubmit({ name: trimmedName, color })
+        if (trimmedName && !isSaving)
+          void onSubmit({ name: trimmedName, color })
       }}
     >
       <FormSection title={t('details')} icon={TagIcon}>
@@ -99,8 +100,10 @@ export function TagForm({
           data-testid="tag-form-submit-button"
           className="h-14 w-full rounded-full text-lg"
           disabled={!trimmedName || isSaving}
+          loading={isSaving}
+          loadingText={tc('saving')}
         >
-          {isSaving ? tc('saving') : submitLabel}
+          {submitLabel}
           <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
         </Button>
         {children}

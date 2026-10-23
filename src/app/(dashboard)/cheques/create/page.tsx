@@ -63,7 +63,7 @@ import { useProfile } from '@/hooks/use-profile'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
 import { buildChequeReturnTo } from '@/lib/cheque-draft'
 import { TagSelector } from '@/features/tags/components/tag-selector'
-import { tagService } from '@/features/tags/services/tag.service'
+import { useDraftTags } from '@/features/tags/hooks/use-draft-tags'
 import { useOcrExtraction } from '@/features/cheques/hooks/use-ocr-extraction'
 import {
   chequeDraftService,
@@ -89,7 +89,6 @@ export default function CreateChequePage() {
   const businessId = activeBusiness?.id
   const { profile } = useProfile()
   const currency = profile?.currency || '₹'
-  const [tagIds, setTagIds] = useState<string[]>([])
   const { data: banks } = useBanks()
 
   const {
@@ -106,18 +105,13 @@ export default function CreateChequePage() {
     draft,
   } = useCreateCheque(businessId, typeParam, {
     draftId: initialDraftId,
+    beforePublish: (id) => draftTags.flush(id),
     onCreated: async (cheque) => {
-      await Promise.all(
-        tagIds.map((tagId) =>
-          tagService.attach({
-            tag_id: tagId,
-            entity_type: 'cheque',
-            entity_id: cheque.id,
-          }),
-        ),
-      )
+      await draftTags.flush(cheque.id)
     },
   })
+  const draftTags = useDraftTags(draft.draftId)
+  const { tagIds, setTagIds } = draftTags
 
   const {
     register,

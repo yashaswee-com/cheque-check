@@ -26,6 +26,7 @@ import { EntityTagsSection } from '@/features/tags/components/tag-chips'
 import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { TextTruncate } from '@/components/ui/text-truncate'
 import { useTranslations } from 'next-intl'
+import { NativeTools } from '@/features/premium-workspace/components/native-tools'
 
 export default function BusinessDetailPage() {
   const t = useTranslations('Businesses')
@@ -217,6 +218,12 @@ export default function BusinessDetailPage() {
           </div>
         </DataState>
       </div>
+
+      <NativeTools
+        destination="business"
+        businessId={business.id}
+        businessName={business.name}
+      />
 
       <SpeedDialFab
         editHref={`/businesses/${id}/edit`}

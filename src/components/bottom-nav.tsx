@@ -12,6 +12,8 @@ import {
 import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { getShellRoute } from '@/lib/navigation-routes'
+import { useSoftwareKeyboard } from '@/hooks/use-software-keyboard'
 
 const navItems = [
   { name: 'dashboard', href: '/dashboard', icon: Home },
@@ -23,7 +25,9 @@ const navItems = [
 export function BottomNav() {
   const pathname = usePathname()
   const t = useTranslations('Navigation')
+  const ts = useTranslations('SharedUI')
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null)
+  const keyboardOpen = useSoftwareKeyboard()
 
   // Reset optimistic path when actual pathname changes
   const [prevPathname, setPrevPathname] = useState(pathname)
@@ -34,32 +38,28 @@ export function BottomNav() {
 
   // Only show bottom nav on main top-level routes
   const currentPath = optimisticPath || pathname
-  const isMainTab = [
-    '/dashboard',
-    '/cheques',
-    '/parties',
-    '/accounts',
-    '/settings',
-    '/businesses',
-    '/features',
-  ].includes(pathname)
+  const route = getShellRoute(pathname)
 
-  if (!isMainTab) {
+  if (!route.showBottomNav || keyboardOpen) {
     return null
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around bg-canvas-parchment/80 px-4 pb-safe backdrop-blur-md dark:bg-black/80 border-t border-primary/5">
+    <nav
+      aria-label={ts('mainNavigation')}
+      className="fixed bottom-0 left-0 right-0 z-40 flex h-[calc(4rem+env(safe-area-inset-bottom))] items-center justify-around bg-canvas-parchment/80 px-4 pb-[env(safe-area-inset-bottom)] backdrop-blur-md dark:bg-black/80 border-t border-primary/5"
+    >
       {navItems.map((item) => {
-        const isActive = currentPath === item.href
+        const isActive = getShellRoute(currentPath).activeTab === item.href
         return (
           <Link
             key={item.name}
             href={item.href}
             data-testid={`bottom-nav-${item.name}`}
+            aria-current={isActive ? 'page' : undefined}
             onClick={() => setOptimisticPath(item.href)}
             className={cn(
-              'flex flex-col items-center justify-center gap-1 transition-all active:scale-95',
+              'flex min-h-11 min-w-14 flex-col items-center justify-center gap-1 rounded-sm transition-all focus-visible:outline-2 focus-visible:outline-primary active:scale-95',
               isActive
                 ? 'text-primary'
                 : 'text-muted-foreground hover:text-foreground',

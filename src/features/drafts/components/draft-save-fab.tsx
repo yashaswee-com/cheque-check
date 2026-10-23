@@ -3,11 +3,12 @@
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   FloppyDiskIcon as SaveIcon,
-  Loading03Icon,
   Tick02Icon as Check,
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import type { DraftSaveStatus } from '@/features/drafts'
+import { Button } from '@/components/ui/button'
+import { useTranslations } from 'next-intl'
 
 interface DraftSaveFabProps {
   status: DraftSaveStatus
@@ -26,13 +27,16 @@ export function DraftSaveFab({
   const isSaved = status === 'saved'
   const isUntouched = status === 'idle' && !hasUserChanges
   const disabled = isSaving || isUntouched
+  const t = useTranslations('Drafts')
 
   return (
-    <button
+    <Button
+      size="icon"
+      loading={isSaving}
       type="button"
       onClick={onSave}
       disabled={disabled}
-      aria-label="Save draft"
+      aria-label={t('saveDraft')}
       data-testid="draft-save-button"
       className={cn(
         'fixed bottom-6 right-6 z-40 flex h-16 w-16 items-center justify-center rounded-full border-4 border-white shadow-lg transition-colors active:scale-95 disabled:active:scale-100 dark:border-zinc-900',
@@ -42,13 +46,11 @@ export function DraftSaveFab({
         isUntouched && 'bg-muted text-muted-foreground cursor-not-allowed',
       )}
     >
-      {isSaving ? (
-        <HugeiconsIcon icon={Loading03Icon} className="h-7 w-7 animate-spin" />
-      ) : isSaved ? (
+      {isSaved ? (
         <HugeiconsIcon icon={Check} className="h-7 w-7" />
       ) : (
         <HugeiconsIcon icon={SaveIcon} className="h-7 w-7" />
       )}
-    </button>
+    </Button>
   )
 }

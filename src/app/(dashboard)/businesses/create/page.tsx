@@ -361,9 +361,11 @@ export default function CreateBusinessPage() {
               type="submit"
               className="w-full rounded-full h-14 text-lg"
               disabled={isSaving}
+              loading={isSaving}
+              loadingText={t('creatingBusiness')}
               data-testid="business-submit-button"
             >
-              {isSaving ? t('creatingBusiness') : t('newBusiness')}{' '}
+              {t('newBusiness')}{' '}
               <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
             </Button>
           </div>

@@ -76,8 +76,8 @@ export function EntityTagsSection({
       </p>
       {isLoading ? (
         <div className="flex h-6 gap-1">
-          <Skeleton stagger={false} className="h-6 w-16 rounded-full" />
-          <Skeleton stagger={false} className="h-6 w-20 rounded-full" />
+          <Skeleton className="h-6 w-16 rounded-full" />
+          <Skeleton className="h-6 w-20 rounded-full" />
         </div>
       ) : (
         <TagChips tags={tags} linked />

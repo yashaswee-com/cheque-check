@@ -48,6 +48,7 @@ interface SettingsSection {
 export default function SettingsPage() {
   const t = useTranslations('Settings')
   const tp = useTranslations('Premium')
+  const tpa = useTranslations('PhoneAuth')
   const { profile, isLoading: profileLoading } = useProfile()
   const { handleLogout } = useSettings()
   const { isLoading: monetizationLoading } = useMonetization()
@@ -77,7 +78,7 @@ export default function SettingsPage() {
           name: tp('openTools'),
           description: tp('benefitsTitle'),
           icon: Zap,
-          href: '/premium',
+          href: '/cheques#bulk-import',
         },
         {
           name: t('preferences'),
@@ -197,7 +198,7 @@ export default function SettingsPage() {
             {profile?.name || t('user')}
           </p>
           <p className="text-xs text-muted-foreground font-semibold">
-            {profile?.email}
+            {profile?.email ?? tpa('noEmail')}
           </p>
         </div>
         <HugeiconsIcon

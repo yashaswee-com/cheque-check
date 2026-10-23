@@ -11,10 +11,7 @@ import { NextIntlClientProvider, type AbstractIntlMessages } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import type { Profile } from '@/types'
-import type {
-  Quota,
-  Transaction,
-} from '@/features/monetization/repositories/monetization.repository'
+import type { Quota } from '@/features/monetization/repositories/monetization.repository'
 import type { PhoneInputProps } from '@/components/ui/phone-input'
 import { FEATURE_IDS, PRODUCT_IDS } from '@/features/monetization/constants'
 import { queryKeys } from '@/lib/query-keys'
@@ -202,42 +199,17 @@ describe('Features page', () => {
       screen.getByRole('switch', { name: messages.Features.receivingMode }),
     ).toBeInTheDocument()
   })
-  it.each([
-    ['created', 'paymentCreatedHelp'],
-    ['authorized', 'paymentAuthorizedHelp'],
-    ['captured', 'paymentCapturedHelp'],
-    ['failed', 'paymentFailedHelp'],
-    ['refunded', 'paymentRefundedHelp'],
-  ] as const)(
-    'explains %s payment without treating it as Premium access',
-    async (status, help) => {
-      mocks.transactions.mockResolvedValue([
-        {
-          id: 'order',
-          user_id: 'user',
-          feature_id: FEATURE_IDS.LIFETIME_PREMIUM,
-          type: 'lifetime',
-          status,
-          amount: 30000,
-          currency: 'INR',
-          razorpay_order_id: 'order_example',
-          razorpay_payment_id: null,
-          created_at: '2026-10-17T00:00:00Z',
-          updated_at: '2026-10-17T00:00:00Z',
-        } satisfies Transaction,
-      ])
-      renderPage()
-      expect(
-        await screen.findByText(messages.Features[help]),
-      ).toBeInTheDocument()
-      expect(
-        screen.queryByRole('switch', { name: messages.Features.receivingMode }),
-      ).not.toBeInTheDocument()
-      expect(
-        screen.getByRole('link', { name: messages.Premium.openTools }),
-      ).toHaveAttribute('href', '/premium')
-    },
-  )
+  it('does not fetch or link payment activity on Features', () => {
+    renderPage()
+    expect(mocks.transactions).not.toHaveBeenCalled()
+    expect(
+      screen.queryByText(messages.Features.activityTitle),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: messages.Features.allTransactions }),
+    ).not.toBeInTheDocument()
+    expect(document.querySelector('#feature-activity')).toBeNull()
+  })
 
   it('offers purchase during a granted trial without hiding trial access', async () => {
     premium = true
@@ -274,9 +246,7 @@ describe('Features page', () => {
   )
   it('keeps locked purchase actions clear and sends the correct product', async () => {
     renderPage()
-    expect(
-      await screen.findByText(messages.Features.noActivity),
-    ).toBeInTheDocument()
+    expect(mocks.transactions).not.toHaveBeenCalled()
     expect(screen.queryByRole('switch')).not.toBeInTheDocument()
     fireEvent.click(
       screen.getByRole('button', {
@@ -420,7 +390,9 @@ describe('Features page', () => {
       card.getByRole('button', { name: messages.Features.sendTestCall }),
     ).toBeDisabled()
     fireEvent.click(
-      card.getByRole('button', { name: 'Top up 100 calls · ₹50' }),
+      card.getByRole('button', {
+        name: `${messages.ProductNames.voice_reminder_100} · ₹50`,
+      }),
     )
     expect(mocks.payment).toHaveBeenCalledWith(
       expect.objectContaining({ productId: PRODUCT_IDS.VOICE_REMINDER_100 }),
@@ -453,7 +425,9 @@ describe('Features page', () => {
       scanner.queryByRole('link', { name: messages.Features.scanCheque }),
     ).not.toBeInTheDocument()
     expect(
-      scanner.getByRole('button', { name: 'Top up 250 scans · ₹50' }),
+      scanner.getByRole('button', {
+        name: `${messages.ProductNames.ai_scan_250} · ₹50`,
+      }),
     ).toBeEnabled()
   })
 
@@ -507,37 +481,20 @@ describe('Features page', () => {
     ).not.toBeChecked()
   })
 
-  it('tracks pending orders and refreshes transactions, entitlements and quotas together', async () => {
-    const transaction: Transaction = {
-      id: 'transaction',
-      user_id: 'user',
-      feature_id: FEATURE_IDS.AI_SCANNER_SUB,
-      type: 'subscription',
-      status: 'authorized',
-      amount: 5000,
-      currency: 'INR',
-      razorpay_order_id: 'order_pending',
-      razorpay_payment_id: null,
-      created_at: '2026-10-17T00:00:00Z',
-      updated_at: '2026-10-17T00:00:00Z',
-    }
-    mocks.transactions.mockResolvedValue([transaction])
+  it('refreshes entitlements and quotas without fetching payment history', async () => {
     const { client } = renderPage()
-    expect(
-      await screen.findByText(messages.Features.paymentAuthorizedHelp),
-    ).toBeInTheDocument()
-    expect(screen.getByText('₹50.00')).toBeInTheDocument()
     const invalidate = vi.spyOn(client, 'invalidateQueries')
     fireEvent.click(
       screen.getByRole('button', { name: messages.Features.refreshStatus }),
     )
-    await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(3))
-    for (const key of ['entitlements', 'quotas', 'transactions']) {
+    await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(2))
+    for (const key of ['entitlements', 'quotas']) {
       expect(invalidate).toHaveBeenCalledWith(
         { queryKey: [key] },
         { throwOnError: true },
       )
     }
+    expect(mocks.transactions).not.toHaveBeenCalled()
   })
 
   it('does not offer purchases when access failed to load', async () => {
@@ -553,15 +510,15 @@ describe('Features page', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('surfaces transaction errors rather than showing an empty purchase history', async () => {
+  it('keeps purchase controls independent of unavailable payment history', () => {
     mocks.transactions.mockRejectedValue(new Error('Unavailable'))
     renderPage()
     expect(
-      await screen.findByText(messages.Features.activityFailed),
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByText(messages.Features.noActivity),
-    ).not.toBeInTheDocument()
+      screen.getByRole('button', {
+        name: messages.Features.getLifetimePremium,
+      }),
+    ).toBeEnabled()
+    expect(mocks.transactions).not.toHaveBeenCalled()
   })
 
   it('disables all purchase actions while checkout is open', () => {
@@ -578,7 +535,9 @@ describe('Features page', () => {
       screen.getByRole('button', { name: messages.Features.enableAddon }),
     ).toBeDisabled()
     expect(
-      screen.getByRole('button', { name: 'Top up 100 calls · ₹50' }),
+      screen.getByRole('button', {
+        name: `${messages.ProductNames.voice_reminder_100} · ₹50`,
+      }),
     ).toBeDisabled()
   })
 
@@ -586,14 +545,12 @@ describe('Features page', () => {
     ['hi', { ...messages, ...hindi }],
     ['hi-en', hinglish],
   ])(
-    'renders the management and activity flows in %s',
+    'renders localized management without activity in %s',
     async (locale, translations) => {
       subscribed = [FEATURE_IDS.VOICE_REMINDER_SUB]
       voiceCredits()
       renderPage(locale, translations)
-      expect(
-        await screen.findByText(translations.Features.noActivity),
-      ).toBeInTheDocument()
+      expect(mocks.transactions).not.toHaveBeenCalled()
       expect(
         screen.getByRole('heading', { name: translations.Features.pageTitle }),
       ).toBeInTheDocument()

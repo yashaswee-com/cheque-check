@@ -220,7 +220,13 @@ function PrintLayoutForm({
         >
           {t('resetPrintLayout')}
         </Button>
-        <Button type="button" disabled={isSaving} onClick={() => void save()}>
+        <Button
+          type="button"
+          disabled={isSaving}
+          loading={isSaving}
+          loadingText={tc('saving')}
+          onClick={() => void save()}
+        >
           {t('savePrintLayout')}
         </Button>
       </div>

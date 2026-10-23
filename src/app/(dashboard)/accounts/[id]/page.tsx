@@ -63,6 +63,7 @@ import { type ChequeStatus, type ChequeWithRelations } from '@/types'
 import { SpeedDialFab } from '@/components/speed-dial-fab'
 import { EntityTagsSection } from '@/features/tags/components/tag-chips'
 import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
+import { NativeTools } from '@/features/premium-workspace/components/native-tools'
 
 export default function AccountDetailPage() {
   const t = useTranslations('Accounts')
@@ -414,6 +415,8 @@ export default function AccountDetailPage() {
           </div>
         </DataState>
       </div>
+
+      <NativeTools destination="account" accountId={account.id} />
 
       <SpeedDialFab
         editHref={`/accounts/${id}/edit`}

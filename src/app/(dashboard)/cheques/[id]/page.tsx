@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useChequeDetail } from '@/hooks/use-cheque-detail'
 import { useParams, useRouter } from 'next/navigation'
@@ -108,6 +108,7 @@ export default function ChequeDetailPage() {
   const router = useRouter()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [printLayoutOpen, setPrintLayoutOpen] = useState(false)
+  const duplicating = useRef(false)
   const { data: party } = useQuery({
     queryKey: queryKeys.parties.detail(cheque?.party_id),
     queryFn: () => partyService.getById(cheque!.party_id),
@@ -150,20 +151,18 @@ export default function ChequeDetailPage() {
     }))
 
   const duplicateCheque = async () => {
-    if (!(await premium.verifyAccess('duplicate-cheque'))) return
+    if (duplicating.current) return
+    duplicating.current = true
+    let navigating = false
     try {
-      const draft = await chequeDraftService.create(cheque.business_id, {
-        party_id: cheque.party_id,
-        account_id: cheque.account_id,
-        amount: cheque.amount,
-        cheque_date: new Date().toISOString().split('T')[0],
-        deposit_date: null,
-        type: cheque.type,
-        notes: cheque.notes,
-      })
+      if (!(await premium.verifyAccess('duplicate-cheque'))) return
+      const draft = await chequeDraftService.duplicate(cheque.id)
       router.push(`/cheques/create?draftId=${draft.id}`)
+      navigating = true
     } catch {
       toast.add({ title: t('duplicateFailed'), type: 'error' })
+    } finally {
+      if (!navigating) duplicating.current = false
     }
   }
 

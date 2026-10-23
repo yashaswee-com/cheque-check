@@ -34,7 +34,12 @@ import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { getWhatsAppSupportLink } from '@/lib/whatsapp'
 import { Calculator } from '@/components/calculator'
-import { cn } from '@/lib/utils'
+import { getShellRoute } from '@/lib/navigation-routes'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 
 const GlobalSearch = dynamic(
   () => import('@/components/global-search').then((mod) => mod.GlobalSearch),
@@ -50,10 +55,14 @@ export function TopNav() {
   const { profile } = useProfile()
   const [searchOpen, setSearchOpen] = useState(false)
   const [calculatorOpen, setCalculatorOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const t = useTranslations()
+  const ts = useTranslations('SharedUI')
 
   const getNavInfo = (path: string) => {
     if (path === '/') return { title: 'ChequeCheck', icon: null }
+    if (path === '/dashboard')
+      return { title: t('Navigation.dashboard'), icon: null }
     if (path === '/settings')
       return { title: t('Navigation.settings'), icon: Settings }
     if (path === '/features')
@@ -162,25 +171,14 @@ export function TopNav() {
   }
 
   const { title, icon: TitleIcon } = getNavInfo(pathname)
-  const isMainTab = [
-    '/',
-    '/cheques',
-    '/parties',
-    '/accounts',
-    '/settings',
-    '/businesses',
-    '/features',
-  ].includes(pathname)
+  const route = getShellRoute(pathname)
+  const isMainTab = route.isTopLevel
 
   const hideSettingsIcon =
     pathname.startsWith('/settings') ||
     pathname.startsWith('/features') ||
     pathname === '/profile'
-  const hideBusinessSwitcher =
-    pathname.startsWith('/settings') ||
-    pathname.startsWith('/features') ||
-    pathname === '/profile' ||
-    pathname === '/businesses/create'
+  const hideBusinessSwitcher = !route.showBusinessSwitcher
 
   return (
     <div className="sticky top-0 z-40 w-full flex flex-col">
@@ -195,13 +193,14 @@ export function TopNav() {
               variant="ghost"
               size="icon"
               onClick={() => router.back()}
+              aria-label={ts('back')}
               className="rounded-full -ml-2 h-9 w-9 shrink-0"
             >
               <HugeiconsIcon icon={ChevronLeft} className="h-5 w-5" />
             </Button>
           )}
           <h1 className="text-lg font-semibold tracking-tight flex items-center gap-2 truncate">
-            {isMainTab && pathname === '/' && (
+            {pathname === '/dashboard' && (
               <SkeletonImage
                 src="/android-chrome-512x512.png"
                 alt="ChequeCheck Logo"
@@ -215,9 +214,7 @@ export function TopNav() {
                 className="h-5 w-5 text-primary shrink-0"
               />
             )}
-            <span className="truncate">
-              {isMainTab && pathname === '/' ? 'ChequeCheck' : title}
-            </span>
+            <span className="truncate">{title}</span>
           </h1>
         </div>
 
@@ -225,106 +222,110 @@ export function TopNav() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setCalculatorOpen(true)}
+            data-testid="global-search-trigger"
+            onClick={() => setSearchOpen(true)}
             className="rounded-full h-9 w-9"
-            aria-label="Open calculator"
+            aria-label={ts('search')}
           >
             <HugeiconsIcon
-              icon={CalculatorIcon}
+              icon={Search}
               className="h-5 w-5 text-muted-foreground"
             />
           </Button>
-
-          {pathname === '/features' && (
-            <Link href="/settings/transactions">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full h-9 w-9"
-              >
-                <HugeiconsIcon
-                  icon={Pay}
-                  className="h-5 w-5 text-muted-foreground"
+          <Popover open={moreOpen} onOpenChange={setMoreOpen}>
+            <PopoverTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  aria-label={ts('more')}
                 />
-              </Button>
-            </Link>
-          )}
-
-          <a
-            href={getWhatsAppSupportLink()}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full h-9 w-9"
+              }
             >
-              <HugeiconsIcon
-                icon={Help}
-                className="h-5 w-5 text-muted-foreground"
-              />
-            </Button>
-          </a>
-
-          {!hideSettingsIcon && (
-            <>
+              <span aria-hidden="true" className="text-xl leading-none">
+                ⋯
+              </span>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              className="w-60"
+              aria-label={ts('more')}
+            >
               <Button
                 variant="ghost"
-                size="icon"
-                onClick={() => window.location.reload()}
-                className="rounded-full h-9 w-9"
+                className="justify-start"
+                onClick={() => {
+                  setMoreOpen(false)
+                  setCalculatorOpen(true)
+                }}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-muted-foreground"
-                >
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                  <path d="M3 3v5h5" />
-                </svg>
+                <HugeiconsIcon icon={CalculatorIcon} className="size-4" />
+                {ts('calculator')}
               </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                data-testid="global-search-trigger"
-                onClick={() => setSearchOpen(true)}
-                className="rounded-full h-9 w-9"
+              <a
+                href={getWhatsAppSupportLink()}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <HugeiconsIcon
-                  icon={Search}
-                  className="h-5 w-5 text-muted-foreground"
-                />
-              </Button>
-            </>
-          )}
+                <span className="flex min-h-10 items-center gap-2 rounded-sm px-4 text-sm hover:bg-muted">
+                  <HugeiconsIcon
+                    icon={Help}
+                    className="h-5 w-5 text-muted-foreground"
+                  />
+                  {ts('help')}
+                </span>
+              </a>
 
-          {/* Always mounted (never unmounted) so the avatar image doesn't re-flicker on nav */}
-          <Link
-            href="/settings"
-            className={cn(hideSettingsIcon && 'invisible pointer-events-none')}
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-all active:scale-95 overflow-hidden ring-2 ring-white shadow-sm">
-              {profile?.avatar_url ? (
-                <SkeletonImage
-                  src={profile.avatar_url}
-                  alt={profile.name || 'User'}
-                  containerClassName="h-full w-full rounded-full"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <HugeiconsIcon icon={User} className="h-4 w-4" />
+              {!hideSettingsIcon && (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => window.location.reload()}
+                    className="justify-start"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-muted-foreground"
+                    >
+                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                    </svg>
+                    {ts('reload')}
+                  </Button>
+                </>
               )}
-            </div>
-          </Link>
+
+              <Link
+                href="/settings"
+                onClick={() => setMoreOpen(false)}
+                className="flex min-h-10 items-center gap-2 rounded-sm px-4 text-sm hover:bg-muted"
+                aria-label={t('Navigation.settings')}
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-all active:scale-95 overflow-hidden ring-2 ring-white shadow-sm">
+                  {profile?.avatar_url ? (
+                    <SkeletonImage
+                      src={profile.avatar_url}
+                      alt={profile.name || 'User'}
+                      containerClassName="h-full w-full rounded-full"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <HugeiconsIcon icon={User} className="h-4 w-4" />
+                  )}
+                </div>
+                {t('Navigation.settings')}
+              </Link>
+            </PopoverContent>
+          </Popover>
         </div>
       </header>
 

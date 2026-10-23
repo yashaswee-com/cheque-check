@@ -20,6 +20,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/components/ui/toast'
 import { useProfile } from '@/hooks/use-profile'
 import { useSettings } from '@/hooks/use-settings'
+import { publicEnv } from '@/lib/env/client'
+import { LoginPhoneSection } from '@/features/auth/components/login-phone-section'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -49,6 +51,7 @@ async function clearPwaCache() {
 export default function ProfilePage() {
   const t = useTranslations('Settings')
   const tc = useTranslations('Common')
+  const tp = useTranslations('PhoneAuth')
   const { profile, updateProfile, isLoading } = useProfile()
   const { handleDeleteProfile } = useSettings()
   const [draftName, setDraftName] = useState<string | null>(null)
@@ -131,7 +134,7 @@ export default function ProfilePage() {
           <Input
             leftIcon={Mail}
             id="profile-email"
-            value={profile?.email ?? ''}
+            value={profile?.email ?? tp('noEmail')}
             readOnly
             disabled
             className="h-14 rounded-sm border-none bg-canvas-parchment dark:bg-surface-tile-1"
@@ -147,6 +150,10 @@ export default function ProfilePage() {
           <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
         </Button>
       </form>
+
+      {publicEnv.NEXT_PUBLIC_PHONE_AUTH_ENABLED === 'true' && (
+        <LoginPhoneSection />
+      )}
 
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-2">

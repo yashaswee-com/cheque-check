@@ -36,8 +36,8 @@ import {
 
 const ChequeStatsChart = dynamic(
   () =>
-    import('@/components/cheque-stats-chart').then(
-      (mod) => mod.ChequeStatsChart,
+    import('@/features/cheques/components/cheque-distribution').then(
+      (mod) => mod.ChequeDistribution,
     ),
   {
     loading: () => <Skeleton className="h-full w-full rounded-lg" />,
@@ -69,24 +69,11 @@ function ReportsContent() {
     filter,
     setFilter,
   } = useCheques(activeBusiness?.id)
-  const {
-    outstanding,
-    issuedCount,
-    receivedCount,
-    clearedCount,
-    bouncedCount,
-  } = useChequeStats(cheques)
+  const { outstanding } = useChequeStats(cheques, profile?.time_zone)
 
   const isLoading = chequesLoading
 
   const currency = profile?.currency || '₹'
-
-  const chartData = [
-    { name: t('issued'), value: issuedCount, color: '#0066cc' },
-    { name: t('received'), value: receivedCount, color: '#2997ff' },
-    { name: t('cleared'), value: clearedCount, color: '#34C759' },
-    { name: t('bounced'), value: bouncedCount, color: '#FF3B30' },
-  ].filter((d) => d.value > 0)
 
   const handleExport = async (format: 'csv' | 'json' | 'pdf' | 'excel') => {
     if (!(await premium.verifyAccess('reports'))) return
@@ -240,20 +227,7 @@ function ReportsContent() {
                 {tr('distribution')}
               </h2>
             </div>
-            <div className="rounded-lg border bg-card p-6 h-[300px] relative">
-              {cheques?.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-sm text-muted-foreground">
-                    {tr('noDataForChart')}
-                  </p>
-                </div>
-              ) : (
-                <ChequeStatsChart
-                  chartData={chartData}
-                  totalCheques={cheques?.length || 0}
-                />
-              )}
-            </div>
+            <ChequeStatsChart cheques={cheques} currency={currency} />
           </div>
 
           {/* List Preview */}

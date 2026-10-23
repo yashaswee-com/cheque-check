@@ -53,9 +53,7 @@ function AvatarImage({
 
   return (
     <>
-      {!loaded && (
-        <Skeleton stagger={false} className="absolute inset-0 rounded-full" />
-      )}
+      {!loaded && <Skeleton className="absolute inset-0 rounded-full" />}
       <img
         ref={imageRef}
         src={imageUrl}

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useFormatter, useTranslations } from 'next-intl'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowRight01Icon, RefreshIcon } from '@hugeicons/core-free-icons'
 import { useProfile } from '@/hooks/use-profile'
@@ -18,8 +18,6 @@ import { isValidE164Phone } from '@/lib/phone'
 import { queryKeys } from '@/lib/query-keys'
 import { cn } from '@/lib/utils'
 import { FEATURE_IDS, PRODUCT_IDS } from '@/features/monetization/constants'
-import { monetizationService } from '@/features/monetization/services/monetization.service'
-import type { Transaction } from '@/features/monetization/repositories/monetization.repository'
 import { getPaymentProductIcon } from '@/features/monetization/lib/payment-product-icons'
 import type { Profile } from '@/types'
 import { usePremiumAccess } from '@/features/monetization/hooks/use-premium-access'
@@ -48,7 +46,7 @@ function FeatureStatus({
 export default function FeaturesPage() {
   const t = useTranslations('Features')
   const tc = useTranslations('Common')
-  const tt = useTranslations('Transactions')
+  const productNames = useTranslations('ProductNames')
   const tp = useTranslations('Premium')
   const premium = usePremiumAccess()
   const format = useFormatter()
@@ -64,16 +62,6 @@ export default function FeaturesPage() {
     getEntitlementState,
   } = useMonetization()
   const { processPayment, isProcessing } = useRazorpay()
-  const transactions = useQuery<Transaction[]>({
-    queryKey: queryKeys.monetization.transactions(),
-    queryFn: () => monetizationService.getTransactions(),
-    refetchInterval: (query) =>
-      query.state.data?.some(
-        (entry) => entry.status === 'created' || entry.status === 'authorized',
-      )
-        ? 15_000
-        : false,
-  })
   const [profilePhone, setProfilePhone] = useState<string>()
   const [saving, setSaving] = useState<string | null>(null)
   const [isSendingTestCall, setIsSendingTestCall] = useState(false)
@@ -97,6 +85,7 @@ export default function FeaturesPage() {
   }
 
   async function saveProfile(key: string, changes: Partial<Profile>) {
+    if (saving !== null) return
     setSaving(key)
     try {
       await updateProfile(changes)
@@ -113,6 +102,7 @@ export default function FeaturesPage() {
   }
 
   async function refreshAccess() {
+    if (isRefreshing) return
     setIsRefreshing(true)
     try {
       await Promise.all([
@@ -124,10 +114,6 @@ export default function FeaturesPage() {
           { queryKey: queryKeys.monetization.quotas() },
           { throwOnError: true },
         ),
-        queryClient.invalidateQueries(
-          { queryKey: queryKeys.monetization.transactions() },
-          { throwOnError: true },
-        ),
       ])
     } catch (error) {
       notifyError(error)
@@ -137,6 +123,7 @@ export default function FeaturesPage() {
   }
 
   async function sendTestCall() {
+    if (isSendingTestCall) return
     setIsSendingTestCall(true)
     try {
       const response = await fetch('/api/notifications/test-voice', {
@@ -162,7 +149,7 @@ export default function FeaturesPage() {
   const addons = [
     {
       id: 'ai',
-      name: t('aiScanner'),
+      name: productNames(PRODUCT_IDS.AI_SCANNER_30D),
       description: t('aiScannerDesc'),
       productId: PRODUCT_IDS.AI_SCANNER_30D,
       topUpProductId: PRODUCT_IDS.AI_SCAN_250,
@@ -173,7 +160,7 @@ export default function FeaturesPage() {
     },
     {
       id: 'voice',
-      name: t('voiceReminder'),
+      name: productNames(PRODUCT_IDS.VOICE_REMINDER_30D),
       description: t('voiceReminderDesc'),
       productId: PRODUCT_IDS.VOICE_REMINDER_30D,
       topUpProductId: PRODUCT_IDS.VOICE_REMINDER_100,
@@ -197,13 +184,15 @@ export default function FeaturesPage() {
         <p className="text-[17px] leading-relaxed text-muted-foreground">
           {t('pageDescription')}
         </p>
-        <a
-          href="#feature-activity"
-          className="inline-flex min-h-11 items-center gap-1 text-sm text-primary hover:underline"
+        <Button
+          variant="outline"
+          size="pill"
+          loading={isRefreshing}
+          onClick={refreshAccess}
         >
-          {t('trackPayments')}{' '}
-          <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-        </a>
+          <HugeiconsIcon icon={RefreshIcon} className="size-4" />
+          {t('refreshStatus')}
+        </Button>
       </header>
 
       {isLoading || isLoadingProfile ? (
@@ -238,7 +227,7 @@ export default function FeaturesPage() {
                   id="lifetime-title"
                   className="text-2xl font-semibold tracking-tight @min-[640px]:text-3xl"
                 >
-                  {t('lifetimePremium')}
+                  {productNames(PRODUCT_IDS.LIFETIME_PREMIUM)}
                 </h2>
                 <p className="max-w-lg text-[17px] leading-relaxed text-muted-foreground">
                   {t('lifetimeAccess')}
@@ -262,6 +251,7 @@ export default function FeaturesPage() {
                       {t('receivingPrice')}
                     </p>
                     <Button
+                      loading={isProcessing}
                       size="pill"
                       className="h-auto min-h-11 w-full whitespace-normal py-3 font-normal"
                       disabled={
@@ -561,6 +551,7 @@ export default function FeaturesPage() {
 
                       {subscribed ? (
                         <Button
+                          loading={isProcessing}
                           size="pill"
                           variant="outline"
                           className="h-auto min-h-11 w-full whitespace-normal py-3 font-normal"
@@ -572,13 +563,11 @@ export default function FeaturesPage() {
                             })
                           }
                         >
-                          {t('topUpOffer', {
-                            count: addon.count,
-                            unit: addon.unit,
-                          })}
+                          {productNames(addon.topUpProductId)} · ₹50
                         </Button>
                       ) : (
                         <Button
+                          loading={isProcessing}
                           size="pill"
                           className="h-auto min-h-11 w-full whitespace-normal py-3 font-normal"
                           disabled={isProcessing}
@@ -688,6 +677,8 @@ export default function FeaturesPage() {
                           {(phoneChanged || needsPhone) && (
                             <Button
                               type="submit"
+                              loading={saving === 'phone'}
+                              loadingText={t('savingPhone')}
                               variant="outline"
                               size="pill"
                               className="w-full font-normal"
@@ -697,14 +688,14 @@ export default function FeaturesPage() {
                                 isSendingTestCall
                               }
                             >
-                              {saving === 'phone'
-                                ? t('savingPhone')
-                                : t('savePhone')}
+                              {t('savePhone')}
                             </Button>
                           )}
                         </form>
                         <div className="space-y-2">
                           <Button
+                            loading={isSendingTestCall}
+                            loadingText={t('sendingTestCall')}
                             variant="outline"
                             size="pill"
                             className="w-full font-normal"
@@ -718,9 +709,7 @@ export default function FeaturesPage() {
                             }
                             onClick={sendTestCall}
                           >
-                            {isSendingTestCall
-                              ? t('sendingTestCall')
-                              : t('sendTestCall')}
+                            {t('sendTestCall')}
                           </Button>
                           <p className="text-xs leading-relaxed text-muted-foreground">
                             {phoneChanged
@@ -741,128 +730,6 @@ export default function FeaturesPage() {
           </section>
         </>
       )}
-
-      <section
-        id="feature-activity"
-        aria-labelledby="activity-title"
-        className="scroll-mt-24 space-y-5 border-t pt-8"
-      >
-        <div className="flex flex-col justify-between gap-3 @min-[640px]:flex-row @min-[640px]:items-center">
-          <div className="space-y-2">
-            <h2
-              id="activity-title"
-              className="text-xl font-semibold tracking-tight"
-            >
-              {t('activityTitle')}
-            </h2>
-            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
-              {t('activityDescription')}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="pill"
-            disabled={isRefreshing || transactions.isFetching}
-            onClick={refreshAccess}
-            className="self-start font-normal"
-          >
-            <HugeiconsIcon
-              icon={RefreshIcon}
-              className={cn(
-                'size-4',
-                isRefreshing && 'motion-safe:animate-spin',
-              )}
-            />{' '}
-            {t('refreshStatus')}
-          </Button>
-        </div>
-        <div aria-live="polite">
-          {transactions.isPending ? (
-            <p role="status" className="text-sm text-muted-foreground">
-              {t('loadingActivity')}
-            </p>
-          ) : transactions.isError ? (
-            <p role="alert" className="text-sm text-destructive">
-              {t('activityFailed')}
-            </p>
-          ) : !transactions.data?.length ? (
-            <p className="rounded-lg bg-canvas-parchment p-5 text-sm text-muted-foreground">
-              {t('noActivity')}
-            </p>
-          ) : (
-            <ul className="divide-y rounded-lg border px-5 @min-[640px]:px-6">
-              {transactions.data.slice(0, 3).map((transaction) => {
-                const name =
-                  transaction.feature_id === FEATURE_IDS.LIFETIME_PREMIUM
-                    ? t('lifetimePremium')
-                    : transaction.feature_id === FEATURE_IDS.AI_SCAN ||
-                        transaction.feature_id === FEATURE_IDS.AI_SCANNER_SUB
-                      ? t('aiScanner')
-                      : t('voiceReminder')
-                return (
-                  <li key={transaction.id} className="space-y-3 py-5">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0 space-y-1">
-                        <p className="text-sm font-semibold">{name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {tt(
-                            transaction.type === 'top_up'
-                              ? 'topUp'
-                              : transaction.type === 'lifetime'
-                                ? 'lifetimePremium'
-                                : 'subscription',
-                          )}{' '}
-                          &middot;{' '}
-                          {format.dateTime(new Date(transaction.created_at), {
-                            dateStyle: 'medium',
-                          })}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className="text-sm tabular-nums">
-                          {format.number(transaction.amount / 100, {
-                            style: 'currency',
-                            currency: transaction.currency,
-                          })}
-                        </span>
-                        <FeatureStatus
-                          active={transaction.status === 'captured'}
-                        >
-                          {tt(transaction.status)}
-                        </FeatureStatus>
-                      </div>
-                    </div>
-                    <p className="text-xs leading-relaxed text-muted-foreground">
-                      {t(
-                        transaction.status === 'captured'
-                          ? 'paymentCapturedHelp'
-                          : transaction.status === 'authorized'
-                            ? 'paymentAuthorizedHelp'
-                            : transaction.status === 'created'
-                              ? 'paymentCreatedHelp'
-                              : transaction.status === 'failed'
-                                ? 'paymentFailedHelp'
-                                : 'paymentRefundedHelp',
-                      )}
-                    </p>
-                    <p className="break-all text-xs text-muted-foreground">
-                      {tt('orderId')}:{' '}
-                      {transaction.razorpay_order_id ?? transaction.id}
-                    </p>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </div>
-        <Link
-          href="/settings/transactions"
-          className="inline-flex min-h-11 items-center gap-1 text-sm text-primary hover:underline"
-        >
-          {t('allTransactions')}{' '}
-          <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-        </Link>
-      </section>
     </div>
   )
 }

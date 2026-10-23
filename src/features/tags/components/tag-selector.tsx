@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowDown01Icon as ChevronDown,
@@ -31,10 +32,13 @@ export function TagSelector({
   businessId,
   value,
   onChange,
-  placeholder = 'Add tags',
+  placeholder,
 }: TagSelectorProps) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
+  const [createError, setCreateError] = useState(false)
+  const creating = useRef(false)
+  const t = useTranslations('SharedUI')
   const { tags, isLoading, createTag, isCreating } = useTags(businessId)
   const selected = tags.filter((tag) => value.includes(tag.id))
 
@@ -48,18 +52,26 @@ export function TagSelector({
 
   const addTag = async () => {
     const trimmedName = name.trim()
-    if (!businessId || !trimmedName) return
-    const tag = await createTag({
-      business_id: businessId,
-      name: trimmedName,
-      color: nextTagColor(tags),
-    })
-    onChange([...value, tag.id])
-    setName('')
+    if (!businessId || !trimmedName || creating.current) return
+    creating.current = true
+    setCreateError(false)
+    try {
+      const tag = await createTag({
+        business_id: businessId,
+        name: trimmedName,
+        color: nextTagColor(tags),
+      })
+      onChange([...value, tag.id])
+      setName('')
+    } catch {
+      setCreateError(true)
+    } finally {
+      creating.current = false
+    }
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover modal open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
           <Button
@@ -75,14 +87,12 @@ export function TagSelector({
             value
               .slice(0, 3)
               .map((id) => (
-                <Skeleton
-                  key={id}
-                  stagger={false}
-                  className="h-6 w-16 rounded-full"
-                />
+                <Skeleton key={id} className="h-6 w-16 rounded-full" />
               ))
           ) : selected.length === 0 ? (
-            <span className="text-muted-foreground">{placeholder}</span>
+            <span className="text-muted-foreground">
+              {placeholder ?? t('addTags')}
+            </span>
           ) : (
             selected.map((tag) => (
               <span
@@ -101,6 +111,8 @@ export function TagSelector({
         />
       </PopoverTrigger>
       <PopoverContent
+        backdrop
+        aria-label={t('addTags')}
         className="w-(--anchor-width) max-w-[calc(100vw-2rem)] p-3"
         align="start"
       >
@@ -110,7 +122,8 @@ export function TagSelector({
               value={name}
               data-testid="tag-selector-create-input"
               onChange={(event) => setName(event.target.value)}
-              placeholder="New tag"
+              placeholder={t('newTag')}
+              aria-label={t('newTag')}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') {
                   event.preventDefault()
@@ -122,28 +135,32 @@ export function TagSelector({
               type="button"
               size="icon"
               onClick={() => void addTag()}
-              disabled={!name.trim() || isCreating}
-              aria-label="Create tag"
+              loading={isCreating}
+              disabled={!businessId || !name.trim() || isCreating}
+              aria-label={t('createTag')}
               data-testid="tag-selector-create-button"
             >
               <HugeiconsIcon icon={Plus} className="h-4 w-4" />
             </Button>
           </div>
+          {createError && (
+            <p role="alert" className="text-xs text-destructive">
+              {t('createTagFailed')}
+            </p>
+          )}
           <div className="h-48 space-y-1 overflow-y-auto">
             {isLoading &&
               Array.from({ length: 4 }, (_, index) => (
                 <div key={index} className="flex items-center gap-2 px-2 py-2">
-                  <Skeleton
-                    stagger={false}
-                    className="size-3 shrink-0 rounded-full"
-                  />
-                  <Skeleton stagger={false} className="h-4 w-24 rounded" />
+                  <Skeleton className="size-3 shrink-0 rounded-full" />
+                  <Skeleton className="h-4 w-24 rounded" />
                 </div>
               ))}
             {tags.map((tag) => (
               <button
                 key={tag.id}
                 type="button"
+                aria-pressed={value.includes(tag.id)}
                 data-testid={`tag-selector-option-${tag.id}`}
                 className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-muted"
                 onClick={() => toggleTag(tag)}
@@ -166,7 +183,7 @@ export function TagSelector({
             ))}
             {!isLoading && tags.length === 0 && (
               <p className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                No tags yet
+                {t('noTags')}
               </p>
             )}
           </div>

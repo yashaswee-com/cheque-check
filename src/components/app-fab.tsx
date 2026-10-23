@@ -5,36 +5,27 @@ import { usePathname } from 'next/navigation'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Add01Icon as Plus } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
-
-// Shell-mounted (outside PageTransition/loading.tsx) so it survives route changes
-// without unmounting/re-fading — create pages render their own DraftSaveFab instead.
-const LIST_FAB_TARGETS: Record<
-  string,
-  { href: string; bottomClassName: string }
-> = {
-  '/': { href: '/cheques/create', bottomClassName: 'bottom-24' },
-  '/cheques': { href: '/cheques/create', bottomClassName: 'bottom-20' },
-  '/parties': { href: '/parties/create', bottomClassName: 'bottom-20' },
-  '/accounts': { href: '/accounts/create', bottomClassName: 'bottom-20' },
-  '/businesses': { href: '/businesses/create', bottomClassName: 'bottom-20' },
-  '/tags': { href: '/tags/create', bottomClassName: 'bottom-6' },
-}
+import { getShellRoute } from '@/lib/navigation-routes'
+import { useSoftwareKeyboard } from '@/hooks/use-software-keyboard'
+import { useTranslations } from 'next-intl'
 
 export function AppFab() {
   const pathname = usePathname()
-  const target = LIST_FAB_TARGETS[pathname]
+  const { createHref } = getShellRoute(pathname)
+  const keyboardOpen = useSoftwareKeyboard()
+  const t = useTranslations('Common')
 
-  if (!target) return null
+  if (!createHref || keyboardOpen) return null
 
   return (
-    <Link href={target.href}>
-      <Button
-        data-testid="app-fab-create"
-        className={`fixed ${target.bottomClassName} right-6 h-16 w-16 rounded-full z-40 border-4 border-white dark:border-zinc-900`}
-        size="icon"
-      >
-        <HugeiconsIcon icon={Plus} className="h-8 w-8" />
-      </Button>
-    </Link>
+    <Button
+      render={<Link href={createHref} />}
+      aria-label={t('add')}
+      data-testid="app-fab-create"
+      className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-6 h-16 w-16 rounded-full z-40 border-4 border-white dark:border-zinc-900"
+      size="icon"
+    >
+      <HugeiconsIcon icon={Plus} className="h-8 w-8" />
+    </Button>
   )
 }

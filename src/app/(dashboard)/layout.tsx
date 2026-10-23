@@ -12,10 +12,10 @@ export default function DashboardLayout({
 }) {
   return (
     <OnboardingCheck>
-      <div className="flex min-h-full flex-col pb-16">
+      <div className="flex min-h-full min-w-0 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))]">
         <ScrollToTop />
         <TopNav />
-        <main className="flex-1 px-4 pt-6 flex flex-col">
+        <main className="min-w-0 flex-1 px-4 pt-6 flex flex-col">
           <PageTransition>{children}</PageTransition>
         </main>
         <AppFab />

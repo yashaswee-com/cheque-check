@@ -48,6 +48,7 @@ import {
 
 import { TagChips } from '@/features/tags/components/tag-chips'
 import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
+import { NativeTools } from '@/features/premium-workspace/components/native-tools'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -315,6 +316,10 @@ export default function BusinessesPage() {
           ))}
         </DataState>
       </div>
+      <NativeTools
+        destination="businesses"
+        businesses={businesses.map(({ id, name }) => ({ id, name }))}
+      />
     </div>
   )
 }

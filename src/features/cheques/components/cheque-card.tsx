@@ -8,7 +8,6 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Tick02Icon as Check,
   Cancel01Icon as X,
-  Delete02Icon as Trash2,
   Image01Icon as ImageIcon,
   MessageQuestionIcon as Message,
 } from '@hugeicons/core-free-icons'
@@ -20,26 +19,13 @@ import { StatusPill } from '@/components/ui/status-pill'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
 import { TextTruncate } from '@/components/ui/text-truncate'
-import dynamic from 'next/dynamic'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useTranslations } from 'next-intl'
-import { useChequeActions } from '@/hooks/use-cheque-actions'
 import {
   isPartySmsEnabled,
   preparePartySms,
 } from '@/features/cheques/lib/notify-party'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
 
-const DeleteConfirmationDialog = dynamic(
-  () =>
-    import('@/components/ui/delete-dialog').then(
-      (mod) => mod.DeleteConfirmationDialog,
-    ),
-  {
-    loading: () => <Skeleton className="h-10 w-full rounded-lg" />,
-    ssr: false,
-  },
-)
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 
 import Link from 'next/link'
@@ -57,7 +43,6 @@ export function ChequeCard({ cheque, onStatusUpdate, tags }: ChequeCardProps) {
   const [swiping, setSwiping] = useState<'clear' | 'bounce' | null>(null)
   const { profile } = useProfile()
   const premium = usePremiumAction()
-  const { deleteCheque } = useChequeActions()
 
   const currency = profile?.currency || '₹'
   const dateFormat = (profile?.date_format || 'dd/MM/yyyy')
@@ -225,21 +210,6 @@ export function ChequeCard({ cheque, onStatusUpdate, tags }: ChequeCardProps) {
             <p className="text-xs text-muted-foreground">
               #{cheque.cheque_number}
             </p>
-            <div className="pointer-events-auto">
-              <DeleteConfirmationDialog
-                title={t('deleteConfirmTitle')}
-                description={t('deleteConfirmDesc')}
-                confirmName={cheque.cheque_number}
-                onDelete={async () => {
-                  deleteCheque(cheque.id)
-                }}
-                trigger={
-                  <button className="text-muted-foreground hover:text-destructive transition-colors">
-                    <HugeiconsIcon icon={Trash2} className="h-3 w-3" />
-                  </button>
-                }
-              />
-            </div>
           </div>
           <StatusPill status={statusLabel as ChequeStatus} />
         </div>

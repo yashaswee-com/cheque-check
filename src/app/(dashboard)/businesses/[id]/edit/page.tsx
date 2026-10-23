@@ -244,9 +244,11 @@ export default function EditBusinessPage() {
             type="submit"
             className="w-full rounded-full h-14 text-lg"
             disabled={isSaving}
+            loading={isSaving}
+            loadingText={tc('saving')}
             data-testid="business-edit-submit-button"
           >
-            {isSaving ? tc('saving') : t('updateBusiness')}{' '}
+            {t('updateBusiness')}{' '}
             <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
           </Button>
 

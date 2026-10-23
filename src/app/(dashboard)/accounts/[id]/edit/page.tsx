@@ -260,9 +260,11 @@ export default function EditAccountPage() {
             type="submit"
             className="w-full rounded-full h-14 text-lg"
             disabled={isSaving}
+            loading={isSaving}
+            loadingText={tc('saving')}
             data-testid="account-edit-submit-button"
           >
-            {isSaving ? tc('saving') : t('updateAccount')}{' '}
+            {t('updateAccount')}{' '}
             <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
           </Button>
 
