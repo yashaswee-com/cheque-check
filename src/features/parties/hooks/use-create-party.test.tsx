@@ -119,6 +119,8 @@ describe('useCreateParty', () => {
     act(() => result.current.form.setValue('contact', '+919876543210'))
     await act(async () => result.current.nextStep())
     expect(result.current.step).toBe(3)
+    await act(async () => result.current.nextStep())
+    expect(result.current.step).toBe(3)
     act(() => result.current.prevStep())
     expect(result.current.step).toBe(2)
   })
@@ -145,6 +147,8 @@ describe('useCreateParty', () => {
     expect(onCreated).toHaveBeenCalledWith(party)
     expect(mocks.draft.finishPublish).toHaveBeenCalledOnce()
     expect(result.current.isSuccess).toBe(true)
+    act(() => result.current.continueAfterSuccess())
+    expect(mocks.draft.goBack).toHaveBeenCalledOnce()
   })
 
   it('publishes an existing draft, assigns the party to a cheque, and redirects', async () => {
@@ -232,5 +236,34 @@ describe('useCreateParty', () => {
     expect(mocks.draft.finishPublish).toHaveBeenCalledOnce()
     expect(result.current.isSuccess).toBe(true)
     expect(result.current.isSaving).toBe(false)
+  })
+
+  it('uses the generic error message for non-Error publication failures', async () => {
+    const { result } = setup({ returnTo: '/parties/new' })
+    mocks.draft.beginPublish.mockResolvedValue('party-draft-3')
+    mocks.publish.mockRejectedValueOnce('service unavailable')
+    setValidParty(result)
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.toastAdd).toHaveBeenCalledWith({
+      title: 'error',
+      description: 'error',
+      type: 'error',
+    })
+    expect(mocks.draft.failPublish).toHaveBeenCalledOnce()
+    expect(result.current.isSaving).toBe(false)
+  })
+
+  it('does not link a cheque draft for a non-draft return destination', async () => {
+    const { result } = setup({ returnTo: '/parties/new' })
+    mocks.draft.beginPublish.mockResolvedValue('party-draft-4')
+    setValidParty(result)
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.updateChequeDraft).not.toHaveBeenCalled()
+    act(() => result.current.continueAfterSuccess())
+    expect(mocks.routerReplace).toHaveBeenCalledWith('/parties/new')
   })
 })

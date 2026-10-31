@@ -52,6 +52,17 @@ afterEach(() => {
 })
 
 describe('useParties', () => {
+  it('has a zero balance while cheque data is unavailable and surfaces party failures', async () => {
+    mocks.getCheques.mockRejectedValueOnce(new Error('cheques offline'))
+    mocks.getParties.mockRejectedValueOnce(new Error('parties offline'))
+    const { result } = setup('b1')
+    expect(result.current.getBalance('p1')).toBe(0)
+    await waitFor(() =>
+      expect(result.current.error?.message).toBe('parties offline'),
+    )
+    expect(result.current.filteredParties).toEqual([])
+    expect(result.current.getBalance('unknown')).toBe(0)
+  })
   it('loads parties and computes pending balances excluding cleared and bounced cheques', async () => {
     const { result } = setup('business-1')
 

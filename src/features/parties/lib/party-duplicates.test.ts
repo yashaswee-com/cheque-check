@@ -2,6 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { findPossiblePartyDuplicates } from './party-duplicates'
 
 describe('findPossiblePartyDuplicates', () => {
+  it('handles absent and unparseable stored contacts without false positives', () => {
+    const rows = [
+      { id: 'p1', name: 'Missing', contact: null },
+      { id: 'p2', name: 'Invalid', contact: 'abc' },
+      { id: 'p3', name: 'Legacy', contact: '1234567' },
+      { id: 'p4', name: 'Legacy', contact: '1234567' },
+    ]
+    expect(findPossiblePartyDuplicates(rows, '', '1234567', 'IN')).toEqual([
+      'Legacy',
+    ])
+    expect(findPossiblePartyDuplicates(rows, ' missing ', 'abc', 'IN')).toEqual(
+      ['Missing'],
+    )
+  })
   const parties = [
     { id: 'p1', name: 'Asha Traders', contact: '+91 98765 43210' },
     { id: 'p2', name: 'Other', contact: '09876543210' },

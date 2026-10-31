@@ -54,12 +54,11 @@ export function useParties(businessId: string | undefined) {
         return sortOrder === 'asc'
           ? a.name.localeCompare(b.name)
           : b.name.localeCompare(a.name)
-      } else if (sortBy === 'balance') {
+      } else {
         const balA = getBalance(a.id)
         const balB = getBalance(b.id)
         return sortOrder === 'asc' ? balA - balB : balB - balA
       }
-      return 0
     })
 
     return result
