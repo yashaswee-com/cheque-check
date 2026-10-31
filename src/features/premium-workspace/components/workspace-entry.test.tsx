@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
 import { WorkspaceEntry } from './workspace-entry'
+import { renderToString } from 'react-dom/server'
 
 vi.mock('@/features/monetization/components/premium-gate', () => ({
   PremiumGate: ({ feature }: { feature: string }) => (
@@ -19,6 +20,15 @@ afterEach(() => {
 })
 
 describe('locked workspace entry context', () => {
+  it('renders a neutral server-side entry before browser hash resolution', () => {
+    const html = renderToString(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <WorkspaceEntry />
+      </NextIntlClientProvider>,
+    )
+    expect(html).toContain('Premium workspace')
+    expect(html).toContain('bulk-import')
+  })
   it.each([
     'party-statements',
     'consolidated-dashboard',

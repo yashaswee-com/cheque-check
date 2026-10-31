@@ -12,17 +12,26 @@ import { TemplatesPanel } from './templates-panel'
 import { FiltersPanel } from './filters-panel'
 import { ReportsPanel } from './reports-panel'
 import { MessagePanel } from './message-panel'
+import { SavedTools } from './saved-tools'
 import type { ChequeRow, SavedTool, WorkspaceContext } from '../types'
 
-const { importRows, bulkStatus, snapshot, applyTool, saveTool, downloadPdf } =
-  vi.hoisted(() => ({
-    importRows: vi.fn(),
-    bulkStatus: vi.fn(),
-    snapshot: vi.fn(),
-    applyTool: vi.fn(),
-    saveTool: vi.fn(),
-    downloadPdf: vi.fn(),
-  }))
+const {
+  importRows,
+  bulkStatus,
+  snapshot,
+  applyTool,
+  saveTool,
+  deleteTool,
+  downloadPdf,
+} = vi.hoisted(() => ({
+  importRows: vi.fn(),
+  bulkStatus: vi.fn(),
+  snapshot: vi.fn(),
+  applyTool: vi.fn(),
+  saveTool: vi.fn(),
+  deleteTool: vi.fn(),
+  downloadPdf: vi.fn(),
+}))
 vi.mock('../service', () => ({
   premiumWorkspaceService: {
     importRows,
@@ -30,6 +39,7 @@ vi.mock('../service', () => ({
     snapshot,
     applyTool,
     saveTool,
+    deleteTool,
   },
 }))
 vi.mock('../statement-pdf', () => ({ downloadStatementPdf: downloadPdf }))
@@ -78,6 +88,18 @@ const run = async (action: () => Promise<unknown>) => {
   await action()
 }
 const common = { businessId: 'b1', context, tools: [], run, busy: false }
+const savedTool: SavedTool = {
+  id: 'tool',
+  user_id: 'u1',
+  business_id: 'b1',
+  kind: 'saved-view',
+  name: 'My view',
+  payload: {},
+  created_at: '2026-10-31',
+  updated_at: '2026-10-31',
+  deleted_at: null,
+  deletion_batch_id: null,
+}
 const wrap = (node: React.ReactNode) =>
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -91,6 +113,234 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('workspace workflows', () => {
+  it('saves, applies and confirms deletion of named tools', async () => {
+    const apply = vi.fn()
+    applyTool.mockResolvedValue({ search: '123' })
+    const tool = savedTool
+    wrap(
+      <SavedTools
+        businessId="b1"
+        kind="saved-view"
+        tools={[tool]}
+        payload={{ status: 'Issued' }}
+        onApply={apply}
+        run={run}
+        busy={false}
+      />,
+    )
+    fireEvent.change(
+      screen.getByLabelText(messages.PremiumWorkspace.toolName),
+      { target: { value: 'New view' } },
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.save }),
+    )
+    await waitFor(() =>
+      expect(saveTool).toHaveBeenCalledWith('b1', 'saved-view', 'New view', {
+        status: 'Issued',
+      }),
+    )
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText(messages.PremiumWorkspace.toolName),
+      ).toHaveValue(''),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.apply }),
+    )
+    await waitFor(() => expect(apply).toHaveBeenCalledWith({ search: '123' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.delete }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.cancel }),
+    )
+    expect(deleteTool).not.toHaveBeenCalled()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.delete }),
+    )
+    fireEvent.click(
+      screen
+        .getAllByRole('button', { name: messages.PremiumWorkspace.delete })
+        .at(-1)!,
+    )
+    await waitFor(() => expect(deleteTool).toHaveBeenCalledWith('tool'))
+    await waitFor(() =>
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument(),
+    )
+  })
+
+  it('edits all filter fields and resets selection, including select-all and confirmation cancel', () => {
+    const changed = vi.fn()
+    wrap(
+      <FiltersPanel
+        {...common}
+        currency="₹"
+        mode="bulk"
+        onFiltersChange={changed}
+      />,
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.selectAll }),
+    )
+    expect(screen.getByRole('checkbox')).toBeChecked()
+    fireEvent.click(screen.getByRole('checkbox'))
+    expect(screen.getByRole('checkbox')).not.toBeChecked()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.selectAll }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: messages.PremiumWorkspace.updateSelected,
+      }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.cancel }),
+    )
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: messages.PremiumWorkspace.clearSelection,
+      }),
+    )
+    expect(screen.getByRole('checkbox')).not.toBeChecked()
+    for (const [label, value] of [
+      [messages.PremiumWorkspace.fields.status, 'Issued'],
+      [messages.PremiumWorkspace.fields.type, 'Outward'],
+      [messages.PremiumWorkspace.fields.party_id, 'p1'],
+      [messages.PremiumWorkspace.from, '2025-01-01'],
+      [messages.PremiumWorkspace.to, '2025-01-02'],
+    ]) {
+      fireEvent.change(screen.getByLabelText(label), { target: { value } })
+    }
+    expect(changed).toHaveBeenLastCalledWith({
+      status: 'Issued',
+      type: 'Outward',
+      party_id: 'p1',
+      from: '2025-01-01',
+      to: '2025-01-02',
+    })
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.reset }),
+    )
+    expect(changed).toHaveBeenLastCalledWith({})
+  })
+
+  it('edits all template fields, shows validation errors and cancels a valid creation', async () => {
+    applyTool.mockResolvedValue({
+      party_id: 'p1',
+      account_id: 'a1',
+      amount: 125,
+    })
+    wrap(
+      <TemplatesPanel
+        {...common}
+        tools={[
+          {
+            ...savedTool,
+            id: 'template',
+            name: 'Recurring',
+            kind: 'cheque-template',
+          },
+        ]}
+      />,
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.apply }),
+    )
+    await waitFor(() =>
+      expect(screen.getByLabelText('Amount')).toHaveValue('125'),
+    )
+    for (const [label, value] of [
+      ['Party', 'p1'],
+      ['Account', 'a1'],
+      ['Direction', 'Outward'],
+      ['Amount', '250'],
+      ['Cheque number', '000003'],
+      ['Cheque date', '2026-10-31'],
+      ['Deposit date', '2026-11-01'],
+      ['Notes', 'Monthly invoice'],
+    ]) {
+      fireEvent.change(screen.getByLabelText(label), { target: { value } })
+    }
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: messages.PremiumWorkspace.createCheque,
+      }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.cancel }),
+    )
+    expect(importRows).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText('Amount'), {
+      target: { value: '-10' },
+    })
+    expect(
+      screen.getByRole('button', {
+        name: messages.PremiumWorkspace.createCheque,
+      }),
+    ).toBeDisabled()
+  })
+
+  it('uses sample message data and applies saved message bodies', async () => {
+    applyTool.mockResolvedValue({ body: 'Hello {party}' })
+    wrap(
+      <MessagePanel
+        {...common}
+        businessName="Acme"
+        currency="₹"
+        tools={[
+          {
+            ...savedTool,
+            id: 'message',
+            name: 'Reminder',
+            payload: { body: '{party} {amount}' },
+            kind: 'message-template',
+          },
+        ]}
+      />,
+    )
+    fireEvent.change(
+      screen.getByLabelText(messages.PremiumWorkspace.previewCheque),
+      { target: { value: '' } },
+    )
+    expect(screen.getByText(/₹1000/)).toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.apply }),
+    )
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText(messages.PremiumWorkspace.messageBody),
+      ).toHaveValue('Hello {party}'),
+    )
+  })
+
+  it('invalidates report snapshots when date boundaries change', () => {
+    wrap(
+      <ReportsPanel
+        {...common}
+        businessName="Acme"
+        businesses={[{ id: 'b1', name: 'Acme' }]}
+        currency="₹"
+        mode="statement"
+      />,
+    )
+    fireEvent.change(screen.getByLabelText('Party'), {
+      target: { value: 'p1' },
+    })
+    fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.from), {
+      target: { value: '2026-10-31' },
+    })
+    fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.to), {
+      target: { value: '2026-10-01' },
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      messages.PremiumWorkspace.dateRangeError,
+    )
+    expect(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.generate }),
+    ).toBeDisabled()
+  })
   it('prefills a recurring cheque without copying its number or dates and requires confirmation to create', async () => {
     wrap(<TemplatesPanel {...common} />)
     fireEvent.change(screen.getByLabelText('Start with a previous cheque'), {

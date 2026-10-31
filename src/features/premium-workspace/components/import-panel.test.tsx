@@ -55,6 +55,27 @@ function upload() {
 }
 
 describe('ImportPanel', () => {
+  it('shows owned reference names and IDs for cheque import', () => {
+    mount({
+      initialKind: 'cheques',
+      context: {
+        cheques: [],
+        parties: [
+          { id: 'p1', name: 'Asha' } as WorkspaceContext['parties'][number],
+        ],
+        accounts: [
+          {
+            id: 'a1',
+            account_name: 'Main',
+            account_number: '1111',
+          } as WorkspaceContext['accounts'][number],
+        ],
+      },
+    })
+    expect(screen.getByText('p1')).toBeInTheDocument()
+    expect(screen.getByText('a1')).toBeInTheDocument()
+    expect(screen.getByText(/Main/)).toBeInTheDocument()
+  })
   it('previews valid rows and requires explicit confirmation to import', async () => {
     mount()
     upload()

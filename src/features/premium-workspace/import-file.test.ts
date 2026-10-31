@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as XLSX from 'xlsx'
-import { readImportFile } from './import-file'
+import { downloadImportSample, readImportFile } from './import-file'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
 
 function fileWithBytes(name: string, content: ArrayBuffer): File {
   const file = new File([content], name)
@@ -13,6 +18,35 @@ function csvFile(text: string): File {
 }
 
 describe('CSV and Excel parsing', () => {
+  it.each(['parties', 'cheques'] as const)(
+    'downloads an import-header sample for %s and releases its URL',
+    (kind) => {
+      let content: Blob | undefined
+      const createObjectURL = vi.fn((blob: Blob) => {
+        content = blob
+        return 'blob:sample'
+      })
+      const revokeObjectURL = vi.fn()
+      vi.stubGlobal(
+        'URL',
+        Object.assign(class extends URL {}, {
+          createObjectURL,
+          revokeObjectURL,
+        }),
+      )
+      const click = vi
+        .spyOn(HTMLAnchorElement.prototype, 'click')
+        .mockImplementation(function (this: HTMLAnchorElement) {
+          expect(this.download).toBe(`${kind}-import.csv`)
+          expect(this.href).toBe('blob:sample')
+        })
+      downloadImportSample(kind)
+      expect(content?.type).toBe('text/csv;charset=utf-8')
+      expect(content?.size).toBeGreaterThan(0)
+      expect(click).toHaveBeenCalledOnce()
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:sample')
+    },
+  )
   it('preserves six-digit cheque numbers and quoted CSV fields', async () => {
     const rows = await readImportFile(
       csvFile(

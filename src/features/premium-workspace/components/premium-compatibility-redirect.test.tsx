@@ -1,4 +1,4 @@
-import { cleanup, render, waitFor } from '@testing-library/react'
+import { act, cleanup, render, waitFor } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
@@ -47,6 +47,54 @@ afterEach(() => {
 })
 
 describe('legacy Premium routes', () => {
+  it('routes message templates to the active business detail', async () => {
+    window.history.replaceState(null, '', '/premium#message-templates')
+    renderEntry()
+    await waitFor(() =>
+      expect(replace).toHaveBeenCalledWith('/businesses/b1#message-templates'),
+    )
+  })
+
+  it('continues to other owned businesses after a context read fails', async () => {
+    window.history.replaceState(
+      null,
+      '',
+      '/premium?partyId=p1#party-statements',
+    )
+    context
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({ parties: [{ id: 'p1' }] })
+    renderEntry()
+    await waitFor(() =>
+      expect(replace).toHaveBeenCalledWith('/parties/p1#party-statements'),
+    )
+  })
+
+  it.each([{ parties: [] }, { parties: [{ id: 'p1' }] }])(
+    'does not redirect after unmount with pending party lookup',
+    async ({ parties }) => {
+      window.history.replaceState(
+        null,
+        '',
+        '/premium?partyId=p1#party-statements',
+      )
+      let resolve!: (value: { parties: { id: string }[] }) => void
+      context
+        .mockImplementationOnce(
+          () =>
+            new Promise((done) => {
+              resolve = done
+            }),
+        )
+        .mockResolvedValue({ parties: [] })
+      const { unmount } = renderEntry()
+      unmount()
+      await act(async () => {
+        resolve({ parties })
+      })
+      expect(replace).not.toHaveBeenCalled()
+    },
+  )
   it('preserves the native destination fragment for cheque tools', async () => {
     window.history.replaceState(null, '', '/premium#saved-views')
     renderEntry()
