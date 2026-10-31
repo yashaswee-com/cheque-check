@@ -88,7 +88,8 @@ async function testVoice() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${adminEnv.SUPABASE_SERVICE_ROLE_KEY}`,
         },
-        body: '{}',
+        body: JSON.stringify({ userId: user.id, jobIds: [jobId] }),
+        signal: AbortSignal.timeout(60000),
       },
     )
 

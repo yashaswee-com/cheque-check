@@ -4,6 +4,45 @@ import { OpsError, unwrap } from '../lib/errors'
 
 export type NotificationHealth =
   Database['public']['Functions']['notification_health']['Returns'][number]
+export type ProviderHealth =
+  Database['public']['Functions']['notification_provider_health']['Returns'][number]
+
+export async function getProviderHealth(
+  db: AdminClient,
+): Promise<ProviderHealth> {
+  const rows = unwrap(
+    await db.rpc('notification_provider_health', {}),
+    'Loading provider capacity health',
+  )
+  const value = rows?.[0]
+  if (
+    !Array.isArray(rows) ||
+    rows.length !== 1 ||
+    !value ||
+    !Number.isFinite(value.starts_per_second) ||
+    value.starts_per_second <= 0 ||
+    value.starts_per_second > 100 ||
+    !Number.isInteger(value.max_in_flight) ||
+    value.max_in_flight < 1 ||
+    value.max_in_flight > 100 ||
+    [value.in_flight, value.expired_slots, value.throttled_total].some(
+      (count) => !Number.isSafeInteger(count) || count < 0,
+    ) ||
+    !Number.isFinite(value.next_admission_wait_seconds) ||
+    value.next_admission_wait_seconds < 0 ||
+    (value.last_throttled_at !== null &&
+      (typeof value.last_throttled_at !== 'string' ||
+        !Number.isFinite(Date.parse(value.last_throttled_at))))
+  ) {
+    throw new OpsError(
+      'The database returned invalid provider capacity health metrics.',
+      {
+        hint: 'Apply the notification provider capacity migration and refresh the PostgREST schema cache.',
+      },
+    )
+  }
+  return value
+}
 
 const countFields = [
   'pending_due',

@@ -11,6 +11,35 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      notification_provider_capacity: {
+        Row: {
+          provider: string
+          starts_per_second: number
+          max_in_flight: number
+          next_start_at: string
+          throttled_total: number
+          last_throttled_at: string | null
+        }
+        Insert: Partial<
+          Database['public']['Tables']['notification_provider_capacity']['Row']
+        > & {
+          provider: string
+          starts_per_second: number
+          max_in_flight: number
+        }
+        Update: Partial<
+          Database['public']['Tables']['notification_provider_capacity']['Row']
+        >
+        Relationships: []
+      }
+      notification_provider_slots: {
+        Row: { claim_token: string; provider: string; expires_at: string }
+        Insert: Database['public']['Tables']['notification_provider_slots']['Row']
+        Update: Partial<
+          Database['public']['Tables']['notification_provider_slots']['Row']
+        >
+        Relationships: []
+      }
       report_export_rows: {
         Row: { job_id: string; position: number; payload: Json }
         Insert: never
@@ -632,6 +661,26 @@ export interface Database {
       }
     }
     Functions: {
+      admit_notification_delivery: {
+        Args: {
+          requested_job: string
+          requested_token: string
+          requested_recipient: string
+        }
+        Returns: Json
+      }
+      notification_provider_health: {
+        Args: Record<string, never>
+        Returns: {
+          starts_per_second: number
+          max_in_flight: number
+          in_flight: number
+          expired_slots: number
+          next_admission_wait_seconds: number
+          throttled_total: number
+          last_throttled_at: string | null
+        }[]
+      }
       claim_report_export: {
         Args: Record<string, never>
         Returns: Database['public']['Tables']['report_export_jobs']['Row'][]

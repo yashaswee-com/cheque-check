@@ -164,6 +164,14 @@ describe('test voice route', () => {
       'https://project.test/functions/v1/notifications-dispatcher',
       expect.objectContaining({ method: 'POST' }),
     )
+    const inserted = mocks.insert.mock.calls[0][0]
+    expect(fetch).toHaveBeenCalledWith(
+      'https://project.test/functions/v1/notifications-dispatcher',
+      expect.objectContaining({
+        body: JSON.stringify({ userId: 'user-1', jobIds: [inserted.id] }),
+        signal: expect.any(AbortSignal),
+      }),
+    )
   })
 
   it('reports exhausted voice quota', async () => {

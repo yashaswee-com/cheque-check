@@ -24,6 +24,7 @@ interface DeliveryMetrics {
   provider_uncertain: number
   reconciliation_required: number
   finalization_retries: number
+  provider_throttled: number
 }
 
 export class DispatcherOrchestrator {
@@ -46,6 +47,7 @@ export class DispatcherOrchestrator {
       provider_uncertain: 0,
       reconciliation_required: 0,
       finalization_retries: 0,
+      provider_throttled: 0,
     }
     let claims = 0
     let stopReason = 'max_jobs'
@@ -60,7 +62,10 @@ export class DispatcherOrchestrator {
         const jobs = await this.db.claimJobs(Math.min(5, remaining), scope)
         claims++
         if (!jobs.length) {
-          stopReason = 'empty_queue'
+          stopReason =
+            results.at(-1)?.status === 'queued'
+              ? 'provider_capacity'
+              : 'empty_queue'
           break
         }
         results.push(
@@ -68,9 +73,20 @@ export class DispatcherOrchestrator {
             jobs.map((job) => this.dispatchSafely(job, metrics)),
           )),
         )
+        const throttled = results
+          .slice(-jobs.length)
+          .some((result) => result.status === 'queued')
         if (jobs.length < Math.min(5, remaining)) {
-          stopReason = 'empty_queue'
+          stopReason = throttled ? 'provider_capacity' : 'empty_queue'
           break
+        }
+        if (throttled && remaining > jobs.length) {
+          // Bound database churn under shared backpressure; never sleep beyond the loop budget.
+          if (Date.now() + 1000 >= deadline) {
+            stopReason = 'budget'
+            break
+          }
+          await new Promise<void>((resolve) => setTimeout(resolve, 1000))
         }
       }
       if (
@@ -91,6 +107,7 @@ export class DispatcherOrchestrator {
         skipped: results.filter((result) => result.status === 'skipped').length,
         failed_jobs: results.filter((result) => result.status === 'failed')
           .length,
+        queued: results.filter((result) => result.status === 'queued').length,
         failed,
         scoped: !!scope,
         stop_reason: failed ? 'error' : stopReason,
@@ -186,10 +203,33 @@ export class DispatcherOrchestrator {
     const to = this.testMode.enabled ? this.testMode.phone : recipient
     // Set before awaiting: a lost database response may already have reserved a credit.
     state.providerStarted = true
-    const hasQuota = await this.db.startDelivery(job, to)
-    if (!hasQuota) {
+    const admission = await this.db.startDelivery(job, to)
+    if (admission.status === 'throttled') {
+      state.providerStarted = false
+      metrics.provider_throttled++
+      return {
+        jobId: job.id,
+        status: 'queued',
+        error: 'Provider capacity unavailable; queued',
+      }
+    }
+    if (admission.status === 'quota_exhausted') {
       state.providerStarted = false
       return this.skip(job, 'Voice reminder quota exhausted')
+    }
+    if (Date.now() >= admission.startBefore) {
+      await this.finalize(
+        job,
+        metrics,
+        'rejected',
+        undefined,
+        'Provider admission expired before request',
+      )
+      return {
+        jobId: job.id,
+        status: 'failed',
+        error: 'Provider admission expired before request',
+      }
     }
 
     metrics.provider_requests++

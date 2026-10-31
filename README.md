@@ -137,8 +137,10 @@ modules or Edge Functions.
 - Tags are loaded for visible cheque IDs. Closed native tools do not fetch a
   workspace; opening a tool enables its complete-context workflow.
 - Notification scheduling checkpoints 200 profiles per SQL batch. Delivery uses
-  two-minute token-owned leases, at most five concurrent provider calls per invocation, a
-  ten-second provider deadline, and bounded multi-batch invocations.
+  two-minute token-owned leases, a shared database admission gate (initially one
+  admission/second and five in-flight requests globally), a ten-second provider
+  deadline, and bounded multi-batch invocations. Throttling requeues without
+  charging credits or consuming retries; manual and sample calls use the same gate.
 - One credit is reserved before a logical reminder's provider request. Acceptance
   settles it once; definitive rejection releases it before retry. Uncertain
   outcomes retain the reservation for reconciliation and are not auto-redelivered.

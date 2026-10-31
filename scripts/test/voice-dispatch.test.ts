@@ -154,7 +154,10 @@ function makeOrchestrator(
     fetchCheques: vi.fn(async () => [
       { id: 'c1', amount: 10, account: { bank: { name: 'HDFC' } } },
     ]),
-    startDelivery: vi.fn(async () => true),
+    startDelivery: vi.fn(async () => ({
+      status: 'started',
+      startBefore: Date.now() + 20000,
+    })),
     finishDelivery: vi.fn(async () => undefined),
     markSkipped: vi.fn(async () => undefined),
     markFailedOrRetry: vi.fn(async () => undefined),
@@ -251,7 +254,7 @@ describe('dispatcher eligibility', () => {
         })
         log.mockClear()
         const skipped = makeOrchestrator(reminder, {
-          startDelivery: async () => false,
+          startDelivery: async () => ({ status: 'quota_exhausted' }),
         })
         await skipped.orchestrator.run(50)
         expect(summary(log)).toMatchObject({
@@ -316,7 +319,10 @@ describe('dispatcher eligibility', () => {
     ],
     ['deleted business', { isBusinessActive: async () => false }],
     ['deleted cheques', { fetchCheques: async () => [] }],
-    ['exhausted quota', { startDelivery: async () => false }],
+    [
+      'exhausted quota',
+      { startDelivery: async () => ({ status: 'quota_exhausted' }) },
+    ],
   ])('skips without calling the provider: %s', async (_name, overrides) => {
     const { orchestrator, twilio, db } = makeOrchestrator(reminder, overrides)
     const [result] = await orchestrator.run(50)
@@ -418,7 +424,7 @@ describe('dispatcher eligibility', () => {
       active++
       peak = Math.max(peak, active)
       await new Promise((resolve) => setTimeout(resolve, 1))
-      return true
+      return { status: 'started', startBefore: Date.now() + 20000 }
     })
     const finishDelivery = vi.fn(async () => {
       active--
@@ -471,13 +477,83 @@ describe('dispatcher eligibility', () => {
   it('skips sample calls when quota is exhausted', async () => {
     const { orchestrator, twilio } = makeOrchestrator(sample, {
       fetchProfile: sampleProfile(true),
-      startDelivery: async () => false,
+      startDelivery: async () => ({ status: 'quota_exhausted' }),
     })
     const [result] = await orchestrator.run(50)
     expect(result.status).toBe('skipped')
     expect(twilio.initiateCall).not.toHaveBeenCalled()
   })
 })
+describe('shared provider backpressure integration', () => {
+  it('reports throttled work as queued without contacting the provider or consuming failure handling', async () => {
+    const { orchestrator, db, twilio } = makeOrchestrator(reminder, {
+      startDelivery: async () => ({ status: 'throttled' }),
+    })
+    const [result] = await orchestrator.run(1)
+    expect(result).toEqual({
+      jobId: JOB,
+      status: 'queued',
+      error: 'Provider capacity unavailable; queued',
+    })
+    expect(twilio.initiateCall).not.toHaveBeenCalled()
+    expect(db.markSkipped).not.toHaveBeenCalled()
+    expect(db.markFailedOrRetry).not.toHaveBeenCalled()
+    expect(db.finishDelivery).not.toHaveBeenCalled()
+  })
+  it('refunds an expired admission as a known non-send rather than calling after its deadline', async () => {
+    const { orchestrator, db, twilio } = makeOrchestrator(reminder, {
+      startDelivery: async () => ({
+        status: 'started',
+        startBefore: Date.now() - 1,
+      }),
+    })
+    expect((await orchestrator.run(1))[0].status).toBe('failed')
+    expect(twilio.initiateCall).not.toHaveBeenCalled()
+    expect(db.finishDelivery).toHaveBeenCalledWith(
+      reminder,
+      'rejected',
+      undefined,
+      'Provider admission expired before request',
+    )
+    expect(db.markFailedOrRetry).not.toHaveBeenCalled()
+  })
+  it('bounds waits and emits explicit backpressure metrics without busy-spinning', async () => {
+    vi.useFakeTimers()
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    try {
+      const { orchestrator, db } = makeOrchestrator(reminder, {
+        claimJobs: vi.fn(async () => Array.from({ length: 5 }, () => reminder)),
+        startDelivery: async () => ({ status: 'throttled' }),
+      })
+      const started = Date.now()
+      const running = orchestrator.run(1000)
+      await vi.runAllTimersAsync()
+      const results = await running
+      expect(Date.now() - started).toBeLessThanOrEqual(40000)
+      expect(db.claimJobs.mock.calls.length).toBeLessThanOrEqual(40)
+      expect(results.every((result) => result.status === 'queued')).toBe(true)
+      const metric = log.mock.calls
+        .map(([value]) => value)
+        .find(
+          (value) =>
+            typeof value === 'string' &&
+            value.startsWith(
+              '{"level":"info","event":"notification.dispatcher.run"',
+            ),
+        )
+      expect(JSON.parse(String(metric))).toMatchObject({
+        queued: results.length,
+        provider_throttled: results.length,
+        provider_requests: 0,
+        stop_reason: 'budget',
+      })
+    } finally {
+      vi.useRealTimers()
+      log.mockRestore()
+    }
+  })
+})
+
 describe('scoped claim migration', () => {
   const sql = readFileSync(
     'supabase\\migrations\\20261021060000_scoped_voice_dispatch.sql',

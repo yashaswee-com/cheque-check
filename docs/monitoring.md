@@ -270,7 +270,8 @@ are one aggregate JSON record per normal completed/failed invocation. Scheduler
 records batches, enqueues, invalid timezones, completion, budget exhaustion and
 duration. Dispatcher records claims, processed/sent/skipped/failed work, provider
 request and accepted/rejected/uncertain counts, reconciliation holds, finalization
-retries, duration, and stop reason (`empty_queue`, `max_jobs`, `budget`, `error`).
+retries, throttled admissions/queued results, duration, and stop reason
+(`empty_queue`, `max_jobs`, `budget`, `provider_capacity`, `error`).
 `provider_duration_ms` sums overlapping provider calls and may exceed invocation
 duration. Provider acceptance is recorded separately from successful persistence.
 An abruptly terminated worker cannot emit a final record; the database health
@@ -381,11 +382,15 @@ with other deployed policies; QA must verify those separately.
   still uses browser memory and can block.
 - Size provider-account throughput explicitly. A 1,000-reminder burst within
   15 minutes needs about 1.11 accepted calls/second before retries. Five calls
-  per invocation is not a global limiter. At ten seconds per call, roughly twenty
+  per invocation are now also gated globally: one admission/second and five
+  in-flight request slots by default. The gate paces database admissions, not
+  exact on-wire request starts or answered-call concurrency. At ten seconds per call, roughly twenty
   jobs fit a 40-second loop; at one invocation/minute that is about 0.33 jobs/second,
-  far below the nominal 200-job cap. Measure prep/database latency and approved
-  provider limits before changing concurrency or adding workers.
+  far below the nominal 200-job cap. Uncertainty holds reduce capacity further.
+  Use `ops notification-provider-health` alongside queue health and measure
+  prep/database latency and approved provider limits before changing concurrency
+  or adding workers. See [shared capacity rollout](notification-system.md#shared-provider-capacity-rollout).
 - Set operational ownership, dashboard filters, alert delivery and retention;
-  observe several representative peaks after rollout. Global provider throttling,
-  hosted load testing, automated reconciliation and production sizing remain
+  observe several representative peaks after rollout. Hosted load testing,
+  provider-side limit verification, automated reconciliation and production sizing remain
   explicit follow-ups, not capabilities this local benchmark certifies.

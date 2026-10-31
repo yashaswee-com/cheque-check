@@ -81,7 +81,7 @@ export interface DispatchSummary {
   processed: number
   results: {
     jobId: string
-    status: 'sent' | 'skipped' | 'failed'
+    status: 'sent' | 'skipped' | 'failed' | 'queued'
     error?: string
     providerMessageId?: string
   }[]

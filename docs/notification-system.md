@@ -126,17 +126,29 @@ refresh `public.notification_time_zones` after PostgreSQL/tzdata upgrades.
    Manual `p_user_id`/`p_job_ids` scopes remain enforced inside the SQL claim.
 2. Check profile, phone, voice preference, business and live cheques; skip
    ineligible jobs using the ownership token, without consuming credits.
-3. Build the message, then `start_notification_delivery` atomically reserves
-   one credit and records that a provider request may begin. A lost reservation
+3. Build the message, then `admit_notification_delivery` atomically checks the
+   shared provider gate, reserves one credit, and records that a request may begin.
+   Initial limits are one admission/second and five request slots globally.
+   Capacity denial returns the job to pending with 15-second backoff, no charge,
+   no provider attempt, and no retry penalty. Dispatcher results say `queued`,
+   not `sent` or `failed`. Workers wait at most one second between throttled batches
+   within the existing 40-second loop budget instead of busy-spinning.
+   A lost reservation
    response is treated conservatively: no provider call and no immediate retry.
-4. Invoke Twilio with a ten-second deadline. A usable accepted Call SID is required.
+4. Begin Twilio only before the admission's 20-second start deadline, then apply
+   a ten-second HTTP deadline. An expired admission is settled as a confirmed
+   non-send/rejection and refunded; no provider call is made.
+   A usable accepted Call SID is required.
    HTTP 4xx rejection is definitive; network errors, malformed acceptance and
    HTTP 5xx are uncertain and must not cause blind redelivery.
 5. `finish_notification_delivery` atomically settles status, quota and audit:
    acceptance charges the reserved credit once; rejection releases it and retries
    after 10 or 30 minutes, with at most three claimed attempts. Repeating the same
    finalization token is idempotent. Database finalization is retried, never the
-   provider request itself.
+   provider request itself. Acceptance/rejection also releases the global request
+   slot transactionally. Uncertain calls/crashed workers conservatively hold slots
+   until their two-minute capacity lease expires or an operator settles a known
+   acceptance/rejection.
 6. Expired unstarted leases are retryable. Started expired leases and uncertain
    provider outcomes become failed/reconciliation-required and retain the credit
    reservation. They are not automatically redelivered.
@@ -144,7 +156,7 @@ refresh `public.notification_time_zones` after PostgreSQL/tzdata upgrades.
 ### Deployment and reconciliation
 
 Pause both notification cron jobs and wait for existing invocations to finish
-before applying the three `20261031` migrations. Existing legacy `processing`
+before applying the initial bounded-read/delivery/scheduler `20261031` migrations. Existing legacy `processing`
 jobs are quarantined as failed because their provider outcomes cannot be inferred.
 Deploy both updated Edge Functions before resuming cron; do not run old workers
 against the new delivery schema. The migrations change both cron schedules to
@@ -161,8 +173,60 @@ manual provider/accounting review.
 A pending reservation temporarily reduces available credits. Rejection refunds
 only the original quota period; it never decrements usage in a newer period.
 Monitor oldest pending age, expired processing leases, uncertain attempts and
-reservation age. Five concurrent calls is an initial limit, not proof of
-10,000-user capacity: tune against provider account limits and measured latency.
+reservation age. The global defaults are conservative, not proof of 10,000-user
+capacity: tune against provider account limits and measured latency.
+
+### Shared provider-capacity rollout
+
+`20261031050000_notification_provider_capacity.sql` installs the service-only
+gate, request-slot leases and read-only `notification_provider_health()` RPC.
+Before applying it, pause dispatch cron and block manual/test dispatch while
+existing invocations drain. Deploy the updated dispatcher and test-call route
+before resuming traffic. The legacy `start_notification_delivery` RPC intentionally
+fails closed; the renamed quota helper is not executable by the service role, so
+old workers cannot bypass capacity limits. Do not deploy old worker code as a
+rollback without coordinating the database contract.
+
+Verify in approved QA that overlapping cron, manual and sample invocations cannot
+bypass pacing or five request slots. Test capacity denial without credit/retry
+loss, all accepted/rejected/uncertain outcomes, terminated workers, stale tokens,
+quota exhaustion and expiry. Local tests apply the actual migration in PGlite;
+PGlite serializes one connection and does **not** prove independent hosted
+transaction contention or provider throughput.
+
+Operators can inspect the limits/occupancy without sending calls:
+
+```sh
+npm run ops -- ops notification-provider-health --env qa --json
+npm run ops -- ops notification-provider-health --env prod --check --json
+```
+
+`--check` exits 1 for expired slot rows; ordinary saturation is informational, not
+an error. Combine with `ops notification-health` to alert on queue delay. The gate
+prunes expired slots on subsequent admissions. `throttled_total` is a cumulative
+count of admission denials (including repeat deferrals), not a unique-user metric.
+No cron/alert delivery is installed by these read-only commands.
+
+Limits reside in the single `notification_provider_capacity` row. Change them
+only after approved provider/QA measurements, e.g. a reviewed service-role SQL
+update of `starts_per_second` and `max_in_flight`; defaults are 1 and 5, with
+schema-validated ranges `(0,100]` and `1..100`. Every worker shares the same row,
+not a process-local counter. Missing configuration fails explicitly.
+
+Pacing governs **database admissions**; network scheduling can shift actual HTTP
+request start times. Slots count admitted/in-progress requests, not ringing or
+answered phone calls, and expired leases cannot prove the remote provider has
+finished an uncertain request. Twilio's account CPS/concurrent-call settings remain
+the final provider-side limits. Clock-synchronized workers must honor the returned
+start deadline; test host clock/latency in QA. The application gate does not claim
+to enforce an exact on-wire CPS or limit the duration of calls.
+
+At five in-flight requests with ten-second latency the rough ceiling is
+0.5 requests/second while active, before database/preparation/settlement work and
+uncertainty holds. A single 40-second cron invocation each minute has additional
+idle time. Measure backlog/delivery SLOs before adding worker ticks or increasing
+limits. There is no hard global queue-size cap or automatic provider reconciliation
+in this phase; durable queued work is delayed, not silently dropped.
 
 ## 6. Sample / test-call feature
 
@@ -182,9 +246,11 @@ works before relying on it.
   (`src/app/api/notifications/test-voice/route.ts`) enqueues a
   `notification_jobs` row with `purpose: 'sample_voice_test'` and a random
   (never-colliding) `idempotency_key`, then immediately invokes the deployed
-  `notifications-dispatcher` function and reads back the job's final status —
+  `notifications-dispatcher` function scoped to this user/job and reads back its status —
   the user gets a real pass/fail result in the UI within a few seconds instead
-  of waiting for the next cron tick.
+  of waiting for the next cron tick when capacity is available. Under global
+  backpressure the existing UI explicitly reports queued; cron later resumes it.
+  A test request never drains unrelated users' reminders.
 - The dispatcher recognizes `purpose === 'sample_voice_test'` and builds a
   **canned test message** ("Hello {name}, this is a test call from Cheque
   Check...") instead of fetching real cheques — see

@@ -45,7 +45,12 @@ export interface DispatchCheque {
 export interface DispatchResult {
   jobId: string
   /** 'sent' = provider accepted the call; it does not prove it was answered. */
-  status: 'sent' | 'skipped' | 'failed'
+  status: 'sent' | 'skipped' | 'failed' | 'queued'
   error?: string
   providerMessageId?: string
 }
+
+export type DeliveryAdmission =
+  | { status: 'started'; startBefore: number }
+  | { status: 'quota_exhausted' }
+  | { status: 'throttled' }

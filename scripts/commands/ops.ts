@@ -33,6 +33,8 @@ import {
 import { searchUsers } from '../domain/users'
 import {
   getNotificationHealth,
+  getProviderHealth,
+  type ProviderHealth,
   notificationHealthAlerts,
   type NotificationHealth,
 } from '../domain/notification-health'
@@ -170,6 +172,39 @@ const notificationHealth = defineAction<{
       result.alerts.forEach((alert) => ctx.ui.warn(alert))
     else
       ctx.ui.success('No queue/scheduler alerts at the configured thresholds.')
+  },
+})
+
+const providerHealth = defineAction<{
+  metrics: ProviderHealth
+  alerts: string[]
+}>({
+  name: 'notification-provider-health',
+  title: 'Inspect shared voice provider capacity',
+  description:
+    'Read-only global admission limits, request slots and throttle counts. --check exits 1 for expired capacity slots.',
+  mutates: false,
+  options: [
+    {
+      flags: '--check',
+      description: 'Exit 1 when expired provider slots remain',
+    },
+  ],
+  examples: [
+    'ops notification-provider-health --env qa --json',
+    'ops notification-provider-health --env prod --check --json',
+  ],
+  async run(ctx, options) {
+    const metrics = await getProviderHealth(ctx.db())
+    const alerts = metrics.expired_slots > 0 ? ['expired_provider_slots'] : []
+    if (options.check && alerts.length) process.exitCode = 1
+    return { metrics, alerts }
+  },
+  render(ctx, result) {
+    ctx.ui.section('Shared voice provider admission capacity')
+    ctx.ui.kv(result.metrics)
+    result.alerts.forEach((alert) => ctx.ui.warn(alert))
+    if (!result.alerts.length) ctx.ui.success('No expired provider slots.')
   },
 })
 
@@ -519,5 +554,13 @@ export const opsGroup: GroupDef = {
   name: 'ops',
   title: 'Ops: doctor, stats, audit log, bulk grants',
   description: 'Health checks, reporting, and batch operations.',
-  actions: [doctor, stats, notificationHealth, audit, bulk, allowlistAdd],
+  actions: [
+    doctor,
+    stats,
+    notificationHealth,
+    providerHealth,
+    audit,
+    bulk,
+    allowlistAdd,
+  ],
 }

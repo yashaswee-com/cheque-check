@@ -181,46 +181,56 @@ Notes:
 `[W]` = writes (goes through the safety gate). Run any command with
 `--help` for its flags and examples.
 
-| Command                       | What it does                                                    |
-| ----------------------------- | --------------------------------------------------------------- |
-| `user find`                   | Search users                                                    |
-| `user show`                   | Snapshot: profile, businesses, premium, quotas, recent payments |
-| `user list-premium`           | Premium / subscription holders (`--feature`, `--status`)        |
-| `premium grant-lifetime` W    | Lifetime Premium                                                |
-| `premium trial` W             | Premium trial for `--days`                                      |
-| `premium extend` W            | Extend any entitlement by `--days`                              |
-| `premium set-expiry` W        | Exact expiry (`--until <date\|never>`)                          |
-| `premium pause` / `resume` W  | Pause or resume an entitlement                                  |
-| `premium cancel` W            | Cancel (keeps the record; access ends)                          |
-| `premium revoke` W            | Revoke immediately                                              |
-| `quota topup` W               | Add Voice Reminders / AI Scans                                  |
-| `quota sub` W                 | Grant or extend the Voice / AI subscription                     |
-| `quota set` W                 | Set limit / used / reset date exactly (corrections)             |
-| `voice trigger-business` W    | Reminder call for one business now                              |
-| `voice trigger-user` W        | Reminder calls for all of one user's due businesses             |
-| `voice sample` W              | Sample test call                                                |
-| `voice diagnose`              | Checklist of why reminders are not happening                    |
-| `voice jobs`                  | List jobs (`--user`, `--status`)                                |
-| `voice jobs-inspect`          | Job details and provider logs                                   |
-| `voice jobs-retry` W          | Failed/skipped/cancelled → pending                              |
-| `voice jobs-cancel` W         | Pending → cancelled                                             |
-| `voice pipeline` W            | Run the scheduler and dispatcher once (all users)               |
-| `payment list`                | Transactions (`--user`, `--status`)                             |
-| `payment reconcile` W         | Fulfil a paid-but-not-granted order (verifies with Razorpay)    |
-| `payment refund` W            | Record a refund and revoke                                      |
-| `account profile` W           | Phone, time zone, language, voice/SMS, reminders per day        |
-| `account magic-link` W        | Email a sign-in or password-reset link                          |
-| `account change-email` W      | Change the login email                                          |
-| `account ban` W               | Ban (`24h`, `7d`, `30d`, `permanent`, `48h`…) or `none`         |
-| `account restore` W           | Restore a soft-deleted business, party, or bank account         |
-| `account rate-limits`         | API rate-limit counters                                         |
-| `account rate-limits-reset` W | Clear them (all, or `--endpoint`)                               |
-| `ops doctor`                  | Env, credentials, target, migration, functions                  |
-| `ops stats`                   | Key numbers                                                     |
-| `ops notification-health`     | Read-only queue/scheduler aggregates and threshold alerts       |
-| `ops audit`                   | Audit log (`--user`, `--action`, `--by`, `--since`)             |
-| `ops bulk` W                  | Apply grants from a CSV                                         |
-| `ops allowlist-add`           | Mark a project as dev on this machine                           |
+| Command                            | What it does                                                          |
+| ---------------------------------- | --------------------------------------------------------------------- |
+| `user find`                        | Search users                                                          |
+| `user show`                        | Snapshot: profile, businesses, premium, quotas, recent payments       |
+| `user list-premium`                | Premium / subscription holders (`--feature`, `--status`)              |
+| `premium grant-lifetime` W         | Lifetime Premium                                                      |
+| `premium trial` W                  | Premium trial for `--days`                                            |
+| `premium extend` W                 | Extend any entitlement by `--days`                                    |
+| `premium set-expiry` W             | Exact expiry (`--until <date\|never>`)                                |
+| `premium pause` / `resume` W       | Pause or resume an entitlement                                        |
+| `premium cancel` W                 | Cancel (keeps the record; access ends)                                |
+| `premium revoke` W                 | Revoke immediately                                                    |
+| `quota topup` W                    | Add Voice Reminders / AI Scans                                        |
+| `quota sub` W                      | Grant or extend the Voice / AI subscription                           |
+| `quota set` W                      | Set limit / used / reset date exactly (corrections)                   |
+| `voice trigger-business` W         | Reminder call for one business now                                    |
+| `voice trigger-user` W             | Reminder calls for all of one user's due businesses                   |
+| `voice sample` W                   | Sample test call                                                      |
+| `voice diagnose`                   | Checklist of why reminders are not happening                          |
+| `voice jobs`                       | List jobs (`--user`, `--status`)                                      |
+| `voice jobs-inspect`               | Job details and provider logs                                         |
+| `voice jobs-retry` W               | Failed/skipped/cancelled → pending                                    |
+| `voice jobs-cancel` W              | Pending → cancelled                                                   |
+| `voice pipeline` W                 | Run the scheduler and dispatcher once (all users)                     |
+| `payment list`                     | Transactions (`--user`, `--status`)                                   |
+| `payment reconcile` W              | Fulfil a paid-but-not-granted order (verifies with Razorpay)          |
+| `payment refund` W                 | Record a refund and revoke                                            |
+| `account profile` W                | Phone, time zone, language, voice/SMS, reminders per day              |
+| `account magic-link` W             | Email a sign-in or password-reset link                                |
+| `account change-email` W           | Change the login email                                                |
+| `account ban` W                    | Ban (`24h`, `7d`, `30d`, `permanent`, `48h`…) or `none`               |
+| `account restore` W                | Restore a soft-deleted business, party, or bank account               |
+| `account rate-limits`              | API rate-limit counters                                               |
+| `account rate-limits-reset` W      | Clear them (all, or `--endpoint`)                                     |
+| `ops doctor`                       | Env, credentials, target, migration, functions                        |
+| `ops stats`                        | Key numbers                                                           |
+| `ops notification-health`          | Read-only queue/scheduler aggregates and threshold alerts             |
+| `ops notification-provider-health` | Shared admission limits, request slots and cumulative throttle counts |
+| `ops audit`                        | Audit log (`--user`, `--action`, `--by`, `--since`)                   |
+| `ops bulk` W                       | Apply grants from a CSV                                               |
+| `ops allowlist-add`                | Mark a project as dev on this machine                                 |
+
+### Provider Capacity Diagnostics
+
+`ops notification-provider-health --check --json` is read-only and exits 1 when
+expired request-slot rows remain. Normal saturation is informational. Use it
+alongside `ops notification-health` for queue-delay alerts; neither command sends
+provider calls or automatically changes limits/reconciles uncertain deliveries.
+See [shared provider capacity](../docs/notification-system.md#shared-provider-capacity-rollout)
+for configuration, migration/deployment order and local-test limitations.
 
 ### Bulk CSV
 

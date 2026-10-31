@@ -1,10 +1,11 @@
-import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { TABLES } from '../../_shared/tables.ts'
 import {
   ClaimedJob,
   DispatchCheque,
   DispatchProfile,
   DispatchScope,
+  DeliveryAdmission,
 } from '../types.ts'
 
 export class DispatcherDatabaseService {
@@ -69,10 +70,13 @@ export class DispatcherDatabaseService {
     return rows
   }
 
-  /** Reserves one unit of quota atomically; false means quota is exhausted. */
-  async startDelivery(job: ClaimedJob, recipient: string): Promise<boolean> {
+  /** Atomically admits a provider request and reserves quota, or requeues without a retry penalty. */
+  async startDelivery(
+    job: ClaimedJob,
+    recipient: string,
+  ): Promise<DeliveryAdmission> {
     const { data, error } = await this.supabase.rpc(
-      'start_notification_delivery',
+      'admit_notification_delivery',
       {
         requested_job: job.id,
         requested_token: job.claim_token,
@@ -80,9 +84,21 @@ export class DispatcherDatabaseService {
       },
     )
     if (error) throw error
-    if (typeof data !== 'boolean')
-      throw new Error('Delivery reservation result was not returned')
-    return data
+    const result: unknown = data
+    if (result && typeof result === 'object' && 'status' in result) {
+      if (result.status === 'quota_exhausted' || result.status === 'throttled')
+        return { status: result.status }
+      if (
+        result.status === 'started' &&
+        'start_before' in result &&
+        typeof result.start_before === 'string'
+      ) {
+        const startBefore = Date.parse(result.start_before)
+        if (Number.isFinite(startBefore))
+          return { status: 'started', startBefore }
+      }
+    }
+    throw new Error('Invalid provider admission result')
   }
 
   /** 'sent' means the provider accepted the call, not that anyone answered. */
