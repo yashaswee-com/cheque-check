@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   routerReplace: vi.fn(),
   toastAdd: vi.fn(),
   useDraftController: vi.fn(),
+  firstIncompletePartyStep: vi.fn(),
   draft: {
     draftId: null as string | null,
     status: 'idle',
@@ -36,7 +37,7 @@ vi.mock('@/features/drafts', () => ({
   partyDraftService: { publish: mocks.publish },
   chequeDraftService: { update: mocks.updateChequeDraft },
   partyDraftToFormValues: vi.fn(),
-  firstIncompletePartyStep: vi.fn(),
+  firstIncompletePartyStep: mocks.firstIncompletePartyStep,
   toPartyDraftFields: vi.fn(),
   draftKeys: {
     list: (entity: string, businessId: string) => [
@@ -95,6 +96,7 @@ beforeEach(() => {
   mocks.useDraftController.mockReturnValue(mocks.draft)
   mocks.draft.draftId = null
   mocks.draft.beginPublish.mockResolvedValue(null)
+  mocks.firstIncompletePartyStep.mockReturnValue(2)
   mocks.create.mockResolvedValue(party)
   mocks.publish.mockResolvedValue(party)
   mocks.updateChequeDraft.mockResolvedValue(undefined)
@@ -191,6 +193,44 @@ describe('useCreateParty', () => {
       type: 'error',
     })
     expect(result.current.isSuccess).toBe(false)
+    expect(result.current.isSaving).toBe(false)
+  })
+
+  it('hydrates the wizard step and creates a new party before returning to a cheque draft', async () => {
+    const returnTo = '/cheques/new?draftId=cheque-draft-2'
+    const onCreated = vi.fn()
+    const { result } = setup({ returnTo, onCreated })
+    const controllerOptions = mocks.useDraftController.mock.calls[0][0]
+    act(() => controllerOptions.onHydrated({ id: 'party-draft-1' }))
+    expect(result.current.step).toBe(2)
+    setValidParty(result)
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.create).toHaveBeenCalledOnce()
+    expect(mocks.publish).not.toHaveBeenCalled()
+    expect(onCreated).toHaveBeenCalledWith(party)
+    expect(mocks.updateChequeDraft).toHaveBeenCalledWith('cheque-draft-2', {
+      party_id: party.id,
+    })
+    expect(result.current.isSuccess).toBe(true)
+    act(() => result.current.continueAfterSuccess())
+    expect(mocks.routerReplace).toHaveBeenCalledWith(returnTo)
+  })
+
+  it('publishes a party draft without a return destination and marks the workflow complete', async () => {
+    const { result } = setup()
+    mocks.draft.beginPublish.mockResolvedValue('party-draft-1')
+    setValidParty(result)
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.publish).toHaveBeenCalledWith(
+      'party-draft-1',
+      expect.objectContaining({ name: 'Acme Traders' }),
+    )
+    expect(mocks.draft.finishPublish).toHaveBeenCalledOnce()
+    expect(result.current.isSuccess).toBe(true)
     expect(result.current.isSaving).toBe(false)
   })
 })

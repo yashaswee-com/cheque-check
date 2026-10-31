@@ -57,4 +57,15 @@ describe('party draft tags', () => {
       ),
     )
   })
+
+  it('retains a failed hydration and refuses to overwrite links during flush', async () => {
+    const failure = new Error('Tag links unavailable')
+    getForEntity.mockRejectedValueOnce(failure)
+    const { result } = renderHook(() => usePartyDraftTags('party-draft'))
+
+    await expect(result.current.flush('party-draft')).rejects.toBe(failure)
+    act(() => result.current.setTagIds(['tag-1']))
+    await expect(result.current.flush('party-draft')).rejects.toBe(failure)
+    expect(syncForEntity).not.toHaveBeenCalled()
+  })
 })
