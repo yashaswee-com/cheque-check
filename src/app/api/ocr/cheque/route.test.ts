@@ -66,6 +66,33 @@ beforeEach(() => {
 })
 
 describe('OCR shared contracts and client', () => {
+  it('rejects invalid JSON before authentication', async () => {
+    const response = await POST(
+      new Request('https://app.test/api/ocr/cheque', {
+        method: 'POST',
+        body: '{broken',
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: 'Invalid JSON body.' })
+    expect(mocks.getUser).not.toHaveBeenCalled()
+  })
+
+  it('maps a missing signed private image to not found', async () => {
+    mocks.createSignedUrl.mockResolvedValueOnce({
+      data: null,
+      error: new Error('missing'),
+    })
+    const response = await POST(
+      request({
+        imageUrl: buildPrivateMediaUrl(PRIVATE_CHEQUE_BUCKET, 'u1/missing.png'),
+      }),
+    )
+    expect(response.status).toBe(404)
+    expect(await response.json()).toEqual({ error: 'Cheque image not found.' })
+    expect(mocks.processImage).not.toHaveBeenCalled()
+  })
   it('keeps the typed quota arguments aligned with the committed migration', () => {
     const args: Database['public']['Functions']['consume_user_quota']['Args'] =
       {

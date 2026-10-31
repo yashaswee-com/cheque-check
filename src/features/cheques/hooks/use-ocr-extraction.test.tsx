@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   toastAdd: vi.fn(),
   toastClose: vi.fn(),
   loggerError: vi.fn(),
+  translate: (key: string) => key,
 }))
 
 vi.mock('@/lib/monitoring/telemetry', () => ({
@@ -34,7 +35,8 @@ vi.mock('@/lib/logger', () => ({
   logger: { error: mocks.loggerError },
 }))
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => key,
+  // next-intl translators are referentially stable; the hook's effect depends on them.
+  useTranslations: () => mocks.translate,
 }))
 
 const response = (data: unknown, ok = true, status = 200) =>
@@ -321,5 +323,57 @@ describe('useOcrExtraction', () => {
 
     await act(async () => result.current.extractData(''))
     expect(mocks.monitoredFetch).toHaveBeenCalledOnce()
+  })
+
+  it('matches an outward account by name when the extracted account number is absent', async () => {
+    mocks.monitoredFetch.mockResolvedValue(
+      response(
+        extraction({
+          account_name: 'Acme Current',
+          account_number: null,
+        }),
+      ),
+    )
+    const { result, setValue } = setup()
+
+    await act(async () => result.current.extractData('/scan-by-name.png'))
+
+    expect(setValue).toHaveBeenCalledWith('account_id', 'account-1')
+    expect(result.current.unmatchedEntities).toBeNull()
+  })
+
+  it('uses the generic status message when an error response body cannot be read', async () => {
+    mocks.monitoredFetch.mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: vi.fn().mockRejectedValue(new Error('Invalid JSON')),
+    })
+    const { result } = setup()
+
+    await act(async () => result.current.extractData('/broken-response.png'))
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      'OCR Error',
+      expect.objectContaining({ message: 'Failed to extract data (503)' }),
+    )
+    expect(result.current.isExtracting).toBe(false)
+  })
+
+  it('extracts an image URL supplied by navigation and ignores inline creation without a target', async () => {
+    const { result } = setup({ imageUrlParam: '/from-navigation.png' })
+
+    await waitFor(() =>
+      expect(mocks.monitoredFetch).toHaveBeenCalledWith(
+        '/api/ocr/cheque',
+        expect.objectContaining({
+          body: JSON.stringify({ imageUrl: '/from-navigation.png' }),
+        }),
+      ),
+    )
+    await waitFor(() => expect(result.current.isExtracting).toBe(false))
+    expect(mocks.monitoredFetch).toHaveBeenCalledOnce()
+    await act(async () => result.current.handleInlineCreate())
+    expect(mocks.createParty).not.toHaveBeenCalled()
+    expect(mocks.createAccount).not.toHaveBeenCalled()
   })
 })
