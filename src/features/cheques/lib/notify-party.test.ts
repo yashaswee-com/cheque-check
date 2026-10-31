@@ -58,6 +58,54 @@ describe('notify-party', () => {
     ).toContain('Cheque #123456')
   })
 
+  it('offers an authorized action and rechecks access when clicked', async () => {
+    mocks.party.mockResolvedValue({ name: 'Acme', contact: '+919876543210' })
+    const action = await buildNotifyPartyAction(
+      { ...cheque, party_id: 'p1' },
+      null,
+      'Notify',
+      true,
+      'Access required',
+    )
+    expect(action?.children).toBe('Notify')
+    action?.onClick()
+    await vi.waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: 'Access required',
+          type: 'info',
+        }),
+      ),
+    )
+    expect(mocks.party).toHaveBeenCalledWith('p1')
+  })
+
+  it('skips parties without a phone and reports failed party lookups', async () => {
+    mocks.party.mockResolvedValueOnce({ name: 'Acme', contact: '' })
+    await expect(
+      buildNotifyPartyAction(
+        { ...cheque, party_id: 'p1' },
+        null,
+        'Notify',
+        true,
+      ),
+    ).resolves.toBeUndefined()
+    mocks.party.mockRejectedValueOnce(new Error('Party unavailable'))
+    await expect(
+      buildNotifyPartyAction(
+        { ...cheque, party_id: 'p1' },
+        null,
+        'Notify',
+        true,
+      ),
+    ).resolves.toBeUndefined()
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: 'Notify',
+      description: 'Party unavailable',
+      type: 'error',
+    })
+  })
+
   it('encodes a phone number and message as an SMS link', () => {
     expect(buildSmsLink('+919876543210', 'Cheque ready')).toBe(
       'sms:+919876543210?body=Cheque%20ready',
