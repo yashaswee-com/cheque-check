@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { transactionProductId } from './transaction-product'
 import { ALL_PRODUCT_IDS } from '../constants'
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import english from '../../../../messages/en.json'
 import hindi from '../../../../messages/hi.json'
 import hinglish from '../../../../messages/hi-en.json'
@@ -57,7 +58,7 @@ describe('exact payment product labels', () => {
   })
   it('only updates catalog display names in the forward migration', () => {
     const migration = readFileSync(
-      'supabase\\migrations\\20261021040000_product_names.sql',
+      join('supabase', 'migrations', '20261021040000_product_names.sql'),
       'utf8',
     )
     expect(migration).toContain(

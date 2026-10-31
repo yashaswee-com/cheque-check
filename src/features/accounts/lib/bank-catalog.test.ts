@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { execFileSync } from 'node:child_process'
+import { join } from 'node:path'
 import catalog from '../../../../supabase/reference/banks.json'
 import { bankNameKey } from './bank-name'
 
@@ -59,7 +60,7 @@ describe('dated RBI bank catalog', () => {
     expect(() =>
       execFileSync(
         process.execPath,
-        ['scripts\\generate-bank-seed.mjs', '--check'],
+        [join('scripts', 'generate-bank-seed.mjs'), '--check'],
         { stdio: 'pipe' },
       ),
     ).not.toThrow()

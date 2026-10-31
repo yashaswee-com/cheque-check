@@ -1,12 +1,13 @@
 // Structural regression checks complement (not replace) applying the migration to local Postgres.
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import en from '../../../messages/en.json'
 import hiEn from '../../../messages/hi-en.json'
 import hi from '../../../messages/hi.json'
 
 const sql = readFileSync(
-  'supabase\\migrations\\20261017030000_premium_workspace.sql',
+  join('supabase', 'migrations', '20261017030000_premium_workspace.sql'),
   'utf8',
 )
 

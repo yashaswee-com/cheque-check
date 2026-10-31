@@ -13,7 +13,11 @@ let Service: new (client: unknown) => Service
 beforeAll(async () => {
   const url = pathToFileURL(
     resolve(
-      'supabase\\functions\\notifications-dispatcher\\services\\database.service.ts',
+      'supabase',
+      'functions',
+      'notifications-dispatcher',
+      'services',
+      'database.service.ts',
     ),
   ).href
   ;({ DispatcherDatabaseService: Service } = await import(

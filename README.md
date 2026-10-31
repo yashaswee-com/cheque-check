@@ -289,6 +289,10 @@ Every pull request and push to `main` runs `.github/workflows/quality.yml`:
 6. High/critical production dependency audit
 7. Production build
 
+Tests that read repository files or launch scripts use `node:path` helpers
+instead of hard-coded Windows separators so `npm test` works on Windows and
+the Ubuntu GitHub Actions runners.
+
 The workflow also starts Supabase and runs `supabase db reset` to verify that
 all migrations and seed data apply to a clean database.
 

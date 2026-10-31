@@ -556,7 +556,11 @@ describe('shared provider backpressure integration', () => {
 
 describe('scoped claim migration', () => {
   const sql = readFileSync(
-    'supabase\\migrations\\20261021060000_scoped_voice_dispatch.sql',
+    resolve(
+      'supabase',
+      'migrations',
+      '20261021060000_scoped_voice_dispatch.sql',
+    ),
     'utf8',
   )
   it('enforces the scope inside the claim query', () => {

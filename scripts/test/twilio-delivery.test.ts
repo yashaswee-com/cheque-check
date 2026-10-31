@@ -11,7 +11,7 @@ interface Provider {
 let provider: Provider
 beforeAll(async () => {
   const url = pathToFileURL(
-    resolve('supabase\\functions\\_shared\\twilio-voice.service.ts'),
+    resolve('supabase', 'functions', '_shared', 'twilio-voice.service.ts'),
   ).href
   const edgeModule = await import(/* @vite-ignore */ url)
   provider = new edgeModule.TwilioVoiceService({

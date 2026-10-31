@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { PGlite } from '@electric-sql/pglite'
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 const A = '11111111-1111-4111-8111-111111111111'
@@ -49,13 +50,13 @@ describe('bank catalog SQL', () => {
     `)
     await db.exec(
       readFileSync(
-        'supabase\\migrations\\20261021030000_bank_catalog.sql',
+        join('supabase', 'migrations', '20261021030000_bank_catalog.sql'),
         'utf8',
       ),
     )
     await db.exec(
       readFileSync(
-        'supabase\\migrations\\20261021030100_seed_bank_catalog.sql',
+        join('supabase', 'migrations', '20261021030100_seed_bank_catalog.sql'),
         'utf8',
       ),
     )
