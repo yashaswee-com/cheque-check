@@ -143,6 +143,15 @@ describe('EditableAvatar', () => {
     expect(mocks.uploadAvatar).not.toHaveBeenCalled()
   })
 
+  it('opens the file picker when requesting a new avatar', () => {
+    openEditor()
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]')
+    if (!input) throw new Error('Avatar file input missing')
+    const click = vi.spyOn(input, 'click')
+    fireEvent.click(screen.getByRole('button', { name: 'uploadNew' }))
+    expect(click).toHaveBeenCalledOnce()
+  })
+
   it('deletes an existing avatar only through its callback', async () => {
     const onDelete = vi.fn().mockResolvedValue(undefined)
     openEditor({ imageUrl: '/avatar.png', onDelete })
@@ -159,6 +168,14 @@ describe('EditableAvatar', () => {
       }),
     )
     expect(mocks.uploadAvatar).not.toHaveBeenCalled()
+  })
+
+  it('does not offer deletion when no delete callback is provided', () => {
+    openEditor({ imageUrl: '/avatar.png' })
+    expect(
+      screen.queryByRole('button', { name: 'remove' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Asha' })).toBeInTheDocument()
   })
 
   it('notifies deletion failures and permits another attempt', async () => {

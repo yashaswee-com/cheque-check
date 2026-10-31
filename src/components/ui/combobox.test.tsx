@@ -46,6 +46,14 @@ it('selects and clears existing options', async () => {
   expect(change).toHaveBeenLastCalledWith('')
 })
 
+it('works without an optional test identifier', async () => {
+  const change = vi.fn()
+  render(<Combobox options={options} onValueChange={change} />)
+  fireEvent.click(screen.getByRole('button'))
+  fireEvent.click((await screen.findByText('Savings')).closest('[cmdk-item]')!)
+  expect(change).toHaveBeenCalledWith('savings')
+})
+
 it('creates a trimmed new option and resets the query when dismissed', async () => {
   const create = vi.fn()
   render(

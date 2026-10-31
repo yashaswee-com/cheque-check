@@ -97,4 +97,17 @@ describe('Button pending state', () => {
     expect(screen.getByRole('button', { name: 'Export' })).toBeDisabled()
     expect(screen.getAllByText('Export')).toHaveLength(1)
   })
+
+  it('keeps the end-position spinner decorative when idle', () => {
+    render(
+      <Button loading={false} spinnerPosition="end">
+        Export
+      </Button>,
+    )
+    expect(screen.getByRole('button', { name: 'Export' })).toBeEnabled()
+    expect(screen.getByRole('button').querySelector('svg')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    )
+  })
 })

@@ -73,3 +73,26 @@ it('uses the profile country on the server without a browser timezone', () => {
   )
   expect(html).toContain('+91')
 })
+
+it('does not normalize an invalid legacy value and honors a disabled input', () => {
+  const change = vi.fn()
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <PhoneInput value="not a phone" onChange={change} disabled />
+    </NextIntlClientProvider>,
+  )
+  expect(change).not.toHaveBeenCalled()
+  expect(screen.getByRole('textbox')).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Select country' })).toBeDisabled()
+})
+
+it('keeps an unset phone value empty without reporting an edit', () => {
+  const change = vi.fn()
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <PhoneInput onChange={change} />
+    </NextIntlClientProvider>,
+  )
+  expect(screen.getByRole('textbox')).toHaveValue('')
+  expect(change).not.toHaveBeenCalled()
+})

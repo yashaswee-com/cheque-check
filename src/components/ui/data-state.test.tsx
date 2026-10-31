@@ -66,6 +66,19 @@ describe('DataState', () => {
     expect(screen.getByText('Records')).toBeInTheDocument()
   })
 
+  it('uses the default no-results state when no custom fallback is supplied', () => {
+    render(
+      <DataState allData={[1]} data={[]}>
+        Records
+      </DataState>,
+    )
+    expect(screen.getByText('noRecordsFound')).toBeInTheDocument()
+    expect(screen.getByText('noResultsMatch')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'clearAllFilters' }),
+    ).not.toBeInTheDocument()
+  })
+
   it.each([
     { isUnauthorized: true, unauthorizedState: <p>Custom</p> },
     { isError: true, errorState: <p>Custom</p> },

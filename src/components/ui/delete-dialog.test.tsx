@@ -105,6 +105,27 @@ describe('DeleteConfirmationDialog', () => {
     expect(onDelete).toHaveBeenCalledTimes(2)
   })
 
+  it('stringifies non-Error deletion failures for the browser alert', async () => {
+    const onDelete = vi.fn().mockRejectedValue('permission denied')
+    const alert = vi.fn()
+    vi.stubGlobal('alert', alert)
+    render(
+      <DeleteConfirmationDialog
+        open
+        title="Delete"
+        description="Permanent"
+        confirmName="Main"
+        onDelete={onDelete}
+      />,
+    )
+    fireEvent.change(screen.getByLabelText('typeToConfirm Main'), {
+      target: { value: 'Main' },
+    })
+    fireEvent.click(screen.getByTestId('delete-dialog-confirm-button'))
+    await waitFor(() => expect(alert).toHaveBeenCalledWith('permission denied'))
+    expect(onDelete).toHaveBeenCalledOnce()
+  })
+
   it('supports an uncontrolled trigger and closes after successful deletion', async () => {
     render(
       <DeleteConfirmationDialog

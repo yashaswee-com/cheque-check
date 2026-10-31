@@ -102,4 +102,15 @@ describe('ErrorView', () => {
     )
     expect(writeText).toHaveBeenCalledExactlyOnceWith('safe-reference')
   })
+
+  it('does not announce success when copying the reference fails', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('clipboard denied'))
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    render(<ErrorView supportReference="safe-reference" />)
+    fireEvent.click(screen.getByRole('button', { name: 'copyReference' }))
+    await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
+    expect(
+      screen.getByRole('button', { name: 'copyReference' }),
+    ).toBeInTheDocument()
+  })
 })

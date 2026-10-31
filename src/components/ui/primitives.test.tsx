@@ -53,6 +53,9 @@ import {
   SelectValue,
 } from './select'
 import { EntityAvatar } from './entity-avatar'
+import { EmptyState } from './empty-state'
+import { TextTruncate } from './text-truncate'
+import { Tag01Icon } from '@hugeicons/core-free-icons'
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/cheques' }))
 beforeEach(() => {
@@ -210,6 +213,60 @@ it('renders a command dialog with shortcut hints', () => {
     'data-slot',
     'command-shortcut',
   )
+})
+
+it('renders an empty-state fallback action without a destination', () => {
+  wrap(
+    <EmptyState
+      title="No items"
+      action={{ label: 'Add item' }}
+      data-testid="empty-state"
+    />,
+  )
+  expect(screen.getByTestId('empty-state')).toHaveTextContent('No items')
+  expect(screen.getByRole('button', { name: 'Add item' })).toBeEnabled()
+})
+
+it('supports empty-state illustrations, icons, descriptions and actions', () => {
+  const action = vi.fn()
+  const { rerender, container } = render(
+    <EmptyState
+      title="No tags"
+      description="Create your first tag"
+      icon={Tag01Icon}
+      action={{ label: 'Create tag', onClick: action }}
+    />,
+  )
+  expect(screen.getByText('Create your first tag')).toBeInTheDocument()
+  expect(container.querySelector('svg')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Create tag' }))
+  expect(action).toHaveBeenCalledOnce()
+
+  rerender(
+    <EmptyState
+      title="No tags"
+      illustration={<span>Tag illustration</span>}
+      action={{ label: 'Open tags', href: '/tags' }}
+    />,
+  )
+  expect(screen.getByText('Tag illustration')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Open tags' })).toHaveAttribute(
+    'href',
+    '/tags',
+  )
+})
+
+it('truncates long text and preserves its full value in the title', () => {
+  render(<TextTruncate text="A long cheque description" maxLength={10} />)
+  expect(screen.getByText('A long che...')).toHaveAttribute(
+    'title',
+    'A long cheque description',
+  )
+})
+
+it('renders no element for empty text', () => {
+  const { container } = render(<TextTruncate text="" maxLength={10} />)
+  expect(container).toBeEmptyDOMElement()
 })
 
 it('selects an option in a grouped select', async () => {

@@ -1,6 +1,7 @@
 import { createRef } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { renderToString } from 'react-dom/server'
 import { Input } from './input'
 
 const speech = vi.hoisted(() => ({
@@ -33,11 +34,33 @@ describe('Input', () => {
     expect(onChange).toHaveBeenCalledOnce()
   })
 
+  it('forwards callback refs', () => {
+    const ref = vi.fn()
+    render(<Input ref={ref} aria-label="Name" />)
+    expect(ref).toHaveBeenCalledWith(
+      screen.getByRole('textbox', { name: 'Name' }),
+    )
+  })
+
+  it('renders the server snapshot without browser speech state', () => {
+    expect(renderToString(<Input aria-label="Search" />)).toContain(
+      'aria-label="Search"',
+    )
+  })
+
   it.each(['password', 'number', 'email', 'date'])(
     'does not offer speech for %s inputs',
     (type) => {
       render(<Input type={type} />)
       expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    },
+  )
+
+  it.each(['text', 'search', 'url'])(
+    'offers speech recognition for %s inputs',
+    async (type) => {
+      render(<Input type={type} />)
+      expect(await screen.findByRole('button')).toBeInTheDocument()
     },
   )
 
