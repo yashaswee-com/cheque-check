@@ -79,6 +79,25 @@ afterAll(async () => {
 })
 
 describe('PostgreSQL lifecycle migrations', () => {
+  it('creates only private media buckets without legacy public policies on a clean database', async () => {
+    expect(
+      (await db.query('SELECT id, public FROM storage.buckets ORDER BY id'))
+        .rows,
+    ).toEqual([
+      { id: 'private-avatars', public: false },
+      { id: 'private-cheque-images', public: false },
+    ])
+    expect(
+      (
+        await db.query(
+          `SELECT policyname FROM pg_policies WHERE schemaname = 'storage'
+            AND policyname IN ('Public Access', 'Avatar Public Access',
+              'Authenticated users can upload cheque images', 'Authenticated users can upload avatars',
+              'Users can update their avatars', 'Users can delete their avatars')`,
+        )
+      ).rows,
+    ).toEqual([])
+  })
   it('enforces closed sets without silently replacing unknown values', async () => {
     await expect(
       db.exec(`UPDATE profiles SET language = 'xx' WHERE user_id = '${owner}'`),

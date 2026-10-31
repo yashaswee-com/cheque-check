@@ -43,19 +43,17 @@ Do not run `--delete-source` without verified backups. If copy-only mode was
 already used, remove only verified, unreferenced legacy objects through the
 Supabase storage inventory.
 
-After confirming both legacy buckets are empty, apply
-`20261019000000_retire_legacy_public_media_buckets.sql` (for example, with
-`npx supabase db push`). The migration removes the old public bucket records
-and policies, and fails without deleting anything if either bucket still
-contains objects. The supported storage buckets are then only
-`private-avatars` and `private-cheque-images`.
+The deployed legacy buckets have already been removed. Clean database resets no
+longer create those buckets or their public policies; the historical schema
+migrations still add the required image and avatar columns. The obsolete legacy
+bucket retirement migration has been removed.
 
-The retirement migration locks the Storage tables while checking emptiness,
-then temporarily opts into Supabase's protected SQL deletion for the two empty
-bucket records. It restores the previous `storage.allow_delete_query` setting
-immediately afterward; objects are never deleted by this migration. No global
-Storage configuration change or trigger removal is required, including during
-a clean QA database reset.
+If another existing environment still has legacy buckets, verify migration and
+backups before removing the empty buckets through the Supabase Storage API or
+dashboard and retiring their old policies. Editing historical migrations does not
+change already-applied environments.
+
+The supported media buckets are `private-avatars` and `private-cheque-images`.
 
 ## Verification
 
