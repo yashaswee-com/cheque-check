@@ -11,8 +11,24 @@ export const queryKeys = {
     all: () => ['businesses'] as const,
     detail: (id: string | undefined) => ['business', id] as const,
     allCheques: () => ['all-businesses-cheques'] as const,
+    summaries: (today?: string) =>
+      today
+        ? (['business-cheque-summaries', today] as const)
+        : (['business-cheque-summaries'] as const),
   },
   cheques: {
+    summaries: (businessId?: string) =>
+      ['cheque-summaries', businessId] as const,
+    summary: (
+      businessId: string | undefined,
+      today: string,
+      includeInward: boolean,
+      range: import('@/features/cheques/lib/date-range').ChequeDateRange,
+    ) => ['cheque-summaries', businessId, today, includeInward, range] as const,
+    pages: (businessId: string | undefined) =>
+      ['cheque-pages', businessId] as const,
+    page: (request: import('@/types/cheque-list').ChequeListRequest) =>
+      ['cheque-pages', request.businessId, request] as const,
     list: (businessId: string | undefined) => ['cheques', businessId] as const,
     detail: (id: string | undefined) => ['cheque', id] as const,
     numberConflict: (
@@ -50,8 +66,14 @@ export const queryKeys = {
   },
   entityTagMap: {
     all: () => ['entity-tag-map'] as const,
-    forBusiness: (businessId: string | null | undefined, entityType: string) =>
-      ['entity-tag-map', businessId, entityType] as const,
+    forBusiness: (
+      businessId: string | null | undefined,
+      entityType: string,
+      entityIds?: readonly string[],
+    ) =>
+      entityIds
+        ? (['entity-tag-map', businessId, entityType, entityIds] as const)
+        : (['entity-tag-map', businessId, entityType] as const),
   },
   drafts: {
     list: (entity: DraftEntity, businessId: string | undefined) =>

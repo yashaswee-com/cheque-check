@@ -23,6 +23,9 @@ const row: ChequeWithRelations = {
 
 function makeRepository(overrides: Partial<IChequeRepository> = {}) {
   return {
+    getPage: vi.fn(),
+    getBusinessSummaries: vi.fn(),
+    getSummary: vi.fn(),
     getAll: vi.fn().mockResolvedValue([row]),
     getById: vi.fn().mockResolvedValue(row),
     create: vi.fn().mockResolvedValue(row),

@@ -23,6 +23,8 @@ const boundary = vi.hoisted(() => {
   const query = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
     is: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     range: vi.fn().mockReturnThis(),
@@ -133,6 +135,62 @@ beforeEach(() => {
 })
 
 describe('production CRUD repositories at the Supabase boundary', () => {
+  it('fetches complete cheque history beyond the response cap using ID cursors', async () => {
+    const rows = Array.from({ length: 1001 }, (_, i) => ({
+      ...cheque,
+      id: `cheque-${String(i).padStart(5, '0')}`,
+    }))
+    for (const data of [
+      rows.slice(0, 500),
+      rows.slice(500, 1000),
+      rows.slice(1000),
+    ]) {
+      boundary.query.then.mockImplementationOnce((resolve) =>
+        Promise.resolve(resolve({ data, error: null })),
+      )
+    }
+    expect(await new SupabaseChequeRepository().getAll('business-1')).toEqual(
+      rows,
+    )
+    expect(boundary.query.gt).toHaveBeenCalledWith('id', rows[499].id)
+    expect(boundary.query.gt).toHaveBeenCalledWith('id', rows[999].id)
+    expect(boundary.query.limit).toHaveBeenCalledWith(500)
+  })
+
+  it('fetches only selected page relations in server order and preserves complete metadata', async () => {
+    boundary.query.then.mockImplementationOnce((resolve) =>
+      Promise.resolve(
+        resolve({
+          data: [
+            { cheque_id: 'second', matching_count: 10000, active_count: 10001 },
+            { cheque_id: 'first', matching_count: 10000, active_count: 10001 },
+          ],
+          error: null,
+        }),
+      ),
+    )
+    boundary.result.data = [
+      { ...cheque, id: 'first' },
+      { ...cheque, id: 'second' },
+    ]
+    const page = await new SupabaseChequeRepository().getPage({
+      businessId: 'business-1',
+      search: 'Supplier',
+      nativeFilters: { type: 'Outward' },
+    })
+    expect(page.rows.map((row) => row.id)).toEqual(['second', 'first'])
+    expect(page.matchingCount).toBe(10000)
+    expect(page.activeCount).toBe(10001)
+    expect(boundary.query.in).toHaveBeenCalledWith('id', ['second', 'first'])
+    expect(boundary.rpc).toHaveBeenCalledWith(
+      'cheque_list_page',
+      expect.objectContaining({
+        requested_search: 'Supplier',
+        requested_type: 'Outward',
+        requested_limit: 50,
+      }),
+    )
+  })
   const cases = [
     {
       table: TABLES.ACCOUNTS,
@@ -229,16 +287,18 @@ describe('production CRUD repositories at the Supabase boundary', () => {
         )
         expect(boundary.query.eq).toHaveBeenCalledWith('is_draft', false)
       }
-      expect(boundary.query.order).toHaveBeenCalledWith(
-        entry.table === TABLES.ACCOUNTS
-          ? 'account_name'
-          : entry.table === TABLES.PARTIES
-            ? 'name'
-            : entry.table === TABLES.CHEQUES
-              ? 'cheque_date'
+      if (entry.table === TABLES.CHEQUES) {
+        expect(boundary.query.order).toHaveBeenCalledWith('id')
+        expect(boundary.query.limit).toHaveBeenCalledWith(500)
+      } else
+        expect(boundary.query.order).toHaveBeenCalledWith(
+          entry.table === TABLES.ACCOUNTS
+            ? 'account_name'
+            : entry.table === TABLES.PARTIES
+              ? 'name'
               : 'created_at',
-        { ascending: entry.table !== TABLES.BUSINESSES },
-      )
+          { ascending: entry.table !== TABLES.BUSINESSES },
+        )
       boundary.result.data = entry.row
       await expect(entry.repository.getById(entry.row.id)).resolves.toEqual(
         entry.row,
@@ -315,6 +375,19 @@ describe('production CRUD repositories at the Supabase boundary', () => {
 })
 
 describe('tag repository', () => {
+  it('bounds tag reads to the visible entity IDs and skips empty pages', async () => {
+    const repository = new SupabaseTagRepository()
+    expect(
+      await repository.getTagsByEntity('business-1', 'cheque', []),
+    ).toEqual([])
+    expect(boundary.from).not.toHaveBeenCalled()
+    boundary.result.data = [{ entity_id: 'cheque-1', tag }]
+    expect(
+      await repository.getTagsByEntity('business-1', 'cheque', ['cheque-1']),
+    ).toEqual(boundary.result.data)
+    expect(boundary.query.in).toHaveBeenCalledWith('entity_id', ['cheque-1'])
+    expect(boundary.query.range).toHaveBeenCalledWith(0, 499)
+  })
   it('reads scoped tags, usage counts, links and joined entity tags', async () => {
     const repository = new SupabaseTagRepository()
     boundary.result.data = [tag]

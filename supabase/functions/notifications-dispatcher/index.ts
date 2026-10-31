@@ -6,7 +6,7 @@ import { Logger } from '../_shared/logger.ts'
 import { DispatcherDatabaseService } from './services/database.service.ts'
 import { DispatcherOrchestrator } from './orchestrators/dispatcher.orchestrator.ts'
 
-const BATCH_SIZE = 50
+const BATCH_SIZE = 200
 const MAX_TARGETED_JOBS = 50
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i

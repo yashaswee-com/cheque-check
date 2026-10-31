@@ -25,46 +25,64 @@ export class DispatcherOrchestrator {
 
   /** Without a scope this is the global cron claim; a scope limits the claim itself. */
   async run(batchSize = 50, scope?: DispatchScope): Promise<DispatchResult[]> {
-    const jobs = await this.db.claimJobs(batchSize, scope)
     const results: DispatchResult[] = []
-
-    for (const job of jobs) {
-      results.push(await this.dispatchSafely(job))
+    const deadline = Date.now() + 40_000
+    // Claim only what can start immediately; queued-in-memory jobs would age their leases.
+    for (
+      let remaining = batchSize;
+      remaining > 0 && Date.now() < deadline;
+      remaining -= 5
+    ) {
+      const jobs = await this.db.claimJobs(Math.min(5, remaining), scope)
+      if (!jobs.length) break
+      results.push(
+        ...(await Promise.all(jobs.map((job) => this.dispatchSafely(job)))),
+      )
+      if (jobs.length < Math.min(5, remaining)) break
     }
 
     return results
   }
 
-  /** A thrown error must not leave a claimed job stuck in 'processing'. */
+  /** Pre-provider failures retry; started deliveries recover through their lease. */
   private async dispatchSafely(job: ClaimedJob): Promise<DispatchResult> {
+    const state = { providerStarted: false }
     try {
-      return await this.dispatch(job)
+      return await this.dispatch(job, state)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       Logger.error(`Dispatch crashed for job ${job.id}`, message)
-      await this.db.markFailedOrRetry(job, message)
+      if (!state.providerStarted) await this.db.markFailedOrRetry(job, message)
+      // Started deliveries retain their reservation and cannot be blindly retried.
+      // The lease reaper exposes them for provider reconciliation.
       return { jobId: job.id, status: 'failed', error: message }
     }
   }
 
   private async skip(job: ClaimedJob, reason: string): Promise<DispatchResult> {
-    await this.db.markSkipped(job.id, reason)
+    await this.db.markSkipped(job, reason)
     return { jobId: job.id, status: 'skipped', error: reason }
   }
 
-  private async dispatch(job: ClaimedJob): Promise<DispatchResult> {
+  private async dispatch(
+    job: ClaimedJob,
+    state: { providerStarted: boolean },
+  ): Promise<DispatchResult> {
     if (job.channel !== 'voice') {
       await this.db.markSkipped(
-        job.id,
+        job,
         `channel '${job.channel}' is not implemented yet`,
       )
       return { jobId: job.id, status: 'skipped' }
     }
 
-    return this.dispatchVoice(job)
+    return this.dispatchVoice(job, state)
   }
 
-  private async dispatchVoice(job: ClaimedJob): Promise<DispatchResult> {
+  private async dispatchVoice(
+    job: ClaimedJob,
+    state: { providerStarted: boolean },
+  ): Promise<DispatchResult> {
     const profile = await this.db.fetchProfile(job.user_id)
     if (!profile || profile.deleted_at) {
       return this.skip(job, 'User account is unavailable')
@@ -100,48 +118,56 @@ export class DispatcherOrchestrator {
       }
     }
 
-    const hasQuota = await this.db.consumeVoiceQuota(job.user_id)
-    if (!hasQuota) return this.skip(job, 'Voice reminder quota exhausted')
-
     const language = profile.language || 'en'
     const message = isSample
       ? this.buildSampleMessage(profile.name || 'User', language)
       : this.buildMessage(profile.name || 'User', cheques, language)
     const twiml = this.twilio.generateTwiML(message, language)
     const to = this.testMode.enabled ? this.testMode.phone : recipient
+    // Set before awaiting: a lost database response may already have reserved a credit.
+    state.providerStarted = true
+    const hasQuota = await this.db.startDelivery(job, to)
+    if (!hasQuota) {
+      state.providerStarted = false
+      return this.skip(job, 'Voice reminder quota exhausted')
+    }
 
     const call = await this.twilio.initiateCall(to, twiml)
 
     if (call.success) {
-      await this.db.markSent(job.id)
-      await this.db.writeLog({
-        job_id: job.id,
-        user_id: job.user_id,
-        channel: 'voice',
-        purpose: job.purpose,
-        recipient: to,
-        status: 'success',
-        provider: 'twilio_voice',
-        provider_message_id: call.sid,
-      })
+      Logger.info(`Provider accepted job ${job.id}`, { sid: call.sid })
+      await this.finalize(job, 'accepted', call.sid)
       Logger.info(`Voice call sent for job ${job.id}`, { sid: call.sid })
       return { jobId: job.id, status: 'sent', providerMessageId: call.sid }
     }
 
     const errorMessage = call.error || 'Twilio call failed'
-    await this.db.markFailedOrRetry(job, errorMessage)
-    await this.db.writeLog({
-      job_id: job.id,
-      user_id: job.user_id,
-      channel: 'voice',
-      purpose: job.purpose,
-      recipient: to,
-      status: 'failed',
-      provider: 'twilio_voice',
-      error: errorMessage,
-    })
+    await this.finalize(
+      job,
+      call.uncertain ? 'uncertain' : 'rejected',
+      undefined,
+      errorMessage,
+    )
     Logger.error(`Voice call failed for job ${job.id}`, errorMessage)
     return { jobId: job.id, status: 'failed', error: errorMessage }
+  }
+
+  private async finalize(
+    job: ClaimedJob,
+    outcome: 'accepted' | 'rejected' | 'uncertain',
+    providerId?: string,
+    message?: string,
+  ) {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await this.db.finishDelivery(job, outcome, providerId, message)
+        return
+      } catch (error) {
+        Logger.error(`Delivery finalization failed for ${job.id}`, error)
+        if (attempt === 2) throw error
+        await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)))
+      }
+    }
   }
 
   private buildMessage(

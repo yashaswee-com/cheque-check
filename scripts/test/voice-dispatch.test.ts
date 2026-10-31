@@ -124,18 +124,24 @@ type Job = {
   purpose: string
   payload: Record<string, unknown>
   attempts: number
+  claim_token: string
 }
 
 function makeOrchestrator(
   job: Job,
   overrides: Record<string, unknown> = {},
-  twilioResult: { success: boolean; sid?: string; error?: string } = {
+  twilioResult: {
+    success: boolean
+    sid?: string
+    error?: string
+    uncertain?: boolean
+  } = {
     success: true,
     sid: 'CA1',
   },
 ) {
   const db = {
-    claimJobs: vi.fn(async () => [job]),
+    claimJobs: vi.fn().mockResolvedValueOnce([job]).mockResolvedValue([]),
     fetchProfile: vi.fn(async () => ({
       user_id: job.user_id,
       name: 'Asha',
@@ -148,8 +154,8 @@ function makeOrchestrator(
     fetchCheques: vi.fn(async () => [
       { id: 'c1', amount: 10, account: { bank: { name: 'HDFC' } } },
     ]),
-    consumeVoiceQuota: vi.fn(async () => true),
-    markSent: vi.fn(async () => undefined),
+    startDelivery: vi.fn(async () => true),
+    finishDelivery: vi.fn(async () => undefined),
     markSkipped: vi.fn(async () => undefined),
     markFailedOrRetry: vi.fn(async () => undefined),
     writeLog: vi.fn(async () => undefined),
@@ -171,6 +177,7 @@ const reminder: Job = {
   purpose: 'cheque_reminder',
   payload: { cheque_ids: ['c1'] },
   attempts: 1,
+  claim_token: '44444444-4444-4444-8444-444444444444',
 }
 
 describe('dispatcher eligibility', () => {
@@ -178,7 +185,7 @@ describe('dispatcher eligibility', () => {
     const { orchestrator, db } = makeOrchestrator(reminder)
     const scope = { userId: USER, jobIds: [JOB] }
     const results = await orchestrator.run(50, scope)
-    expect(db.claimJobs).toHaveBeenCalledWith(50, scope)
+    expect(db.claimJobs).toHaveBeenCalledWith(5, scope)
     expect(results).toEqual([
       { jobId: JOB, status: 'sent', providerMessageId: 'CA1' },
     ])
@@ -187,7 +194,7 @@ describe('dispatcher eligibility', () => {
   it('claims globally when no scope is given', async () => {
     const { orchestrator, db } = makeOrchestrator(reminder)
     await orchestrator.run(50)
-    expect(db.claimJobs).toHaveBeenCalledWith(50, undefined)
+    expect(db.claimJobs).toHaveBeenCalledWith(5, undefined)
   })
 
   it.each([
@@ -219,13 +226,13 @@ describe('dispatcher eligibility', () => {
     ],
     ['deleted business', { isBusinessActive: async () => false }],
     ['deleted cheques', { fetchCheques: async () => [] }],
-    ['exhausted quota', { consumeVoiceQuota: async () => false }],
+    ['exhausted quota', { startDelivery: async () => false }],
   ])('skips without calling the provider: %s', async (_name, overrides) => {
     const { orchestrator, twilio, db } = makeOrchestrator(reminder, overrides)
     const [result] = await orchestrator.run(50)
     expect(result.status).toBe('skipped')
     expect(twilio.initiateCall).not.toHaveBeenCalled()
-    expect(db.markSent).not.toHaveBeenCalled()
+    expect(db.finishDelivery).not.toHaveBeenCalled()
   })
 
   it('does not consume quota when an earlier check skips the job', async () => {
@@ -233,7 +240,7 @@ describe('dispatcher eligibility', () => {
       isBusinessActive: async () => false,
     })
     await orchestrator.run(50)
-    expect(db.consumeVoiceQuota).not.toHaveBeenCalled()
+    expect(db.startDelivery).not.toHaveBeenCalled()
   })
 
   it('retries via markFailedOrRetry when the provider rejects', async () => {
@@ -244,7 +251,13 @@ describe('dispatcher eligibility', () => {
     )
     const [result] = await orchestrator.run(50)
     expect(result).toMatchObject({ status: 'failed', error: 'bad number' })
-    expect(db.markFailedOrRetry).toHaveBeenCalledWith(reminder, 'bad number')
+    expect(db.finishDelivery).toHaveBeenCalledWith(
+      reminder,
+      'rejected',
+      undefined,
+      'bad number',
+    )
+    expect(db.markFailedOrRetry).not.toHaveBeenCalled()
   })
 
   it('never leaves a claimed job in processing when something throws', async () => {
@@ -256,6 +269,78 @@ describe('dispatcher eligibility', () => {
     const [result] = await orchestrator.run(50)
     expect(result).toMatchObject({ status: 'failed', error: 'db down' })
     expect(db.markFailedOrRetry).toHaveBeenCalled()
+  })
+
+  it('never calls the provider again when acceptance finalization fails', async () => {
+    const finishDelivery = vi
+      .fn()
+      .mockRejectedValue(new Error('audit unavailable'))
+    const { orchestrator, db, twilio } = makeOrchestrator(reminder, {
+      finishDelivery,
+    })
+    const [result] = await orchestrator.run(5)
+    expect(result.status).toBe('failed')
+    expect(twilio.initiateCall).toHaveBeenCalledTimes(1)
+    expect(finishDelivery).toHaveBeenCalledTimes(3)
+    expect(db.markFailedOrRetry).not.toHaveBeenCalled()
+  })
+
+  it('does not redeliver an uncertain provider response', async () => {
+    const { orchestrator, db } = makeOrchestrator(
+      reminder,
+      {},
+      {
+        success: false,
+        error: 'request timed out',
+        uncertain: true,
+      },
+    )
+    await orchestrator.run(5)
+    expect(db.finishDelivery).toHaveBeenCalledWith(
+      reminder,
+      'uncertain',
+      undefined,
+      'request timed out',
+    )
+    expect(db.markFailedOrRetry).not.toHaveBeenCalled()
+  })
+
+  it('holds an ambiguous reservation response without contacting the provider', async () => {
+    const { orchestrator, db, twilio } = makeOrchestrator(reminder, {
+      startDelivery: vi
+        .fn()
+        .mockRejectedValue(new Error('database response lost')),
+    })
+    await orchestrator.run(5)
+    expect(twilio.initiateCall).not.toHaveBeenCalled()
+    expect(db.markFailedOrRetry).not.toHaveBeenCalled()
+  })
+
+  it('bounds in-flight deliveries to five and drains more than one batch', async () => {
+    const jobs = Array.from({ length: 12 }, (_, i) => ({
+      ...reminder,
+      id: `job-${i}`,
+    }))
+    let active = 0
+    let peak = 0
+    const claimJobs = vi.fn(async (limit: number) => jobs.splice(0, limit))
+    const startDelivery = vi.fn(async () => {
+      active++
+      peak = Math.max(peak, active)
+      await new Promise((resolve) => setTimeout(resolve, 1))
+      return true
+    })
+    const finishDelivery = vi.fn(async () => {
+      active--
+    })
+    const { orchestrator } = makeOrchestrator(reminder, {
+      claimJobs,
+      startDelivery,
+      finishDelivery,
+    })
+    expect(await orchestrator.run(12)).toHaveLength(12)
+    expect(peak).toBe(5)
+    expect(claimJobs.mock.calls.map(([limit]) => limit)).toEqual([5, 5, 2])
   })
 
   const sample: Job = {
@@ -279,7 +364,7 @@ describe('dispatcher eligibility', () => {
     })
     const [result] = await orchestrator.run(50)
     expect(result.status).toBe('sent')
-    expect(db.consumeVoiceQuota).toHaveBeenCalledTimes(1)
+    expect(db.startDelivery).toHaveBeenCalledTimes(1)
     expect(db.fetchCheques).not.toHaveBeenCalled()
   })
 
@@ -289,14 +374,14 @@ describe('dispatcher eligibility', () => {
     })
     const [result] = await orchestrator.run(50)
     expect(result).toMatchObject({ status: 'skipped' })
-    expect(db.consumeVoiceQuota).not.toHaveBeenCalled()
+    expect(db.startDelivery).not.toHaveBeenCalled()
     expect(twilio.initiateCall).not.toHaveBeenCalled()
   })
 
   it('skips sample calls when quota is exhausted', async () => {
     const { orchestrator, twilio } = makeOrchestrator(sample, {
       fetchProfile: sampleProfile(true),
-      consumeVoiceQuota: async () => false,
+      startDelivery: async () => false,
     })
     const [result] = await orchestrator.run(50)
     expect(result.status).toBe('skipped')

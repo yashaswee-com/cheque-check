@@ -45,8 +45,8 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push: state.push }) }))
 vi.mock('@/features/businesses/hooks/use-business', () => ({
   useBusiness: () => ({ activeBusiness: { id: 'b1' } }),
 }))
-vi.mock('@/features/cheques/hooks/use-cheques', () => ({
-  useCheques: vi.fn(() => ({ cheques: state.cheques })),
+vi.mock('@/features/cheques/hooks/use-cheque-list', () => ({
+  useChequeSearch: vi.fn(() => ({ cheques: state.cheques })),
 }))
 vi.mock('@/features/parties/hooks/use-parties', () => ({
   useParties: vi.fn(() => ({ parties: state.parties })),

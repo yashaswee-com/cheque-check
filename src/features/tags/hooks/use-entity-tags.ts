@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Tag, TagEntityType } from '@/types'
 import { tagService } from '@/features/tags/services/tag.service'
 import { queryKeys } from '@/lib/query-keys'
+import { logger } from '@/lib/logger'
 
 export function useEntityTags(
   entityType: TagEntityType,
@@ -70,12 +71,24 @@ export function useEntityTagsDraft(
 export function useEntityTagMap(
   businessId: string | null | undefined,
   entityType: TagEntityType,
+  entityIds?: readonly string[],
 ) {
   const query = useQuery<Record<string, Tag[]>>({
-    queryKey: queryKeys.entityTagMap.forBusiness(businessId, entityType),
-    queryFn: () => tagService.getTagMap(businessId!, entityType),
-    enabled: businessId !== undefined,
+    queryKey: queryKeys.entityTagMap.forBusiness(
+      businessId,
+      entityType,
+      entityIds,
+    ),
+    queryFn: () =>
+      entityIds
+        ? tagService.getTagMap(businessId!, entityType, entityIds)
+        : tagService.getTagMap(businessId!, entityType),
+    enabled: businessId !== undefined && (!entityIds || entityIds.length > 0),
     staleTime: 0,
   })
+  useEffect(() => {
+    if (query.error)
+      logger.error('Entity tags could not be loaded', query.error)
+  }, [query.error])
   return query.data ?? {}
 }

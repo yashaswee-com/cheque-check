@@ -193,6 +193,18 @@ export function useCreateCheque(
         queryKey: queryKeys.cheques.list(businessId),
       })
       queryClient.invalidateQueries({
+        queryKey: queryKeys.cheques.pages(businessId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.cheques.summaries(businessId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.businesses.summaries(),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.premiumWorkspace.all(),
+      })
+      queryClient.invalidateQueries({
         queryKey: draftKeys.list('cheque', businessId),
       })
       const actionProps = await buildNotifyPartyAction(

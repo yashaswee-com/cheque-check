@@ -1,28 +1,11 @@
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { TABLES } from '../../_shared/tables.ts'
-import { FEATURE_IDS } from '../../_shared/feature-ids.ts'
 import {
   ClaimedJob,
   DispatchCheque,
   DispatchProfile,
   DispatchScope,
 } from '../types.ts'
-
-const RETRY_BACKOFF_MINUTES = [10, 30, 120]
-const MAX_ATTEMPTS = 3
-
-export interface NotificationLogEntry {
-  job_id: string
-  user_id: string
-  channel: string
-  purpose: string
-  recipient: string | null
-  status: 'success' | 'failed'
-  provider: string
-  provider_message_id?: string | null
-  provider_response?: unknown
-  error?: string | null
-}
 
 export class DispatcherDatabaseService {
   constructor(private supabase: SupabaseClient) {}
@@ -70,47 +53,62 @@ export class DispatcherDatabaseService {
   ): Promise<DispatchCheque[]> {
     if (chequeIds.length === 0) return []
 
-    const { data, error } = await this.supabase
-      .from(TABLES.CHEQUES)
-      .select('id, amount, account:accounts(bank:banks(name))')
-      .in('id', chequeIds)
-      .eq('business_id', businessId)
-      .eq('status', 'Issued')
-      .eq('is_draft', false)
-      .is('deleted_at', null)
-
-    if (error) throw error
-    return (data || []) as unknown as DispatchCheque[]
+    const rows: DispatchCheque[] = []
+    for (let from = 0; from < chequeIds.length; from += 100) {
+      const { data, error } = await this.supabase
+        .from(TABLES.CHEQUES)
+        .select('id, amount, account:accounts(bank:banks(name))')
+        .in('id', chequeIds.slice(from, from + 100))
+        .eq('business_id', businessId)
+        .eq('status', 'Issued')
+        .eq('is_draft', false)
+        .is('deleted_at', null)
+      if (error) throw error
+      rows.push(...((data || []) as unknown as DispatchCheque[]))
+    }
+    return rows
   }
 
   /** Reserves one unit of quota atomically; false means quota is exhausted. */
-  async consumeVoiceQuota(userId: string): Promise<boolean> {
-    const { data, error } = await this.supabase.rpc('admin_increment_quota', {
-      p_user_id: userId,
-      p_feature_id: FEATURE_IDS.VOICE_REMINDER,
-    })
+  async startDelivery(job: ClaimedJob, recipient: string): Promise<boolean> {
+    const { data, error } = await this.supabase.rpc(
+      'start_notification_delivery',
+      {
+        requested_job: job.id,
+        requested_token: job.claim_token,
+        requested_recipient: recipient,
+      },
+    )
     if (error) throw error
-    return Boolean(data)
+    if (typeof data !== 'boolean')
+      throw new Error('Delivery reservation result was not returned')
+    return data
   }
 
   /** 'sent' means the provider accepted the call, not that anyone answered. */
-  async markSent(jobId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from(TABLES.NOTIFICATION_JOBS)
-      .update({ status: 'sent', updated_at: new Date().toISOString() })
-      .eq('id', jobId)
+  async finishDelivery(
+    job: ClaimedJob,
+    outcome: 'accepted' | 'rejected' | 'uncertain',
+    providerId?: string,
+    message?: string,
+  ): Promise<void> {
+    const { error } = await this.supabase.rpc('finish_notification_delivery', {
+      requested_job: job.id,
+      requested_token: job.claim_token,
+      requested_outcome: outcome,
+      requested_provider_id: providerId,
+      requested_error: message,
+    })
     if (error) throw error
   }
 
-  async markSkipped(jobId: string, reason: string): Promise<void> {
-    const { error } = await this.supabase
-      .from(TABLES.NOTIFICATION_JOBS)
-      .update({
-        status: 'skipped',
-        last_error: reason,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', jobId)
+  async markSkipped(job: ClaimedJob, reason: string): Promise<void> {
+    const { error } = await this.supabase.rpc('release_notification_claim', {
+      requested_job: job.id,
+      requested_token: job.claim_token,
+      requested_error: reason,
+      requested_skip: true,
+    })
     if (error) throw error
   }
 
@@ -119,37 +117,11 @@ export class DispatcherDatabaseService {
     job: ClaimedJob,
     errorMessage: string,
   ): Promise<void> {
-    const update =
-      job.attempts >= MAX_ATTEMPTS
-        ? {
-            status: 'failed',
-            last_error: errorMessage,
-            updated_at: new Date().toISOString(),
-          }
-        : {
-            status: 'pending',
-            last_error: errorMessage,
-            scheduled_at: new Date(
-              Date.now() +
-                RETRY_BACKOFF_MINUTES[
-                  Math.min(job.attempts - 1, RETRY_BACKOFF_MINUTES.length - 1)
-                ] *
-                  60_000,
-            ).toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-
-    const { error } = await this.supabase
-      .from(TABLES.NOTIFICATION_JOBS)
-      .update(update)
-      .eq('id', job.id)
-    if (error) throw error
-  }
-
-  async writeLog(entry: NotificationLogEntry): Promise<void> {
-    const { error } = await this.supabase
-      .from(TABLES.NOTIFICATION_LOGS)
-      .insert([entry])
+    const { error } = await this.supabase.rpc('release_notification_claim', {
+      requested_job: job.id,
+      requested_token: job.claim_token,
+      requested_error: errorMessage,
+    })
     if (error) throw error
   }
 }

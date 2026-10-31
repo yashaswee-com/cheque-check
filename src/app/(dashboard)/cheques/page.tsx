@@ -1,6 +1,7 @@
 'use client'
 
-import { useCheques } from '@/features/cheques/hooks/use-cheques'
+import { useChequeList } from '@/features/cheques/hooks/use-cheque-list'
+import { Button } from '@/components/ui/button'
 import { ChequeCard } from '@/components/cheque-card'
 import { ChequeFilterBar } from '@/features/cheques/components/cheque-filter-bar'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -15,19 +16,19 @@ import { DraftsLink } from '@/features/drafts'
 import { ChequeWithRelations } from '@/types'
 import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { NativeTools } from '@/features/premium-workspace/components/native-tools'
-import { filterCheques } from '@/features/premium-workspace/logic'
 import type { ChequeFilters } from '@/features/premium-workspace/types'
 import { useState } from 'react'
 
 export default function ChequesPage() {
   const t = useTranslations('Cheques')
+  const tc = useTranslations('SharedUI')
   const { activeBusiness } = useBusiness()
   const businessId = activeBusiness?.id
   const [nativeFilters, setNativeFilters] = useState<ChequeFilters>({})
 
   const {
     cheques,
-    filteredCheques,
+    activeCount,
     isLoading,
     error,
     search,
@@ -39,8 +40,16 @@ export default function ChequesPage() {
     sortOrder,
     setSortOrder,
     updateStatus,
-  } = useCheques(businessId)
-  const tagMap = useEntityTagMap(businessId, 'cheque')
+    pageIndex,
+    hasNextPage,
+    nextPage,
+    previousPage,
+  } = useChequeList(businessId, nativeFilters)
+  const tagMap = useEntityTagMap(
+    businessId,
+    'cheque',
+    cheques.map((row) => row.id),
+  )
 
   const clearFilters = () => {
     setSearch('')
@@ -49,7 +58,7 @@ export default function ChequesPage() {
     setSortOrder('desc')
     setNativeFilters({})
   }
-  const visibleCheques = filterCheques(filteredCheques ?? [], nativeFilters)
+  const visibleCheques = cheques
 
   return (
     <div className="max-w-2xl space-y-8 pb-24">
@@ -76,7 +85,7 @@ export default function ChequesPage() {
           isLoading={isLoading}
           isError={!!error}
           data={visibleCheques}
-          allData={cheques}
+          allData={activeCount ? [activeCount] : []}
           onClearFilters={clearFilters}
           loadingComponent={
             <div className="space-y-4">
@@ -107,6 +116,24 @@ export default function ChequesPage() {
             />
           ))}
         </DataState>
+        {!isLoading && !error && activeCount > 0 && (
+          <div className="flex justify-between gap-4">
+            <Button
+              variant="outline"
+              disabled={pageIndex === 0}
+              onClick={previousPage}
+            >
+              {tc('previousPage')}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!hasNextPage}
+              onClick={nextPage}
+            >
+              {tc('nextPage')}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )

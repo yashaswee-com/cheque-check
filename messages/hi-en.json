@@ -1,5 +1,8 @@
 {
   "SharedUI": {
+    "previousPage": "Pichhla page",
+    "nextPage": "Agla page",
+    "viewAllCheques": "Saare cheques dekhein",
     "mainNavigation": "Main navigation",
     "more": "Aur options",
     "back": "Wapas jaayein",

@@ -71,6 +71,7 @@ export default function BusinessesPage() {
     businesses,
     filteredBusinesses,
     isLoading,
+    error,
     activeBusiness,
     setActiveBusiness,
     search,
@@ -198,6 +199,7 @@ export default function BusinessesPage() {
 
       <div className="space-y-4">
         <DataState
+          isError={!!error}
           isLoading={isLoading}
           data={filteredBusinesses}
           allData={businesses}

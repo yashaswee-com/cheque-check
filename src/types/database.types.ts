@@ -11,6 +11,44 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      notification_scheduler_runs: {
+        Row: {
+          run_at: string
+          profile_cursor: string | null
+          completed: boolean
+          force_run: boolean
+          updated_at: string
+        }
+        Insert: Partial<
+          Database['public']['Tables']['notification_scheduler_runs']['Row']
+        > & { run_at: string }
+        Update: Partial<
+          Database['public']['Tables']['notification_scheduler_runs']['Row']
+        >
+        Relationships: []
+      }
+      notification_attempts: {
+        Row: {
+          claim_token: string
+          job_id: string
+          outcome: 'started' | 'accepted' | 'rejected' | 'uncertain'
+          provider_message_id: string | null
+          error: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<
+          Database['public']['Tables']['notification_attempts']['Row']
+        > & {
+          claim_token: string
+          job_id: string
+          outcome: 'started' | 'accepted' | 'rejected' | 'uncertain'
+        }
+        Update: Partial<
+          Database['public']['Tables']['notification_attempts']['Row']
+        >
+        Relationships: []
+      }
       lifecycle_events: {
         Row: {
           id: string
@@ -324,6 +362,13 @@ export interface Database {
           scheduled_at: string
           status: Database['public']['Enums']['notification_job_status']
           attempts: number
+          claim_token: string | null
+          lease_until: string | null
+          provider_started_at: string | null
+          provider_message_id: string | null
+          delivery_recipient: string | null
+          quota_reserved: boolean
+          quota_reset_at: string | null
           last_error: string | null
           idempotency_key: string
           created_at: string
@@ -551,8 +596,93 @@ export interface Database {
         Relationships: []
       }
     }
-    Views: Record<string, never>
+    Views: {
+      notification_time_zones: {
+        Row: { name: string | null }
+        Relationships: []
+      }
+    }
     Functions: {
+      cheque_summary: {
+        Args: {
+          requested_business: string
+          requested_today: string
+          requested_include_inward?: boolean
+          requested_from?: string
+          requested_to?: string
+        }
+        Returns: {
+          status: Database['public']['Enums']['cheque_status']
+          type: Database['public']['Enums']['cheque_type']
+          cheque_count: number
+          total_amount: number
+          today_count: number
+          upcoming_count: number
+          overdue_count: number
+        }[]
+      }
+      cheque_list_page: {
+        Args: {
+          requested_business: string
+          requested_search?: string
+          requested_status?: string
+          requested_sort?: string
+          requested_order?: string
+          requested_offset?: number
+          requested_limit?: number
+          requested_include_inward?: boolean
+          requested_native_search?: string
+          requested_native_status?: string
+          requested_type?: string
+          requested_party?: string
+          requested_from?: string
+          requested_to?: string
+        }
+        Returns: {
+          cheque_id: string | null
+          matching_count: number
+          active_count: number
+        }[]
+      }
+      business_cheque_summaries: {
+        Args: { requested_today: string }
+        Returns: { business_id: string; upcoming_total: number }[]
+      }
+      schedule_notification_batch: {
+        Args: { requested_now?: string; requested_force?: boolean }
+        Returns: {
+          enqueued: number
+          completed: boolean
+          invalid_timezones: number
+        }[]
+      }
+      start_notification_delivery: {
+        Args: {
+          requested_job: string
+          requested_token: string
+          requested_recipient: string
+        }
+        Returns: boolean
+      }
+      finish_notification_delivery: {
+        Args: {
+          requested_job: string
+          requested_token: string
+          requested_outcome: string
+          requested_provider_id?: string
+          requested_error?: string
+        }
+        Returns: undefined
+      }
+      release_notification_claim: {
+        Args: {
+          requested_job: string
+          requested_token: string
+          requested_error: string
+          requested_skip?: boolean
+        }
+        Returns: undefined
+      }
       configure_cron_credentials: {
         Args: {
           requested_project_url: string

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { PrintLayoutEditor } from '@/features/cheques/components/print-layout-editor'
@@ -21,18 +21,43 @@ type Destination =
   'cheques' | 'parties' | 'party' | 'business' | 'account' | 'businesses'
 
 type BusinessOption = { id: string; name: string }
+const InitialToolContext = createContext<string | null>(null)
+const toolSections: Record<
+  Destination,
+  readonly (readonly [string, string])[]
+> = {
+  cheques: [
+    ['bulk-import', 'import'],
+    ['cheque-templates', 'templates'],
+    ['saved-views', 'views'],
+    ['bulk-actions', 'bulk'],
+  ],
+  parties: [
+    ['bulk-import', 'import'],
+    ['party-statements', 'partyStatement'],
+  ],
+  party: [['party-statements', 'partyStatement']],
+  business: [['message-templates', 'messages']],
+  businesses: [['consolidated-dashboard', 'consolidated']],
+  account: [['print-layout', 'printLayout']],
+}
 
 function ToolSection({
   id,
   title,
   children,
+  onActivate,
 }: {
   id: string
   title: string
   children: React.ReactNode
+  onActivate?: () => void
 }) {
+  const initialTool = useContext(InitialToolContext)
   const [open, setOpen] = useState(
-    () => typeof window !== 'undefined' && window.location.hash === `#${id}`,
+    () =>
+      initialTool === id ||
+      (typeof window !== 'undefined' && window.location.hash === `#${id}`),
   )
 
   useEffect(() => {
@@ -45,9 +70,11 @@ function ToolSection({
     <details
       id={id}
       open={open}
-      onToggle={(event) =>
-        setOpen((event.currentTarget as HTMLDetailsElement).open)
-      }
+      onToggle={(event) => {
+        const expanded = event.currentTarget.open
+        setOpen(expanded)
+        if (expanded) onActivate?.()
+      }}
       className="scroll-mt-24 rounded-lg border bg-card"
     >
       <summary className="flex min-h-12 cursor-pointer items-center px-4 py-3 font-semibold">
@@ -58,15 +85,7 @@ function ToolSection({
   )
 }
 
-export function NativeTools({
-  destination,
-  businessId: requestedBusinessId,
-  businessName,
-  businesses: requestedBusinesses,
-  partyId,
-  accountId,
-  onFiltersChange,
-}: {
+type NativeToolsProps = {
   destination: Destination
   businessId?: string
   businessName?: string
@@ -74,7 +93,65 @@ export function NativeTools({
   partyId?: string
   accountId?: string
   onFiltersChange?: (filters: ChequeFilters) => void
-}) {
+}
+
+export function NativeTools(props: NativeToolsProps) {
+  const t = useTranslations('NativeTools')
+  const { activeBusiness, businesses } = useBusiness()
+  const sections = toolSections[props.destination]
+  const [activated, setActivated] = useState<string | null>(() =>
+    typeof window !== 'undefined'
+      ? (sections.find(([id]) => window.location.hash === `#${id}`)?.[0] ??
+        null)
+      : null,
+  )
+  useEffect(() => {
+    const syncHash = () => {
+      const section = sections.find(([id]) => window.location.hash === `#${id}`)
+      if (section) setActivated(section[0])
+    }
+    window.addEventListener('hashchange', syncHash)
+    return () => window.removeEventListener('hashchange', syncHash)
+  }, [sections])
+  const hasBusiness =
+    props.businessId ||
+    activeBusiness?.id ||
+    props.businesses?.length ||
+    businesses.length
+  if (props.destination === 'account' || !hasBusiness || activated) {
+    return (
+      <InitialToolContext.Provider value={activated}>
+        <NativeToolsContent {...props} />
+      </InitialToolContext.Provider>
+    )
+  }
+  // Closed tools must not fetch an entire workspace just to render their headings.
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold">{t('title')}</h2>
+      {sections.map(([id, title]) => (
+        <ToolSection
+          key={id}
+          id={id}
+          title={t(title)}
+          onActivate={() => setActivated(id)}
+        >
+          <p role="status">{t('loading')}</p>
+        </ToolSection>
+      ))}
+    </section>
+  )
+}
+
+function NativeToolsContent({
+  destination,
+  businessId: requestedBusinessId,
+  businessName,
+  businesses: requestedBusinesses,
+  partyId,
+  accountId,
+  onFiltersChange,
+}: NativeToolsProps) {
   const t = useTranslations('NativeTools')
   const { activeBusiness, businesses: availableBusinesses } = useBusiness()
   const { profile } = useProfile()

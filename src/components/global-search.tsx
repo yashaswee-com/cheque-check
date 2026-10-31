@@ -8,7 +8,7 @@ import {
   ArrowRight01Icon as ChevronRight,
 } from '@hugeicons/core-free-icons'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
-import { useCheques } from '@/features/cheques/hooks/use-cheques'
+import { useChequeSearch } from '@/features/cheques/hooks/use-cheque-list'
 import { useParties } from '@/features/parties/hooks/use-parties'
 import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { useRouter } from 'next/navigation'
@@ -42,7 +42,11 @@ export function GlobalSearch({
   const t = useTranslations('Common')
   const tDrafts = useTranslations('Drafts')
 
-  const { cheques } = useCheques(open ? businessId : undefined)
+  const {
+    cheques,
+    isLoading: chequesLoading,
+    error: chequesError,
+  } = useChequeSearch(open ? businessId : undefined, query)
   const { parties } = useParties(open ? businessId : undefined)
   const { accounts } = useAccounts(open ? businessId : undefined)
 
@@ -149,9 +153,14 @@ export function GlobalSearch({
         onValueChange={setQuery}
       />
       <CommandList className="max-h-[400px]">
-        {query.length > 0 && !hasResults && (
-          <CommandEmpty>{t('noResultsFor', { query })}</CommandEmpty>
-        )}
+        {chequesLoading && <p role="status">{t('loading')}</p>}
+        {chequesError && <p role="alert">{t('loadDataError')}</p>}
+        {query.length > 0 &&
+          !hasResults &&
+          !chequesLoading &&
+          !chequesError && (
+            <CommandEmpty>{t('noResultsFor', { query })}</CommandEmpty>
+          )}
 
         {(filteredCheques.length > 0 || filteredChequeDrafts.length > 0) && (
           <CommandGroup heading={t('cheques')}>

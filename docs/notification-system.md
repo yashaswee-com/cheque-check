@@ -10,27 +10,27 @@ today; Email/Push/WhatsApp are planned follow-ups built on the same schema.
 ```mermaid
 flowchart LR
   subgraph "pg_cron (Postgres)"
-    T1["notifications-scheduler-tick\n*/15 * * * *"]
-    T2["notifications-dispatcher-tick\n*/2 * * * *"]
+    T1["notifications-scheduler-tick\n* * * * *"]
+    T2["notifications-dispatcher-tick\n* * * * *"]
   end
   T1 -->|net.http_post, Vault secrets| S[notifications-scheduler\nEdge Function]
   T2 -->|net.http_post, Vault secrets| D[notifications-dispatcher\nEdge Function]
   S -->|enqueue| J[(notification_jobs)]
   D -->|claim_notification_jobs RPC| J
-  D -->|admin_increment_quota RPC| Q[(user_quotas)]
+  D -->|start / finish delivery RPCs| Q[(user_quotas)]
   D -->|Twilio Voice API| TW[Twilio]
   D -->|insert| L[(notification_logs)]
   API["/api/notifications/test-voice\n(Features page button)"] -->|enqueue + invoke| D
 ```
 
-- **notifications-scheduler** (`supabase/functions/notifications-scheduler/`) runs every 15
-  minutes. For every eligible profile, it computes the profile's local time
-  (via `time_zone`), checks whether "now" falls in one of that profile's
-  reminder slots, finds cheques due for reminding, and enqueues one
-  `notification_jobs` row per business.
-- **notifications-dispatcher** (`supabase/functions/notifications-dispatcher/`) runs every 2
-  minutes. It atomically claims a batch of due jobs, places the Twilio voice
-  call, records the outcome, and retries failures with backoff.
+- **notifications-scheduler** (`supabase/functions/notifications-scheduler/`) runs every
+  minute and resumes durable 15-minute scheduling windows. Its SQL RPC processes
+  200 eligible profiles per batch, applies local-time slots and due-cheque rules,
+  and enqueues one `notification_jobs` row per business.
+- **notifications-dispatcher** (`supabase/functions/notifications-dispatcher/`) runs every
+  minute. It claims five jobs at a time, processes at most five calls concurrently per invocation,
+  and drains up to 200 jobs within a 40-second invocation budget. A ten-second
+  provider deadline bounds each call; database/network latency can reduce throughput.
 - Both are plain Deno Edge Functions with **no shared npm deps** — Twilio is
   called via raw `fetch` (works identically whether deployed via the CLI or
   pasted into the Supabase Dashboard editor, since the Dashboard can't resolve
@@ -48,8 +48,9 @@ flowchart LR
 | `push_subscriptions` | Reserved for the future Web Push channel (not wired up yet).                                                                                                                                        |
 | `user_quotas`        | Shared with the rest of the monetization system. `feature_id = 'voice_reminder'` is the quota pool both real reminders **and** sample test calls draw from.                                         |
 
-`channel` and `status` are `TEXT` + `CHECK` constraints (not Postgres enums).
-`purpose` is **unconstrained** `TEXT` on purpose — see §6.
+`channel`, `status` and `purpose` are PostgreSQL enums after the closed-choice
+migration. `notification_attempts` records token-owned provider attempts, and
+`notification_scheduler_runs` stores resumable profile cursors.
 
 ## 3. User preferences the system respects
 
@@ -83,46 +84,68 @@ channel.
 
 ## 4. Scheduler logic in detail
 
-1. Fetch all profiles with `voice_call_enabled=true`, non-null `phone` and
-   `time_zone`.
-2. For each profile, compute `{date, minutesOfDay}` in their local time zone.
-3. Resolve their slot list from `reminders_per_day` (1→`[09:00]`,
-   2→`[09:00,17:00]`, 3→`[09:00,13:00,18:00]`) and check if "now" falls within
-   a 15-minute window of any slot (the window must be ≥ the cron interval, or
-   a slot could be missed entirely).
-4. If a slot matches, fetch that user's active cheques and filter to the ones
-   due for a reminder (§3's remind_before_days logic).
-5. Group due cheques by business, and `upsert` one `notification_jobs` row per
-   business with `onConflict: 'idempotency_key', ignoreDuplicates: true` —
-   safe to re-run the same tick twice, or have two overlapping invocations.
+1. Claim the oldest incomplete scheduling window, or create the current
+   15-minute window. Each SQL batch is serialized with a transaction advisory lock.
+2. Read the next 200 eligible profiles in user-ID order. Compute local dates
+   and slot times using PostgreSQL's timezone database; invalid zones are counted
+   and reported explicitly.
+3. Select due live, published Issued cheques and enqueue jobs with unique keys.
+   Persist the cursor atomically with the inserts. Repeated batches do not create
+   duplicate reminders.
+4. Continue within the invocation's 40-second budget. Subsequent cron ticks resume
+   the same window, including its original timestamp and force-run setting.
+
+Slots remain 1 → `[09:00]`, 2 → `[09:00,17:00]`,
+3 → `[09:00,13:00,18:00]`, with a 15-minute matching window. The normal
+scheduler performs set-based selection and inserts, not one network query
+per profile. Targeted ops runs retain the same due rules and explicit complete
+pagination. The timezone-name materialized view avoids repeated catalog scans;
+refresh `public.notification_time_zones` after PostgreSQL/tzdata upgrades.
 
 ## 5. Dispatcher logic in detail
 
-1. Call `claim_notification_jobs(p_batch_size)` — an atomic
-   `UPDATE ... WHERE status='pending' ... FOR UPDATE SKIP LOCKED` that also
-   increments `attempts` and sets `status='processing'`. This is what makes
-   it safe to run every 2 minutes without double-sending if a previous
-   invocation is still running. A service-role manual run may pass
-   `p_user_id` and `p_job_ids` (migration `20261021060000`): the claim then
-   only touches those pending jobs of that user, inside the same `UPDATE`.
-   Without a scope it is the unchanged global cron claim. The ops CLI
-   dispatches this way after queuing a manual reminder.
-2. For each claimed job:
-   - Skip (job marked `skipped` with the reason) when the user is deactivated,
-     voice reminders are off (sample test calls too), the recipient is not a
-     valid E.164 number, the business is deleted, or none of the job's
-     cheques is still active.
-   - Fetch the profile; skip (no log entry, job marked `skipped`) if no phone.
-   - Call `admin_increment_quota(user_id, 'voice_reminder')` — **reserves**
-     quota atomically _before_ calling Twilio. If it returns `false` (no
-     quota left), the job is marked `skipped` without ever contacting Twilio.
-   - Build the voice message (real cheque summary, or the canned sample-test
-     message — see §6) in the user's `language`.
-   - Call Twilio's Voice API directly via `fetch` (no SDK).
-   - On success (the provider accepted the call; not proof it was answered): mark `sent`, write a `notification_logs` row with the Twilio
-     Call SID.
-   - On failure: write a `failed` log row, and either reschedule with backoff
-     (10min → 30min → 2h, max 3 attempts) or mark `failed` permanently.
+1. Claim at most five due jobs using `FOR UPDATE SKIP LOCKED`. Each claim
+   increments attempts and obtains a random ownership token and two-minute lease.
+   Manual `p_user_id`/`p_job_ids` scopes remain enforced inside the SQL claim.
+2. Check profile, phone, voice preference, business and live cheques; skip
+   ineligible jobs using the ownership token, without consuming credits.
+3. Build the message, then `start_notification_delivery` atomically reserves
+   one credit and records that a provider request may begin. A lost reservation
+   response is treated conservatively: no provider call and no immediate retry.
+4. Invoke Twilio with a ten-second deadline. A usable accepted Call SID is required.
+   HTTP 4xx rejection is definitive; network errors, malformed acceptance and
+   HTTP 5xx are uncertain and must not cause blind redelivery.
+5. `finish_notification_delivery` atomically settles status, quota and audit:
+   acceptance charges the reserved credit once; rejection releases it and retries
+   after 10 or 30 minutes, with at most three claimed attempts. Repeating the same
+   finalization token is idempotent. Database finalization is retried, never the
+   provider request itself.
+6. Expired unstarted leases are retryable. Started expired leases and uncertain
+   provider outcomes become failed/reconciliation-required and retain the credit
+   reservation. They are not automatically redelivered.
+
+### Deployment and reconciliation
+
+Pause both notification cron jobs and wait for existing invocations to finish
+before applying the three `20261031` migrations. Existing legacy `processing`
+jobs are quarantined as failed because their provider outcomes cannot be inferred.
+Deploy both updated Edge Functions before resuming cron; do not run old workers
+against the new delivery schema. The migrations change both cron schedules to
+every minute but do not activate paused jobs.
+
+Investigate uncertain attempts with the provider's call records before acting.
+For a known accepted call, a service-role operator can call
+`finish_notification_delivery(job_id, claim_token, 'accepted', call_sid, NULL)`.
+For a confirmed rejection/no call, use outcome `'rejected'` and a reason.
+Never manually set an uncertain job back to pending: that bypasses settlement and
+can duplicate calls. Legacy jobs have no new attempt token and require separate
+manual provider/accounting review.
+
+A pending reservation temporarily reduces available credits. Rejection refunds
+only the original quota period; it never decrements usage in a newer period.
+Monitor oldest pending age, expired processing leases, uncertain attempts and
+reservation age. Five concurrent calls is an initial limit, not proof of
+10,000-user capacity: tune against provider account limits and measured latency.
 
 ## 6. Sample / test-call feature
 
@@ -179,13 +202,9 @@ have their own minimal mirror: `supabase/functions/_shared/feature-ids.ts`
 (just the one value they need, `voice_reminder`), with a comment pointing
 back to the canonical source.
 
-**Intentionally NOT made dynamic**: `notification_jobs.channel`/`status` and
-`purpose` use `TEXT` (not a Postgres enum) specifically so new values (e.g. a
-future `whatsapp` channel, or a new `purpose` like `payment_receipt`) don't
-require a migration — see the comment in
-`20261017000000_notification_platform.sql`. `channel`/`status` still have a
-`CHECK` constraint (small, stable sets); `purpose` has none (validated at the
-app layer only).
+**Intentionally NOT made dynamic**: notification channel/status/purpose are
+closed PostgreSQL enums after `20261021010000_closed_choices.sql`. Adding a
+channel or purpose requires a migration and matching application contracts.
 
 ## 8. Required secrets / configuration
 
@@ -206,12 +225,12 @@ accounts. Enable the destination country under Twilio Console → Voice →
 Geographic Permissions (Low-Risk **and** High-Risk tabs).
 
 **Dispatcher returns `processed: 0` right after a failure**
-Expected — a failed job is rescheduled with backoff (10/30/120 min based on
-attempt count) via `markFailedOrRetry`. Check
+For a definitive rejection, a job is rescheduled with 10/30-minute backoff.
+Uncertain outcomes require reconciliation instead. Check
 `select scheduled_at, status, attempts, last_error from notification_jobs order by created_at desc limit 5;`
 — if `scheduled_at` is in the future, the dispatcher correctly won't claim it
-yet. To force an immediate retry while testing:
-`update notification_jobs set scheduled_at = now(), status = 'pending' where id = '...';`
+yet. Only a known, already settled rejection can be accelerated while testing
+by changing its `scheduled_at`. Do not change an uncertain job's status.
 
 **`401 Unauthorized` calling the edge function manually**
 The function's own code compares the incoming `Authorization: Bearer <key>`

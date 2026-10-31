@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import type { ChequeWithRelations } from '@/types'
+import type { ChequeSummaryRow } from '@/types/cheque-list'
 import { ChequeStatsChart } from './cheque-stats-chart'
 import {
   chequeDistribution,
+  DISTRIBUTION_STATUSES,
   type DistributionDirection,
   type DistributionMetric,
 } from '../lib/statistics'
@@ -20,14 +22,18 @@ const COLORS = {
 export function ChequeDistribution({
   cheques,
   currency,
+  summary,
 }: {
-  cheques: ChequeWithRelations[] | undefined
+  cheques?: ChequeWithRelations[]
+  summary?: ChequeSummaryRow[]
   currency: string
 }) {
   const t = useTranslations('ChartStats')
   const [metric, setMetric] = useState<DistributionMetric>('count')
   const [direction, setDirection] = useState<DistributionDirection>('All')
-  const distribution = chequeDistribution(cheques, metric, direction)
+  const distribution = summary
+    ? summaryDistribution(summary, metric, direction)
+    : chequeDistribution(cheques, metric, direction)
   const formatValue = (value: number) =>
     metric === 'amount'
       ? `${currency}${value.toLocaleString()}`
@@ -102,4 +108,42 @@ export function ChequeDistribution({
       </ul>
     </div>
   )
+}
+
+function summaryDistribution(
+  rows: ChequeSummaryRow[],
+  metric: DistributionMetric,
+  direction: DistributionDirection,
+) {
+  const eligible = rows.filter(
+    (row) => direction === 'All' || row.type === direction,
+  )
+  const slices = DISTRIBUTION_STATUSES.map((status) => ({
+    status,
+    count: eligible
+      .filter((row) => row.status === status)
+      .reduce((sum, row) => sum + row.cheque_count, 0),
+    value: eligible
+      .filter((row) => row.status === status)
+      .reduce(
+        (sum, row) =>
+          sum + (metric === 'count' ? row.cheque_count : row.total_amount),
+        0,
+      ),
+  }))
+  const totalCheques = slices.reduce((sum, slice) => sum + slice.count, 0)
+  return {
+    slices,
+    totalCheques,
+    total: slices.reduce((sum, slice) => sum + slice.value, 0),
+    hasPending: slices.some(
+      (slice) =>
+        (slice.status === 'Issued' || slice.status === 'Received') &&
+        slice.count > 0,
+    ),
+    allCleared:
+      totalCheques > 0 &&
+      slices.find((slice) => slice.status === 'Cleared')?.count ===
+        totalCheques,
+  }
 }

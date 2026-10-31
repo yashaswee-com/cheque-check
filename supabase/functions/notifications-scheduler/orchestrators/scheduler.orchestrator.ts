@@ -1,10 +1,8 @@
 import { SchedulerDatabaseService } from '../services/database.service.ts'
 import {
   NOTIFICATION_PURPOSE,
-  SLOT_MATCH_WINDOW_MINUTES,
   daysBetween,
   getLocalTime,
-  resolveReminderSlots,
 } from '../../_shared/notifications.ts'
 import { Logger } from '../../_shared/logger.ts'
 import {
@@ -141,57 +139,20 @@ export class SchedulerOrchestrator {
   async run(
     now: Date = new Date(),
     forceRun = false,
-  ): Promise<{ enqueued: number }> {
-    const profiles = await this.db.fetchEligibleProfiles()
+  ): Promise<{ enqueued: number; completed: boolean }> {
     let enqueued = 0
-
-    for (const profile of profiles) {
-      if (!profile.time_zone || !profile.phone) continue
-
-      const local = getLocalTime(now, profile.time_zone)
-      const slots = resolveReminderSlots(profile.reminders_per_day)
-      const matchedSlot = forceRun
-        ? slots[0]
-        : slots.find(
-            (slot) =>
-              local.minutesOfDay >= slot.minutesOfDay &&
-              local.minutesOfDay <
-                slot.minutesOfDay + SLOT_MATCH_WINDOW_MINUTES,
-          )
-      if (!matchedSlot) continue
-
-      const cheques = await this.db.fetchActiveChequesForUser(
-        profile.user_id,
-        local.date,
-      )
-      const due = cheques.filter((cheque) =>
-        isDueForReminder(cheque, local.date),
-      )
-      if (due.length === 0) continue
-
-      const jobs = groupByBusiness(due).map(
-        ([businessId, businessCheques]): NewNotificationJob => ({
-          user_id: profile.user_id,
-          business_id: businessId,
-          channel: 'voice',
-          purpose: NOTIFICATION_PURPOSE.CHEQUE_REMINDER,
-          payload: {
-            cheque_ids: businessCheques.map((c) => c.id),
-            slot: matchedSlot.label,
-          },
-          scheduled_at: now.toISOString(),
-          idempotency_key: `${NOTIFICATION_PURPOSE.CHEQUE_REMINDER}:voice:${businessId}:${local.date}:${matchedSlot.label}`,
-        }),
-      )
-
-      await this.db.enqueueJobs(jobs)
-      enqueued += jobs.length
-      Logger.info(
-        `Enqueued ${jobs.length} voice job(s) for user ${profile.user_id} (slot=${matchedSlot.label})`,
-      )
-    }
-
-    return { enqueued }
+    const deadline = Date.now() + 40_000
+    do {
+      const batch = await this.db.scheduleBatch(now, forceRun)
+      enqueued += batch.enqueued
+      if (batch.invalid_timezones)
+        Logger.error('Scheduler skipped invalid time zones', {
+          count: batch.invalid_timezones,
+        })
+      if (batch.completed) return { enqueued, completed: true }
+    } while (Date.now() < deadline)
+    Logger.info('Scheduler paused at its durable checkpoint')
+    return { enqueued, completed: false }
   }
 }
 

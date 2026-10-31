@@ -16,6 +16,7 @@ export interface ITagRepository {
   getTagsByEntity(
     businessId: string | null,
     entityType: TagEntityType,
+    entityIds?: readonly string[],
   ): Promise<Array<{ entity_id: string; tag: Tag }>>
   create(input: Pick<Tag, 'business_id' | 'name' | 'color'>): Promise<Tag>
   update(id: string, input: Partial<Pick<Tag, 'name' | 'color'>>): Promise<Tag>
@@ -78,15 +79,27 @@ export class SupabaseTagRepository
   async getTagsByEntity(
     businessId: string | null,
     entityType: TagEntityType,
+    entityIds?: readonly string[],
   ): Promise<Array<{ entity_id: string; tag: Tag }>> {
-    let query = this.supabase
-      .from(TABLES.ENTITY_TAGS)
-      .select('entity_id, tag:tags!inner(*)')
-      .eq('entity_type', entityType)
-    if (businessId) query = query.eq('tag.business_id', businessId)
-    return this.handle(query) as unknown as Promise<
-      Array<{ entity_id: string; tag: Tag }>
-    >
+    if (entityIds?.length === 0) return []
+    const rows: Array<{ entity_id: string; tag: Tag }> = []
+    for (let from = 0; ; from += 500) {
+      let query = this.supabase
+        .from(TABLES.ENTITY_TAGS)
+        .select('entity_id, tag:tags!inner(*)')
+        .eq('entity_type', entityType)
+        .order('entity_id')
+        .order('tag_id')
+        .range(from, from + 499)
+      if (businessId) query = query.eq('tag.business_id', businessId)
+      if (entityIds) query = query.in('entity_id', [...entityIds])
+      const page = (await this.handle(query)) as unknown as Array<{
+        entity_id: string
+        tag: Tag
+      }>
+      rows.push(...page)
+      if (page.length < 500) return rows
+    }
   }
 
   async create(

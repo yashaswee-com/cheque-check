@@ -1,5 +1,8 @@
 {
   "SharedUI": {
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "viewAllCheques": "View all cheques",
     "mainNavigation": "Main navigation",
     "more": "More actions",
     "back": "Go back",

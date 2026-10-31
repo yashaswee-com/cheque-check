@@ -1,9 +1,29 @@
 import { Cheque, ChequeStatus, ChequeWithRelations } from '@/types'
 import { TABLES } from '@/lib/supabase/tables'
 import { SupabaseRepository } from '@/repositories/base.repository'
+import type {
+  ChequeListRequest,
+  ChequePage,
+  ChequeSummaryRow,
+} from '@/types/cheque-list'
+import type { ChequeDateRange } from '../lib/date-range'
+import { DatabaseError } from '@/lib/errors'
+
+const RELATIONS =
+  '*, party:parties(name, contact, color, icon, avatar_url), account:accounts(account_name, color, icon, bank:banks(name, logo_url))'
 
 export interface IChequeRepository {
   getAll(businessId: string): Promise<ChequeWithRelations[]>
+  getPage(request: ChequeListRequest): Promise<ChequePage<ChequeWithRelations>>
+  getBusinessSummaries(
+    today: string,
+  ): Promise<{ business_id: string; upcoming_total: number }[]>
+  getSummary(
+    businessId: string,
+    today: string,
+    includeInward: boolean,
+    range?: ChequeDateRange,
+  ): Promise<ChequeSummaryRow[]>
   getById(id: string): Promise<ChequeWithRelations>
   create(
     input: Omit<Cheque, 'id' | 'created_at' | 'updated_at'>,
@@ -26,17 +46,99 @@ export class SupabaseChequeRepository
   implements IChequeRepository
 {
   async getAll(businessId: string): Promise<ChequeWithRelations[]> {
-    return this.handle(
-      this.supabase
+    const rows: ChequeWithRelations[] = []
+    let cursor: string | undefined
+    for (;;) {
+      let query = this.supabase
         .from(TABLES.CHEQUES)
-        .select(
-          '*, party:parties(name, contact, color, icon, avatar_url), account:accounts(account_name, color, icon, bank:banks(name, logo_url))',
-        )
+        .select(RELATIONS)
         .eq('business_id', businessId)
         .is('deleted_at', null)
         .eq('is_draft', false)
-        .order('cheque_date', { ascending: true }),
-    ) as Promise<ChequeWithRelations[]>
+        .order('id')
+        .limit(500)
+      if (cursor) query = query.gt('id', cursor)
+      const page = (await this.handle(query)) as ChequeWithRelations[]
+      rows.push(...page)
+      if (page.length < 500) break
+      cursor = page[page.length - 1].id
+    }
+    return rows.sort(
+      (a, b) =>
+        a.cheque_date.localeCompare(b.cheque_date) || a.id.localeCompare(b.id),
+    )
+  }
+
+  async getPage(
+    request: ChequeListRequest,
+  ): Promise<ChequePage<ChequeWithRelations>> {
+    const native = request.nativeFilters ?? {}
+    const page = await this.handle(
+      this.supabase.rpc('cheque_list_page', {
+        requested_business: request.businessId,
+        requested_search: request.search ?? '',
+        requested_status: request.status,
+        requested_sort: request.sortBy ?? 'date',
+        requested_order: request.sortOrder ?? 'desc',
+        requested_offset: request.offset ?? 0,
+        requested_limit: request.limit ?? 50,
+        requested_include_inward: request.includeInward ?? true,
+        requested_native_search: native.search ?? '',
+        requested_native_status: native.status,
+        requested_type: native.type,
+        requested_party: native.party_id,
+        requested_from: native.from,
+        requested_to: native.to,
+      }),
+    )
+    if (!page.length)
+      throw new DatabaseError('Cheque page metadata was not returned')
+    const ids = page.flatMap((row) => (row.cheque_id ? [row.cheque_id] : []))
+    const rows = ids.length
+      ? ((await this.handle(
+          this.supabase
+            .from(TABLES.CHEQUES)
+            .select(RELATIONS)
+            .in('id', ids)
+            .eq('business_id', request.businessId)
+            .is('deleted_at', null)
+            .eq('is_draft', false),
+        )) as ChequeWithRelations[])
+      : []
+    const byId = new Map(rows.map((row) => [row.id, row]))
+    return {
+      rows: ids.flatMap((id) => {
+        const row = byId.get(id)
+        return row ? [row] : []
+      }),
+      matchingCount: page[0].matching_count,
+      activeCount: page[0].active_count,
+    }
+  }
+
+  async getBusinessSummaries(today: string) {
+    return this.handle(
+      this.supabase.rpc('business_cheque_summaries', {
+        requested_today: today,
+      }),
+    )
+  }
+
+  async getSummary(
+    businessId: string,
+    today: string,
+    includeInward: boolean,
+    range: ChequeDateRange = {},
+  ) {
+    return this.handle(
+      this.supabase.rpc('cheque_summary', {
+        requested_business: businessId,
+        requested_today: today,
+        requested_include_inward: includeInward,
+        requested_from: range.from,
+        requested_to: range.to,
+      }),
+    )
   }
 
   async getById(id: string): Promise<ChequeWithRelations> {

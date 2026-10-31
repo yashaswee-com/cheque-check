@@ -24,32 +24,27 @@ export function useBusinesses() {
     },
   })
 
-  const { data: allCheques, isLoading: chequesLoading } = useQuery({
-    queryKey: queryKeys.businesses.allCheques(),
-    queryFn: async () => {
-      const results = await Promise.all(
-        businesses.map((b) => chequeService.getAll(b.id)),
-      )
-      return results.flat()
-    },
+  const today = new Date().toISOString().split('T')[0]
+  const {
+    data: summaries,
+    isLoading: chequesLoading,
+    error,
+  } = useQuery({
+    queryKey: queryKeys.businesses.summaries(today),
+    queryFn: () => chequeService.getBusinessSummaries(today),
     enabled: businesses.length > 0,
   })
+  const totals = useMemo(
+    () =>
+      new Map(summaries?.map((row) => [row.business_id, row.upcoming_total])),
+    [summaries],
+  )
 
   const getUpcomingTotal = useCallback(
     (businessId: string) => {
-      if (!allCheques) return 0
-      const today = new Date().toISOString().split('T')[0]
-      return allCheques
-        .filter(
-          (c) =>
-            c.business_id === businessId &&
-            c.status !== 'Cleared' &&
-            c.status !== 'Bounced' &&
-            c.cheque_date >= today,
-        )
-        .reduce((sum, c) => sum + (c.amount || 0), 0)
+      return totals.get(businessId) ?? 0
     },
-    [allCheques],
+    [totals],
   )
 
   const filteredBusinesses = useMemo(() => {
@@ -84,6 +79,7 @@ export function useBusinesses() {
     businesses,
     filteredBusinesses,
     isLoading: businessesLoading || chequesLoading,
+    error,
     activeBusiness,
     setActiveBusiness,
     search,

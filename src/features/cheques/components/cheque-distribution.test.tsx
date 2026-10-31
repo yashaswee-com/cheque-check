@@ -45,6 +45,45 @@ const row = (
 })
 
 describe('ChequeDistribution', () => {
+  it('uses exact server aggregates for count, amount and direction', () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ChequeDistribution
+          currency="₹"
+          summary={[
+            {
+              status: 'Issued',
+              type: 'Outward',
+              cheque_count: 10000,
+              total_amount: 15000,
+              today_count: 0,
+              upcoming_count: 10000,
+              overdue_count: 0,
+            },
+            {
+              status: 'Cleared',
+              type: 'Inward',
+              cheque_count: 1,
+              total_amount: 300,
+              today_count: 0,
+              upcoming_count: 0,
+              overdue_count: 0,
+            },
+          ]}
+        />
+      </NextIntlClientProvider>,
+    )
+    expect(screen.getByTestId('chart-total')).toHaveTextContent('10,001')
+    fireEvent.change(screen.getByLabelText('Measure'), {
+      target: { value: 'amount' },
+    })
+    expect(screen.getByTestId('chart-total')).toHaveTextContent('₹15,300')
+    fireEvent.change(screen.getByLabelText('Direction'), {
+      target: { value: 'Inward' },
+    })
+    expect(screen.getByTestId('chart-total')).toHaveTextContent('₹300')
+    expect(screen.getByRole('status')).toHaveTextContent('All cheques cleared')
+  })
   it('switches count/amount and direction without overlapping slices', () => {
     renderChart([
       row('1', 'Issued', 'Outward', 100),

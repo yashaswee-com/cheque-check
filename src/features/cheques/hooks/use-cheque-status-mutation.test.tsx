@@ -59,6 +59,15 @@ describe('canonical cheque hooks', () => {
     const { client, wrapper } = setup()
     client.setQueryData(queryKeys.cheques.list('b1'), [original])
     client.setQueryData(queryKeys.cheques.detail('c1'), original)
+    const pageKey = queryKeys.cheques.page({ businessId: 'b1', limit: 50 })
+    const summaryKey = queryKeys.cheques.summary('b1', '2026-10-31', true, {})
+    client.setQueryData(pageKey, {
+      rows: [original],
+      matchingCount: 1,
+      activeCount: 1,
+    })
+    client.setQueryData(summaryKey, [])
+    client.setQueryData(queryKeys.businesses.summaries('2026-10-31'), [])
     let reject!: (error: Error) => void
     mocks.updateStatus.mockImplementation(
       () =>
@@ -90,6 +99,12 @@ describe('canonical cheque hooks', () => {
     ])
     expect(client.getQueryData(queryKeys.cheques.detail('c1'))).toBe(original)
     expect(mocks.updateStatus).toHaveBeenCalledWith('c1', 'Cleared')
+    expect(client.getQueryState(pageKey)?.isInvalidated).toBe(true)
+    expect(client.getQueryState(summaryKey)?.isInvalidated).toBe(true)
+    expect(
+      client.getQueryState(queryKeys.businesses.summaries('2026-10-31'))
+        ?.isInvalidated,
+    ).toBe(true)
   })
 
   it('uses the same mutation when only a detail cache exists', async () => {

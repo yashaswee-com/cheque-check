@@ -18,6 +18,7 @@ export interface ClaimedJob {
     request_id?: string
   }
   attempts: number
+  claim_token: string
 }
 
 export interface DispatchProfile {

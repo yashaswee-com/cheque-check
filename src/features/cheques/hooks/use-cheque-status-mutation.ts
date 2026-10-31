@@ -3,6 +3,7 @@ import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { useOptimisticMutation } from '@/hooks/use-optimistic-mutation'
 import { queryKeys } from '@/lib/query-keys'
 import { chequeService } from '../services/cheque.service'
+import { logger } from '@/lib/logger'
 
 export function useChequeStatusMutation(
   businessId: string | undefined,
@@ -31,5 +32,8 @@ export function useChequeStatusMutation(
           : cheque,
       ),
     onSuccess: (updated) => onSuccess?.(updated),
+    onError: (error) => {
+      logger.error('Cheque status update failed', error)
+    },
   })
 }

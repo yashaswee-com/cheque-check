@@ -123,6 +123,26 @@ vi.mock('@/features/cheques/hooks/use-cheque-stats', () => ({
     outstanding: 1100,
   }),
 }))
+vi.mock('@/features/cheques/hooks/use-dashboard-cheques', () => ({
+  useDashboardCheques: () => ({
+    todayCheques: cheques,
+    todayCount: cheques.length,
+    payable: 600,
+    receivable: 500,
+    currentBalance: balance,
+    upcomingCount: 2,
+    overdueCount: 1,
+    isLoading: loading,
+    error: null,
+    hasMoreToday: false,
+    updateStatus: mocks.status,
+  }),
+  useChequeSummary: () => ({
+    data: cheques,
+    isLoading: loading,
+    isError: false,
+  }),
+}))
 vi.mock('@/features/tags/hooks/use-entity-tags', () => ({
   useEntityTagMap: () => ({ cheque: [], business: [] }),
 }))
@@ -136,9 +156,13 @@ vi.mock('@/features/drafts', () => ({
   DraftsSummaryCard: () => <span>Draft summary</span>,
 }))
 vi.mock('@/features/cheques/components/cheque-distribution', () => ({
-  ChequeDistribution: ({ cheques: rows }: { cheques: unknown[] }) => (
-    <span>Chart records: {rows.length}</span>
-  ),
+  ChequeDistribution: ({
+    summary,
+    cheques: rows,
+  }: {
+    summary?: unknown[]
+    cheques?: unknown[]
+  }) => <span>Chart records: {(summary ?? rows ?? []).length}</span>,
 }))
 vi.mock('@/features/cheques/components/stats-date-filter', () => ({
   StatsDateFilter: ({

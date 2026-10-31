@@ -9,19 +9,22 @@ import {
 export class SchedulerDatabaseService {
   constructor(private supabase: SupabaseClient) {}
 
-  async fetchEligibleProfiles(): Promise<ReminderProfile[]> {
-    const { data, error } = await this.supabase
-      .from(TABLES.PROFILES)
-      .select(
-        'user_id, name, time_zone, reminders_per_day, voice_call_enabled, phone',
-      )
-      .eq('voice_call_enabled', true)
-      .is('deleted_at', null)
-      .not('phone', 'is', null)
-      .not('time_zone', 'is', null)
-
+  async scheduleBatch(now: Date, forceRun: boolean) {
+    const { data, error } = await this.supabase.rpc(
+      'schedule_notification_batch',
+      {
+        requested_now: now.toISOString(),
+        requested_force: forceRun,
+      },
+    )
     if (error) throw error
-    return (data || []) as unknown as ReminderProfile[]
+    if (!data?.length)
+      throw new Error('Scheduler batch metadata was not returned')
+    return data[0] as {
+      enqueued: number
+      completed: boolean
+      invalid_timezones: number
+    }
   }
 
   async fetchProfile(userId: string): Promise<ReminderProfile | null> {
@@ -70,25 +73,35 @@ export class SchedulerDatabaseService {
     userId: string,
     localToday: string,
   ): Promise<ReminderCheque[]> {
-    const { data, error } = await this.supabase
-      .from(TABLES.CHEQUES)
-      .select(
-        `
+    const rows: ReminderCheque[] = []
+    let cursor: string | undefined
+    for (;;) {
+      let query = this.supabase
+        .from(TABLES.CHEQUES)
+        .select(
+          `
         id, deposit_date, cheque_date, remind_before_days,
         business:businesses!inner(id, user_id)
       `,
-      )
-      .eq('business.user_id', userId)
-      .is('business.deleted_at', null)
-      .is('deleted_at', null)
-      .eq('status', 'Issued')
-      .eq('is_draft', false)
-      .or(
-        `deposit_date.gte.${localToday},and(deposit_date.is.null,cheque_date.eq.${localToday})`,
-      )
-
-    if (error) throw error
-    return (data || []) as unknown as ReminderCheque[]
+        )
+        .eq('business.user_id', userId)
+        .is('business.deleted_at', null)
+        .is('deleted_at', null)
+        .eq('status', 'Issued')
+        .eq('is_draft', false)
+        .or(
+          `deposit_date.gte.${localToday},and(deposit_date.is.null,cheque_date.eq.${localToday})`,
+        )
+        .order('id')
+        .limit(500)
+      if (cursor) query = query.gt('id', cursor)
+      const { data, error } = await query
+      if (error) throw error
+      const page = (data || []) as unknown as ReminderCheque[]
+      rows.push(...page)
+      if (page.length < 500) return rows
+      cursor = page[page.length - 1].id
+    }
   }
 
   /** Existing jobs for idempotency keys, so a repeated request reports the original jobs. */

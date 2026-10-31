@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NativeTools } from './native-tools'
 import { PremiumWorkspace } from './workspace'
+import { useWorkspaceContext } from '../hooks/use-workspace'
 
 const state = vi.hoisted(() => ({
   business: {
@@ -210,6 +211,20 @@ describe('PremiumWorkspace navigation', () => {
 })
 
 describe('NativeTools destinations', () => {
+  function activate(container: HTMLElement) {
+    const details = container.querySelector('details')
+    if (!details) throw new Error('Expected a tool section')
+    details.open = true
+    fireEvent(details, new Event('toggle'))
+  }
+
+  it('does not fetch workspace data for closed tool headings', () => {
+    const { container } = render(<NativeTools destination="cheques" />)
+    expect(useWorkspaceContext).not.toHaveBeenCalled()
+    expect(container.querySelectorAll('details')).toHaveLength(4)
+    activate(container)
+    expect(useWorkspaceContext).toHaveBeenCalled()
+  })
   it.each([
     [
       'cheques',
@@ -220,7 +235,10 @@ describe('NativeTools destinations', () => {
     ['business', ['message-templates']],
     ['businesses', ['consolidated-dashboard']],
   ] as const)('wires premium boundaries for %s', (destination, gates) => {
-    render(<NativeTools destination={destination} partyId="p1" />)
+    const { container } = render(
+      <NativeTools destination={destination} partyId="p1" />,
+    )
+    activate(container)
     for (const gate of gates)
       expect(screen.getByTestId(`gate-${gate}`)).toBeInTheDocument()
     expect(screen.getAllByTestId(/^gate-/)).toHaveLength(gates.length)
@@ -240,7 +258,9 @@ describe('NativeTools destinations', () => {
   it('reports no business and supports explicitly supplied business options', () => {
     state.business.activeBusiness = null
     state.business.businesses = []
-    const { rerender } = render(<NativeTools destination="businesses" />)
+    const { rerender, container } = render(
+      <NativeTools destination="businesses" />,
+    )
     expect(screen.getByText('noBusiness')).toBeInTheDocument()
     rerender(
       <NativeTools
@@ -248,12 +268,14 @@ describe('NativeTools destinations', () => {
         businesses={[{ id: 'b3', name: 'Third' }]}
       />,
     )
+    activate(container)
     expect(screen.getByText('Reports consolidated')).toBeInTheDocument()
   })
 
   it('retries failed active queries while ignoring disabled tools queries', () => {
     state.tools.isError = true
-    const { rerender } = render(<NativeTools destination="party" />)
+    const { rerender, container } = render(<NativeTools destination="party" />)
+    activate(container)
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     state.context.isError = true
     rerender(<NativeTools destination="party" />)
@@ -268,6 +290,7 @@ describe('NativeTools destinations', () => {
     const { rerender, container } = render(
       <NativeTools destination="cheques" />,
     )
+    activate(container)
     expect(screen.getByRole('status')).toHaveTextContent('loading')
     state.tools.isPending = false
     state.context.data = undefined

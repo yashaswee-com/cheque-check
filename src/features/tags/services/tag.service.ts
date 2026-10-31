@@ -33,8 +33,14 @@ export class TagService {
     return this.repository.getLinks(tagId)
   }
 
-  async getTagMap(businessId: string | null, entityType: TagEntityType) {
-    const rows = await this.repository.getTagsByEntity(businessId, entityType)
+  async getTagMap(
+    businessId: string | null,
+    entityType: TagEntityType,
+    entityIds?: readonly string[],
+  ) {
+    const rows = entityIds
+      ? await this.repository.getTagsByEntity(businessId, entityType, entityIds)
+      : await this.repository.getTagsByEntity(businessId, entityType)
     const map: Record<string, Tag[]> = {}
     for (const { entity_id, tag } of rows) (map[entity_id] ??= []).push(tag)
     for (const tags of Object.values(map))

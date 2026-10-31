@@ -122,6 +122,28 @@ or authenticated server handlers, orchestrate it through services, and expose
 reactive data through typed hooks. Server-only credentials belong in server
 modules or Edge Functions.
 
+### Bounded reads and reminder delivery
+
+- The cheque list uses 50-row server-filtered pages, with stable date/amount and
+  ID ordering. Global cheque search requests at most five matches. Dashboard
+  totals/distributions and business upcoming totals are database aggregates,
+  independent of list pagination; the dashboard renders at most 50 today cards
+  and links to the full list when there are more.
+- Complete-history consumers (reports and existing related-entity views) use
+  explicitly paginated reads, not a single response subject to the API row cap.
+  These are live reads, not transactionally frozen export snapshots. Interactive
+  pages use offset pagination; concurrent changes can move records between pages.
+- Tags are loaded for visible cheque IDs. Closed native tools do not fetch a
+  workspace; opening a tool enables its complete-context workflow.
+- Notification scheduling checkpoints 200 profiles per SQL batch. Delivery uses
+  two-minute token-owned leases, at most five concurrent provider calls per invocation, a
+  ten-second provider deadline, and bounded multi-batch invocations.
+- One credit is reserved before a logical reminder's provider request. Acceptance
+  settles it once; definitive rejection releases it before retry. Uncertain
+  outcomes retain the reservation for reconciliation and are not auto-redelivered.
+  See [notification-system.md](docs/notification-system.md) for deployment order,
+  recovery and operational limits.
+
 Feature code belongs under `src/features/<feature>`. Current feature areas are
 `auth`, `onboarding`, `dashboard`, `businesses`, `accounts`, `parties`,
 `cheques`, `reports`, `monetization`, `profile`, and `settings`. Shared UI and

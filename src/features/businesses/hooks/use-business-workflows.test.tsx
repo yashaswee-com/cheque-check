@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
 }))
 vi.mock('../services/business.service', () => ({ businessService: mocks }))
 vi.mock('@/features/cheques/services/cheque.service', () => ({
-  chequeService: { getAll: mocks.getCheques },
+  chequeService: { getBusinessSummaries: mocks.getCheques },
 }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }))
 vi.mock('@/lib/celebrate', () => ({ queueCelebration: mocks.celebrate }))
@@ -42,34 +42,10 @@ function setup() {
 beforeEach(() => {
   vi.resetAllMocks()
   mocks.getAll.mockResolvedValue(businesses)
-  mocks.getCheques.mockImplementation((id: string) =>
-    Promise.resolve([
-      {
-        business_id: id,
-        amount: id === 'b1' ? 100 : 500,
-        status: 'Issued',
-        cheque_date: '2999-01-01',
-      },
-      {
-        business_id: id,
-        amount: 900,
-        status: 'Cleared',
-        cheque_date: '2999-01-01',
-      },
-      {
-        business_id: id,
-        amount: 900,
-        status: 'Bounced',
-        cheque_date: '2999-01-01',
-      },
-      {
-        business_id: id,
-        amount: 900,
-        status: 'Issued',
-        cheque_date: '2000-01-01',
-      },
-    ]),
-  )
+  mocks.getCheques.mockResolvedValue([
+    { business_id: 'b1', upcoming_total: 100 },
+    { business_id: 'b2', upcoming_total: 500 },
+  ])
   mocks.create.mockResolvedValue({ id: 'created', name: 'New Business' })
   mocks.delete.mockResolvedValue(undefined)
 })
@@ -95,8 +71,10 @@ describe('business hooks', () => {
     const { result } = renderHook(() => useBusinesses(), { wrapper })
     await waitFor(() => expect(result.current.getUpcomingTotal('b2')).toBe(500))
     expect(result.current.getUpcomingTotal('b1')).toBe(100)
-    expect(mocks.getCheques).toHaveBeenCalledWith('b1')
-    expect(mocks.getCheques).toHaveBeenCalledWith('b2')
+    expect(mocks.getCheques).toHaveBeenCalledWith(
+      new Date().toISOString().split('T')[0],
+    )
+    expect(mocks.getCheques).toHaveBeenCalledTimes(1)
     act(() => {
       result.current.setSortBy('upcoming')
       result.current.setSortOrder('desc')

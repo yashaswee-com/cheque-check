@@ -186,6 +186,29 @@ vi.mock('@/features/cheques/hooks/use-cheques', () => ({
     updateStatus: mocks.status,
   }),
 }))
+vi.mock('@/features/cheques/hooks/use-cheque-list', () => ({
+  useChequeList: (_business: string, native: { status?: string }) => ({
+    cheques: (filteredCheques ?? []).filter(
+      (row) => !native.status || row.status === native.status,
+    ),
+    activeCount: listedCheques.length,
+    isLoading: loading,
+    error: listError,
+    search: '',
+    setSearch: mocks.filterSearch,
+    filter: 'All',
+    setFilter: mocks.filterStatus,
+    sortBy: 'date',
+    setSortBy: mocks.filterSortBy,
+    sortOrder: 'desc',
+    setSortOrder: mocks.filterSortOrder,
+    updateStatus: mocks.status,
+    pageIndex: 0,
+    hasNextPage: false,
+    nextPage: vi.fn(),
+    previousPage: vi.fn(),
+  }),
+}))
 vi.mock('@/features/cheques/hooks/use-cheque-actions', () => ({
   useChequeActions: () => ({ deleteCheque: mocks.delete }),
 }))

@@ -45,7 +45,7 @@ const destination = new URL(
   import.meta.url,
 )
 if (process.argv.includes('--check')) {
-  if (readFileSync(destination, 'utf8') !== sql) {
+  if (readFileSync(destination, 'utf8').replaceAll('\r\n', '\n') !== sql) {
     throw new Error(
       'Bank seed is stale. Run node scripts\\generate-bank-seed.mjs.',
     )

@@ -12,15 +12,17 @@ import {
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
-import { useCheques } from '@/features/cheques/hooks/use-cheques'
+import {
+  useDashboardCheques,
+  useChequeSummary,
+} from '@/features/cheques/hooks/use-dashboard-cheques'
 import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { ChequeCard } from '@/components/cheque-card'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef } from 'react'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useChequeStats } from '@/features/cheques/hooks/use-cheque-stats'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import dynamic from 'next/dynamic'
@@ -31,7 +33,6 @@ import { cn } from '@/lib/utils'
 import type { DateRange } from 'react-day-picker'
 import { StatsDateFilter } from '@/features/cheques/components/stats-date-filter'
 import {
-  filterByChequeDate,
   resolveDateRange,
   type DateRangePreset,
 } from '@/features/cheques/lib/date-range'
@@ -53,13 +54,30 @@ export default function HomePage() {
   const tCommon = useTranslations('Common')
   const tReports = useTranslations('Reports')
   const tStats = useTranslations('ChartStats')
+  const tShared = useTranslations('SharedUI')
   const { activeBusiness } = useBusiness()
   const { profile } = useProfile()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { cheques, isLoading, updateStatus } = useCheques(activeBusiness?.id)
-  const tagMap = useEntityTagMap(activeBusiness?.id, 'cheque')
+  const {
+    todayCheques,
+    todayCount,
+    payable,
+    receivable,
+    currentBalance,
+    upcomingCount,
+    overdueCount,
+    isLoading,
+    error,
+    updateStatus,
+    hasMoreToday,
+  } = useDashboardCheques(activeBusiness?.id)
+  const tagMap = useEntityTagMap(
+    activeBusiness?.id,
+    'cheque',
+    todayCheques.map((row) => row.id),
+  )
 
   const handleScan = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -72,24 +90,11 @@ export default function HomePage() {
     })
   }
 
-  const {
-    todayCheques,
-    payable,
-    receivable,
-    currentBalance,
-    upcomingCount,
-    overdueCount,
-  } = useChequeStats(cheques, profile?.time_zone)
-
   const [statsPreset, setStatsPreset] = useState<DateRangePreset>('all')
   const [customRange, setCustomRange] = useState<DateRange>()
-  const statsCheques = useMemo(
-    () =>
-      filterByChequeDate(
-        cheques,
-        resolveDateRange(statsPreset, new Date(), customRange),
-      ),
-    [cheques, statsPreset, customRange],
+  const statsSummary = useChequeSummary(
+    activeBusiness?.id,
+    resolveDateRange(statsPreset, new Date(), customRange),
   )
 
   const currency = profile?.currency || '₹'
@@ -100,6 +105,7 @@ export default function HomePage() {
     <div className="max-w-2xl space-y-8 pb-20 pt-2">
       <DataState
         isLoading={isLoading}
+        isError={!!error}
         data={activeBusiness ? [activeBusiness] : []}
         allData={activeBusiness ? [activeBusiness] : []}
         loadingComponent={
@@ -269,6 +275,9 @@ export default function HomePage() {
                 ))}
               </div>
             )}
+            {hasMoreToday && (
+              <Link href="/cheques">{tShared('viewAllCheques')}</Link>
+            )}
           </div>
 
           {/* Today/Upcoming/Overdue Cards */}
@@ -276,7 +285,7 @@ export default function HomePage() {
             {[
               {
                 label: tDashboard('today'),
-                count: todayCheques.length,
+                count: todayCount,
                 color: 'bg-primary/5',
               },
               {
@@ -321,7 +330,16 @@ export default function HomePage() {
                 />
               </div>
             </div>
-            <ChequeStatsChart cheques={statsCheques} currency={currency} />
+            {statsSummary.isLoading ? (
+              <Skeleton className="h-[280px] w-full" />
+            ) : statsSummary.isError ? (
+              <p role="alert">{tCommon('loadDataError')}</p>
+            ) : (
+              <ChequeStatsChart
+                summary={statsSummary.data}
+                currency={currency}
+              />
+            )}
           </div>
         </>
       </DataState>

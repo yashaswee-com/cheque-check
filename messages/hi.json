@@ -1,5 +1,8 @@
 {
   "SharedUI": {
+    "previousPage": "पिछला पृष्ठ",
+    "nextPage": "अगला पृष्ठ",
+    "viewAllCheques": "सभी चेक देखें",
     "mainNavigation": "मुख्य नेविगेशन",
     "more": "अन्य विकल्प",
     "back": "वापस जाएँ",

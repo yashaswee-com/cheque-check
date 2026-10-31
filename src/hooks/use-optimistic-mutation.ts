@@ -4,6 +4,7 @@ import {
   useQueryClient,
   type MutationFunction,
 } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
 
 type QueryKeyResolver<TVariables> =
   QueryKey | ((variables: TVariables) => QueryKey)
@@ -106,6 +107,19 @@ export function useOptimisticMutation<TData, TVariables, TResult>({
         new Map(
           [
             queryKey,
+            ...(queryKey[0] === 'cheques'
+              ? [
+                  queryKeys.cheques.pages(
+                    typeof queryKey[1] === 'string' ? queryKey[1] : undefined,
+                  ),
+                  queryKeys.cheques.summaries(
+                    typeof queryKey[1] === 'string' ? queryKey[1] : undefined,
+                  ),
+                  queryKeys.businesses.summaries(),
+                  queryKeys.businesses.allCheques(),
+                  queryKeys.premiumWorkspace.all(),
+                ]
+              : []),
             ...additionalQueryKeys.map((key) =>
               resolveQueryKey(key, variables),
             ),
