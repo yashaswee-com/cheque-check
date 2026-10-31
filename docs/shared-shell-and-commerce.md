@@ -1,4 +1,4 @@
-# Shared shell, pending actions and payment labels
+# Shared shell and commerce
 
 ## Pending actions
 

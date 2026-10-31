@@ -287,7 +287,7 @@ The fixture caps the complete dataset at 1,000,000 cheques. The ten-task default
 does **not** emulate independent production connections or authenticated HTTP
 sessions. Compare baselines on the same runtime/machine/workload; do not interpret
 these results as 10,000 concurrent-user support. See
-[monitoring.md](../docs/monitoring.md#scaling-validation-and-capacity-gates)
+[monitoring and session lookup](../docs/monitoring-and-session-lookup.md#scaling-validation-and-capacity-gates)
 for the measurement assumptions and authorized QA follow-ups.
 
 ### Read-only Notification Health

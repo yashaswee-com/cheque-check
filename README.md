@@ -51,30 +51,98 @@ The app is served at `http://localhost:3000` by default.
 
 ## Environment
 
-Core variables are validated when the application starts. Feature-specific
-credentials are validated only when that feature is invoked, so contributors
-can work on core CRUD without payment or OCR credentials.
+Set local Next.js variables in the repository-root `.env.local` file (the
+`npm run supabase:setup` wizard can create it). For deployed builds, configure
+them in the deployment platform's environment settings, separately for QA and
+production. Next.js public variables are embedded at build time; changing one
+requires a new build/deployment. The CLI has its own env-file fallback described
+below.
 
-| Variable                        | Required for                     |
-| ------------------------------- | -------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | All application functionality    |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | All application functionality    |
-| `OPENAI_API_KEY`                | AI cheque scanning               |
-| `NEXT_PUBLIC_RAZORPAY_KEY_ID`   | Razorpay Checkout                |
-| `RAZORPAY_KEY_ID`               | Creating Razorpay orders         |
-| `RAZORPAY_KEY_SECRET`           | Creating Razorpay orders         |
-| `RAZORPAY_WEBHOOK_SECRET`       | Razorpay webhook verification    |
-| `SUPABASE_SERVICE_ROLE_KEY`     | Admin scripts and Edge Functions |
-| `NEXT_PUBLIC_SENTRY_DSN`        | Sentry telemetry                 |
-| `SENTRY_AUTH_TOKEN`             | Sentry source-map uploads        |
-| `NEXT_PUBLIC_LOG_LEVEL`         | Client/server log verbosity      |
+The two Supabase public values are required for the app to start. Other
+application credentials are optional until their feature is used, so core CRUD
+development does not require payment, OCR, or monitoring accounts.
 
-Never expose service-role, Razorpay secret, OpenAI, Twilio, or webhook secrets
-through a `NEXT_PUBLIC_` variable.
+### Application
 
-Sentry and Clarity are explicitly gated by environment/release configuration and
-tracking policy. See [Monitoring and Session Lookup](docs/monitoring.md) for
-Vercel settings, masking, browser opt-out, user/session searches and QA rollout.
+| Variable                              | Required / used for                                                                                                                                      | Where to get it                                                                                                                                  |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`            | Required by the app and CLI; identifies the Supabase project. Deployed environments must not point at local Supabase.                                    | Supabase Dashboard → **Project Settings → API** → Project URL.                                                                                   |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`       | Required by the app's browser/server Supabase clients. It is the public client key; access is constrained by Auth and Row Level Security.                | Supabase Dashboard → **Project Settings → API** → anon/public key.                                                                               |
+| `SUPABASE_SERVICE_ROLE_KEY`           | Server-only admin operations, account deactivation, and operations CLI. Edge Functions receive the Supabase service-role key from their project runtime. | Supabase Dashboard → **Project Settings → API** → service-role key. Treat as a secret.                                                           |
+| `OPENAI_API_KEY`                      | Server-side AI cheque scanning and Supabase Studio's configured OpenAI integration. Only needed when using those features.                               | Create an API key in the OpenAI platform dashboard.                                                                                              |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID`         | Public identifier used by Razorpay Checkout in the browser. Needed for checkout.                                                                         | Razorpay Dashboard → **Account & Settings → API Keys**.                                                                                          |
+| `RAZORPAY_KEY_ID`                     | Server-side Razorpay order creation and CLI payment reconciliation.                                                                                      | Use the matching key ID from the Razorpay Dashboard API Keys page.                                                                               |
+| `RAZORPAY_KEY_SECRET`                 | Server-side signing/authentication for Razorpay orders and CLI payment reconciliation.                                                                   | Revealed when creating the matching Razorpay API key pair. Keep secret.                                                                          |
+| `RAZORPAY_WEBHOOK_SECRET`             | Verifies Razorpay webhook signatures in the `razorpay-webhook` Supabase Edge Function. It is not a Next.js app variable.                                 | Choose a webhook secret when configuring the webhook in the Razorpay Dashboard; set it as a Supabase Edge Function secret.                       |
+| `NEXT_PUBLIC_PHONE_AUTH_ENABLED`      | Optional feature flag (`true`/`false`, default `false`) controlling whether phone OTP sign-in is shown.                                                  | Set per local/deployment environment when enabling phone auth; also configure Supabase Auth as described in [phone-auth.md](docs/phone-auth.md). |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`      | Public Cloudflare Turnstile site key for CAPTCHA on phone OTP. Required when phone auth is enabled in production.                                        | Cloudflare Dashboard → **Turnstile** → create/select a widget for the app's hostnames.                                                           |
+| `NEXT_PUBLIC_WHATSAPP_SUPPORT_NUMBER` | Optional support contact number used to construct the app's WhatsApp support link.                                                                       | Set to the business's WhatsApp-enabled support number in international format.                                                                   |
+| `NEXT_PUBLIC_LOG_LEVEL`               | Optional Pino log verbosity: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, or `silent`. Defaults to `debug` in development and `info` otherwise.   | Choose a level appropriate for the environment; prefer `info` in production.                                                                     |
+
+### Monitoring and release metadata
+
+Collection is disabled unless explicitly enabled. Set these before building
+(`NEXT_PUBLIC_*` values are public build-time configuration); use separate
+projects/destinations for QA and production. See [Monitoring and Session Lookup](docs/monitoring-and-session-lookup.md)
+for policy, privacy controls, masking, and rollout requirements.
+
+| Variable                                      | Use / default                                                                                                                                                     | Where to get it                                                                                     |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_APP_ENV`                         | App/telemetry environment: `production`, `qa`, or `development`. Required when observability is enabled.                                                          | Set to match the deployment; it is application configuration, not a provider credential.            |
+| `NEXT_PUBLIC_DEPLOYMENT_KIND`                 | Deployment type: `production`, `qa`, `preview`, or `development`; previews are also detected by Vercel.                                                           | Set per deployment target. Never identify a preview as production.                                  |
+| `NEXT_PUBLIC_APP_RELEASE`                     | Release identifier used to correlate telemetry and source maps. Vercel defaults to `cheque-check@<commit-sha>`; enabled local monitoring needs an explicit value. | Usually use the commit/release identifier being built.                                              |
+| `NEXT_PUBLIC_OBSERVABILITY_ENABLED`           | Set `true` to enable Sentry error/trace collection; default `false`. Required `NEXT_PUBLIC_APP_ENV` and release metadata must be present.                         | Explicit deployment opt-in after monitoring configuration and policy review.                        |
+| `NEXT_PUBLIC_PREVIEW_MONITORING_ENABLED`      | Opts previews into monitoring; default `false`. Preview traffic must use QA destinations and cannot use production telemetry.                                     | Enable only for approved QA preview testing.                                                        |
+| `NEXT_PUBLIC_MONITORING_POLICY_APPROVED`      | Explicit policy gate for analytics/replay; default `false`.                                                                                                       | Set `true` only after privacy and provider review for the deployment.                               |
+| `NEXT_PUBLIC_SENTRY_DSN`                      | Public DSN used to send permitted Sentry events.                                                                                                                  | Sentry project → **Settings → Client Keys (DSN)**.                                                  |
+| `SENTRY_AUTH_TOKEN`                           | Build-only secret used by enabled Sentry builds to upload source maps. Never expose it to browsers.                                                               | Create a narrowly scoped auth token in Sentry with the required project/release upload permissions. |
+| `NEXT_PUBLIC_CLARITY_PROJECT_ID`              | Microsoft Clarity project identifier. Use separate projects for QA and production.                                                                                | Clarity project settings.                                                                           |
+| `NEXT_PUBLIC_CLARITY_ENABLED`                 | Enables Clarity when monitoring is on and policy is approved; default `false`.                                                                                    | Set `true` only after the masking and opt-out checks in the monitoring guide.                       |
+| `NEXT_PUBLIC_REPLAY_ENABLED`                  | Enables Sentry replay when monitoring is on and policy is approved; default `false`.                                                                              | Set `true` only after replay masking and opt-out checks.                                            |
+| `NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE`       | Sentry performance-trace sampling from `0` to `1`; default `0.05`.                                                                                                | Optional tuning value; use a measured rate appropriate to traffic and quota.                        |
+| `NEXT_PUBLIC_SENTRY_REPLAY_SAMPLE_RATE`       | Baseline Sentry replay sampling from `0` to `1`; default `0.01`.                                                                                                  | Optional tuning value.                                                                              |
+| `NEXT_PUBLIC_SENTRY_ERROR_REPLAY_SAMPLE_RATE` | Replay sampling for eligible error sessions from `0` to `1`; default `0.25`.                                                                                      | Optional tuning value.                                                                              |
+
+### Supabase Auth, Edge Functions, and operations CLI
+
+These are configured in Supabase rather than exposed to the Next.js browser.
+Keep provider secrets out of `NEXT_PUBLIC_*` variables.
+
+| Variable                                                             | Use                                                                                                                                                                    | Where to get it / configure it                                                                                                        |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN`                                | Shell-only input when pushing the Supabase Auth Twilio configuration with `supabase config push`; not a Vercel variable.                                               | Twilio Console → account credentials. Configure the Auth SMS provider in Supabase; see [phone-auth.md](docs/phone-auth.md).           |
+| `SUPABASE_AUTH_CAPTCHA_SECRET`                                       | Shell-only input for Supabase Auth CAPTCHA configuration; not a Vercel variable.                                                                                       | Cloudflare Turnstile widget secret key; configure it in Supabase Auth.                                                                |
+| `SUPABASE_AUTH_EXTERNAL_APPLE_SECRET`                                | Supabase Auth config substitution for Apple OAuth. Apple OAuth is disabled in the checked-in Supabase config, so this is not required unless that provider is enabled. | Create/configure the Apple sign-in key and secret in Apple Developer; pass it only through the supported Supabase Auth configuration. |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`      | Twilio credentials and sender used by the `notifications-dispatcher` Edge Function to deliver reminder voice calls.                                                    | Twilio Console; set these as Supabase Edge Function secrets, not app or Vercel variables.                                             |
+| `NOTIFICATIONS_FORCE_RUN`                                            | Optional `true` flag for an explicitly forced scheduler invocation.                                                                                                    | Set only for a controlled operational run; normally unset/`false`.                                                                    |
+| `NOTIFICATIONS_TEST_MODE`, `NOTIFICATIONS_TEST_PHONE`                | Optional dispatcher test mode and destination for controlled provider tests.                                                                                           | Set only for an authorized test; normally unset/`false`.                                                                              |
+| `SUPABASE_DB_URL`                                                    | Direct/session-pooler database connection used by CLI migration/reset and QA E2E setup. Reset is destructive.                                                          | Supabase Dashboard → **Connect** / database connection details. Keep its password secret and verify the project before any reset.     |
+| `SUPABASE_ACCESS_TOKEN`                                              | Optional Supabase CLI login token used by setup automation to link a hosted project.                                                                                   | Create an access token in your Supabase account settings. Prefer interactive CLI login if not automating.                             |
+| `FORMAT_BASE`                                                        | Optional base ref used by `npm run format` / `format:check`; defaults to `origin/main`.                                                                                | Set to another Git ref only when formatting against a different comparison base.                                                      |
+| `PLAYWRIGHT_BASE_URL`, `PLAYWRIGHT_WORKERS`, `PLAYWRIGHT_PROD_BUILD` | Optional E2E target URL, worker count, and production-build mode. Defaults target the local app; production-build mode defaults to one worker.                         | Set for the Playwright run; see [e2e/README.md](e2e/README.md) before targeting a shared environment.                                 |
+| `PORT`                                                               | Optional port for the app and Playwright's local target URL; defaults to `3000`.                                                                                       | Set if another local service already uses the default port.                                                                           |
+| `CI`                                                                 | Enables Playwright's CI behavior (retries, `test.only` guard, CI reporter, and no server reuse).                                                                       | Automatically provided by most CI systems; normally unset locally.                                                                    |
+
+`NODE_ENV`, `NEXT_RUNTIME`, `VERCEL`, `VERCEL_ENV`, and
+`VERCEL_GIT_COMMIT_SHA` are runtime/build-platform values, not application
+secrets to copy into local configuration. Vercel supplies its platform values;
+Next.js supplies its runtime values.
+
+Supabase configuration also contains optional substitutions for
+`S3_HOST`, `S3_REGION`, `S3_ACCESS_KEY`, and `S3_SECRET_KEY`. They are only for
+the experimental Supabase OrioleDB/S3 integration; Cheque Check does not use
+that integration and does not require these values.
+
+The Supabase Auth Twilio token above is distinct from the Twilio secrets used
+by the notifications Edge Function. Supabase also provides `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY` to Edge Functions at runtime. CLI environment files
+may be placed at the repository root (`.env.local`, `.env.qa`,
+`.env.staging`, `.env.production`) or under `env/`; root files take precedence
+and are not merged. Next.js itself expects its local env file at the repository
+root. See [environment configuration and deployment sequence](docs/environment-configuration.md)
+and [Ops CLI setup](scripts/README.md#one-time-setup) for operational details.
+See the [documentation index](docs/README.md) for topic coverage and the
+repository's document naming convention.
 
 ## Commands
 
@@ -175,7 +243,7 @@ modules or Edge Functions.
   still block. Background CSV escapes quotes and neutralizes spreadsheet formulas;
   JSON preserves frozen scalar/relationship data (not lifecycle/internal columns).
   Hosted storage/network performance still requires production measurements.
-  See [export rollout and operations](docs/monitoring.md#background-export-operations).
+  See [export rollout and operations](docs/monitoring-and-session-lookup.md#background-export-operations).
 - Explicit `any` is disallowed in these strengthened production boundaries and the
   reporting feature. This is an incremental lint gate, not a repository-wide
   type-cleanup rewrite.
@@ -199,7 +267,7 @@ npm run ops -- ops notification-health --env prod --check --json
 The benchmark's ten queued workers share one serialized database connection:
 latencies include local queueing, not ten independent PostgreSQL connections.
 Its defaults are local regression budgets, not a production SLA or capacity
-certification. See [monitoring.md](docs/monitoring.md#scaling-validation-and-capacity-gates)
+certification. See [monitoring and session lookup](docs/monitoring-and-session-lookup.md#scaling-validation-and-capacity-gates)
 for the workload, measurements, capacity gates, and next production checks.
 
 The health command is read-only and service-role-only. It requires
@@ -270,7 +338,7 @@ changing a TypeScript rule does not update deployed SQL or server functions.
   functions need Vault credentials (`project_url`, `service_role_key`) so
   `pg_cron` can authenticate to them. `npm run ops -- dev setup` provisions
   them through the service-role-only `configure_cron_credentials` RPC; no SQL
-  editor step is needed. See `docs/environment.md` and `docs/phone-auth.md`.
+  editor step is needed. See [environment configuration](docs/environment-configuration.md) and [phone OTP authentication](docs/phone-auth.md).
 
 `supabase/seed.sql` contains idempotent bank reference data. The reset command
 requires the linked project ref to be in `supabase/.dev-projects.json` or the
@@ -292,6 +360,14 @@ Every pull request and push to `main` runs `.github/workflows/quality.yml`:
 Tests that read repository files or launch scripts use `node:path` helpers
 instead of hard-coded Windows separators so `npm test` works on Windows and
 the Ubuntu GitHub Actions runners.
+
+The dependency lockfile pins patched production packages. Targeted npm overrides
+make Sentry's bundler packages use the same patched glob version as the app;
+their older glob 13 ranges otherwise retain vulnerable glob/minimatch copies.
+The Sentry glob compatibility tests cover source-map discovery and ignore rules.
+Revisit these overrides when Sentry supports the patched glob major directly.
+Verify dependency changes with `npm audit --omit=dev --audit-level=high`; do not
+lower the audit threshold or apply `npm audit fix --force` without testing.
 
 The workflow also starts Supabase and runs `supabase db reset` to verify that
 all migrations and seed data apply to a clean database.

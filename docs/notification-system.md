@@ -1,4 +1,4 @@
-# Notification System
+# Notification system
 
 How Cheque Check delivers Voice Reminder calls (and the sample test-call
 feature), what user preferences it respects, how the scheduler/dispatcher
@@ -55,7 +55,7 @@ and `notification.dispatcher.run` to existing Edge logs, including duration,
 batch/outcome counts, checkpoint pauses, and finalization/reconciliation signals.
 These complement the durable database health query when a worker terminates
 before it can emit its final event. No external dashboard or alert poller is
-automatically installed. See [monitoring.md](monitoring.md#scaling-validation-and-capacity-gates)
+automatically installed. See [monitoring and session lookup](monitoring-and-session-lookup.md#scaling-validation-and-capacity-gates)
 for metric definitions, local benchmark commands, and production capacity gates.
 
 | Table                | Purpose                                                                                                                                                                                             |

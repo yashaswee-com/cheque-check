@@ -65,4 +65,4 @@ a clean QA database reset.
 - Confirm database media fields begin with `/api/storage/`.
 - Review script failures before deleting either legacy bucket.
 
-Buckets and storage policies are created entirely by migrations; no manual SQL-editor step is required. See `docs/environment.md` for the deployment sequence.
+Buckets and storage policies are created entirely by migrations; no manual SQL-editor step is required. See [environment configuration](environment-configuration.md) for the deployment sequence.

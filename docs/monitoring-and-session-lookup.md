@@ -1,4 +1,4 @@
-# Monitoring and Session Lookup
+# Monitoring and session lookup
 
 Sentry receives errors and sampled performance traces. Clarity provides masked
 UX recordings for authenticated users. Both use the Supabase **auth user UUID**,
@@ -18,7 +18,7 @@ automatically loaded by Next.js. Use separate builds for QA and production.
 | `NEXT_PUBLIC_APP_ENV`                         | `production`, `qa`, or `development`; required when enabled                                                          |
 | `NEXT_PUBLIC_OBSERVABILITY_ENABLED`           | `true` enables essential Sentry error/trace collection; default `false`                                              |
 | `NEXT_PUBLIC_APP_RELEASE`                     | Optional on Vercel: defaults to `cheque-check@<VERCEL_GIT_COMMIT_SHA>`; required explicitly for enabled local builds |
-| `NEXT_PUBLIC_PREVIEW_MONITORING_ENABLED`      | Default `false`; opt-in previews must use `APP_ENV=qa` and QA destinations                                           |
+| `NEXT_PUBLIC_PREVIEW_MONITORING_ENABLED`      | Default `false`; opt-in previews must use `NEXT_PUBLIC_APP_ENV=qa` and QA destinations                               |
 | `NEXT_PUBLIC_MONITORING_POLICY_APPROVED`      | Default `false`; set `true` only after privacy/provider review for the India/adult audience                          |
 | `NEXT_PUBLIC_CLARITY_ENABLED`                 | Default `false`; enable after Clarity masking, stop/reset and identity smoke tests                                   |
 | `NEXT_PUBLIC_REPLAY_ENABLED`                  | Default `false`; enable after Sentry replay masking/opt-out smoke tests                                              |

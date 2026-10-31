@@ -1,17 +1,20 @@
 # Resolution plan: 25 product, data, authentication, and UX issues
 
-Status: implementation changes are committed on `feat/issue-2-resolution`.
+This is the historical implementation plan for the reported backlog, not a
+current inventory of unresolved defects or deployment readiness. Several
+planned changes are now implemented; see the focused documents linked below
+for their current behavior. Provider configuration, migration state, and
+production rollout remain environment-specific and must be verified separately.
 
-This document records the requirements and implementation approach for the
-reported backlog. Production rollout is separate: apply and verify database
-migrations, configure deployment secrets, and validate external SMS/voice
-providers in their intended environments before enabling live delivery.
+## 1. Original baseline findings
 
-## 1. Findings from the current repository
+The table below records the repository state when this plan was written. Its
+observations are historical and must not be used as descriptions of current
+behavior without checking the linked implementation documentation.
 
 These are source-level observations, not claims about deployed environments.
 
-| Area             | Current evidence                                                                                                                                                                  | Consequence                                                                                                                   |
+| Area             | Original baseline evidence                                                                                                                                                        | Planned response                                                                                                              |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Soft deletion    | Profiles, businesses, parties and accounts have `deleted_at`; cheque deletion and draft deletion call physical DELETE. Tag deletion and tag detachment also call physical DELETE. | A consistent database-level lifecycle is needed, not just additional client filters.                                          |
 | Tags             | `tags` has unconditional name uniqueness; `entity_tags` has a composite primary key and no deletion metadata.                                                                     | Reuse, reattachment, usage counts, recovery and ownership must be designed together.                                          |
@@ -36,7 +39,7 @@ Primary implementation references:
 - [Auth repository](../src/features/auth/repositories/auth.repository.ts)
 - [Supabase configuration](../supabase/config.toml)
 - [Premium workspace service](../src/features/premium-workspace/service.ts)
-- [Premium access policy](./premium-access.md)
+- [Premium access policy](./premium-access-policy.md)
 - [Dashboard](<../src/app/(dashboard)/dashboard/page.tsx>)
 - [Cheque statistics](../src/features/cheques/hooks/use-cheque-stats.ts)
 - [Media route](../src/app/api/storage/[bucket]/[...path]/route.ts)

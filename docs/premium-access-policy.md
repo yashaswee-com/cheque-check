@@ -1,4 +1,4 @@
-# Lifetime Premium implementation plan and access policy
+# Premium access policy
 
 ## Scope
 

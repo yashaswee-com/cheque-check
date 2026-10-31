@@ -1,4 +1,4 @@
-# Code Quality and SOLID Review
+# Code quality and SOLID review
 
 **Review date:** 2026-10-31
 **Scope:** Static review of application source and architecture, plus repository lint, TypeScript, and unit-test commands. This is a maintainability review, not a security or behavioral audit.
@@ -18,13 +18,25 @@ Browser-memory and final serialization limits remain; background exports and
 production load testing are not implemented by these changes. The findings below
 describe the original review baseline, not the current test status.
 
-## Executive summary
+## Original review findings
 
-The codebase has a solid architectural foundation: feature-oriented modules, distinct domain/service/repository layers, shared validators and query-key factories, and ESLint rules that prevent common UI-to-database layer bypasses. The cheque domain entity centralizes status-transition rules, and `ChequeService` depends on an `IChequeRepository` abstraction.
+The prioritized findings and validation results below describe the review
+baseline, not the current repository or test status. Use the README and the
+linked feature documents for current behavior. Re-run the listed checks before
+treating any validation result as current.
+
+At the review baseline, the codebase had a solid architectural foundation:
+feature-oriented modules, distinct domain/service/repository layers, shared
+validators and query-key factories, and ESLint rules that prevent common
+UI-to-database layer bypasses. The cheque domain entity centralizes
+status-transition rules, and `ChequeService` depends on an
+`IChequeRepository` abstraction.
 
 The main opportunities are to reduce the responsibilities and size of selected flows, tighten type guarantees at database boundaries, and make the existing dependency-inversion pattern consistent in OCR. These are incremental improvements; there is no evidence that the project needs a broad rewrite or a new architecture framework.
 
-One higher-priority quality issue is independent of SOLID: the unit suite currently fails because the generated bank-seed migration is stale. The working tree was clean before this review, and no source changes were made.
+The original review reported a bank-seed freshness test failure. That result is
+historical; check the current generated artifact and run the test before
+assuming the failure remains.
 
 ## Prioritized findings
 
