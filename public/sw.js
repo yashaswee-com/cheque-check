@@ -17,7 +17,16 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Basic pass-through for now. 
-  // You can implement caching strategies here (e.g., Cache-First or Network-First).
-  event.respondWith(fetch(event.request));
+  const { request } = event;
+  // Leave cross-origin (Turnstile, Supabase, telemetry), non-GET and
+  // navigation requests to the browser so a failed fetch is never turned
+  // into a rejected FetchEvent.
+  if (
+    request.method !== 'GET' ||
+    request.mode === 'navigate' ||
+    new URL(request.url).origin !== self.location.origin
+  ) {
+    return;
+  }
+  event.respondWith(fetch(request).catch(() => Response.error()));
 });
