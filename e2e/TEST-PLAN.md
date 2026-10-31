@@ -4,6 +4,43 @@ This plan prioritizes the user-facing features in the app, scores them, and assi
 tier that determines whether (and how thoroughly) it's covered by Playwright specs under
 `e2e/specs/`. See `e2e/README.md` for how to run the suite and what's structurally out of scope.
 
+## Unit coverage measurement
+
+`npm run test:coverage` uses Vitest's V8 coverage provider. Its global line
+coverage gate is **80%** across all production TypeScript and TSX files in
+`src/`, including files no test imports. Tests, test setup, and TypeScript
+declarations are excluded; scripts and E2E files are outside the source scope.
+Production pages and UI components remain included.
+
+Coverage is calculated from executable source locations, not total physical
+file lines:
+
+`Line coverage = covered executable lines / total executable lines * 100`
+
+The aggregate is a weighted ratio of covered and total lines across files,
+not an average of each file's percentage. Statement coverage measures executed
+statements, function coverage measures called functions, and branch coverage
+measures exercised alternatives. Only line coverage has an 80% gate; the other
+metrics are still reported.
+
+Reports are written to the ignored `coverage/` directory: `index.html` for
+interactive uncovered-line inspection, `coverage-summary.json` for per-file
+and global totals, and `coverage-final.json` for detailed execution counts.
+Playwright test passes do not automatically contribute to these unit metrics.
+High coverage indicates exercised code, not proof of correctness; assertions,
+failure paths, integration tests, and E2E flows are still necessary.
+
+The known bank-seed freshness failure is not disabled in the repository.
+To measure coverage while leaving only that acknowledged test unexecuted:
+
+```powershell
+npm run test:coverage -- --testNamePattern='^(?!.*keeps migration seeding synchronized with the source snapshot)' --hookTimeout=60000 --testTimeout=30000 --maxWorkers=2
+```
+
+This coverage run limits workers and allows longer test/hook timeouts to avoid
+resource-contention failures during instrumentation. It does not skip any
+additional tests or alter application behavior.
+
 ## Scoring model
 
 Each flow is scored 1 (low) - 3 (high) on three axes, then mapped to a severity tier:
@@ -27,6 +64,12 @@ severity; it increases the number of branches and assertions expected in the spe
 ## P0 — Critical
 
 Core cheque lifecycle. Breakage here means incorrect financial state or a blocked daily workflow.
+
+Phone login also has isolated browser coverage in `phone-auth.spec.ts`: invalid
+mobile numbers, expired-code recovery, resend cooldown, provider-error retry,
+and switching back to email. OTP and CAPTCHA are mocked; these tests do not
+cover SMS delivery or successful session creation. See `e2e/README.md` for
+running this spec without the hosted QA setup.
 
 | Flow                                                                            | Risk | Freq          | Complexity | Spec                                           |
 | ------------------------------------------------------------------------------- | ---- | ------------- | ---------- | ---------------------------------------------- |
