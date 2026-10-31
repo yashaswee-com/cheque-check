@@ -56,6 +56,8 @@ describe('draft tags', () => {
     service.getForEntity.mockRejectedValue(new Error('Offline'))
     const { result } = renderHook(() => useDraftTags('duplicate'))
     await expect(result.current.flush('duplicate')).rejects.toThrow('Offline')
+    act(() => result.current.setTagIds(['new-tag']))
+    await expect(result.current.flush('duplicate')).rejects.toThrow('Offline')
     expect(service.syncForEntity).not.toHaveBeenCalled()
   })
 })

@@ -17,20 +17,23 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 
-const mocks = vi.hoisted(() => ({ create: vi.fn() }))
+const mocks = vi.hoisted(() => ({ create: vi.fn(), isLoading: false }))
 vi.mock('@/features/tags/hooks/use-tags', () => ({
   useTags: () => ({
     tags: [
       { id: 'tag-1', name: 'Urgent', color: '#ff0000' },
       { id: 'tag-2', name: 'Paid', color: '#00ff00' },
     ],
-    isLoading: false,
+    isLoading: mocks.isLoading,
     isCreating: false,
     createTag: mocks.create,
   }),
 }))
 afterEach(cleanup)
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  mocks.isLoading = false
+})
 
 function selector(onChange = vi.fn()) {
   return render(
@@ -45,6 +48,36 @@ function selector(onChange = vi.fn()) {
 }
 
 describe('Tag Selector modal backdrop', () => {
+  it('removes a selected tag and creates a trimmed new tag', async () => {
+    const change = vi.fn()
+    mocks.create.mockResolvedValue({ id: 'new' })
+    selector(change)
+    fireEvent.click(screen.getByTestId('tag-selector-trigger'))
+    fireEvent.click(await screen.findByTestId('tag-selector-option-tag-1'))
+    expect(change).toHaveBeenCalledWith([])
+    fireEvent.change(screen.getByTestId('tag-selector-create-input'), {
+      target: { value: '  Invoice  ' },
+    })
+    fireEvent.click(screen.getByTestId('tag-selector-create-button'))
+    await waitFor(() =>
+      expect(change).toHaveBeenLastCalledWith(['tag-1', 'new']),
+    )
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Invoice' }),
+    )
+    expect(screen.getByTestId('tag-selector-create-input')).toHaveValue('')
+  })
+
+  it('renders selected and catalog placeholders while tags load', async () => {
+    mocks.isLoading = true
+    selector()
+    expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('tag-selector-trigger'))
+    await screen.findByRole('dialog')
+    expect(
+      document.querySelectorAll('[data-slot="skeleton"]').length,
+    ).toBeGreaterThan(3)
+  })
   it('dims only its own overlay, supports multiselect, Escape and focus return', async () => {
     const user = userEvent.setup()
     const change = vi.fn()
