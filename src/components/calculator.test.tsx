@@ -13,6 +13,43 @@ afterEach(() => {
 })
 
 describe('Calculator', () => {
+  it.each([
+    { keys: ['8', '-', '3', '='], expected: '5' },
+    { keys: ['8', 'x', '3', '='], expected: '24' },
+    { keys: ['8', '/', '2', '='], expected: '4' },
+    { keys: ['8', '/', '0', '='], expected: 'Error' },
+    { keys: ['2', '+', '3', '+', '4', '='], expected: '9' },
+    { keys: ['.', '2', '.', '5'], expected: '0.25' },
+    { keys: ['2', '3', 'DEL'], expected: '2' },
+    { keys: ['2', 'DEL'], expected: '0' },
+    { keys: ['='], expected: '0' },
+  ])('handles arithmetic and input sequence $keys', ({ keys, expected }) => {
+    render(<Calculator onClose={vi.fn()} />)
+    for (const key of keys)
+      fireEvent.click(screen.getByRole('button', { name: key }))
+    expect(
+      within(screen.getByRole('dialog')).getByText(expected, {
+        selector: 'span',
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it('does not propagate close-button pointer presses to the drag header', () => {
+    render(<Calculator onClose={vi.fn()} />)
+    const close = screen.getByRole('button', { name: 'Close calculator' })
+    fireEvent.pointerDown(close, {
+      pointerId: 9,
+      button: 0,
+      clientX: 1,
+      clientY: 1,
+    })
+    const header = screen.getByText('Calculator').parentElement!
+    fireEvent.pointerMove(header, { pointerId: 9, clientX: 100, clientY: 100 })
+    fireEvent.pointerUp(header, { pointerId: 9 })
+    expect(screen.getByRole('dialog').style.transform).not.toBe(
+      'translate3d(115px, 171px, 0)',
+    )
+  })
   it('calculates a basic addition', () => {
     render(<Calculator onClose={vi.fn()} />)
 
