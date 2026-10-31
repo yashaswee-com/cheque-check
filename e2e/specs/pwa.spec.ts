@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 // Uses the shared authenticated + onboarded session from global.setup.ts.
-// public/sw.js has no real caching strategy yet (pass-through fetch only), so this
+// public/sw.js has no fetch handler or caching strategy yet, so this
 // only verifies registration - not caching/offline behavior that doesn't exist.
 test.describe('pwa', () => {
   test('registers a service worker on a dashboard route', async ({ page }) => {

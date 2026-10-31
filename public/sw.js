@@ -16,17 +16,6 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  // Leave cross-origin (Turnstile, Supabase, telemetry), non-GET and
-  // navigation requests to the browser so a failed fetch is never turned
-  // into a rejected FetchEvent.
-  if (
-    request.method !== 'GET' ||
-    request.mode === 'navigate' ||
-    new URL(request.url).origin !== self.location.origin
-  ) {
-    return;
-  }
-  event.respondWith(fetch(request).catch(() => Response.error()));
-});
+// No fetch handler: without a caching strategy, intercepting requests only
+// turns aborted or failed fetches (RSC prefetches, Turnstile, Supabase) into
+// FetchEvent network errors. Add one only alongside a real caching strategy.
