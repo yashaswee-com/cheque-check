@@ -6,8 +6,9 @@ tier that determines whether (and how thoroughly) it's covered by Playwright spe
 
 ## Unit coverage measurement
 
-`npm run test:coverage` uses Vitest's V8 coverage provider. Its global line
-coverage gate is **80%** across all production TypeScript and TSX files in
+`npm run test:coverage` uses Vitest's V8 coverage provider. Its line
+coverage gate is **95% in every executable production file**, not just the
+global average, across all production TypeScript and TSX files in
 `src/`, including files no test imports. Tests, test setup, and TypeScript
 declarations are excluded; scripts and E2E files are outside the source scope.
 Production pages and UI components remain included.
@@ -20,8 +21,10 @@ file lines:
 The aggregate is a weighted ratio of covered and total lines across files,
 not an average of each file's percentage. Statement coverage measures executed
 statements, function coverage measures called functions, and branch coverage
-measures exercised alternatives. Only line coverage has an 80% gate; the other
-metrics are still reported.
+measures exercised alternatives. Only line coverage has a 95% per-file gate;
+the other metrics are still reported. Files with zero executable lines (for
+example type-only declarations or barrel exports) have no line coverage to
+improve and do not represent untested behavior.
 
 Reports are written to the ignored `coverage/` directory: `index.html` for
 interactive uncovered-line inspection, `coverage-summary.json` for per-file
@@ -29,6 +32,21 @@ and global totals, and `coverage-final.json` for detailed execution counts.
 Playwright test passes do not automatically contribute to these unit metrics.
 High coverage indicates exercised code, not proof of correctness; assertions,
 failure paths, integration tests, and E2E flows are still necessary.
+
+Feature-wise unit tests exercise repositories, services, hooks, components,
+route handlers, environment accessors, Supabase cookie/session adapters, and
+monitoring lifecycle/privacy behavior. External boundaries such as Supabase,
+payment, OCR, SMS, and monitoring SDKs are mocked: these tests verify application
+contracts and failure handling, not live provider availability or delivery.
+The `server-only` test alias is a boundary-marker shim for importing server
+modules in Vitest; it does not replace their implementations or affect Next.js.
+
+Verified after the per-file expansion: 1,461 tests passed across 187 files, with
+only the acknowledged bank-seed test skipped. All 288 executable production
+files exceed 95% line coverage (lowest: 95.12%). Global coverage is 99.16% lines
+(5,950/6,000), 98.27% statements, 98.22% functions, and 89.50% branches.
+These are a measured snapshot, not a guarantee that future changes retain
+these values; the per-file line gate enforces the minimum on subsequent runs.
 
 The known bank-seed freshness failure is not disabled in the repository.
 To measure coverage while leaving only that acknowledged test unexecuted:

@@ -26,7 +26,8 @@ export default defineConfig({
         'src/test/**',
       ],
       thresholds: {
-        lines: 80,
+        lines: 95,
+        perFile: true,
       },
     },
   },
