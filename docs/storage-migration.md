@@ -50,6 +50,13 @@ and policies, and fails without deleting anything if either bucket still
 contains objects. The supported storage buckets are then only
 `private-avatars` and `private-cheque-images`.
 
+The retirement migration locks the Storage tables while checking emptiness,
+then temporarily opts into Supabase's protected SQL deletion for the two empty
+bucket records. It restores the previous `storage.allow_delete_query` setting
+immediately afterward; objects are never deleted by this migration. No global
+Storage configuration change or trigger removal is required, including during
+a clean QA database reset.
+
 ## Verification
 
 - Open profile, business, party, and cheque images as their owning user.
