@@ -1,12 +1,11 @@
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   UserIcon as User,
-  Mail01Icon as Mail,
   StarsIcon as Version,
 } from '@hugeicons/core-free-icons'
-import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
+import { APP_VERSION } from '@/lib/app-version'
 
 export default function AboutPage() {
   const t = useTranslations('Settings')
@@ -46,23 +45,6 @@ export default function AboutPage() {
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-muted/50 text-muted-foreground">
-                  <HugeiconsIcon icon={Mail} className="h-4 w-4" />
-                </div>
-                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t('support')}
-                </span>
-              </div>
-              <a
-                href="mailto:support@chequecheck.com"
-                className="text-sm font-bold text-primary hover:underline"
-              >
-                support@chequecheck.com
-              </a>
-            </div>
-
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-muted/50 text-muted-foreground">
                   <HugeiconsIcon icon={Version} className="h-4 w-4" />
                 </div>
                 <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
@@ -70,7 +52,7 @@ export default function AboutPage() {
                 </span>
               </div>
               <span className="text-sm font-bold text-muted-foreground">
-                1.0.0 (Build 2026.08)
+                v{APP_VERSION}
               </span>
             </div>
           </div>

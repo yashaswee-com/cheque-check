@@ -2,6 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../messages/en.json'
+import { version } from '../../package.json'
 import AccountsDraftsPage from './(dashboard)/accounts/drafts/page'
 import ChequeDraftsPage from './(dashboard)/cheques/drafts/page'
 import PartiesDraftsPage from './(dashboard)/parties/drafts/page'
@@ -56,14 +57,20 @@ describe('settings and draft routes', () => {
     expect(mocks.redirect).toHaveBeenCalledWith('/tags')
   })
 
-  it('shows product identity and support contact on the about page', () => {
+  it('shows product identity and the package version without support', () => {
     renderPage(<AboutPage />)
     expect(screen.getByRole('heading', { name: 'ChequeCheck' })).toBeVisible()
     expect(screen.getByText(messages.Settings.appTagline)).toBeVisible()
+    expect(screen.getByText(messages.Settings.teamName)).toBeVisible()
+    expect(screen.getByText(`v${version}`)).toBeVisible()
+    expect(version).toMatch(/^\d+\.\d+\.\d+$/)
     expect(
-      screen.getByRole('link', { name: 'support@chequecheck.com' }),
-    ).toHaveAttribute('href', 'mailto:support@chequecheck.com')
-    expect(screen.getByText('1.0.0 (Build 2026.08)')).toBeVisible()
+      screen.queryByRole('link', { name: 'support@chequecheck.com' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(messages.Settings.support),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/Build 2026/)).not.toBeInTheDocument()
   })
 
   it('provides email, WhatsApp, FAQ answers, and a support action', () => {

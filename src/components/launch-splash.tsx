@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import packageJson from '../../package.json'
+import { APP_VERSION } from '@/lib/app-version'
 
 export function LaunchSplash() {
   const [visible, setVisible] = useState(true)
@@ -20,7 +20,7 @@ export function LaunchSplash() {
     >
       <div className="text-3xl font-semibold tracking-tight">ChequeCheck</div>
       <div className="absolute bottom-8 text-xs font-semibold tracking-wider opacity-70">
-        v{packageJson.version}
+        v{APP_VERSION}
       </div>
     </div>
   )

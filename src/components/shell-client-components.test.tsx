@@ -11,6 +11,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Add01Icon, Delete02Icon } from '@hugeicons/core-free-icons'
 import messages from '../../messages/en.json'
+import { version } from '../../package.json'
 import { TopNav } from './top-nav'
 import { BottomNav } from './bottom-nav'
 import { SpeedDialFab } from './speed-dial-fab'
@@ -399,6 +400,7 @@ describe('shell state components', () => {
     vi.useFakeTimers()
     render(<LaunchSplash />)
     expect(screen.getByTestId('launch-splash')).toHaveTextContent('ChequeCheck')
+    expect(screen.getByTestId('launch-splash')).toHaveTextContent(`v${version}`)
     act(() => vi.advanceTimersByTime(900))
     expect(screen.queryByTestId('launch-splash')).not.toBeInTheDocument()
   })
