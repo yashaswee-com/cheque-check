@@ -34,7 +34,8 @@ GRANT SELECT ON public.report_export_jobs TO authenticated;
 CREATE POLICY export_job_owner ON public.report_export_jobs FOR SELECT TO authenticated
   USING(user_id = auth.uid() AND public.lifecycle_user_active());
 
-INSERT INTO storage.buckets(id,name,public) VALUES('report-exports','report-exports',false);
+INSERT INTO storage.buckets(id,name,public) VALUES('report-exports','report-exports',false)
+ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 CREATE FUNCTION public.report_export_access(requested_path text)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
   SELECT public.lifecycle_user_active() AND public.has_lifetime_premium() AND EXISTS (

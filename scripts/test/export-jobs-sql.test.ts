@@ -38,6 +38,8 @@ beforeAll(async () => {
     CREATE SCHEMA storage;
     CREATE TABLE storage.buckets(id text PRIMARY KEY,name text,public boolean);
     CREATE TABLE storage.objects(id uuid DEFAULT gen_random_uuid(),bucket_id text,name text);
+    INSERT INTO storage.buckets VALUES('report-exports','Existing exports',true);
+    INSERT INTO storage.objects(bucket_id,name) VALUES('report-exports','existing.part');
     ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
     GRANT USAGE ON SCHEMA storage TO authenticated;
     GRANT SELECT ON storage.objects TO authenticated;
@@ -57,6 +59,12 @@ beforeAll(async () => {
       'utf8',
     ),
   )
+  expect(
+    (await db.query('SELECT name, public FROM storage.buckets')).rows,
+  ).toEqual([{ name: 'Existing exports', public: false }])
+  expect(
+    (await db.query('SELECT bucket_id, name FROM storage.objects')).rows,
+  ).toEqual([{ bucket_id: 'report-exports', name: 'existing.part' }])
 }, 30000)
 beforeEach(async () => {
   await db.exec(`RESET ROLE; TRUNCATE report_export_rows,report_export_jobs,cheques,accounts,banks,parties,businesses,profiles,storage.objects CASCADE;
@@ -82,6 +90,15 @@ async function claim() {
 }
 
 describe('frozen background exports and private lifecycle', () => {
+  it('keeps a pre-existing export bucket private after migration replay', async () => {
+    expect(
+      (
+        await db.query(
+          "SELECT id, public FROM storage.buckets WHERE id = 'report-exports'",
+        )
+      ).rows,
+    ).toEqual([{ id: 'report-exports', public: false }])
+  })
   it('starts the cron paused until the worker is deployed', async () => {
     expect(
       (

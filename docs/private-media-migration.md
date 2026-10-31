@@ -54,6 +54,9 @@ dashboard and retiring their old policies. Editing historical migrations does no
 change already-applied environments.
 
 The supported media buckets are `private-avatars` and `private-cheque-images`.
+Report downloads use the separate private `report-exports` bucket. Its migration
+reuses a bucket retained across QA resets, enforces `public = false`, and preserves
+existing objects rather than deleting or recreating the bucket.
 
 ## Verification
 
