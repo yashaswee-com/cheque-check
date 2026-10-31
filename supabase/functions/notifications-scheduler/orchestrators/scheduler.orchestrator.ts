@@ -141,18 +141,40 @@ export class SchedulerOrchestrator {
     forceRun = false,
   ): Promise<{ enqueued: number; completed: boolean }> {
     let enqueued = 0
-    const deadline = Date.now() + 40_000
-    do {
-      const batch = await this.db.scheduleBatch(now, forceRun)
-      enqueued += batch.enqueued
-      if (batch.invalid_timezones)
-        Logger.error('Scheduler skipped invalid time zones', {
-          count: batch.invalid_timezones,
-        })
-      if (batch.completed) return { enqueued, completed: true }
-    } while (Date.now() < deadline)
-    Logger.info('Scheduler paused at its durable checkpoint')
-    return { enqueued, completed: false }
+    const started = Date.now()
+    const deadline = started + 40_000
+    let batches = 0
+    let invalidTimezones = 0
+    let completed = false
+    let failed = true
+    try {
+      do {
+        const batch = await this.db.scheduleBatch(now, forceRun)
+        batches++
+        enqueued += batch.enqueued
+        invalidTimezones += batch.invalid_timezones
+        if (batch.invalid_timezones)
+          Logger.error('Scheduler skipped invalid time zones', {
+            count: batch.invalid_timezones,
+          })
+        if (batch.completed) {
+          completed = true
+          break
+        }
+      } while (Date.now() < deadline)
+      failed = false
+      return { enqueued, completed }
+    } finally {
+      Logger.metric('notification.scheduler.run', {
+        duration_ms: Date.now() - started,
+        batches,
+        enqueued,
+        completed,
+        failed,
+        invalid_timezones: invalidTimezones,
+        budget_exhausted: !failed && !completed,
+      })
+    }
   }
 }
 

@@ -1,7 +1,6 @@
 // @vitest-environment node
-import { PGlite } from '@electric-sql/pglite'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import type { PGlite } from '@electric-sql/pglite'
+import { createScalingFixture } from '../lib/scaling-fixture'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 let db: PGlite
@@ -10,64 +9,7 @@ const business = '22222222-2222-4222-8222-222222222222'
 type Claim = { id: string; claim_token: string }
 
 beforeAll(async () => {
-  db = new PGlite()
-  await db.exec(`
-    CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
-    CREATE SCHEMA auth;
-    CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
-      $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
-    CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS
-      $$ SELECT nullif(current_setting('request.jwt.claim.role',true),'') $$;
-    CREATE TYPE notification_job_status AS ENUM ('pending','processing','sent','failed','skipped','cancelled');
-    CREATE TYPE notification_log_status AS ENUM ('success','failed');
-    CREATE TYPE notification_channel AS ENUM ('voice','whatsapp','email','push','sms');
-    CREATE TYPE notification_purpose AS ENUM ('cheque_reminder','sample_voice_test');
-    CREATE TABLE profiles(user_id uuid PRIMARY KEY, deleted_at timestamptz,
-      voice_call_enabled boolean DEFAULT true, phone text DEFAULT '+919800000000',
-      time_zone text DEFAULT 'Asia/Kolkata', reminders_per_day int DEFAULT 1);
-    CREATE TABLE businesses(id uuid PRIMARY KEY, user_id uuid, deleted_at timestamptz);
-    CREATE TABLE parties(id uuid PRIMARY KEY, name text);
-    CREATE TABLE cheques(id uuid PRIMARY KEY, business_id uuid, party_id uuid,
-      cheque_number text, amount numeric, notes text, type text DEFAULT 'Outward',
-      status text DEFAULT 'Issued', cheque_date date DEFAULT '2026-10-31',
-      deposit_date date, remind_before_days int, is_draft boolean DEFAULT false, deleted_at timestamptz);
-    CREATE TABLE user_quotas(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid,
-      feature_id text, used int DEFAULT 0, "limit" int DEFAULT 5, reset_at timestamptz, updated_at timestamptz);
-    CREATE TABLE notification_jobs(
-      id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid, business_id uuid,
-      channel notification_channel DEFAULT 'voice', purpose notification_purpose DEFAULT 'cheque_reminder', payload jsonb DEFAULT '{}',
-      scheduled_at timestamptz DEFAULT now(), status notification_job_status DEFAULT 'pending',
-      attempts int DEFAULT 0, last_error text, idempotency_key text UNIQUE,
-      created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now());
-    CREATE TABLE notification_logs(id uuid DEFAULT gen_random_uuid(), job_id uuid, user_id uuid,
-      channel notification_channel, purpose notification_purpose, recipient text, status notification_log_status, provider text,
-      provider_message_id text, error text);
-    CREATE FUNCTION lifecycle_user_active(requested_user uuid DEFAULT auth.uid())
-      RETURNS boolean LANGUAGE sql STABLE AS
-      $$ SELECT EXISTS (SELECT 1 FROM profiles WHERE user_id = requested_user AND deleted_at IS NULL) $$;
-    CREATE SCHEMA cron;
-    CREATE TABLE cron.job(jobid bigint, jobname text);
-    CREATE FUNCTION cron.alter_job(job_id bigint, schedule text) RETURNS void LANGUAGE sql AS $$ SELECT $$;
-    ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;
-    ALTER TABLE cheques ENABLE ROW LEVEL SECURITY;
-    CREATE POLICY own_businesses ON businesses TO authenticated USING(user_id = auth.uid());
-    CREATE POLICY own_cheques ON cheques TO authenticated USING(EXISTS
-      (SELECT 1 FROM businesses b WHERE b.id = business_id AND b.user_id = auth.uid()));
-    GRANT USAGE ON SCHEMA public,auth TO authenticated,service_role;
-    GRANT SELECT ON businesses,cheques,parties TO authenticated;
-  `)
-  for (const migration of [
-    '20261031000000_bounded_cheque_reads.sql',
-    '20261031010000_notification_delivery_leases.sql',
-    '20261031020000_bounded_notification_scheduler.sql',
-  ]) {
-    await db.exec(
-      readFileSync(
-        join(process.cwd(), 'supabase', 'migrations', migration),
-        'utf8',
-      ),
-    )
-  }
+  db = await createScalingFixture()
 }, 30_000)
 beforeEach(async () => {
   await db.exec(`RESET ROLE; TRUNCATE notification_attempts, notification_jobs, notification_logs,
@@ -320,4 +262,110 @@ describe('durable scheduler batches', () => {
     },
     60_000,
   )
+})
+
+describe('aggregate-only notification health', () => {
+  it('is service-only, validates windows, and reports empty counts explicitly', async () => {
+    await db.exec('SET ROLE authenticated')
+    await expect(
+      db.query('SELECT * FROM notification_health(60)'),
+    ).rejects.toThrow('permission denied')
+    await db.exec('RESET ROLE')
+    for (const window of [null, 0, 1441]) {
+      await expect(
+        db.query('SELECT * FROM notification_health($1)', [window]),
+      ).rejects.toThrow('Health window')
+    }
+    const { rows } = await db.query('SELECT * FROM notification_health(60)')
+    expect(rows).toEqual([
+      {
+        pending_due: 0,
+        pending_future: 0,
+        processing: 0,
+        expired_leases: 0,
+        reconciliation_required: 0,
+        oldest_due_age_seconds: 0,
+        sent_in_window: 0,
+        failed_in_window: 0,
+        skipped_in_window: 0,
+        cancelled_in_window: 0,
+        incomplete_scheduler_runs: 0,
+        oldest_scheduler_age_seconds: 0,
+        scheduler_checkpoint_age_seconds: null,
+      },
+    ])
+  })
+  it('counts queues beyond the API cap, separates future work, and never exposes private job fields', async () => {
+    await db.exec(`INSERT INTO notification_jobs(user_id,business_id,idempotency_key,scheduled_at)
+      SELECT '${user}','${business}',i::text,now() - interval '10 minutes' FROM generate_series(1,1001) i;
+      INSERT INTO notification_jobs(user_id,business_id,idempotency_key,scheduled_at,payload)
+        VALUES('${user}','${business}','future',now() + interval '1 hour','{"phone":"private"}');
+      INSERT INTO notification_scheduler_runs(run_at,updated_at)
+        VALUES(now() - interval '20 minutes',now() - interval '5 minutes');`)
+    const before = (
+      await db.query(
+        'SELECT status,attempts,quota_reserved FROM notification_jobs ORDER BY id',
+      )
+    ).rows
+    await db.exec('SET ROLE service_role')
+    const { rows } = await db.query<{
+      pending_due: number
+      pending_future: number
+      oldest_due_age_seconds: number
+      incomplete_scheduler_runs: number
+      oldest_scheduler_age_seconds: number
+    }>('SELECT * FROM notification_health(60)')
+    expect(rows[0].pending_due).toBe(1001)
+    expect(rows[0].pending_future).toBe(1)
+    expect(rows[0].oldest_due_age_seconds).toBeGreaterThanOrEqual(600)
+    expect(rows[0].incomplete_scheduler_runs).toBe(1)
+    expect(rows[0].oldest_scheduler_age_seconds).toBeGreaterThanOrEqual(1200)
+    expect(JSON.stringify(rows)).not.toContain(user)
+    expect(JSON.stringify(rows)).not.toContain('private')
+    await db.exec('RESET ROLE')
+    expect(
+      (
+        await db.query(
+          'SELECT status,attempts,quota_reserved FROM notification_jobs ORDER BY id',
+        )
+      ).rows,
+    ).toEqual(before)
+  })
+  it('measures recent state changes, expired leases and unresolved reservations', async () => {
+    const accepted = await enqueue()
+    await start(accepted)
+    await finish(accepted, 'accepted', 'accepted')
+    // Recent acceptance of an old queued job still counts in the outcomes window.
+    await db.exec(
+      "UPDATE notification_jobs SET created_at = now() - interval '7 days'",
+    )
+    const uncertain = await enqueue()
+    await start(uncertain)
+    await finish(uncertain, 'uncertain')
+    const expired = await enqueue()
+    await db.query(
+      "UPDATE notification_jobs SET lease_until = now() - interval '1 minute' WHERE id = $1",
+      [expired.id],
+    )
+    await db.exec(`INSERT INTO notification_jobs(user_id,business_id,idempotency_key,status,updated_at)
+      VALUES('${user}','${business}','old-failure','failed',now() - interval '2 hours'),
+        ('${user}','${business}','skip','skipped',now());`)
+    const { rows } = await db.query('SELECT * FROM notification_health(60)')
+    expect(rows[0]).toMatchObject({
+      processing: 1,
+      expired_leases: 1,
+      reconciliation_required: 1,
+      sent_in_window: 1,
+      failed_in_window: 1,
+      skipped_in_window: 1,
+    })
+    await finish(uncertain, 'rejected')
+    expect(
+      (
+        await db.query<{ reconciliation_required: number }>(
+          'SELECT * FROM notification_health(60)',
+        )
+      ).rows[0].reconciliation_required,
+    ).toBe(0)
+  })
 })

@@ -217,6 +217,7 @@ Notes:
 | `account rate-limits-reset` W | Clear them (all, or `--endpoint`)                               |
 | `ops doctor`                  | Env, credentials, target, migration, functions                  |
 | `ops stats`                   | Key numbers                                                     |
+| `ops notification-health`     | Read-only queue/scheduler aggregates and threshold alerts       |
 | `ops audit`                   | Audit log (`--user`, `--action`, `--by`, `--since`)             |
 | `ops bulk` W                  | Apply grants from a CSV                                         |
 | `ops allowlist-add`           | Mark a project as dev on this machine                           |
@@ -244,6 +245,56 @@ asha@example.com,trial,30,
 (exact match), shows a preview, asks once, then applies rows one by one.
 Failed rows are written to `grants.failed.csv` (with an `error` column) so
 you can fix and re-run just those.
+
+## Local Scaling Benchmark
+
+Run on Node 22:
+
+```sh
+npm run test:scaling
+npm run test:scaling -- --users 10000 --active-users 1000 --samples 50 --concurrency 10
+```
+
+This standalone command does not create an ops environment/client. It runs actual
+scaling migrations against a disposable in-memory PGlite fixture, without
+environment files, remote URLs, Supabase resets, or provider calls. JSON stdout
+contains dataset size, p50/p95/p99/max queued SQL latency, scheduler duration and
+batch counts, simulated acceptance accounting, and aggregate queue health.
+Correctness errors or latency-budget failures exit 1; errors go to stderr.
+
+| Flag                     | Default | Limit                                                |
+| ------------------------ | ------- | ---------------------------------------------------- |
+| `--users`                | 10000   | 1..100000 registered profiles                        |
+| `--active-users`         | 1000    | 1..10000 and no more than registered                 |
+| `--cheques-per-business` | 20      | 1..1000 for ordinary active businesses               |
+| `--hot-business-cheques` | 10000   | At least ordinary size, at most 100000               |
+| `--samples`              | 25      | 1..1000 measured requests per scenario, after warmup |
+| `--concurrency`          | 10      | 1..100 queued tasks on one serialized connection     |
+| `--max-p95-ms`           | 1000    | Local read regression budget, 1..60000               |
+| `--max-scheduler-ms`     | 40000   | Total scheduler regression budget, 1..600000         |
+
+The fixture caps the complete dataset at 1,000,000 cheques. The ten-task default
+does **not** emulate independent production connections or authenticated HTTP
+sessions. Compare baselines on the same runtime/machine/workload; do not interpret
+these results as 10,000 concurrent-user support. See
+[monitoring.md](../docs/monitoring.md#scaling-validation-and-capacity-gates)
+for the measurement assumptions and authorized QA follow-ups.
+
+### Read-only Notification Health
+
+```sh
+npm run ops -- ops notification-health --env qa --json
+npm run ops -- ops notification-health --env prod --check --json
+```
+
+Requires `20261031030000_notification_health.sql` and service-role access.
+Defaults: 60-minute recent-outcomes window, due-job alert age 300 seconds,
+scheduler checkpoint/window alert age 900 seconds. Configure with
+`--window-minutes`, `--max-due-age-seconds`, and
+`--max-scheduler-age-seconds`. Any expired lease, unresolved reservation or missing
+scheduler observation also alerts. A successful read emits `ok: true`; `--check`
+exits 1 when `data.alerts` is nonempty. This never triggers calls, writes data,
+or exports private identifiers/payloads. No polling service is started.
 
 ## Developer tooling
 

@@ -188,5 +188,120 @@ without changing signature verification, idempotency or financial payloads.
 Search/printing and feature-specific workflows outside the shared mutation hooks
 can be added at their owning boundaries after the foundation's QA gate passes.
 
-No monitoring dashboard, database migration, profiling, full Sentry Logs ingestion,
-new feedback widget or paid-feature dependency is introduced.
+The browser monitoring rollout above does not introduce a dashboard, profiling,
+full Sentry Logs ingestion, new feedback widget or paid-feature dependency.
+The scaling diagnostics below add a separate service-only database migration
+and aggregate Edge logs; they do not enable a Deno Sentry SDK or vendor collection.
+
+## Scaling Validation and Capacity Gates
+
+### Repeatable local baseline
+
+On Node 22, run `npm run test:scaling`. This is an isolated, in-memory PGlite
+fixture with a reduced schema plus the actual cheque pagination, lease/settlement,
+bounded scheduler, and health migrations. It never loads environment files,
+accepts a remote URL, resets a Supabase project, or calls Twilio.
+
+Defaults: 10,000 registered profiles, 1,000 eligible active voice users, one business
+per profile, 20 cheques per ordinary active business, and a 10,000-cheque hotspot.
+The resulting 29,980 cheque rows include Issued/Cleared history, with active users
+in Asia/Kolkata, UTC, and America/New_York. Scheduling uses a fixed timestamp and
+the manual force-run flag only inside this disposable fixture.
+
+Five read scenarios target the hotspot under an authenticated RLS role: first
+50-row page, last page, five-result search, exact cheque summary, and business
+summary. Each gets one warmup and 25 measured samples; ten client tasks share
+one **serialized** connection. Percentiles are nearest-rank and include client
+queueing. p99 at 25 samples is the maximum, not a statistically robust tail estimate.
+The tool checks counts, row identity/uniqueness, cross-tenant isolation, scheduler
+completion/idempotency, and charging/audit idempotency for up to 200 locally
+simulated accepted deliveries.
+
+JSON stdout is reusable in CI. Errors go to stderr and exit nonzero. Local budgets
+default to each read scenario p95 <= 1,000 ms and total scheduling <= 40,000 ms;
+exceeding either returns `passed: false`, named `budget_failures`, and exit 1.
+They are regression gates, not production latency promises. Workload/threshold
+flags are shown in [scripts/README.md](../scripts/README.md#local-scaling-benchmark).
+Repeat on an idle machine with the same Node/package versions before comparing.
+
+An initial Windows/Node 22 run on 2026-10-31 measured read p95 about 689-709 ms
+including ten-task queueing; scheduling 1,000 active users took about 214 ms in
+six batches. All 200 simulated settlements passed accounting checks.
+This demonstrates local SQL correctness and provides a baseline, **not**
+production throughput, HTTP latency, 10,000 simultaneous users, or provider capacity.
+
+### Queue Health and Alert Signals
+
+Apply `20261031030000_notification_health.sql` during a planned migration window
+(index creation can block writes), then deploy the updated scheduler/dispatcher
+to emit run summaries. The existing safe notification rollout remains applicable.
+Do not apply this automatically to a shared or live project.
+
+```sh
+npm run ops -- ops notification-health --env qa --json
+npm run ops -- ops notification-health --env prod --check --json
+```
+
+The command makes one service-only, read-only RPC. It never claims jobs, runs a
+scheduler, calls a provider, reconciles outcomes, or changes credits. Its exact
+aggregates are independent of the API row cap and contain no IDs, recipients,
+message text, provider SIDs, cheque amounts, or job payloads.
+
+| Metric                                                      | Meaning                                                                                                         |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `pending_due`, `pending_future`                             | Current pending jobs split by scheduled time, including retries and lifecycle-blocked work                      |
+| `processing`, `expired_leases`                              | Current claimed work; expired/missing leases need worker recovery                                               |
+| `oldest_due_age_seconds`                                    | Oldest currently pending due job, zero when none                                                                |
+| `reconciliation_required`                                   | Failed/cancelled jobs with an unresolved provider-start reservation; inspect legacy quarantined jobs separately |
+| `*_in_window`                                               | Current terminal job states updated in the chosen recent window, **not** per-attempt outcome rates              |
+| `incomplete_scheduler_runs`, `oldest_scheduler_age_seconds` | Unfinished scheduling windows and age of the oldest                                                             |
+| `scheduler_checkpoint_age_seconds`                          | Time since any scheduler checkpoint updated; null means no run observed                                         |
+
+Default alerts: due lag > 300 seconds, stale checkpoint/incomplete window > 900
+seconds, any expired lease, any unresolved reservation, or no scheduler observed.
+Exact threshold equality is allowed. `--check` exits 1 on alerts; JSON `ok: true`
+means the RPC completed, so consumers must examine `data.alerts` and the exit code.
+The command does not install a poller: schedule it externally at a reasonable
+cadence (for example once/minute), suppress expected alerts during maintenance,
+and review query cost before increasing polling frequency.
+
+Worker log events `notification.scheduler.run` and `notification.dispatcher.run`
+are one aggregate JSON record per normal completed/failed invocation. Scheduler
+records batches, enqueues, invalid timezones, completion, budget exhaustion and
+duration. Dispatcher records claims, processed/sent/skipped/failed work, provider
+request and accepted/rejected/uncertain counts, reconciliation holds, finalization
+retries, duration, and stop reason (`empty_queue`, `max_jobs`, `budget`, `error`).
+`provider_duration_ms` sums overlapping provider calls and may exceed invocation
+duration. Provider acceptance is recorded separately from successful persistence.
+An abruptly terminated worker cannot emit a final record; the database health
+and platform invocation logs are the complementary signals. Targeted scheduler
+operations retain their existing results rather than these cron-run metrics.
+
+### Before Declaring Production Readiness
+
+- Agree actual active-user distribution, peak simultaneous sessions, think time,
+  tenant skew, cheque history, reads/writes, and regional/network conditions.
+  10,000 registrations alone do not define a throughput requirement. As an
+  illustrative workload, 50 active sessions with five-second think time produce
+  about 10 requests/second; validate the product's actual mix instead of assuming it.
+- On an explicitly approved disposable QA project, use synthetic accounts and
+  authenticated HTTP load through the real routes/RPCs. Ramp, sustain, burst and
+  soak; record p50/p95/p99, non-validation errors, CPU/memory, DB connection usage,
+  locks, query plans, and queue age. Keep real providers and paid operations disabled.
+  No remote load runner or QA reset is executed by the local benchmark.
+- Review `EXPLAIN (ANALYZE, BUFFERS)` for hotspot page/search/summary and scheduling
+  queries under real RLS on PostgreSQL. PGlite omits PostgREST, relation hydration,
+  TLS, pooling, independent transactions and distributed lease contention.
+- Set accepted HTTP/error-rate and queue-delay SLOs from those measurements.
+  Run UI/export responsiveness checks separately; PDF/Excel final serialization
+  still uses browser memory and can block.
+- Size provider-account throughput explicitly. A 1,000-reminder burst within
+  15 minutes needs about 1.11 accepted calls/second before retries. Five calls
+  per invocation is not a global limiter. At ten seconds per call, roughly twenty
+  jobs fit a 40-second loop; at one invocation/minute that is about 0.33 jobs/second,
+  far below the nominal 200-job cap. Measure prep/database latency and approved
+  provider limits before changing concurrency or adding workers.
+- Set operational ownership, dashboard filters, alert delivery and retention;
+  observe several representative peaks after rollout. Global provider throttling,
+  hosted load testing, automated reconciliation and production sizing remain
+  explicit follow-ups, not capabilities this local benchmark certifies.

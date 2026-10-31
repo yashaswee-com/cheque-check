@@ -86,6 +86,7 @@ Vercel settings, masking, browser opt-out, user/session searches and QA rollout.
 | `npm run type-check`         | Run strict TypeScript checks                    |
 | `npm test`                   | Run the Vitest suite once                       |
 | `npm run test:watch`         | Run Vitest in watch mode                        |
+| `npm run test:scaling`       | Disposable local SQL benchmark for 10,000 users |
 | `npm run test:coverage`      | Generate unit-test coverage                     |
 | `npm run test:e2e:install`   | Install Playwright Chromium                     |
 | `npm run test:e2e`           | Run Playwright tests                            |
@@ -167,6 +168,34 @@ modules or Edge Functions.
 - Explicit `any` is disallowed in these strengthened production boundaries and the
   reporting feature. This is an incremental lint gate, not a repository-wide
   type-cleanup rewrite.
+
+### Local scaling checks and queue diagnostics
+
+`npm run test:scaling` creates a disposable in-memory PGlite database, applies the
+actual scaling migrations, and seeds 10,000 registered users with a 1,000-user
+active subset. It measures RLS-scoped hotspot reads, exact summaries, resumable
+scheduling, and simulated delivery accounting. JSON output includes p50/p95/p99,
+correctness checks, and explicit latency-budget failures. No env files, hosted
+database, HTTP endpoint, or real call provider is used.
+
+```sh
+npm run test:scaling
+npm run test:scaling -- --samples 50 --concurrency 10 --max-p95-ms 1000
+npm run ops -- ops notification-health --env qa --json
+npm run ops -- ops notification-health --env prod --check --json
+```
+
+The benchmark's ten queued workers share one serialized database connection:
+latencies include local queueing, not ten independent PostgreSQL connections.
+Its defaults are local regression budgets, not a production SLA or capacity
+certification. See [monitoring.md](docs/monitoring.md#scaling-validation-and-capacity-gates)
+for the workload, measurements, capacity gates, and next production checks.
+
+The health command is read-only and service-role-only. It requires
+`20261031030000_notification_health.sql`; do not mistake a missing RPC for a
+healthy queue. Workers also emit aggregate JSON run summaries to existing Edge
+Function logs, without sending these metrics to a new vendor. No dashboard,
+scheduled alert poller, or production monitoring configuration is created.
 
 Feature code belongs under `src/features/<feature>`. Current feature areas are
 `auth`, `onboarding`, `dashboard`, `businesses`, `accounts`, `parties`,

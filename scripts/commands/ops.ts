@@ -31,6 +31,11 @@ import {
   type OpsStats,
 } from '../domain/ops'
 import { searchUsers } from '../domain/users'
+import {
+  getNotificationHealth,
+  notificationHealthAlerts,
+  type NotificationHealth,
+} from '../domain/notification-health'
 import { askValue, LIMIT_OPTION, selectUser } from './shared'
 
 const STATUS_ICON = {
@@ -98,6 +103,73 @@ const stats = defineAction<OpsStats>({
     ctx.ui.kv(value.jobs24h)
     ctx.ui.section('Admin changes, last 7 days')
     ctx.ui.kv({ 'Audit entries': value.audit7d })
+  },
+})
+
+const notificationHealth = defineAction<{
+  windowMinutes: number
+  metrics: NotificationHealth
+  alerts: string[]
+}>({
+  name: 'notification-health',
+  title: 'Check reminder backlog and scheduler lag',
+  description:
+    'Read-only aggregate metrics; no calls, retries, quota changes, or personal data. --check exits 1 if an alert is present.',
+  mutates: false,
+  options: [
+    {
+      flags: '--window-minutes <minutes>',
+      description: 'Recent job outcomes window (1..1440)',
+      defaultValue: '60',
+    },
+    {
+      flags: '--max-due-age-seconds <seconds>',
+      description: 'Alert when the oldest due job exceeds this age',
+      defaultValue: '300',
+    },
+    {
+      flags: '--max-scheduler-age-seconds <seconds>',
+      description: 'Alert on stale checkpoints or incomplete windows',
+      defaultValue: '900',
+    },
+    { flags: '--check', description: 'Exit 1 if any health alert is present' },
+  ],
+  examples: [
+    'ops notification-health --env qa --json',
+    'ops notification-health --env prod --check --json',
+  ],
+  async run(ctx, options) {
+    const windowMinutes = parseInteger(
+      String(options.windowMinutes),
+      '--window-minutes',
+      { min: 1, max: 1440 },
+    )
+    const limits = {
+      maxDueAgeSeconds: parseInteger(
+        String(options.maxDueAgeSeconds),
+        '--max-due-age-seconds',
+        { min: 1, max: 86400 },
+      ),
+      maxSchedulerAgeSeconds: parseInteger(
+        String(options.maxSchedulerAgeSeconds),
+        '--max-scheduler-age-seconds',
+        { min: 1, max: 86400 },
+      ),
+    }
+    const metrics = await getNotificationHealth(ctx.db(), windowMinutes)
+    const alerts = notificationHealthAlerts(metrics, limits)
+    if (options.check && alerts.length) process.exitCode = 1
+    return { windowMinutes, metrics, alerts }
+  },
+  render(ctx, result) {
+    ctx.ui.section(
+      `Notification health (${result.windowMinutes}-minute outcomes window)`,
+    )
+    ctx.ui.kv(result.metrics)
+    if (result.alerts.length)
+      result.alerts.forEach((alert) => ctx.ui.warn(alert))
+    else
+      ctx.ui.success('No queue/scheduler alerts at the configured thresholds.')
   },
 })
 
@@ -447,5 +519,5 @@ export const opsGroup: GroupDef = {
   name: 'ops',
   title: 'Ops: doctor, stats, audit log, bulk grants',
   description: 'Health checks, reporting, and batch operations.',
-  actions: [doctor, stats, audit, bulk, allowlistAdd],
+  actions: [doctor, stats, notificationHealth, audit, bulk, allowlistAdd],
 }

@@ -1,4 +1,18 @@
 export class Logger {
+  static metric(
+    event: string,
+    values: Record<string, number | boolean | string>,
+  ) {
+    console.log(
+      JSON.stringify({
+        level: 'info',
+        event,
+        timestamp: new Date().toISOString(),
+        ...values,
+      }),
+    )
+  }
+
   static info(message: string, context?: unknown) {
     console.log(
       `[INFO] ${new Date().toISOString()} - ${message}`,

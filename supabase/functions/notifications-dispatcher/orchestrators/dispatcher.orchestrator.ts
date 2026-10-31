@@ -16,6 +16,16 @@ export interface TestModeConfig {
   phone: string
 }
 
+interface DeliveryMetrics {
+  provider_requests: number
+  provider_duration_ms: number
+  provider_accepted: number
+  provider_rejected: number
+  provider_uncertain: number
+  reconciliation_required: number
+  finalization_retries: number
+}
+
 export class DispatcherOrchestrator {
   constructor(
     private db: DispatcherDatabaseService,
@@ -26,33 +36,81 @@ export class DispatcherOrchestrator {
   /** Without a scope this is the global cron claim; a scope limits the claim itself. */
   async run(batchSize = 50, scope?: DispatchScope): Promise<DispatchResult[]> {
     const results: DispatchResult[] = []
-    const deadline = Date.now() + 40_000
-    // Claim only what can start immediately; queued-in-memory jobs would age their leases.
-    for (
-      let remaining = batchSize;
-      remaining > 0 && Date.now() < deadline;
-      remaining -= 5
-    ) {
-      const jobs = await this.db.claimJobs(Math.min(5, remaining), scope)
-      if (!jobs.length) break
-      results.push(
-        ...(await Promise.all(jobs.map((job) => this.dispatchSafely(job)))),
-      )
-      if (jobs.length < Math.min(5, remaining)) break
+    const started = Date.now()
+    const deadline = started + 40_000
+    const metrics: DeliveryMetrics = {
+      provider_requests: 0,
+      provider_duration_ms: 0,
+      provider_accepted: 0,
+      provider_rejected: 0,
+      provider_uncertain: 0,
+      reconciliation_required: 0,
+      finalization_retries: 0,
     }
-
-    return results
+    let claims = 0
+    let stopReason = 'max_jobs'
+    let failed = true
+    try {
+      // Claim only what can start immediately; queued-in-memory jobs would age their leases.
+      for (
+        let remaining = batchSize;
+        remaining > 0 && Date.now() < deadline;
+        remaining -= 5
+      ) {
+        const jobs = await this.db.claimJobs(Math.min(5, remaining), scope)
+        claims++
+        if (!jobs.length) {
+          stopReason = 'empty_queue'
+          break
+        }
+        results.push(
+          ...(await Promise.all(
+            jobs.map((job) => this.dispatchSafely(job, metrics)),
+          )),
+        )
+        if (jobs.length < Math.min(5, remaining)) {
+          stopReason = 'empty_queue'
+          break
+        }
+      }
+      if (
+        Date.now() >= deadline &&
+        results.length < batchSize &&
+        stopReason !== 'empty_queue'
+      )
+        stopReason = 'budget'
+      failed = false
+      return results
+    } finally {
+      Logger.metric('notification.dispatcher.run', {
+        ...metrics,
+        duration_ms: Date.now() - started,
+        claims,
+        processed: results.length,
+        sent: results.filter((result) => result.status === 'sent').length,
+        skipped: results.filter((result) => result.status === 'skipped').length,
+        failed_jobs: results.filter((result) => result.status === 'failed')
+          .length,
+        failed,
+        scoped: !!scope,
+        stop_reason: failed ? 'error' : stopReason,
+      })
+    }
   }
 
   /** Pre-provider failures retry; started deliveries recover through their lease. */
-  private async dispatchSafely(job: ClaimedJob): Promise<DispatchResult> {
+  private async dispatchSafely(
+    job: ClaimedJob,
+    metrics: DeliveryMetrics,
+  ): Promise<DispatchResult> {
     const state = { providerStarted: false }
     try {
-      return await this.dispatch(job, state)
+      return await this.dispatch(job, state, metrics)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       Logger.error(`Dispatch crashed for job ${job.id}`, message)
       if (!state.providerStarted) await this.db.markFailedOrRetry(job, message)
+      else metrics.reconciliation_required++
       // Started deliveries retain their reservation and cannot be blindly retried.
       // The lease reaper exposes them for provider reconciliation.
       return { jobId: job.id, status: 'failed', error: message }
@@ -67,6 +125,7 @@ export class DispatcherOrchestrator {
   private async dispatch(
     job: ClaimedJob,
     state: { providerStarted: boolean },
+    metrics: DeliveryMetrics,
   ): Promise<DispatchResult> {
     if (job.channel !== 'voice') {
       await this.db.markSkipped(
@@ -76,12 +135,13 @@ export class DispatcherOrchestrator {
       return { jobId: job.id, status: 'skipped' }
     }
 
-    return this.dispatchVoice(job, state)
+    return this.dispatchVoice(job, state, metrics)
   }
 
   private async dispatchVoice(
     job: ClaimedJob,
     state: { providerStarted: boolean },
+    metrics: DeliveryMetrics,
   ): Promise<DispatchResult> {
     const profile = await this.db.fetchProfile(job.user_id)
     if (!profile || profile.deleted_at) {
@@ -132,28 +192,39 @@ export class DispatcherOrchestrator {
       return this.skip(job, 'Voice reminder quota exhausted')
     }
 
-    const call = await this.twilio.initiateCall(to, twiml)
+    metrics.provider_requests++
+    const providerStarted = Date.now()
+    const call = await this.twilio.initiateCall(to, twiml).finally(() => {
+      metrics.provider_duration_ms += Date.now() - providerStarted
+    })
 
     if (call.success) {
+      metrics.provider_accepted++
       Logger.info(`Provider accepted job ${job.id}`, { sid: call.sid })
-      await this.finalize(job, 'accepted', call.sid)
+      await this.finalize(job, metrics, 'accepted', call.sid)
       Logger.info(`Voice call sent for job ${job.id}`, { sid: call.sid })
       return { jobId: job.id, status: 'sent', providerMessageId: call.sid }
     }
 
     const errorMessage = call.error || 'Twilio call failed'
+    if (call.uncertain) {
+      metrics.provider_uncertain++
+    } else metrics.provider_rejected++
     await this.finalize(
       job,
+      metrics,
       call.uncertain ? 'uncertain' : 'rejected',
       undefined,
       errorMessage,
     )
+    if (call.uncertain) metrics.reconciliation_required++
     Logger.error(`Voice call failed for job ${job.id}`, errorMessage)
     return { jobId: job.id, status: 'failed', error: errorMessage }
   }
 
   private async finalize(
     job: ClaimedJob,
+    metrics: DeliveryMetrics,
     outcome: 'accepted' | 'rejected' | 'uncertain',
     providerId?: string,
     message?: string,
@@ -165,6 +236,7 @@ export class DispatcherOrchestrator {
       } catch (error) {
         Logger.error(`Delivery finalization failed for ${job.id}`, error)
         if (attempt === 2) throw error
+        metrics.finalization_retries++
         await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)))
       }
     }

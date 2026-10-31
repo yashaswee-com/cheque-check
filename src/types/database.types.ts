@@ -603,6 +603,24 @@ export interface Database {
       }
     }
     Functions: {
+      notification_health: {
+        Args: { requested_window_minutes?: number }
+        Returns: {
+          pending_due: number
+          pending_future: number
+          processing: number
+          expired_leases: number
+          reconciliation_required: number
+          oldest_due_age_seconds: number
+          sent_in_window: number
+          failed_in_window: number
+          skipped_in_window: number
+          cancelled_in_window: number
+          incomplete_scheduler_runs: number
+          oldest_scheduler_age_seconds: number
+          scheduler_checkpoint_age_seconds: number | null
+        }[]
+      }
       cheque_summary: {
         Args: {
           requested_business: string

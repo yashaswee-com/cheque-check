@@ -41,6 +41,23 @@ flowchart LR
 
 ## 2. Data model
 
+### Read-only capacity diagnostics
+
+After applying `20261031030000_notification_health.sql`, run
+`npm run ops -- ops notification-health --env qa --json` for exact queue counts,
+oldest due age, expired leases, unresolved reservations, and scheduler lag.
+Use `--check` for a nonzero exit when configured alert thresholds are exceeded.
+This is a single service-only aggregate query; it never places calls, advances
+the scheduler, retries jobs, changes quotas, or returns personal data.
+
+The updated workers emit aggregate JSON events `notification.scheduler.run`
+and `notification.dispatcher.run` to existing Edge logs, including duration,
+batch/outcome counts, checkpoint pauses, and finalization/reconciliation signals.
+These complement the durable database health query when a worker terminates
+before it can emit its final event. No external dashboard or alert poller is
+automatically installed. See [monitoring.md](monitoring.md#scaling-validation-and-capacity-gates)
+for metric definitions, local benchmark commands, and production capacity gates.
+
 | Table                | Purpose                                                                                                                                                                                             |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `notification_jobs`  | The queue. One row per (business, channel, day, slot) for real reminders, or one row per sample test call. `idempotency_key` prevents duplicate enqueues across overlapping scheduler ticks.        |

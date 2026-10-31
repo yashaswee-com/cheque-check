@@ -191,6 +191,96 @@ describe('dispatcher eligibility', () => {
     ])
   })
 
+  describe('dispatcher aggregate run metrics', () => {
+    function summary(log: { mock: { calls: unknown[][] } }) {
+      const json = log.mock.calls
+        .map((call) => call[0])
+        .find(
+          (value) =>
+            typeof value === 'string' &&
+            value.startsWith(
+              '{"level":"info","event":"notification.dispatcher.run"',
+            ),
+        )
+      expect(json).toBeTypeOf('string')
+      return JSON.parse(String(json))
+    }
+    it('reports provider acceptance separately from durable settlement without private data', async () => {
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+      try {
+        const { orchestrator } = makeOrchestrator(reminder, {
+          finishDelivery: vi
+            .fn()
+            .mockRejectedValue(new Error('database failure')),
+        })
+        await orchestrator.run(50)
+        const metric = summary(log)
+        expect(metric).toMatchObject({
+          event: 'notification.dispatcher.run',
+          processed: 1,
+          sent: 0,
+          failed_jobs: 1,
+          provider_requests: 1,
+          provider_accepted: 1,
+          reconciliation_required: 1,
+          finalization_retries: 2,
+          stop_reason: 'empty_queue',
+        })
+        expect(JSON.stringify(metric)).not.toContain(USER)
+        expect(JSON.stringify(metric)).not.toContain(JOB)
+        expect(JSON.stringify(metric)).not.toContain('CA1')
+        expect(metric.duration_ms).toBeGreaterThanOrEqual(0)
+      } finally {
+        log.mockRestore()
+      }
+    })
+    it('counts uncertain outcomes and skipped work without claiming sent delivery', async () => {
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+      try {
+        const { orchestrator } = makeOrchestrator(
+          reminder,
+          {},
+          { success: false, uncertain: true, error: 'timeout' },
+        )
+        await orchestrator.run(50)
+        expect(summary(log)).toMatchObject({
+          provider_uncertain: 1,
+          reconciliation_required: 1,
+          sent: 0,
+          failed_jobs: 1,
+        })
+        log.mockClear()
+        const skipped = makeOrchestrator(reminder, {
+          startDelivery: async () => false,
+        })
+        await skipped.orchestrator.run(50)
+        expect(summary(log)).toMatchObject({
+          skipped: 1,
+          provider_requests: 0,
+          reconciliation_required: 0,
+        })
+      } finally {
+        log.mockRestore()
+      }
+    })
+    it('emits a failed run summary when queue claims fail', async () => {
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+      try {
+        const { orchestrator } = makeOrchestrator(reminder, {
+          claimJobs: vi.fn().mockRejectedValue(new Error('claim failed')),
+        })
+        await expect(orchestrator.run(50)).rejects.toThrow('claim failed')
+        expect(summary(log)).toMatchObject({
+          failed: true,
+          stop_reason: 'error',
+          processed: 0,
+        })
+      } finally {
+        log.mockRestore()
+      }
+    })
+  })
+
   it('claims globally when no scope is given', async () => {
     const { orchestrator, db } = makeOrchestrator(reminder)
     await orchestrator.run(50)
