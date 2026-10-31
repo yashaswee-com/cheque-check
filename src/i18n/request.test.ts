@@ -41,4 +41,29 @@ describe('request locale contract', () => {
     expect(config.messages).toHaveProperty('Common')
     expect(mocks.warn).toHaveBeenCalledOnce()
   })
+
+  it.each(['EN', 'fr', ' hi ', '../en', 'en.json'])(
+    'rejects noncanonical locale values without attempting a catalog import: %s',
+    async (locale) => {
+      mocks.get.mockReturnValue({ value: locale })
+      const config = await requestConfig({
+        requestLocale: Promise.resolve('hi'),
+      })
+      expect(config.locale).toBe('en')
+      expect(config.messages).toHaveProperty('Common')
+      expect(mocks.warn).toHaveBeenCalledWith(
+        'Unsupported locale cookie; using English',
+      )
+    },
+  )
+
+  it('treats an empty cookie as the default rather than an invalid locale', async () => {
+    mocks.get.mockReturnValue({ value: '' })
+    const config = await requestConfig({
+      requestLocale: Promise.resolve('hi'),
+    })
+    expect(config.locale).toBe('en')
+    expect(mocks.get).toHaveBeenCalledWith('NEXT_LOCALE')
+    expect(mocks.warn).not.toHaveBeenCalled()
+  })
 })
