@@ -1,0 +1,455 @@
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { NextIntlClientProvider } from 'next-intl'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { Add01Icon, Delete02Icon } from '@hugeicons/core-free-icons'
+import messages from '../../messages/en.json'
+import { TopNav } from './top-nav'
+import { BottomNav } from './bottom-nav'
+import { SpeedDialFab } from './speed-dial-fab'
+import { OnboardingCheck } from './onboarding-check'
+import { AppShellSkeleton } from './app-shell-skeleton'
+import { LaunchSplash } from './launch-splash'
+import Providers from './providers'
+import { ScrollToTop } from './scroll-to-top'
+import { PwaRegistrar } from './pwa-registrar'
+
+const mocks = vi.hoisted(() => ({
+  back: vi.fn(),
+  push: vi.fn(),
+  businessSwitch: vi.fn(),
+  profileProvider: vi.fn(),
+  businessProvider: vi.fn(),
+  monitoring: vi.fn(),
+  celebrations: vi.fn(),
+  scrollTo: vi.fn(),
+}))
+let pathname = '/cheques/cheque-id'
+let keyboard = false
+let activeBusiness: {
+  id: string
+  name: string
+  logo_url: string | null
+} | null = null
+let businessState = {
+  businesses: [{ id: 'business', name: 'Acme' }],
+  isLoading: false,
+  isFetching: false,
+}
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname,
+  useRouter: () => ({ back: mocks.back, push: mocks.push }),
+}))
+vi.mock('@/features/profile/hooks/use-profile', () => ({
+  useProfile: () => ({ profile: { name: 'A User', avatar_url: null } }),
+  ProfileProvider: ({ children }: { children: React.ReactNode }) => {
+    mocks.profileProvider()
+    return <div data-testid="profile-provider">{children}</div>
+  },
+}))
+vi.mock('@/features/businesses/hooks/use-business', () => ({
+  useBusiness: () => ({ activeBusiness, ...businessState }),
+  BusinessProvider: ({ children }: { children: React.ReactNode }) => {
+    mocks.businessProvider()
+    return <div data-testid="business-provider">{children}</div>
+  },
+}))
+vi.mock('@/hooks/use-software-keyboard', () => ({
+  useSoftwareKeyboard: () => keyboard,
+}))
+vi.mock('@/components/business-switcher', () => ({
+  BusinessSwitcher: ({ trigger }: { trigger: React.ReactNode }) => (
+    <div>{trigger}</div>
+  ),
+}))
+vi.mock('@/components/calculator', () => ({
+  Calculator: ({ onClose }: { onClose: () => void }) => (
+    <div role="dialog">
+      Calculator <button onClick={onClose}>Close calculator</button>
+    </div>
+  ),
+}))
+vi.mock('@/components/global-search', () => ({
+  GlobalSearch: ({
+    open,
+    onOpenChange,
+  }: {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+  }) =>
+    open ? (
+      <div role="dialog">
+        Search <button onClick={() => onOpenChange(false)}>Close search</button>
+      </div>
+    ) : null,
+}))
+vi.mock('@/components/celebration-host', () => ({
+  CelebrationHost: () => {
+    mocks.celebrations()
+    return <span>Celebration host</span>
+  },
+}))
+vi.mock('@/components/monitoring-provider', () => ({
+  MonitoringProvider: () => {
+    mocks.monitoring()
+    return <span>Monitoring provider</span>
+  },
+}))
+
+function renderIntl(children: React.ReactNode) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+      {children}
+    </NextIntlClientProvider>,
+  )
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  pathname = '/cheques/cheque-id'
+  keyboard = false
+  activeBusiness = null
+  businessState = {
+    businesses: [{ id: 'business', name: 'Acme' }],
+    isLoading: false,
+    isFetching: false,
+  }
+})
+
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
+
+describe('navigation components', () => {
+  it('updates optimistic active tabs and resets them when the real route changes', () => {
+    const view = renderIntl(<BottomNav />)
+    const parties = screen.getByTestId('bottom-nav-parties')
+    fireEvent.click(parties)
+    expect(parties).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByTestId('bottom-nav-cheques')).not.toHaveAttribute(
+      'aria-current',
+    )
+
+    pathname = '/parties'
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+        <BottomNav />
+      </NextIntlClientProvider>,
+    )
+    expect(screen.getByTestId('bottom-nav-parties')).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
+
+  it.each([
+    ['', 'ChequeCheck'],
+    ['/', 'ChequeCheck'],
+    ['/dashboard', messages.Navigation.dashboard],
+    ['/settings', messages.Navigation.settings],
+    ['/features', messages.Navigation.features],
+    ['/profile', messages.Settings.profile],
+    ['/settings/privacy-policy', messages.Settings.privacyPolicy],
+    ['/settings/terms-and-conditions', messages.Settings.termsAndConditions],
+    ['/settings/refund-policy', messages.Settings.refundPolicy],
+    ['/settings/about', messages.Settings.aboutApp],
+    ['/settings/help-and-support', messages.Settings.helpAndSupport],
+    ['/settings/whats-new', messages.Settings.whatsNew],
+    ['/settings/preferences', messages.Settings.preferences],
+    ['/settings/notifications', messages.Settings.notifications],
+    ['/settings/transactions', messages.Settings.transactions],
+    ['/cheques', messages.Cheques.title],
+    ['/accounts', messages.Accounts.title],
+    ['/parties', messages.Parties.title],
+    ['/businesses', messages.Businesses.title],
+    ['/tags', messages.Tags.title],
+    ['/cheques/create', messages.Cheques.newCheque],
+    ['/accounts/create', messages.Accounts.addAccount],
+    ['/parties/create', messages.Parties.newParty],
+    ['/businesses/create', messages.Businesses.newBusiness],
+    ['/tags/create', messages.Tags.newTag],
+    ['/cheques/drafts', messages.Drafts.chequeDrafts],
+    ['/accounts/drafts', messages.Drafts.accountDrafts],
+    ['/parties/drafts', messages.Drafts.partyDrafts],
+    ['/cheques/one/edit', messages.Cheques.editCheque],
+    ['/tags/one', messages.Tags.viewTag],
+    ['/unlisted', 'Unlisted'],
+  ])(
+    'shows the correct title and navigation controls for %s',
+    (route, title) => {
+      pathname = route
+      renderIntl(<TopNav />)
+      expect(screen.getByText(title, { exact: true })).toBeVisible()
+      if (
+        [
+          '/dashboard',
+          '/settings',
+          '/features',
+          '/profile',
+          '/cheques',
+          '/accounts',
+          '/parties',
+          '/businesses',
+          '/tags',
+        ].includes(route)
+      ) {
+        expect(
+          screen.queryByRole('button', { name: messages.SharedUI.back }),
+        ).not.toBeInTheDocument()
+      } else {
+        expect(
+          screen.getByRole('button', { name: messages.SharedUI.back }),
+        ).toBeVisible()
+      }
+    },
+  )
+
+  it('switches business icons, opens search/calculator, and hides restricted menu actions', async () => {
+    const user = userEvent.setup()
+    pathname = '/cheques'
+    activeBusiness = {
+      id: 'business',
+      name: 'Acme',
+      logo_url: 'https://example.test/logo.png',
+    }
+    renderIntl(<TopNav />)
+    expect(screen.getByTestId('business-switcher-trigger')).toHaveAttribute(
+      'data-active-business-name',
+      'Acme',
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.SharedUI.search }),
+    )
+    expect(screen.getByRole('dialog', { name: undefined })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Close search' }))
+    await user.click(
+      screen.getByRole('button', { name: messages.SharedUI.more }),
+    )
+    await user.click(
+      screen.getByRole('button', { name: messages.SharedUI.calculator }),
+    )
+    expect(screen.getByRole('dialog')).toHaveTextContent('Calculator')
+    fireEvent.click(screen.getByRole('button', { name: 'Close calculator' }))
+    await user.click(
+      screen.getByRole('button', { name: messages.SharedUI.more }),
+    )
+    expect(
+      screen.getByRole('link', { name: messages.Navigation.settings }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: messages.SharedUI.reload }),
+    ).toBeVisible()
+
+    cleanup()
+    pathname = '/settings'
+    renderIntl(<TopNav />)
+    await user.click(
+      screen.getByRole('button', { name: messages.SharedUI.more }),
+    )
+    expect(
+      screen.queryByRole('button', { name: messages.SharedUI.reload }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId('business-switcher-trigger'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('uses the back button and closes the More menu after navigating to settings', async () => {
+    const user = userEvent.setup()
+    pathname = '/cheques/one'
+    renderIntl(<TopNav />)
+    await user.click(
+      screen.getByRole('button', { name: messages.SharedUI.back }),
+    )
+    expect(mocks.back).toHaveBeenCalledOnce()
+
+    await user.click(
+      screen.getByRole('button', { name: messages.SharedUI.more }),
+    )
+    const settings = screen.getByRole('link', {
+      name: messages.Navigation.settings,
+    })
+    await user.click(settings)
+    expect(settings).not.toBeVisible()
+  })
+})
+
+describe('shell state components', () => {
+  it('routes unconfigured workspaces to onboarding and keeps loaded children', async () => {
+    businessState = { businesses: [], isLoading: true, isFetching: false }
+    const view = renderIntl(
+      <OnboardingCheck>
+        <p>Workspace</p>
+      </OnboardingCheck>,
+    )
+    expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument()
+
+    businessState = { businesses: [], isLoading: false, isFetching: false }
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+        <OnboardingCheck>
+          <p>Workspace</p>
+        </OnboardingCheck>
+      </NextIntlClientProvider>,
+    )
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/onboarding'))
+    expect(screen.getByText('Workspace')).toBeVisible()
+
+    pathname = '/onboarding'
+    mocks.push.mockClear()
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+        <OnboardingCheck>
+          <p>Workspace</p>
+        </OnboardingCheck>
+      </NextIntlClientProvider>,
+    )
+    await act(async () => {})
+    expect(mocks.push).not.toHaveBeenCalled()
+  })
+
+  it('renders the shell skeleton and shows then dismisses the launch splash', () => {
+    renderIntl(<AppShellSkeleton />)
+    expect(document.querySelector('[aria-busy="true"]')).toHaveAttribute(
+      'aria-live',
+      'polite',
+    )
+    expect(document.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(20)
+    cleanup()
+
+    vi.useFakeTimers()
+    render(<LaunchSplash />)
+    expect(screen.getByTestId('launch-splash')).toHaveTextContent('ChequeCheck')
+    act(() => vi.advanceTimersByTime(900))
+    expect(screen.queryByTestId('launch-splash')).not.toBeInTheDocument()
+  })
+
+  it('composes application providers around a persistent query context', () => {
+    renderIntl(
+      <Providers>
+        <p>Application</p>
+      </Providers>,
+    )
+    expect(screen.getByText('Application')).toBeVisible()
+    expect(screen.getByText('Monitoring provider')).toBeVisible()
+    expect(screen.getByText('Celebration host')).toBeVisible()
+    expect(mocks.profileProvider).toHaveBeenCalledOnce()
+    expect(mocks.businessProvider).toHaveBeenCalledOnce()
+  })
+
+  it('scrolls to the top on route changes', () => {
+    Object.defineProperty(window, 'scrollTo', {
+      configurable: true,
+      value: mocks.scrollTo,
+    })
+    const view = renderIntl(<ScrollToTop />)
+    expect(mocks.scrollTo).toHaveBeenCalledWith(0, 0)
+    mocks.scrollTo.mockClear()
+    pathname = '/parties'
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+        <ScrollToTop />
+      </NextIntlClientProvider>,
+    )
+    expect(mocks.scrollTo).toHaveBeenCalledWith(0, 0)
+  })
+
+  it('registers a service worker and logs registration failures', async () => {
+    const register = vi.fn().mockResolvedValue({ scope: '/app/' })
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: { register },
+    })
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const view = render(<PwaRegistrar />)
+    await waitFor(() => expect(register).toHaveBeenCalledWith('/sw.js'))
+    expect(log).toHaveBeenCalledWith(
+      'Service Worker registered with scope:',
+      '/app/',
+    )
+
+    const registrationError = new Error('registration denied')
+    register.mockRejectedValueOnce(registrationError)
+    view.rerender(<PwaRegistrar key="retry" />)
+    await waitFor(() =>
+      expect(error).toHaveBeenCalledWith(
+        'Service Worker registration failed:',
+        registrationError,
+      ),
+    )
+    log.mockRestore()
+    error.mockRestore()
+  })
+})
+
+describe('speed dial actions', () => {
+  it('opens actions, closes on Escape or backdrop, and calls the selected action', async () => {
+    const user = userEvent.setup()
+    const edit = screen.queryByTestId('speed-dial-edit-link')
+    expect(edit).not.toBeInTheDocument()
+    const onDelete = vi.fn()
+    renderIntl(
+      <SpeedDialFab
+        editHref="/cheques/one/edit"
+        editLabel="Edit cheque"
+        actions={[
+          { label: 'Add note', icon: Add01Icon, onClick: vi.fn() },
+          {
+            label: 'Delete cheque',
+            icon: Delete02Icon,
+            onClick: onDelete,
+            destructive: true,
+            testId: 'delete-cheque',
+          },
+          {
+            label: 'Disabled action',
+            icon: Add01Icon,
+            onClick: vi.fn(),
+            disabled: true,
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByTestId('speed-dial-edit-link')).toHaveAttribute(
+      'href',
+      '/cheques/one/edit',
+    )
+    const toggle = screen.getByTestId('speed-dial-toggle')
+    await user.click(toggle)
+    expect(screen.getByRole('menu')).toBeVisible()
+    expect(
+      screen.getByRole('menuitem', { name: 'Disabled action' }),
+    ).toBeDisabled()
+    await user.click(screen.getByTestId('delete-cheque'))
+    expect(onDelete).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+
+    await user.click(toggle)
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    await user.click(toggle)
+    fireEvent.click(document.querySelector('[aria-hidden="true"]')!)
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
+  it('omits the menu trigger when there are no secondary actions', () => {
+    renderIntl(
+      <SpeedDialFab editHref="/parties/one/edit" editLabel="Edit party" />,
+    )
+    expect(screen.queryByTestId('speed-dial-toggle')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Edit party' })).toHaveAttribute(
+      'href',
+      '/parties/one/edit',
+    )
+  })
+})
