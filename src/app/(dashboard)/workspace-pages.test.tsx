@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState, type ReactNode } from 'react'
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -32,6 +33,7 @@ const mocks = vi.hoisted(() => ({
   loadExport: vi.fn(),
   requestExport: vi.fn(),
   cancelExport: vi.fn(),
+  deferDynamicLoading: false,
 }))
 const business = { id: 'business', name: 'Acme', email: 'acme@example.test' }
 const baseCheque = {
@@ -47,8 +49,15 @@ let loading = false
 let active = true
 let empty = false
 let noResults = false
+let hasMoreToday = false
+let statsError = false
+let missingBusinessEmail = false
 let balance = -100
-let exportJobs: ExportJob[] = []
+let exportJobs: ExportJob[] | undefined = []
+let jobsLoading = false
+let jobsError: Error | null = null
+let reportCheques: (typeof baseCheque)[] | undefined | null = null
+let reportError: Error | null = null
 let profile: {
   id: string
   name: string
@@ -64,9 +73,13 @@ let profile: {
 }
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }))
 vi.mock('next/dynamic', () => ({
-  default: (load: () => Promise<React.ComponentType>) => {
+  default: (
+    load: () => Promise<React.ComponentType>,
+    options?: { loading?: () => ReactNode },
+  ) => {
     const Component = lazy(async () => ({ default: await load() }))
     return function Dynamic(props: Record<string, unknown>) {
+      if (mocks.deferDynamicLoading) return options?.loading?.() ?? null
       return (
         <Suspense fallback={null}>
           <Component {...props} />
@@ -93,9 +106,12 @@ vi.mock('@/features/businesses/hooks/use-businesses-page', () => ({
     const [search, setSearch] = useState('')
     const [sortBy, setSortBy] = useState('name')
     const [sortOrder, setSortOrder] = useState('asc')
+    const listedBusiness = missingBusinessEmail
+      ? { ...business, email: null }
+      : business
     return {
-      businesses: empty ? [] : [business],
-      filteredBusinesses: empty || noResults ? [] : [business],
+      businesses: empty ? [] : [listedBusiness],
+      filteredBusinesses: empty || noResults ? [] : [listedBusiness],
       isLoading: loading,
       activeBusiness: active ? business : null,
       setActiveBusiness: mocks.activate,
@@ -119,20 +135,21 @@ vi.mock('@/features/cheques/hooks/use-cheques', () => ({
 }))
 vi.mock('@/features/reports/hooks/use-report-cheques', () => ({
   useReportCheques: () => ({
-    cheques: cheques.slice(0, 10),
+    cheques: reportCheques === null ? cheques.slice(0, 10) : reportCheques,
     summary: [],
-    totalCount: cheques.length,
+    totalCount:
+      reportCheques === null ? cheques.length : (reportCheques?.length ?? 1),
     outstanding: 1100,
     isLoading: loading,
-    error: null,
+    error: reportError,
     loadExportCheques: mocks.loadExport,
   }),
 }))
 vi.mock('@/features/reports/hooks/use-export-jobs', () => ({
   useExportJobs: () => ({
     data: exportJobs,
-    isLoading: false,
-    error: null,
+    isLoading: jobsLoading,
+    error: jobsError,
     request: mocks.requestExport,
     cancel: mocks.cancelExport,
   }),
@@ -159,13 +176,13 @@ vi.mock('@/features/cheques/hooks/use-dashboard-cheques', () => ({
     overdueCount: 1,
     isLoading: loading,
     error: null,
-    hasMoreToday: false,
+    hasMoreToday,
     updateStatus: mocks.status,
   }),
   useChequeSummary: () => ({
     data: cheques,
     isLoading: loading,
-    isError: false,
+    isError: statsError,
   }),
 }))
 vi.mock('@/features/tags/hooks/use-entity-tags', () => ({
@@ -278,9 +295,16 @@ beforeEach(() => {
   vi.resetAllMocks()
   loading = empty = noResults = false
   active = true
+  hasMoreToday = false
+  statsError = false
+  missingBusinessEmail = false
   balance = -100
   cheques = [baseCheque]
   exportJobs = []
+  jobsLoading = false
+  jobsError = null
+  reportCheques = null
+  reportError = null
   profile = {
     id: 'profile',
     name: 'Original Person',
@@ -288,10 +312,16 @@ beforeEach(() => {
     avatar_url: null,
     currency: '$',
   }
+  mocks.deferDynamicLoading = false
   mocks.update.mockResolvedValue(undefined)
   mocks.verify.mockResolvedValue(true)
 })
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  Reflect.deleteProperty(window, 'caches')
+  Reflect.deleteProperty(navigator, 'serviceWorker')
+  vi.unstubAllGlobals()
+})
 
 describe('dashboard page', () => {
   it.each([true, false])(
@@ -351,6 +381,32 @@ describe('dashboard page', () => {
     ).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Today chart' }))
     expect(await screen.findByText('Chart records: 0')).toBeVisible()
+  })
+  it('uses the default currency and exposes additional cheque navigation', () => {
+    profile = null
+    hasMoreToday = true
+    balance = 0
+    renderPage(<DashboardPage />)
+
+    expect(screen.getByTestId('dashboard-current-balance')).toHaveTextContent(
+      '₹0',
+    )
+    expect(document.querySelector('a[href="/cheques"]')).toBeInTheDocument()
+  })
+
+  it('shows the chart error state after summary loading succeeds', () => {
+    statsError = true
+    renderPage(<DashboardPage />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      messages.Common.loadDataError,
+    )
+  })
+  it('renders the dashboard chart loading fallback while the module is pending', () => {
+    mocks.deferDynamicLoading = true
+    renderPage(<DashboardPage />)
+
+    expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
   })
 })
 
@@ -414,6 +470,105 @@ describe('reports page', () => {
     )
     expect(screen.getByTestId('reports-export-csv')).toBeVisible()
   })
+  it('uses the generic export error message for non-Error failures', async () => {
+    mocks.requestExport.mockRejectedValueOnce('offline')
+    renderPage(<ReportsPage />)
+    fireEvent.click(screen.getByTestId('reports-export-trigger'))
+    fireEvent.click(await screen.findByTestId('reports-export-csv'))
+
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: messages.Common.error,
+          type: 'error',
+        }),
+      ),
+    )
+  })
+
+  it('uses the generic cancellation error message for non-Error failures', async () => {
+    exportJobs = [
+      {
+        id: 'queued',
+        format: 'csv',
+        status: 'queued',
+        row_count: 10,
+        next_part: 0,
+        part_count: 1,
+        created_at: '2026-10-31',
+        expires_at: '2026-11-01',
+        error_code: null,
+      },
+    ]
+    mocks.cancelExport.mockRejectedValueOnce('offline')
+    renderPage(<ReportsPage />)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Reports.cancelExport }),
+    )
+
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: messages.Common.error,
+          type: 'error',
+        }),
+      ),
+    )
+  })
+
+  it('shows job loading/errors and safe values when reports are incomplete', () => {
+    jobsLoading = true
+    jobsError = new Error('Jobs unavailable')
+    exportJobs = undefined
+    profile = null
+    reportCheques = [{ ...baseCheque, party: { name: '' } }]
+    renderPage(<ReportsPage />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      messages.Common.loadDataError,
+    )
+    expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
+    expect(screen.getByText('₹1,100')).toBeVisible()
+  })
+
+  it('keeps export available when the report has an error and explains the failure', () => {
+    reportError = new Error('Report unavailable')
+    renderPage(<ReportsPage />)
+
+    expect(screen.getByTestId('reports-export-trigger')).toBeDisabled()
+    expect(screen.getByText(messages.Common.loadDataError)).toBeVisible()
+  })
+
+  it('renders the report list safely while the cheque response is not available', () => {
+    reportCheques = undefined
+    renderPage(<ReportsPage />)
+
+    expect(
+      screen.getByRole('heading', { name: messages.Reports.recentCheques }),
+    ).toBeVisible()
+  })
+
+  it('uses an export filename when no business is selected', async () => {
+    active = false
+    renderPage(<ReportsPage />)
+    fireEvent.click(screen.getByTestId('reports-export-trigger'))
+    fireEvent.click(await screen.findByTestId('reports-export-pdf'))
+
+    await waitFor(() =>
+      expect(mocks.pdf).toHaveBeenCalledWith(
+        cheques,
+        'cheques_report_export.pdf',
+      ),
+    )
+  })
+
+  it('renders the dynamic chart loading fallback while it is pending', () => {
+    mocks.deferDynamicLoading = true
+    renderPage(<ReportsPage />)
+
+    expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
+  })
   it('exports the complete fresh history, not the ten-row preview, and prevents duplicate downloads', async () => {
     cheques = Array.from({ length: 12 }, (_, index) => ({
       ...baseCheque,
@@ -428,7 +583,11 @@ describe('reports page', () => {
     )
     renderPage(<ReportsPage />)
     fireEvent.click(screen.getByTestId('reports-export-trigger'))
-    fireEvent.click(await screen.findByTestId('reports-export-pdf'))
+    const exportButton = await screen.findByTestId('reports-export-pdf')
+    act(() => {
+      fireEvent.click(exportButton)
+      fireEvent.click(exportButton)
+    })
     await waitFor(() =>
       expect(mocks.pdf).toHaveBeenCalledWith(
         cheques,
@@ -522,6 +681,13 @@ describe('reports page', () => {
 })
 
 describe('profile page', () => {
+  it('shows the delete confirmation placeholder while its module is loading', () => {
+    mocks.deferDynamicLoading = true
+    renderPage(<ProfilePage />)
+
+    expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
+  })
+
   it('shows loading placeholders and makes the email read-only', () => {
     loading = true
     renderPage(<ProfilePage />)
@@ -619,6 +785,18 @@ describe('profile page', () => {
     expect(unregister).toHaveBeenCalledOnce()
   })
 
+  it('reloads even when cache and service-worker APIs are unavailable', async () => {
+    const reload = vi.fn()
+    vi.stubGlobal('location', { reload })
+    renderPage(<ProfilePage />)
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Confirm CLEAR' }),
+    )
+
+    await waitFor(() => expect(reload).toHaveBeenCalledOnce())
+  })
+
   it('uses the fallback name and email when the profile is unavailable', () => {
     profile = null
     renderPage(<ProfilePage />)
@@ -630,6 +808,13 @@ describe('profile page', () => {
 })
 
 describe('business list page', () => {
+  it('shows a loading placeholder for the lazily loaded delete dialog', () => {
+    mocks.deferDynamicLoading = true
+    renderPage(<BusinessesPage />)
+
+    expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
+  })
+
   it('renders business totals, activates a card, and isolates detail navigation from activation', () => {
     renderPage(<BusinessesPage />)
     expect(screen.getByText('$1,200')).toBeVisible()
@@ -641,6 +826,16 @@ describe('business list page', () => {
     detail.addEventListener('click', (event) => event.preventDefault())
     fireEvent.click(detail)
     expect(mocks.activate).not.toHaveBeenCalled()
+  })
+  it('uses fallback currency and email when the business is inactive and lacks contact data', () => {
+    active = false
+    missingBusinessEmail = true
+    profile = null
+    renderPage(<BusinessesPage />)
+
+    expect(screen.getByTestId('business-card-business')).toHaveClass('bg-card')
+    expect(screen.getByText('₹1,200')).toBeVisible()
+    expect(screen.getByText(messages.Common.noEmail)).toBeVisible()
   })
   it('connects search and sort controls and resets a search with no matching records', () => {
     noResults = true

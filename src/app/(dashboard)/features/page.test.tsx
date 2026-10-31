@@ -38,6 +38,7 @@ let loading = false
 let processing = false
 let premiumState: PremiumState | null = null
 let finitePremium = false
+let resolvedEntitlementState: string | null = null
 
 afterEach(cleanup)
 
@@ -57,7 +58,7 @@ vi.mock('@/features/monetization/hooks/use-monetization', () => ({
     isLoading: loading,
     error: accessError,
     getEntitlementState: (id: string) =>
-      subscribed.includes(id) ? 'active' : 'free',
+      resolvedEntitlementState ?? (subscribed.includes(id) ? 'active' : 'free'),
   }),
 }))
 vi.mock('@/features/monetization/hooks/use-premium-access', () => ({
@@ -170,6 +171,7 @@ beforeEach(() => {
   premium = false
   premiumState = null
   finitePremium = false
+  resolvedEntitlementState = null
   subscribed = []
   quotas = []
   entitlements = []
@@ -183,6 +185,14 @@ beforeEach(() => {
 })
 
 describe('Features page', () => {
+  it('shows the loading state while access data is being fetched', () => {
+    loading = true
+    renderPage()
+    expect(screen.getByRole('status')).toHaveTextContent(
+      messages.Features.loading,
+    )
+  })
+
   it('does not offer a checkout that would be rejected for an existing finite active grant', async () => {
     premium = true
     finitePremium = true
@@ -381,6 +391,71 @@ describe('Features page', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('shows the scan shortcut for an accessible scanner with remaining credits', () => {
+    premium = true
+    subscribed = [FEATURE_IDS.AI_SCANNER_SUB]
+    quotas = [
+      {
+        id: 'scan-quota',
+        user_id: 'user',
+        feature_id: FEATURE_IDS.AI_SCAN,
+        used: 1,
+        limit: 250,
+        reset_at: null,
+      },
+    ]
+    renderPage()
+    expect(
+      screen.getByRole('link', { name: messages.Features.scanCheque }),
+    ).toHaveAttribute('href', '/cheques/create')
+  })
+
+  it('recommends an add-on subscription for premium users with depleted trial quota', () => {
+    premium = true
+    voiceCredits(100)
+    renderPage()
+    expect(
+      within(voiceCard()).getByText(messages.Features.subscribeToContinue),
+    ).toBeVisible()
+  })
+
+  it('shows an expired add-on entitlement state', () => {
+    subscribed = [FEATURE_IDS.AI_SCANNER_SUB]
+    resolvedEntitlementState = 'expired'
+    renderPage()
+    expect(
+      within(
+        screen.getByRole('article', { name: messages.Features.aiScanner }),
+      ).getByText(messages.Premium.labels.expired),
+    ).toBeVisible()
+  })
+
+  it('uses a safe progress maximum and displays a quota reset independently of entitlement expiry', () => {
+    subscribed = [FEATURE_IDS.VOICE_REMINDER_SUB]
+    quotas = [
+      {
+        id: 'voice-quota',
+        user_id: 'user',
+        feature_id: FEATURE_IDS.VOICE_REMINDER,
+        used: 0,
+        limit: 0,
+        reset_at: '2099-02-01T00:00:00.000Z',
+      },
+    ]
+    entitlements = [
+      {
+        feature_id: FEATURE_IDS.VOICE_REMINDER_SUB,
+        valid_until: '2099-01-01T00:00:00.000Z',
+      },
+    ]
+    renderPage()
+    expect(within(voiceCard()).getByRole('progressbar')).toHaveAttribute(
+      'aria-valuemax',
+      '1',
+    )
+    expect(within(voiceCard()).getAllByText(/2099/)).toHaveLength(2)
+  })
+
   it('displays the expiration date for a matching subscription entitlement', () => {
     subscribed = [FEATURE_IDS.VOICE_REMINDER_SUB]
     profile.voice_call_enabled = true
@@ -497,6 +572,66 @@ describe('Features page', () => {
     ).not.toBeChecked()
   })
 
+  it('uses the generic save error when a profile update rejects with a non-Error value', async () => {
+    premium = true
+    mocks.update.mockRejectedValue('network unavailable')
+    renderPage()
+    fireEvent.click(
+      screen.getByRole('switch', { name: messages.Features.receivingMode }),
+    )
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: messages.Features.updateFailed,
+          type: 'error',
+        }),
+      ),
+    )
+  })
+
+  it('reports an error premium state without removing feature controls', () => {
+    premiumState = 'error'
+    renderPage()
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      messages.Premium.states.error,
+    )
+  })
+
+  it('distinguishes a sent test call from a server-side test-call failure', async () => {
+    subscribed = [FEATURE_IDS.VOICE_REMINDER_SUB]
+    profile.voice_call_enabled = true
+    voiceCredits()
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ queued: false }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 500 }))
+    renderPage()
+    const sendButton = screen.getByRole('button', {
+      name: messages.Features.sendTestCall,
+    })
+    fireEvent.click(sendButton)
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: messages.Features.testCallSent,
+        }),
+      ),
+    )
+    mocks.toast.mockClear()
+    fireEvent.click(sendButton)
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: messages.Features.testCallFailed,
+          type: 'error',
+        }),
+      ),
+    )
+    fetchMock.mockRestore()
+  })
+
   it('refreshes entitlements and quotas without fetching payment history', async () => {
     const { client } = renderPage()
     const invalidate = vi.spyOn(client, 'invalidateQueries')
@@ -515,6 +650,8 @@ describe('Features page', () => {
 
   it('does not offer purchases when access failed to load', async () => {
     accessError = new Error('Unavailable')
+    const reload = vi.fn()
+    vi.stubGlobal('location', { reload })
     renderPage()
     expect(
       await screen.findByText(messages.Features.loadFailed),
@@ -524,6 +661,10 @@ describe('Features page', () => {
         name: messages.Features.getLifetimePremium,
       }),
     ).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Features.tryAgain }),
+    )
+    expect(reload).toHaveBeenCalledOnce()
   })
 
   it('keeps purchase controls independent of unavailable payment history', () => {

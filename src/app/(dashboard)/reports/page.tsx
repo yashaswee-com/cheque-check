@@ -96,7 +96,7 @@ function ReportsContent() {
       const baseName = `cheques_report_${activeBusiness?.name || 'export'}`
       if (format === 'pdf') {
         await reportService.exportToPDF(exportCheques, `${baseName}.pdf`)
-      } else if (format === 'excel') {
+      } else {
         await reportService.exportToExcel(exportCheques, `${baseName}.xlsx`)
       }
       setExportOpen(false)
