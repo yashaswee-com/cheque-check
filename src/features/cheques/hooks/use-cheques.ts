@@ -57,9 +57,9 @@ export function useCheques(businessId: string | undefined) {
     const result = [...processedCheques].filter((c) => {
       const matchesSearch =
         !query ||
-        (c.cheque_number ?? '').toLowerCase().includes(query) ||
+        c.cheque_number.toLowerCase().includes(query) ||
         (c.party?.name ?? '').toLowerCase().includes(query) ||
-        String(c.amount ?? '').includes(query)
+        String(c.amount).includes(query)
       const matchesFilter = filter === 'All' || c.status === filter
       return matchesSearch && matchesFilter
     })

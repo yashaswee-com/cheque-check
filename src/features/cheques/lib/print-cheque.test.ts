@@ -9,6 +9,7 @@ import {
 afterEach(() => {
   localStorage.clear()
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 describe('print-cheque', () => {
   const cheque = {
@@ -23,6 +24,19 @@ describe('print-cheque', () => {
     const document = createChequePrintPdf(cheque, '₹')
     expect(document.internal.pageSize.getWidth()).toBeCloseTo(210)
     expect(document.internal.pageSize.getHeight()).toBeCloseTo(297)
+  })
+
+  it('returns defaults during server rendering without accessing browser storage', () => {
+    vi.stubGlobal('window', undefined)
+    expect(getPrintLayout('account-1')).toBe(defaultPrintLayout)
+  })
+
+  it('prints an empty payee when the party relation is unavailable', () => {
+    const document = createChequePrintPdf({ ...cheque, party: undefined }, '₹')
+    expect(document.internal.pageSize.getWidth()).toBeCloseTo(210)
+    expect(document.output()).not.toContain('Acme Ltd')
+    expect(document.output()).toContain('123456')
+    expect(document.output()).toContain('2026-09-30')
   })
 
   it('persists account-specific layout coordinates', () => {

@@ -55,6 +55,15 @@ beforeEach(() => {
       upcoming_count: 1,
       overdue_count: 2,
     },
+    {
+      status: 'Cleared',
+      type: 'Outward',
+      cheque_count: 2,
+      total_amount: 250,
+      today_count: 0,
+      upcoming_count: 0,
+      overdue_count: 0,
+    },
   ])
 })
 afterEach(() => {
@@ -88,11 +97,23 @@ describe('bounded cheque hooks', () => {
         expect.objectContaining({ offset: 50 }),
       ),
     )
+    act(() => result.current.previousPage())
+    await waitFor(() =>
+      expect(mocks.getPage).toHaveBeenLastCalledWith(
+        expect.objectContaining({ offset: 0 }),
+      ),
+    )
+    act(() => result.current.previousPage())
+    expect(result.current.pageIndex).toBe(0)
     act(() => result.current.setFilter('Cleared'))
     await waitFor(() =>
       expect(mocks.getPage).toHaveBeenLastCalledWith(
         expect.objectContaining({ offset: 0, status: 'Cleared' }),
       ),
+    )
+    act(() => result.current.updateStatus('cheque-1', 'Cleared'))
+    await waitFor(() =>
+      expect(mocks.updateStatus).toHaveBeenCalledWith('cheque-1', 'Cleared'),
     )
     rerender({ business: 'b2' })
     await waitFor(() =>
@@ -131,6 +152,11 @@ describe('bounded cheque hooks', () => {
         expect.objectContaining({ search: 'Supplier', limit: 5 }),
       ),
     )
+
+    const unscoped = renderHook(() => useChequeSearch(undefined, 'Supplier'), {
+      wrapper,
+    })
+    expect(unscoped.result.current.isLoading).toBe(false)
   })
   it('uses exact aggregates and a bounded today list for the dashboard', async () => {
     const { wrapper } = setup()
@@ -144,5 +170,20 @@ describe('bounded cheque hooks', () => {
     expect(mocks.getPage).toHaveBeenCalledWith(
       expect.objectContaining({ limit: 50, includeInward: false }),
     )
+    act(() => result.current.updateStatus('cheque-1', 'Cleared'))
+    await waitFor(() =>
+      expect(mocks.updateStatus).toHaveBeenCalledWith('cheque-1', 'Cleared'),
+    )
+  })
+
+  it('keeps dashboard queries disabled without a business id', () => {
+    const { wrapper } = setup()
+    const { result } = renderHook(() => useDashboardCheques(undefined), {
+      wrapper,
+    })
+
+    expect(result.current.todayCheques).toEqual([])
+    expect(mocks.getPage).not.toHaveBeenCalled()
+    expect(mocks.getSummary).not.toHaveBeenCalled()
   })
 })

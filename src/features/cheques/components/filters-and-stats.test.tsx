@@ -70,19 +70,53 @@ it('routes search and every sorting and filtering action to its controlled sette
   expect(order).toHaveBeenCalledWith('asc')
 })
 
+it('marks a non-default filter selection on the trigger', () => {
+  wrap(
+    <ChequeFilterBar
+      search="123"
+      setSearch={vi.fn()}
+      filter="Issued"
+      setFilter={vi.fn()}
+      sortBy="date"
+      setSortBy={vi.fn()}
+      sortOrder="desc"
+      setSortOrder={vi.fn()}
+    />,
+  )
+  expect(screen.getByTestId('cheque-filter-trigger')).toHaveClass('bg-primary')
+  expect(screen.getByTestId('cheque-filter-trigger')).not.toHaveClass(
+    'bg-white',
+  )
+})
+
 it('renders empty statistics and formats chart values, percentages and legend labels', () => {
   const { unmount } = wrap(<ChequeStatsChart chartData={[]} totalCheques={0} />)
   expect(screen.getByText(messages.Common.noData)).toBeInTheDocument()
   unmount()
   wrap(
     <ChequeStatsChart
-      chartData={[{ name: 'Issued', value: 100, color: '#ff0000' }]}
+      chartData={[
+        { name: 'Issued', value: 100, color: '#ff0000' },
+        { name: 'Cleared', value: 50, color: '#00ff00' },
+      ]}
       totalCheques={4}
     />,
   )
-  expect(screen.getByText('25 (25.0%)')).toBeInTheDocument()
+  expect(screen.getByText('25 (16.7%)')).toBeInTheDocument()
   expect(screen.getByText('Issued')).toBeInTheDocument()
+  expect(screen.getAllByTestId('slice')).toHaveLength(2)
   expect(screen.getByText('4')).toBeInTheDocument()
+})
+
+it('formats a single zero-valued chart slice without dividing by zero', () => {
+  wrap(
+    <ChequeStatsChart
+      chartData={[{ name: 'Issued', value: 0, color: '#ff0000' }]}
+      totalCheques={0}
+    />,
+  )
+  expect(screen.getByText('25 (0.0%)')).toBeInTheDocument()
+  expect(screen.getByText('0')).toBeInTheDocument()
 })
 
 it('changes date presets, opens a custom calendar and selects dates', async () => {
@@ -110,6 +144,25 @@ it('changes date presets, opens a custom calendar and selects dates', async () =
   expect(screen.getByRole('combobox')).toHaveTextContent('Custom range')
 })
 
+it('does not open a calendar for a non-custom date preset', async () => {
+  const user = userEvent.setup()
+  const onPresetChange = vi.fn()
+  wrap(
+    <StatsDateFilter
+      preset="all"
+      customRange={undefined}
+      onPresetChange={onPresetChange}
+      onCustomRangeChange={vi.fn()}
+    />,
+  )
+  await user.click(screen.getByRole('combobox'))
+  await user.click(await screen.findByRole('option', { name: 'This week' }))
+  expect(onPresetChange).toHaveBeenCalledWith('thisWeek')
+  expect(
+    screen.queryByRole('button', { name: 'Pick dates' }),
+  ).not.toBeInTheDocument()
+})
+
 it('labels an explicit custom date interval', () => {
   wrap(
     <StatsDateFilter
@@ -122,4 +175,16 @@ it('labels an explicit custom date interval', () => {
   expect(
     screen.getByRole('button', { name: '1 Jan – 3 Jan 26' }),
   ).toBeInTheDocument()
+})
+
+it('labels a custom date range while its end date is not selected', () => {
+  wrap(
+    <StatsDateFilter
+      preset="custom"
+      customRange={{ from: new Date(2026, 0, 1) }}
+      onPresetChange={vi.fn()}
+      onCustomRangeChange={vi.fn()}
+    />,
+  )
+  expect(screen.getByRole('button', { name: '1 Jan 26' })).toBeInTheDocument()
 })

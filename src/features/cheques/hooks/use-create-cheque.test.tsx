@@ -17,6 +17,9 @@ const mocks = vi.hoisted(() => ({
   toastAdd: vi.fn(),
   useDraftController: vi.fn(),
   firstIncompleteChequeStep: vi.fn(),
+  profile: { default_reminder_days: 5 } as {
+    default_reminder_days: number
+  } | null,
   draft: {
     draftId: null as string | null,
     status: 'idle',
@@ -58,7 +61,7 @@ vi.mock('@/features/drafts', () => ({
   useDraftController: mocks.useDraftController,
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
-  useProfile: () => ({ profile: { default_reminder_days: 5 } }),
+  useProfile: () => ({ profile: mocks.profile }),
 }))
 vi.mock('@/features/monetization/components/premium-gate', () => ({
   usePremiumAction: () => mocks.premium,
@@ -133,6 +136,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   mocks.useDraftController.mockReturnValue(mocks.draft)
   mocks.draft.draftId = null
+  mocks.profile = { default_reminder_days: 5 }
   mocks.draft.beginPublish.mockResolvedValue(null)
   mocks.firstIncompleteChequeStep.mockReturnValue(2)
   mocks.create.mockResolvedValue(createdCheque)
@@ -170,6 +174,8 @@ describe('useCreateCheque', () => {
     })
     await act(async () => result.current.nextStep())
     expect(result.current.step).toBe(3)
+    await act(async () => result.current.nextStep())
+    expect(result.current.step).toBe(3)
     act(() => result.current.prevStep())
     expect(result.current.step).toBe(2)
   })
@@ -203,6 +209,7 @@ describe('useCreateCheque', () => {
     const onCreated = vi.fn()
     const beforePublish = vi.fn()
     const { result, client } = setup('Outward', { onCreated, beforePublish })
+    client.setQueryData(queryKeys.cheques.list('business-1'), [])
     client.setQueryData(queryKeys.parties.list('business-1'), [
       { id: 'party-1', name: 'Acme' },
     ])
@@ -338,5 +345,74 @@ describe('useCreateCheque', () => {
       description: 'Select a business before creating a cheque',
       type: 'error',
     })
+  })
+
+  it('uses generic upload and creation errors for non-Error failures', async () => {
+    const alert = vi.spyOn(window, 'alert').mockImplementation(() => undefined)
+    const { result } = setup()
+    mocks.uploadImage.mockRejectedValueOnce('upload unavailable')
+    await act(async () => {
+      await result.current.handleImageUpload(
+        new File(['scan'], 'scan.png', { type: 'image/png' }),
+      )
+    })
+    expect(alert).toHaveBeenCalledWith('Upload failed: upload unavailable')
+
+    mocks.create.mockRejectedValueOnce('service unavailable')
+    setValidCheque(result)
+    await act(async () => {
+      await expect(result.current.onSubmit()).rejects.toBe(
+        'service unavailable',
+      )
+    })
+    expect(mocks.toastAdd).toHaveBeenLastCalledWith({
+      title: 'error',
+      description: 'error',
+      type: 'error',
+    })
+    alert.mockRestore()
+  })
+
+  it('uses nullable reminder defaults when profile data is absent and skips business celebration context', async () => {
+    mocks.profile = null
+    const { result } = setup(
+      'Outward',
+      { draftId: 'draft-without-profile' },
+      '',
+    )
+    mocks.draft.beginPublish.mockResolvedValue('draft-without-profile')
+    setValidCheque(result)
+    const controllerOptions = mocks.useDraftController.mock.calls[0][0]
+    expect(
+      controllerOptions.toFields(result.current.form.getValues()),
+    ).not.toHaveProperty('remind_before_days')
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.publish).toHaveBeenCalledWith(
+      'draft-without-profile',
+      expect.objectContaining({ cheque_number: '123456' }),
+      null,
+    )
+    expect(mocks.queueCelebration).toHaveBeenCalledWith({
+      target: '/cheques',
+      cheque: undefined,
+    })
+  })
+
+  it('creates an ordinary cheque with null reminder defaults when profile data is absent', async () => {
+    mocks.profile = null
+    const { result } = setup()
+    const controllerOptions = mocks.useDraftController.mock.calls[0][0]
+    expect(
+      controllerOptions.toFields(result.current.form.getValues()),
+    ).toMatchObject({ remind_before_days: null })
+    setValidCheque(result)
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({ remind_before_days: null }),
+    )
   })
 })

@@ -80,6 +80,57 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('cheque edit and action workflows', () => {
+  it('normalizes empty cheque fields and preserves unrelated optimistic rows', async () => {
+    const { client, wrapper } = setup()
+    const other = Cheque.fromRow({
+      ...original.toJSON(),
+      id: 'c2',
+      cheque_number: '654321',
+    })
+    client.setQueryData(queryKeys.cheques.list('b1'), [original, other])
+    mocks.getById.mockResolvedValue(
+      Cheque.fromRow({
+        ...original.toJSON(),
+        deposit_date: null,
+        notes: null,
+        image_url: null,
+      }),
+    )
+    const { result } = renderHook(() => useEditCheque('c1'), { wrapper })
+    await waitFor(() => expect(result.current.cheque?.id).toBe('c1'))
+    expect(result.current.form.getValues('deposit_date')).toBe('')
+    act(() => {
+      result.current.form.setValue('amount', 125)
+      result.current.form.setValue('deposit_date', '2026-10-02')
+      result.current.form.setValue('notes', '')
+      result.current.form.setValue('image_url', null)
+    })
+
+    await act(async () => result.current.onSubmit())
+
+    const cached = client.getQueryData<Cheque[]>(queryKeys.cheques.list('b1'))
+    expect(cached?.map(({ id }) => id)).toEqual(['c1', 'c2'])
+    expect(cached?.[0]).toBeInstanceOf(Cheque)
+    expect(cached?.[0].deposit_date).toBe('2026-10-02')
+    expect(cached?.[0].notes).toBeNull()
+    expect(cached?.[0].image_url).toBeNull()
+  })
+
+  it('does not mutate or navigate when the schema rejects a blank deposit date', async () => {
+    const { wrapper } = setup()
+    const { result } = renderHook(() => useEditCheque('c1'), { wrapper })
+    await waitFor(() => expect(result.current.cheque?.id).toBe('c1'))
+    act(() => result.current.form.setValue('deposit_date', ''))
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.update).not.toHaveBeenCalled()
+    expect(mocks.back).not.toHaveBeenCalled()
+    expect(
+      result.current.form.getFieldState('deposit_date').error?.message,
+    ).toBe('Expected deposit date is required')
+  })
+
   it('hydrates the editor, uploads an image, and updates class-based cached cheques', async () => {
     const { client, wrapper } = setup()
     const { result } = renderHook(() => useEditCheque('c1'), { wrapper })
@@ -147,6 +198,29 @@ describe('cheque edit and action workflows', () => {
     expect(mocks.back).not.toHaveBeenCalled()
     expect(result.current.isUploading).toBe(false)
   })
+  it('uses the generic upload and update messages for non-Error failures', async () => {
+    const { wrapper } = setup()
+    const { result } = renderHook(() => useEditCheque('c1'), { wrapper })
+    await waitFor(() => expect(result.current.cheque?.id).toBe('c1'))
+    mocks.upload.mockRejectedValueOnce('upload unavailable')
+    await act(async () =>
+      result.current.handleImageUpload(new File(['image'], 'scan.png')),
+    )
+    expect(mocks.toast).toHaveBeenLastCalledWith({
+      title: 'error',
+      description: 'error',
+      type: 'error',
+    })
+
+    act(() => result.current.form.setValue('amount', 250))
+    mocks.update.mockRejectedValueOnce('update unavailable')
+    await act(async () => result.current.onSubmit())
+    expect(mocks.toast).toHaveBeenLastCalledWith({
+      title: 'error',
+      description: 'error',
+      type: 'error',
+    })
+  })
   it('deletes from the editor and navigates to the cheque list', async () => {
     const { client, wrapper } = setup()
     const { result } = renderHook(() => useEditCheque('c1'), { wrapper })
@@ -176,6 +250,16 @@ describe('cheque edit and action workflows', () => {
       actionProps: { label: 'Notify' },
     })
     act(() => result.current.deleteCheque('c1'))
+    await waitFor(() => expect(mocks.delete).toHaveBeenCalledWith('c1'))
+  })
+
+  it('deletes a cheque without an existing optimistic list cache', async () => {
+    const { client, wrapper } = setup()
+    client.removeQueries({ queryKey: queryKeys.cheques.list('b1') })
+    const { result } = renderHook(() => useChequeActions(), { wrapper })
+
+    act(() => result.current.deleteCheque('c1'))
+
     await waitFor(() => expect(mocks.delete).toHaveBeenCalledWith('c1'))
   })
   it('fetches a detail and shares status mutation feedback while exposing load errors', async () => {

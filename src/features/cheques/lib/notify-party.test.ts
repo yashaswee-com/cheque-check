@@ -112,6 +112,40 @@ describe('notify-party', () => {
     )
   })
 
+  it('uses the action label when a party lookup rejects without an Error', async () => {
+    mocks.party.mockRejectedValue('lookup failed')
+    await expect(
+      buildNotifyPartyAction(
+        { ...cheque, party_id: 'p1' },
+        null,
+        'Notify',
+        true,
+      ),
+    ).resolves.toBeUndefined()
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: 'Notify',
+      description: 'Notify',
+      type: 'error',
+    })
+  })
+
+  it('uses the title when authorization rejects without an Error', async () => {
+    mocks.verify.mockRejectedValue('authorization failed')
+    await preparePartySms(
+      'Notify',
+      '+919876543210',
+      cheque,
+      { name: 'Acme' },
+      '₹',
+    )
+    expect(window.location.href).toBe('')
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: 'Notify',
+      description: 'Notify',
+      type: 'error',
+    })
+  })
+
   it('treats the party SMS preference as on unless explicitly disabled', () => {
     expect(isPartySmsEnabled(undefined)).toBe(true)
     expect(isPartySmsEnabled({ party_sms_enabled: true })).toBe(true)

@@ -5,6 +5,21 @@ import { filterByChequeDate, resolveDateRange } from './date-range'
 const now = new Date(2026, 8, 16, 12)
 
 describe('resolveDateRange', () => {
+  it('supports empty custom bounds and an upper-bound-only custom range', () => {
+    expect(resolveDateRange('custom', now)).toEqual({
+      from: undefined,
+      to: undefined,
+    })
+    expect(
+      resolveDateRange('custom', now, { to: new Date(2026, 1, 5) }),
+    ).toEqual({ from: undefined, to: '2026-02-05' })
+    expect(
+      resolveDateRange('custom', now, {
+        from: new Date(2026, 1, 3),
+        to: new Date(2026, 1, 5),
+      }),
+    ).toEqual({ from: '2026-02-03', to: '2026-02-05' })
+  })
   it('returns an unbounded range for all time', () => {
     expect(resolveDateRange('all', now)).toEqual({})
   })
@@ -39,6 +54,23 @@ describe('resolveDateRange', () => {
 })
 
 describe('filterByChequeDate', () => {
+  it('handles missing data and open bounds without retaining undated or out-of-range cheques', () => {
+    expect(
+      filterByChequeDate(undefined, { from: '2026-09-01' }),
+    ).toBeUndefined()
+    const rows = [
+      { cheque_date: null },
+      { cheque_date: '2026-08-31' },
+      { cheque_date: '2026-09-01' },
+      { cheque_date: '2026-10-01' },
+    ]
+    expect(filterByChequeDate(rows, { to: '2026-09-01' })).toEqual(
+      rows.slice(1, 3),
+    )
+    expect(filterByChequeDate(rows, { from: '2026-09-01' })).toEqual(
+      rows.slice(2),
+    )
+  })
   const cheques = [
     { id: 'a', cheque_date: '2026-08-31' },
     { id: 'b', cheque_date: '2026-09-01' },

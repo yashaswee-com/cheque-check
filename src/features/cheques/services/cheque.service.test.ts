@@ -37,6 +37,44 @@ function makeRepository(overrides: Partial<IChequeRepository> = {}) {
 }
 
 describe('ChequeService', () => {
+  it('maps paginated rows to entities while preserving server counts', async () => {
+    const getPage = vi.fn().mockResolvedValue({
+      rows: [row],
+      matchingCount: 17,
+      activeCount: 29,
+    })
+    const repository = makeRepository({ getPage })
+    const request = { businessId: 'b1', limit: 1 }
+    const result = await new ChequeService(repository).getPage(request)
+    expect(repository.getPage).toHaveBeenCalledWith(request)
+    expect(result.rows[0].id).toBe(row.id)
+    expect(result.rows[0].canTransition('Cleared')).toBe(true)
+    expect(result).toMatchObject({ matchingCount: 17, activeCount: 29 })
+  })
+
+  it('forwards business and date-scoped summary requests unchanged', async () => {
+    const getBusinessSummaries = vi
+      .fn()
+      .mockResolvedValue([{ business_id: 'b1' }])
+    const getSummary = vi.fn().mockResolvedValue([{ total_amount: 100 }])
+    const repository = makeRepository({ getBusinessSummaries, getSummary })
+    const service = new ChequeService(repository)
+    await expect(service.getBusinessSummaries('2026-10-31')).resolves.toEqual([
+      { business_id: 'b1' },
+    ])
+    const range = { from: '2026-10-01', to: '2026-10-31' }
+    await expect(
+      service.getSummary('b1', '2026-10-31', false, range),
+    ).resolves.toEqual([{ total_amount: 100 }])
+    expect(repository.getBusinessSummaries).toHaveBeenCalledWith('2026-10-31')
+    expect(repository.getSummary).toHaveBeenCalledWith(
+      'b1',
+      '2026-10-31',
+      false,
+      range,
+    )
+  })
+
   it('maps all repository rows to cheque entities', async () => {
     const repository = makeRepository()
 

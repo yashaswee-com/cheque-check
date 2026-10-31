@@ -334,12 +334,187 @@ describe('useOcrExtraction', () => {
         }),
       ),
     )
-    const { result, setValue } = setup()
+    const { result, setValue } = setup({
+      accounts: [
+        account,
+        {
+          ...account,
+          id: 'account-2',
+          account_name: 'Other Current',
+          account_number: '87654321',
+        },
+      ],
+      parties: [
+        party,
+        { ...party, id: 'party-2', name: 'Acme Traders Limited' },
+      ],
+    })
 
     await act(async () => result.current.extractData('/scan-by-name.png'))
 
     expect(setValue).toHaveBeenCalledWith('account_id', 'account-1')
     expect(result.current.unmatchedEntities).toBeNull()
+  })
+
+  it('matches a short local account suffix and resolves a partial bank name', async () => {
+    mocks.monitoredFetch.mockResolvedValue(
+      response(
+        extraction({
+          account_number: '12345678',
+          account_name: 'Different Account',
+          payee_name: 'Unmatched Payee',
+          bank_name: 'Ex',
+          ifsc_code: null,
+        }),
+      ),
+    )
+    const { result } = setup({
+      parties: [],
+      accounts: [{ ...account, account_number: '5678' }],
+      banks: [{ ...bank, name: 'Example Bank' }],
+    })
+
+    await act(async () => result.current.extractData('/partial-bank.png'))
+
+    expect(result.current.unmatchedEntities).toMatchObject({
+      account_name: 'Different Account',
+      account_number: undefined,
+      bank_id: 'bank-1',
+      payee_name: 'Unmatched Payee',
+    })
+  })
+
+  it('creates an unnamed account using the safe fallback and skips unchecked entities', async () => {
+    mocks.monitoredFetch.mockResolvedValue(
+      response(
+        extraction({
+          payee_name: null,
+          account_name: null,
+          account_number: '987654321',
+          ifsc_code: null,
+          bank_name: 'Example Bank',
+        }),
+      ),
+    )
+    const { result } = setup({ parties: [], accounts: [], banks: [bank] })
+
+    await act(async () => result.current.extractData('/unnamed-account.png'))
+    act(() => result.current.setCreateOptions({ party: true, account: false }))
+    await act(async () => result.current.handleInlineCreate())
+    expect(mocks.createParty).not.toHaveBeenCalled()
+    expect(mocks.createAccount).not.toHaveBeenCalled()
+
+    await act(async () => result.current.extractData('/unnamed-account.png'))
+    act(() => result.current.setCreateOptions({ party: false, account: true }))
+    await act(async () => result.current.handleInlineCreate())
+    expect(mocks.createAccount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        account_name: 'Scanned Account',
+        ifsc_code: null,
+      }),
+    )
+  })
+
+  it('does not close a toast when no loading-toast id was returned', async () => {
+    mocks.toastAdd.mockReturnValueOnce(null)
+    mocks.monitoredFetch.mockResolvedValue(
+      response(
+        extraction({
+          payee_name: 'New Party',
+          account_number: '987654321',
+        }),
+      ),
+    )
+    const { result } = setup({ parties: undefined, accounts: undefined })
+
+    await act(async () => result.current.extractData('/scan-without-toast.png'))
+
+    expect(mocks.toastClose).not.toHaveBeenCalled()
+    expect(result.current.unmatchedEntities).not.toBeNull()
+  })
+
+  it('retains a matched party and nullable OCR fields for an unmatched account', async () => {
+    mocks.monitoredFetch.mockResolvedValue(
+      response(
+        extraction({
+          payee_name: 'Acme Traders',
+          account_name: null,
+          account_number: '987654321',
+          ifsc_code: null,
+          bank_name: null,
+        }),
+      ),
+    )
+    const { result } = setup({
+      parties: [party],
+      accounts: [],
+      banks: undefined,
+    })
+
+    await act(async () => result.current.extractData('/missing-bank.png'))
+
+    expect(result.current.unmatchedEntities).toEqual({
+      payee_name: undefined,
+      account_name: undefined,
+      account_number: '987654321',
+      ifsc_code: undefined,
+      bank_name: undefined,
+      bank_id: '',
+    })
+  })
+
+  it('preserves an unmatched payee when OCR cannot identify an account number', async () => {
+    mocks.monitoredFetch.mockResolvedValue(
+      response(
+        extraction({
+          payee_name: 'Unmatched Payee',
+          account_name: null,
+          account_number: null,
+          ifsc_code: null,
+          bank_name: null,
+        }),
+      ),
+    )
+    const { result } = setup({
+      parties: [],
+      accounts: [],
+      banks: undefined,
+    })
+
+    await act(async () => result.current.extractData('/missing-account.png'))
+
+    expect(result.current.unmatchedEntities).toEqual({
+      payee_name: 'Unmatched Payee',
+      account_name: undefined,
+      account_number: undefined,
+      ifsc_code: undefined,
+      bank_name: undefined,
+      bank_id: '',
+    })
+  })
+
+  it('does not close a failed extraction toast when no toast id is returned', async () => {
+    mocks.toastAdd.mockReturnValueOnce(null)
+    mocks.monitoredFetch.mockResolvedValue(response({}, false, 503))
+    const { result } = setup()
+
+    await act(async () =>
+      result.current.extractData('/failed-without-toast.png'),
+    )
+
+    expect(mocks.toastClose).not.toHaveBeenCalled()
+    expect(result.current.isExtracting).toBe(false)
+  })
+
+  it('skips a pending scan when image upload does not return a URL', async () => {
+    mocks.getFile.mockReturnValue(
+      new File(['image'], 'cheque.png', { type: 'image/png' }),
+    )
+    const upload = vi.fn().mockResolvedValue(null)
+    setup({ upload })
+
+    await waitFor(() => expect(upload).toHaveBeenCalledOnce())
+    expect(mocks.monitoredFetch).not.toHaveBeenCalled()
   })
 
   it('uses the generic status message when an error response body cannot be read', async () => {

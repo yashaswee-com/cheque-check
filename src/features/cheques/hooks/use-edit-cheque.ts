@@ -66,7 +66,7 @@ export function useEditCheque(id: string) {
             ? ChequeEntity.fromRow({
                 ...cachedCheque.toJSON(),
                 ...newCheque,
-                deposit_date: newCheque.deposit_date || null,
+                deposit_date: newCheque.deposit_date,
                 notes: newCheque.notes || null,
                 image_url: newCheque.image_url || null,
               })

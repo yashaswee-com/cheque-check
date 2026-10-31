@@ -107,6 +107,8 @@ describe('useCheques', () => {
       'c3',
       'c2',
     ])
+    act(() => result.current.setSearch('000001'))
+    expect(result.current.filteredCheques.map(({ id }) => id)).toEqual(['c1'])
     act(() => result.current.setSearch('ACME'))
     expect(result.current.filteredCheques.map(({ id }) => id)).toEqual([
       'c1',
@@ -134,6 +136,14 @@ describe('useCheques', () => {
       'c2',
     ])
     act(() => result.current.setSortOrder('desc'))
+    expect(result.current.filteredCheques.map(({ id }) => id)).toEqual([
+      'c2',
+      'c1',
+    ])
+    act(() => {
+      result.current.setSortBy('date')
+      result.current.setSortOrder('asc')
+    })
     expect(result.current.filteredCheques.map(({ id }) => id)).toEqual([
       'c2',
       'c1',
@@ -188,5 +198,15 @@ describe('useCheques', () => {
       'c2',
       'c3',
     ])
+  })
+
+  it('searches safely when a cheque has no related party', async () => {
+    mocks.getAll.mockResolvedValueOnce([{ ...fixtures[0], party: undefined }])
+    const { result } = setup()
+    await waitFor(() => expect(result.current.cheques).toHaveLength(1))
+
+    act(() => result.current.setSearch('not present'))
+
+    expect(result.current.filteredCheques).toEqual([])
   })
 })

@@ -59,7 +59,36 @@ function renderEditor() {
   )
 }
 
+function renderUncontrolledEditor() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return render(
+    <QueryClientProvider client={client}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PrintLayoutEditor accountId="account-1" onOpenChange={mocks.close} />
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
+  )
+}
+
 describe('Synced print layout editor', () => {
+  it('opens and resets an uncontrolled editor', async () => {
+    renderUncontrolledEditor()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Cheques.configurePrint }),
+    )
+    const input = await screen.findByLabelText('Payee X (mm)')
+    expect(mocks.close).toHaveBeenCalledWith(true)
+    fireEvent.change(input, { target: { value: '80' } })
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: messages.Cheques.resetPrintLayout,
+      }),
+    )
+    expect(input).toHaveValue(defaultPrintLayout.payeeX)
+  })
+
   it('loads the saved account layout and saves changes after fresh authorization', async () => {
     renderEditor()
     const input = await screen.findByLabelText('Payee X (mm)')

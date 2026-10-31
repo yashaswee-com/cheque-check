@@ -146,6 +146,7 @@ describe('shared cheque cards', () => {
     swipe(30)
     expect(update).not.toHaveBeenCalled()
     swipe(100)
+    swipe(-100)
     expect(update).not.toHaveBeenCalled()
     swipe(200)
     expect(update).toHaveBeenLastCalledWith('swipe', 'Cleared')
@@ -163,5 +164,38 @@ describe('shared cheque cards', () => {
     swipe(200)
     swipe(-200)
     expect(update).not.toHaveBeenCalled()
+
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ChequeCard
+          cheque={{ ...cheque, status: 'Bounced' }}
+          onStatusUpdate={update}
+        />
+      </NextIntlClientProvider>,
+    )
+    swipe(200)
+    swipe(-200)
+    expect(update).not.toHaveBeenCalled()
+
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ChequeCard cheque={cheque} />
+      </NextIntlClientProvider>,
+    )
+    swipe(200)
+    swipe(-200)
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('opens the scanned cheque image in a dialog', async () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ChequeCard cheque={{ ...baseCheque, image_url: '/scan.png' }} />
+      </NextIntlClientProvider>,
+    )
+    fireEvent.click(screen.getByRole('button'))
+    await screen.findByRole('dialog')
+    const image = screen.getByRole('img', { name: messages.Cheques.scan })
+    expect(image).toHaveAttribute('src', '/scan.png')
   })
 })

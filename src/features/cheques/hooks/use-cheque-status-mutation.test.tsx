@@ -130,6 +130,51 @@ describe('canonical cheque hooks', () => {
     expect(onSuccess).toHaveBeenCalledExactlyOnceWith(updated)
   })
 
+  it('updates cheque status when no success callback is provided', async () => {
+    const { wrapper } = setup()
+    mocks.updateStatus.mockResolvedValue(original)
+    const { result } = renderHook(() => useChequeStatusMutation('b1'), {
+      wrapper,
+    })
+
+    await act(async () => {
+      await result.current.mutateAsync({ id: 'c1', status: 'Cleared' })
+    })
+
+    expect(mocks.updateStatus).toHaveBeenCalledWith('c1', 'Cleared')
+  })
+
+  it('preserves unrelated list cheques and a mismatched but valid detail-cache entity', async () => {
+    const { client, wrapper } = setup()
+    const other = ChequeEntity.fromRow({
+      ...original.toJSON(),
+      id: 'c2',
+      cheque_number: '000002',
+      amount: 25,
+    })
+    client.setQueryData(queryKeys.cheques.list('b1'), [original, other])
+    client.setQueryData(queryKeys.cheques.detail('c1'), other)
+    const updated = ChequeEntity.fromRow({
+      ...original.toJSON(),
+      status: 'Cleared',
+    })
+    mocks.updateStatus.mockResolvedValue(updated)
+    const { result } = renderHook(() => useChequeStatusMutation('b1'), {
+      wrapper,
+    })
+
+    await act(async () => {
+      await result.current.mutateAsync({ id: 'c1', status: 'Cleared' })
+    })
+
+    const list = client.getQueryData<ChequeEntity[]>(
+      queryKeys.cheques.list('b1'),
+    )
+    expect(list?.[0].status).toBe('Cleared')
+    expect(list?.[1]).toBe(other)
+    expect(client.getQueryData(queryKeys.cheques.detail('c1'))).toBe(other)
+  })
+
   it.each(['', '12345', '1234567', 'abcdef'])(
     'does not query a malformed number: %s',
     (number) => {
