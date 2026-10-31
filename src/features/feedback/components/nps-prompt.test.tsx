@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { renderToString } from 'react-dom/server'
 import {
   cleanup,
   fireEvent,
@@ -27,8 +28,21 @@ vi.mock('@/lib/monitoring/telemetry', () => ({
   recordFeedbackSubmission: state.record,
 }))
 vi.mock('@/components/ui/dialog', () => ({
-  Dialog: ({ open, children }: { open: boolean; children: ReactNode }) =>
-    open ? <div data-testid="desktop-dialog">{children}</div> : null,
+  Dialog: ({
+    open,
+    children,
+    onOpenChange,
+  }: {
+    open: boolean
+    children: ReactNode
+    onOpenChange: (open: boolean) => void
+  }) =>
+    open ? (
+      <div data-testid="desktop-dialog">
+        <button onClick={() => onOpenChange(false)}>Close dialog</button>
+        {children}
+      </div>
+    ) : null,
   DialogContent: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
   ),
@@ -72,6 +86,16 @@ afterEach(() => {
 const context = { businessId: 'b1', chequeId: 'c1' }
 
 describe('NpsPrompt', () => {
+  it('uses a mobile-safe server snapshot and handles desktop dismissal', () => {
+    expect(
+      renderToString(<NpsPrompt context={context} onClose={vi.fn()} />),
+    ).toContain('mobile-sheet')
+    state.desktop = true
+    const close = vi.fn()
+    render(<NpsPrompt context={context} onClose={close} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
+    expect(close).toHaveBeenCalledOnce()
+  })
   it('does not show feedback without a context', () => {
     const { container } = render(<NpsPrompt context={null} onClose={vi.fn()} />)
     expect(container).toBeEmptyDOMElement()

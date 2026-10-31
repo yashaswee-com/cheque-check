@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CelebrationHost } from './celebration-host'
+import { renderToString } from 'react-dom/server'
 
 const state = vi.hoisted(() => ({
   pathname: '/cheques',
@@ -48,6 +49,14 @@ afterEach(() => {
 })
 
 describe('CelebrationHost', () => {
+  it('does not expose pending client celebrations during server rendering', () => {
+    state.pending = {
+      target: '/cheques',
+      cheque: { id: 'c1', businessId: 'b1' },
+    }
+    expect(renderToString(<CelebrationHost />)).toBe('')
+    expect(state.celebrate).not.toHaveBeenCalled()
+  })
   it('ignores absent celebrations and those targeting another route', () => {
     const { rerender } = render(<CelebrationHost />)
     state.pending = { target: '/accounts' }
