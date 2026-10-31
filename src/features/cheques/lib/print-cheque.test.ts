@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   createChequePrintPdf,
   defaultPrintLayout,
@@ -6,6 +6,10 @@ import {
   savePrintLayout,
 } from './print-cheque'
 
+afterEach(() => {
+  localStorage.clear()
+  vi.restoreAllMocks()
+})
 describe('print-cheque', () => {
   const cheque = {
     account_id: 'account-1',
@@ -25,5 +29,10 @@ describe('print-cheque', () => {
     const layout = { ...defaultPrintLayout, payeeX: 42 }
     savePrintLayout('account-1', layout)
     expect(getPrintLayout('account-1')).toEqual(layout)
+  })
+
+  it('falls back to default coordinates for corrupted stored layouts', () => {
+    localStorage.setItem('cheque-check:print-layout:account-1', 'invalid json')
+    expect(getPrintLayout('account-1')).toEqual(defaultPrintLayout)
   })
 })
