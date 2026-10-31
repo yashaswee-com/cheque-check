@@ -84,6 +84,11 @@ describe('validated persistence contracts', () => {
         'cheque relations',
       ),
     ).toThrow(DatabaseError)
+    const noBank = relatedChequeSchema.parse({
+      ...cheque,
+      account: { account_name: 'Main', bank: null },
+    })
+    expect(noBank.account?.bank).toBeUndefined()
   })
   it.each([
     { amount: null },

@@ -7,6 +7,8 @@ import { SupabasePartyRepository } from '@/features/parties/repositories/party.r
 import { SupabaseTagRepository } from '@/features/tags/repositories/tag.repository'
 import { SupabaseNpsRepository } from '@/features/feedback/repositories/nps.repository'
 import { SupabaseMonetizationRepository } from '@/features/monetization/repositories/monetization.repository'
+import { exportJobService } from '@/features/reports/services/export-job.service'
+import { TagService } from '@/features/tags/services/tag.service'
 import {
   premiumWorkspaceRepository,
   getMessageTemplate,
@@ -135,6 +137,138 @@ beforeEach(() => {
 })
 
 describe('production CRUD repositories at the Supabase boundary', () => {
+  it('rejects absent cheque page metadata and preserves counts for empty result pages', async () => {
+    const repository = new SupabaseChequeRepository()
+    await expect(
+      repository.getPage({ businessId: 'business-1' }),
+    ).rejects.toThrow('Cheque page metadata was not returned')
+    boundary.result.data = [
+      { cheque_id: null, matching_count: 0, active_count: 8 },
+    ]
+    await expect(
+      repository.getPage({ businessId: 'business-1' }),
+    ).resolves.toEqual({ rows: [], matchingCount: 0, activeCount: 8 })
+    expect(boundary.query.in).not.toHaveBeenCalled()
+  })
+
+  it('omits disappeared relations but retains authoritative page metadata', async () => {
+    boundary.query.then.mockImplementationOnce((resolve) =>
+      Promise.resolve(
+        resolve({
+          data: [{ cheque_id: 'gone', matching_count: 1, active_count: 4 }],
+          error: null,
+        }),
+      ),
+    )
+    await expect(
+      new SupabaseChequeRepository().getPage({ businessId: 'business-1' }),
+    ).resolves.toEqual({ rows: [], matchingCount: 1, activeCount: 4 })
+  })
+
+  it('passes explicit sorting, paging, native filters, and summary ranges to RPCs', async () => {
+    boundary.result.data = [
+      { cheque_id: null, matching_count: 0, active_count: 0 },
+    ]
+    const repository = new SupabaseChequeRepository()
+    await repository.getPage({
+      businessId: 'business-1',
+      search: 'Acme',
+      sortBy: 'amount',
+      sortOrder: 'asc',
+      offset: 10,
+      limit: 20,
+      includeInward: false,
+      nativeFilters: {
+        search: 'Invoice',
+        from: '2026-10-01',
+        to: '2026-10-31',
+      },
+    })
+    expect(boundary.rpc).toHaveBeenLastCalledWith(
+      'cheque_list_page',
+      expect.objectContaining({
+        requested_sort: 'amount',
+        requested_order: 'asc',
+        requested_offset: 10,
+        requested_limit: 20,
+        requested_include_inward: false,
+        requested_native_search: 'Invoice',
+      }),
+    )
+    await repository.getBusinessSummaries('2026-10-31')
+    expect(boundary.rpc).toHaveBeenLastCalledWith('business_cheque_summaries', {
+      requested_today: '2026-10-31',
+    })
+    await repository.getSummary('business-1', '2026-10-31', true)
+    expect(boundary.rpc).toHaveBeenLastCalledWith('cheque_summary', {
+      requested_business: 'business-1',
+      requested_today: '2026-10-31',
+      requested_include_inward: true,
+      requested_from: undefined,
+      requested_to: undefined,
+    })
+  })
+
+  it('paginates scoped tag maps and sorts tags within each entity', async () => {
+    const tag = {
+      ...timestamps,
+      id: 'tag-1',
+      business_id: 'business-1',
+      name: 'Urgent',
+      color: '#ff0000',
+    }
+    const firstPage = Array.from({ length: 500 }, () => ({
+      entity_id: 'party-1',
+      tag,
+    }))
+    boundary.query.then.mockImplementationOnce((resolve) =>
+      Promise.resolve(resolve({ data: firstPage, error: null })),
+    )
+    boundary.result.data = [
+      { entity_id: 'party-1', tag: { ...tag, id: 'tag-2', name: 'Alpha' } },
+    ]
+    const result = await new TagService(new SupabaseTagRepository()).getTagMap(
+      'business-1',
+      'party',
+      ['party-1'],
+    )
+    expect(result['party-1']).toHaveLength(501)
+    expect(result['party-1'][0].name).toBe('Alpha')
+    expect(boundary.query.in).toHaveBeenCalledWith('entity_id', ['party-1'])
+    expect(boundary.query.range).toHaveBeenLastCalledWith(500, 999)
+  })
+
+  it('lists validated export jobs and forwards request and cancellation through the production service', async () => {
+    const job = {
+      id: '00000000-0000-4000-8000-000000000001',
+      format: 'csv',
+      status: 'queued',
+      row_count: 1,
+      next_part: 0,
+      part_count: 1,
+      created_at: '2026-10-31',
+      expires_at: '2026-11-01',
+      error_code: null,
+    }
+    boundary.result.data = [job]
+    await expect(exportJobService.list('business-1')).resolves.toEqual([job])
+    expect(boundary.from).toHaveBeenLastCalledWith(TABLES.REPORT_EXPORT_JOBS)
+    expect(boundary.query.limit).toHaveBeenLastCalledWith(10)
+    boundary.result.data = job.id
+    await exportJobService.request(job.id, 'business-1', 'json', false)
+    expect(boundary.rpc).toHaveBeenLastCalledWith('request_report_export', {
+      requested_id: job.id,
+      requested_business: 'business-1',
+      requested_format: 'json',
+      requested_include_inward: false,
+    })
+    boundary.result.data = null
+    await exportJobService.cancel(job.id)
+    expect(boundary.rpc).toHaveBeenLastCalledWith('cancel_report_export', {
+      requested_job: job.id,
+    })
+  })
+
   it('rejects malformed joined cheque reads and nullable published fields rather than asserting a domain type', async () => {
     const repository = new SupabaseChequeRepository()
     boundary.result.data = [{ ...cheque, amount: '100' }]
