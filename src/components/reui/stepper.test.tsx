@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { StrictMode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   Stepper,
@@ -159,6 +160,43 @@ describe('Stepper', () => {
       'tabindex',
       '4',
     )
+  })
+
+  it('unregisters removed triggers and tolerates Strict Mode ref replay', () => {
+    function DynamicSteps({ includeLast }: { includeLast: boolean }) {
+      return (
+        <Stepper>
+          <StepperItem step={1}>
+            <StepperTrigger>First</StepperTrigger>
+          </StepperItem>
+          <StepperItem step={2}>
+            <StepperTrigger>Second</StepperTrigger>
+          </StepperItem>
+          {includeLast && (
+            <StepperItem step={3}>
+              <StepperTrigger>Last</StepperTrigger>
+            </StepperItem>
+          )}
+        </Stepper>
+      )
+    }
+
+    const { rerender } = render(
+      <StrictMode>
+        <DynamicSteps includeLast />
+      </StrictMode>,
+    )
+    expect(screen.getAllByRole('tab')).toHaveLength(3)
+    rerender(
+      <StrictMode>
+        <DynamicSteps includeLast={false} />
+      </StrictMode>,
+    )
+    const second = screen.getByRole('tab', { name: 'Second' })
+    second.focus()
+    fireEvent.keyDown(second, { key: 'ArrowRight' })
+    expect(screen.getByRole('tab', { name: 'First' })).toHaveFocus()
+    expect(screen.getAllByRole('tab')).toHaveLength(2)
   })
 
   it('requires root and item providers for consumer hooks', () => {
