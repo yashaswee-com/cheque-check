@@ -164,8 +164,10 @@ describe('PhoneAuthForm signup name', () => {
   it('requires a fresh captcha token and forwards it to the OTP service', async () => {
     mocks.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = 'site'
     const widget = vi.fn(
-      (_node: HTMLElement, _options: { callback: (token: string) => void }) =>
-        'widget',
+      (
+        _node: HTMLElement,
+        _options: { action?: string; callback: (token: string) => void },
+      ) => 'widget',
     )
     Object.defineProperty(window, 'turnstile', {
       configurable: true,
@@ -189,6 +191,7 @@ describe('PhoneAuthForm signup name', () => {
       messages.PhoneAuth.errors.captcha_required,
     )
     await waitFor(() => expect(widget).toHaveBeenCalled())
+    expect(widget.mock.calls[0][1].action).toBe('phone_login')
     act(() => widget.mock.calls[0][1].callback('captcha'))
     fireEvent.click(screen.getByTestId('phone-auth-send-button'))
     await screen.findByTestId('phone-auth-code-input')

@@ -6,6 +6,7 @@ const SCRIPT_ID = 'cf-turnstile-script'
 
 type RenderOptions = {
   sitekey: string
+  action?: string
   callback: (token: string) => void
   'expired-callback': () => void
   'error-callback': () => void
@@ -49,6 +50,20 @@ describe('TurnstileWidget', () => {
 
     unmount()
     expect(remove).toHaveBeenCalledWith('widget-1')
+  })
+
+  it('passes the action to the provider widget', async () => {
+    const { renderWidget } = installTurnstile()
+    render(
+      <TurnstileWidget
+        siteKey="site-key"
+        action="phone_signup"
+        onToken={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => expect(renderWidget).toHaveBeenCalledOnce())
+    expect(renderWidget.mock.calls[0][1].action).toBe('phone_signup')
   })
 
   it('uses the latest callback without recreating the provider widget', async () => {

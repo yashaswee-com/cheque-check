@@ -7,6 +7,7 @@ interface TurnstileApi {
     element: HTMLElement,
     options: {
       sitekey: string
+      action?: string
       callback: (token: string) => void
       'expired-callback': () => void
       'error-callback': () => void
@@ -45,11 +46,17 @@ function loadScript(): Promise<void> {
 
 interface TurnstileWidgetProps {
   siteKey: string
+  /** Turnstile action (1-32 chars of [A-Za-z0-9_-]); reported in Turnstile analytics and siteverify. */
+  action?: string
   onToken: (token: string | null) => void
 }
 
 /** Renders the Cloudflare Turnstile challenge; tokens are single-use, so remount to reset. */
-export function TurnstileWidget({ siteKey, onToken }: TurnstileWidgetProps) {
+export function TurnstileWidget({
+  siteKey,
+  action,
+  onToken,
+}: TurnstileWidgetProps) {
   const container = useRef<HTMLDivElement>(null)
   const onTokenRef = useRef(onToken)
 
@@ -65,6 +72,7 @@ export function TurnstileWidget({ siteKey, onToken }: TurnstileWidgetProps) {
         if (cancelled || !container.current || !window.turnstile) return
         widgetId = window.turnstile.render(container.current, {
           sitekey: siteKey,
+          ...(action ? { action } : {}),
           callback: (token) => onTokenRef.current(token),
           'expired-callback': () => onTokenRef.current(null),
           'error-callback': () => onTokenRef.current(null),
@@ -75,7 +83,7 @@ export function TurnstileWidget({ siteKey, onToken }: TurnstileWidgetProps) {
       cancelled = true
       if (widgetId) window.turnstile?.remove(widgetId)
     }
-  }, [siteKey])
+  }, [siteKey, action])
 
   return <div ref={container} data-testid="turnstile-widget" />
 }

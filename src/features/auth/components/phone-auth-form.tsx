@@ -186,6 +186,7 @@ export function PhoneAuthForm({
         <TurnstileWidget
           key={captchaKey}
           siteKey={siteKey}
+          action={`phone_${purpose}`}
           onToken={setCaptchaToken}
         />
       </div>
