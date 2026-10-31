@@ -6,6 +6,7 @@ const SCRIPT_ID = 'cf-turnstile-script'
 
 type RenderOptions = {
   sitekey: string
+  size: 'flexible'
   action?: string
   callback: (token: string) => void
   'expired-callback': () => void
@@ -42,6 +43,8 @@ describe('TurnstileWidget', () => {
     await waitFor(() => expect(renderWidget).toHaveBeenCalledOnce())
     const options = renderWidget.mock.calls[0][1]
     expect(options.sitekey).toBe('site-key')
+    expect(options.size).toBe('flexible')
+    expect(renderWidget.mock.calls[0][0]).toHaveClass('w-full')
 
     options.callback('token-1')
     options['expired-callback']()

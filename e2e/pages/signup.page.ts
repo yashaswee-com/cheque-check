@@ -5,6 +5,9 @@ export class SignupPage {
 
   async goto() {
     await this.page.goto('/signup')
+    if (await this.page.getByTestId('phone-auth-number-input').isVisible()) {
+      await this.page.getByTestId('signup-toggle-phone-button').click()
+    }
   }
 
   get nameInput() {

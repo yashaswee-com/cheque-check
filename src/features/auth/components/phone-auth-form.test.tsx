@@ -15,6 +15,7 @@ import { PhoneAuthForm } from './phone-auth-form'
 const mocks = vi.hoisted(() => ({
   sendPhoneOtp: vi.fn(),
   verifyPhoneOtp: vi.fn(),
+  toast: vi.fn(),
   env: { NEXT_PUBLIC_TURNSTILE_SITE_KEY: undefined as string | undefined },
 }))
 
@@ -26,15 +27,24 @@ vi.mock('@/lib/env/client', () => ({
   publicEnv: mocks.env,
 }))
 
+vi.mock('@/components/ui/toast', () => ({
+  toast: { add: mocks.toast },
+}))
+
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
   vi.restoreAllMocks()
   Reflect.deleteProperty(window, 'turnstile')
+  Reflect.deleteProperty(document, 'elementFromPoint')
 })
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = undefined
+  Object.defineProperty(document, 'elementFromPoint', {
+    configurable: true,
+    value: vi.fn(() => null),
+  })
 })
 
 function renderForm() {
@@ -46,6 +56,96 @@ function renderForm() {
 }
 
 describe('PhoneAuthForm signup name', () => {
+  it.each([
+    'invalid_request',
+    'invalid_phone',
+    'unsupported_country',
+    'invalid_or_expired_code',
+    'rate_limited',
+    'captcha_failed',
+    'phone_in_use',
+    'already_linked',
+    'unauthorized',
+    'account_deactivated',
+    'provider_unavailable',
+    'unknown',
+  ] as const)(
+    'shows a descriptive toast and inline error for %s',
+    async (code) => {
+      mocks.sendPhoneOtp.mockResolvedValue({ ok: false, code })
+      render(
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <PhoneAuthForm purpose="login" onVerified={vi.fn()} />
+        </NextIntlClientProvider>,
+      )
+      fireEvent.change(screen.getByTestId('phone-auth-number-input'), {
+        target: { value: '9876543210' },
+      })
+      fireEvent.click(screen.getByTestId('phone-auth-send-button'))
+      await waitFor(() =>
+        expect(mocks.toast).toHaveBeenCalledWith({
+          title: messages.PhoneAuth.errorTitle,
+          description: messages.PhoneAuth.errors[code],
+          type: 'error',
+        }),
+      )
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        messages.PhoneAuth.errors[code],
+      )
+      expect(screen.getByTestId('phone-auth-send-button')).toBeEnabled()
+    },
+  )
+
+  it('surfaces unexpected request failures and allows retry', async () => {
+    mocks.sendPhoneOtp.mockRejectedValue(new Error('network failed'))
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PhoneAuthForm purpose="login" onVerified={vi.fn()} />
+      </NextIntlClientProvider>,
+    )
+    fireEvent.change(screen.getByTestId('phone-auth-number-input'), {
+      target: { value: '9876543210' },
+    })
+    fireEvent.click(screen.getByTestId('phone-auth-send-button'))
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith({
+        title: messages.PhoneAuth.errorTitle,
+        description: messages.PhoneAuth.errors.unknown,
+        type: 'error',
+      }),
+    )
+    expect(screen.getByTestId('phone-auth-send-button')).toBeEnabled()
+  })
+
+  it('supports formatted paste and keyboard editing across six digit slots', async () => {
+    const user = userEvent.setup()
+    mocks.sendPhoneOtp.mockResolvedValue({
+      ok: true,
+      phone: '+919876543210',
+      resendAfterSeconds: 0,
+    })
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PhoneAuthForm purpose="login" onVerified={vi.fn()} />
+      </NextIntlClientProvider>,
+    )
+    await user.type(screen.getByTestId('phone-auth-number-input'), '9876543210')
+    await user.click(screen.getByTestId('phone-auth-send-button'))
+    const input = await screen.findByTestId('phone-auth-code-input')
+    await user.click(input)
+    await user.paste('123 456')
+    expect(input).toHaveValue('123456')
+    expect(screen.getByTestId('phone-auth-code-slots')).toHaveTextContent(
+      '123456',
+    )
+    expect(screen.getByTestId('phone-auth-verify-button')).toBeEnabled()
+    await user.keyboard('{End}{Backspace}')
+    expect(input).toHaveValue('12345')
+    expect(screen.getByTestId('phone-auth-verify-button')).toBeDisabled()
+    await user.keyboard('9')
+    expect(input).toHaveValue('123459')
+  })
+
   it('validates numbers, supports cancellation and displays a rate-limit error', async () => {
     const cancel = vi.fn()
     mocks.sendPhoneOtp.mockResolvedValue({
@@ -109,15 +209,41 @@ describe('PhoneAuthForm signup name', () => {
     })
     fireEvent.click(screen.getByTestId('phone-auth-send-button'))
     const input = await screen.findByTestId('phone-auth-code-input')
+    expect(input).toHaveAttribute('autocomplete', 'one-time-code')
+    expect(input).toHaveAttribute('inputmode', 'numeric')
+    expect(
+      screen
+        .getByTestId('phone-auth-code-slots')
+        .querySelectorAll('[data-slot="otp-slot"]'),
+    ).toHaveLength(6)
+    expect(
+      screen
+        .getByRole('button', { name: messages.PhoneAuth.editNumber })
+        .querySelector('svg'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByTestId('phone-auth-resend-button').querySelector('svg'),
+    ).toBeInTheDocument()
     fireEvent.submit(input.closest('form')!)
     expect(screen.getByRole('alert')).toHaveTextContent(
       messages.PhoneAuth.errors.invalid_or_expired_code,
     )
     fireEvent.change(input, { target: { value: '12ab34' } })
+    expect(input).toHaveValue('')
+    fireEvent.change(input, { target: { value: '1234' } })
     expect(input).toHaveValue('1234')
+    expect(screen.getByTestId('phone-auth-verify-button')).toBeDisabled()
     fireEvent.change(input, { target: { value: '123456' } })
+    expect(screen.getByTestId('phone-auth-code-slots')).toHaveTextContent(
+      '123456',
+    )
     fireEvent.click(screen.getByTestId('phone-auth-verify-button'))
     await waitFor(() => expect(input).toHaveValue(''))
+    expect(mocks.toast).toHaveBeenLastCalledWith({
+      title: messages.PhoneAuth.errorTitle,
+      description: messages.PhoneAuth.errors.invalid_or_expired_code,
+      type: 'error',
+    })
     expect(mocks.verifyPhoneOtp).toHaveBeenCalledWith({
       phone: '+919876543210',
       token: '123456',
@@ -190,6 +316,11 @@ describe('PhoneAuthForm signup name', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       messages.PhoneAuth.errors.captcha_required,
     )
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: messages.PhoneAuth.errorTitle,
+      description: messages.PhoneAuth.errors.captcha_required,
+      type: 'error',
+    })
     await waitFor(() => expect(widget).toHaveBeenCalled())
     expect(widget.mock.calls[0][1].action).toBe('phone_login')
     act(() => widget.mock.calls[0][1].callback('captcha'))
@@ -259,6 +390,11 @@ describe('PhoneAuthForm signup name', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Enter your name to create an account.',
     )
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: messages.PhoneAuth.errorTitle,
+      description: messages.PhoneAuth.errors.name_required,
+      type: 'error',
+    })
     await waitFor(() =>
       expect(screen.getByTestId('phone-auth-name-input')).toHaveFocus(),
     )

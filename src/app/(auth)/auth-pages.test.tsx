@@ -21,6 +21,10 @@ const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   replace: vi.fn(),
   alert: vi.fn(),
+  toast: vi.fn(),
+}))
+vi.mock('@/components/ui/toast', () => ({
+  toast: { add: mocks.toast },
 }))
 vi.mock('@/lib/env/client', () => ({
   publicEnv: { NEXT_PUBLIC_PHONE_AUTH_ENABLED: 'true' },
@@ -76,7 +80,12 @@ describe.each([
   { kind: 'login', Component: LoginPage, submit: mocks.login },
   { kind: 'signup', Component: SignupPage, submit: mocks.signup },
 ])('$kind page', ({ kind, Component, submit }) => {
+  function selectEmailAuthentication() {
+    fireEvent.click(screen.getByTestId(`${kind}-toggle-phone-button`))
+  }
+
   function enterCredentials() {
+    selectEmailAuthentication()
     fireEvent.change(screen.getByTestId(`${kind}-email-input`), {
       target: { value: 'person@example.test' },
     })
@@ -88,8 +97,17 @@ describe.each([
         target: { value: 'Test Person' },
       })
   }
+  it('defaults to phone authentication and presents email as the secondary option', () => {
+    renderPage(<Component />)
+    expect(screen.getByRole('region', { name: `Phone ${kind}` })).toBeVisible()
+    const toggle = screen.getByTestId(`${kind}-toggle-phone-button`)
+    expect(toggle).toHaveTextContent(messages.PhoneAuth.useEmail)
+    expect(toggle.querySelector('svg')).toBeInTheDocument()
+    expect(toggle).toHaveClass('h-12', 'rounded-sm', 'font-normal')
+  })
   it('requires email/password and reveals the password without submitting', () => {
     const { container } = renderPage(<Component />)
+    selectEmailAuthentication()
     expect(screen.getByTestId(`${kind}-email-input`)).toBeRequired()
     const password = screen.getByTestId(`${kind}-password-input`)
     expect(password).toBeRequired()
@@ -152,7 +170,10 @@ describe.each([
     async (failure) => {
       if (failure === 'returned')
         submit.mockResolvedValueOnce({
-          error: { message: 'Invalid credentials' },
+          error: {
+            code: 'invalid_credentials',
+            message: 'Invalid credentials',
+          },
         })
       else
         submit.mockRejectedValueOnce(
@@ -164,8 +185,16 @@ describe.each([
       enterCredentials()
       fireEvent.click(screen.getByTestId(`${kind}-submit-button`))
       await waitFor(() =>
-        expect(mocks.alert).toHaveBeenCalledWith('Invalid credentials'),
+        expect(mocks.toast).toHaveBeenCalledWith({
+          title: messages.Auth.errorTitle,
+          description:
+            failure === 'returned'
+              ? messages.Auth.errors.invalidCredentials
+              : messages.Auth.errors.unavailable,
+          type: 'error',
+        }),
       )
+      expect(mocks.alert).not.toHaveBeenCalled()
       expect(mocks.push).not.toHaveBeenCalled()
       expect(screen.getByTestId(`${kind}-submit-button`)).toBeEnabled()
       expect(screen.getByTestId(`${kind}-email-input`)).toHaveValue(
@@ -175,6 +204,10 @@ describe.each([
   )
   it('switches to phone authentication and routes verified users to dashboard', () => {
     renderPage(<Component />)
+    expect(screen.getByRole('region', { name: `Phone ${kind}` })).toBeVisible()
+    fireEvent.click(screen.getByTestId(`${kind}-toggle-phone-button`))
+    expect(screen.queryByRole('region', { name: `Phone ${kind}` })).toBeNull()
+    expect(screen.getByTestId(`${kind}-email-input`)).toBeVisible()
     fireEvent.click(screen.getByTestId(`${kind}-toggle-phone-button`))
     expect(screen.getByRole('region', { name: `Phone ${kind}` })).toBeVisible()
     expect(screen.queryByTestId(`${kind}-email-input`)).not.toBeInTheDocument()
@@ -198,6 +231,7 @@ describe.each([
       await waitFor(() => expect(mocks.oauth).toHaveBeenCalledWith(provider))
       expect(submit).not.toHaveBeenCalled()
       expect(mocks.alert).not.toHaveBeenCalled()
+      expect(mocks.toast).not.toHaveBeenCalled()
     },
   )
   it.each(['returned', 'thrown', 'non-error'])(
@@ -218,8 +252,13 @@ describe.each([
         screen.getByRole('button', { name: messages.Common.google }),
       )
       await waitFor(() =>
-        expect(mocks.alert).toHaveBeenCalledWith('OAuth unavailable'),
+        expect(mocks.toast).toHaveBeenCalledWith({
+          title: messages.Auth.errorTitle,
+          description: messages.Auth.errors.unavailable,
+          type: 'error',
+        }),
       )
+      expect(mocks.alert).not.toHaveBeenCalled()
       expect(mocks.push).not.toHaveBeenCalled()
     },
   )

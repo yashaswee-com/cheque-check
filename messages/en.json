@@ -375,6 +375,7 @@
     "signOut": "Sign Out"
   },
   "PhoneAuth": {
+    "errorTitle": "Phone verification needs attention",
     "usePhone": "Use phone number",
     "useEmail": "Use email instead",
     "phoneLabel": "Mobile number",
@@ -407,21 +408,33 @@
     "errors": {
       "name_required": "Enter your name to create an account.",
       "invalid_request": "Something was wrong with that request. Please try again.",
-      "invalid_phone": "Enter a valid 10-digit Indian mobile number.",
+      "invalid_phone": "Enter a 10-digit Indian mobile number starting with 6, 7, 8 or 9. The +91 country code is already selected.",
       "unsupported_country": "Only Indian (+91) mobile numbers are supported right now.",
-      "invalid_or_expired_code": "That code is incorrect or has expired. Check it or request a new code.",
-      "rate_limited": "Too many attempts. Please wait a moment before requesting another code.",
-      "captcha_failed": "The security check failed. Please try again.",
-      "captcha_required": "Complete the security check to continue.",
+      "invalid_or_expired_code": "The 6-digit code is incorrect or has expired. Enter the latest code from your SMS, or use Resend code when the countdown ends.",
+      "rate_limited": "Too many codes or verification attempts were requested. Wait before trying again; use the resend countdown if shown.",
+      "captcha_failed": "The Cloudflare security check failed or expired. Complete the new check, then request your code again.",
+      "captcha_required": "Complete the Cloudflare security check before sending or resending a code. Each code request needs a fresh security check.",
       "phone_in_use": "This number is already used by another account. Accounts are not merged automatically; contact support to resolve it.",
       "already_linked": "This number is already verified for your account.",
       "unauthorized": "Please sign in again to continue.",
       "account_deactivated": "This account has been deactivated. Contact support if this is a mistake.",
-      "provider_unavailable": "We couldn't send or check the code right now. No code was confirmed. Please try again shortly.",
-      "unknown": "Something went wrong. Please try again."
+      "provider_unavailable": "The SMS or verification service could not be reached. Check your connection and try again shortly. If no SMS arrives, request a new code when resend is available.",
+      "unknown": "We couldn't complete phone verification. Check your connection and try again. If the problem continues, use email instead or contact support."
     }
   },
   "Auth": {
+    "errorTitle": "Unable to continue",
+    "errors": {
+      "invalidCredentials": "The email and password do not match. Check both and try again, or use Forgot Password to reset your password.",
+      "emailNotConfirmed": "Confirm your email using the link sent to your inbox before signing in. Check your spam folder too.",
+      "accountExists": "An account already uses these details. Sign in instead, or reset your password if you have forgotten it.",
+      "weakPassword": "This password does not meet the security requirements. Choose a longer password with a mix of letters, numbers and symbols.",
+      "rateLimited": "Too many authentication requests were made. Wait a few minutes before trying again.",
+      "captchaFailed": "The security check failed or expired. Refresh the page, complete the check and try again.",
+      "methodUnavailable": "This sign-in or sign-up method is currently unavailable. Try phone, email or another available sign-in option.",
+      "accountDeactivated": "This account has been deactivated. Contact support if you need help restoring access.",
+      "unavailable": "We couldn't complete your request. Check your connection and try again. If the problem continues, try another sign-in method or contact support."
+    },
     "login": "Login",
     "signup": "Sign Up",
     "email": "Email",

@@ -5,6 +5,9 @@ export class LoginPage {
 
   async goto() {
     await this.page.goto('/login')
+    if (await this.page.getByTestId('phone-auth-number-input').isVisible()) {
+      await this.page.getByTestId('login-toggle-phone-button').click()
+    }
   }
 
   get emailInput() {
@@ -19,8 +22,6 @@ export class LoginPage {
     return this.page.getByTestId('login-submit-button')
   }
 
-  /** Login pages surface errors via native `alert()`, so callers must attach
-   * a `page.on('dialog', ...)` listener before calling this if they expect one. */
   async login(email: string, password: string) {
     await this.emailInput.fill(email)
     await this.passwordInput.fill(password)

@@ -5,6 +5,10 @@ Phone OTP uses Supabase Auth as the provider. Email/password and OAuth
 
 ## Flows
 
+When phone authentication is enabled, login and sign-up open the phone form
+by default. Email remains a secondary outlined option, styled like the
+Google/Facebook buttons.
+
 - **Login**: `POST /api/auth/phone/send` then `/verify` with
   `purpose: "login"`. Login does not create accounts.
 - **Sign-up**: the same routes with `purpose: "signup"` and a required name.
@@ -35,6 +39,20 @@ Phone OTP uses Supabase Auth as the provider. Email/password and OAuth
 Expired and wrong codes are indistinguishable (`invalid_or_expired_code`).
 SMS OTP expiry is a hosted Auth setting (suggested 300 s); set it in the
 dashboard.
+
+The verification form uses `input-otp` to display six digit slots backed by
+one accessible input, preserving keyboard editing, paste and SMS autofill.
+Formatted pasted codes are reduced to digits, and verification requires all
+six digits. Change number and resend actions include icons; the resend
+countdown and single-use CAPTCHA requirements remain unchanged.
+Validation and provider failures appear both inline and as an error toast,
+with localized guidance for invalid numbers, expired codes, rate limits,
+security checks, account conflicts and unavailable services. Login and
+sign-up email/OAuth failures also use localized toasts rather than browser
+alerts; raw provider error details are not displayed.
+Turnstile uses its flexible-width mode, aligned with the complete mobile
+number field (including +91). Auth card padding leaves at least 300px for the
+widget on viewports 320px and wider, respecting Cloudflare's minimum width.
 
 ## Enabling locally
 

@@ -2,10 +2,15 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { OTPInput, REGEXP_ONLY_DIGITS } from 'input-otp'
+import { PencilEdit01Icon, RefreshIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { publicEnv } from '@/lib/env/client'
+import { cn } from '@/lib/utils'
+import { toast } from '@/components/ui/toast'
 import {
   OTP_LENGTH,
   checkIndianMobile,
@@ -80,10 +85,19 @@ export function PhoneAuthForm({
     requestAnimationFrame(() => document.getElementById(id)?.focus())
   }, [])
 
+  const reportError = (nextError: FormError) => {
+    setError(nextError)
+    toast.add({
+      title: t('errorTitle'),
+      description: t(`errors.${nextError}`),
+      type: 'error',
+    })
+  }
+
   const requestCode = async (target: string, kind: 'send' | 'resend') => {
     if (busy.current) return
     if (needsCaptcha && !captchaToken) {
-      setError('captcha_required')
+      reportError('captcha_required')
       return
     }
     busy.current = true
@@ -103,13 +117,15 @@ export function PhoneAuthForm({
         setCooldownEndsAt(Date.now() + result.resendAfterSeconds * 1000)
         focusField(codeId)
       } else {
-        setError(result.code)
+        reportError(result.code)
         if (result.code === 'rate_limited' && result.retryAfterSeconds) {
           setCooldownEndsAt(
             Date.now() + Math.min(result.retryAfterSeconds, 300) * 1000,
           )
         }
       }
+    } catch {
+      reportError('unknown')
     } finally {
       // Captcha tokens are single-use.
       setCaptchaToken(null)
@@ -122,13 +138,13 @@ export function PhoneAuthForm({
   const handleSend = (event: React.FormEvent) => {
     event.preventDefault()
     if (purpose === 'signup' && !name.trim()) {
-      setError('name_required')
+      reportError('name_required')
       focusField(nameId)
       return
     }
     const checked = checkIndianMobile(national)
     if (!checked.ok) {
-      setError(
+      reportError(
         checked.reason === 'unsupported_country'
           ? 'unsupported_country'
           : 'invalid_phone',
@@ -144,7 +160,7 @@ export function PhoneAuthForm({
     if (busy.current) return
     const token = normalizeOtp(code)
     if (!token) {
-      setError('invalid_or_expired_code')
+      reportError('invalid_or_expired_code')
       focusField(codeId)
       return
     }
@@ -161,11 +177,13 @@ export function PhoneAuthForm({
         onVerified(result.phone)
         return
       }
-      setError(result.code)
+      reportError(result.code)
       if (result.code === 'invalid_or_expired_code') {
         setCode('')
         focusField(codeId)
       }
+    } catch {
+      reportError('unknown')
     } finally {
       busy.current = false
       setPending(null)
@@ -229,7 +247,10 @@ export function PhoneAuthForm({
         )}
         <div className="space-y-2">
           <Label htmlFor={phoneId}>{t('phoneLabel')}</Label>
-          <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-2"
+            data-testid="phone-auth-number-field"
+          >
             <span
               className="flex h-12 shrink-0 items-center rounded-sm bg-canvas-parchment px-3 text-sm font-medium"
               aria-label={t('countryCode')}
@@ -297,21 +318,48 @@ export function PhoneAuthForm({
         <p className="text-sm text-muted-foreground" aria-live="polite">
           {t('codeSentTo', { phone: maskPhone(phone) })}
         </p>
-        <Input
+        <OTPInput
           id={codeId}
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
           data-testid="phone-auth-code-input"
           maxLength={OTP_LENGTH}
+          pattern={REGEXP_ONLY_DIGITS}
+          pasteTransformer={(value) => value.replace(/\D/g, '')}
           value={code}
-          onChange={(event) => {
-            setCode(event.target.value.replace(/\D/g, ''))
+          onChange={(value) => {
+            setCode(value)
             setError(null)
           }}
+          disabled={pending !== null}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : `${codeId}-hint`}
-          className="h-12 rounded-sm border-none bg-canvas-parchment text-center text-lg tracking-[0.5em]"
+          containerClassName="w-full has-[:disabled]:opacity-50"
+          render={({ slots }) => (
+            <div
+              className="grid w-full grid-cols-6 gap-2"
+              data-testid="phone-auth-code-slots"
+              aria-hidden="true"
+            >
+              {slots.map((slot, index) => (
+                <div
+                  key={index}
+                  data-slot="otp-slot"
+                  className={cn(
+                    'relative flex h-12 min-w-0 items-center justify-center rounded-sm border border-border bg-canvas-parchment text-lg font-medium tabular-nums',
+                    error && 'border-destructive',
+                    slot.isActive && 'border-ring ring-2 ring-ring/50',
+                  )}
+                >
+                  {slot.char}
+                  {slot.hasFakeCaret && (
+                    <span className="absolute h-5 w-px animate-pulse bg-foreground motion-reduce:animate-none" />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         />
         <p id={`${codeId}-hint`} className="text-xs text-muted-foreground">
           {t('codeExpiryHint')}
@@ -329,26 +377,36 @@ export function PhoneAuthForm({
       >
         {purpose === 'link' ? t('linkVerify') : t('verify')}
       </Button>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Button
           type="button"
           variant="link"
-          className="px-0"
+          className="h-auto min-h-10 max-w-full whitespace-normal px-0 text-left"
           onClick={editNumber}
           disabled={pending !== null}
         >
+          <HugeiconsIcon
+            icon={PencilEdit01Icon}
+            className="size-4"
+            aria-hidden="true"
+          />
           {t('editNumber')}
         </Button>
         <Button
           type="button"
           variant="link"
-          className="px-0"
+          className="h-auto min-h-10 max-w-full whitespace-normal px-0 text-right"
           data-testid="phone-auth-resend-button"
           onClick={() => void requestCode(phone, 'resend')}
           loading={pending === 'resend'}
           loadingText={t('resending')}
           disabled={pending !== null || secondsLeft > 0}
         >
+          <HugeiconsIcon
+            icon={RefreshIcon}
+            className="size-4"
+            aria-hidden="true"
+          />
           {secondsLeft > 0
             ? t('resendIn', { seconds: secondsLeft })
             : t('resend')}

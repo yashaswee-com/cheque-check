@@ -38,17 +38,11 @@ test.describe('authentication', () => {
   test('login with invalid credentials shows an error and stays on /login', async ({
     page,
   }) => {
-    let dialogMessage = ''
-    page.on('dialog', (dialog) => {
-      dialogMessage = dialog.message()
-      void dialog.accept()
-    })
-
     const loginPage = new LoginPage(page)
     await loginPage.goto()
     await loginPage.login(e2eUser('nonexistent').email, 'wrong-password')
 
-    await expect.poll(() => dialogMessage).not.toBe('')
+    await expect(page.locator('[data-slot="toast-description"]')).toBeVisible()
     await expect(page).toHaveURL('/login')
   })
 
@@ -91,7 +85,13 @@ test.describe('authentication', () => {
     await signupPage.goto()
     await signupPage.signup(user.name, user.email, user.password)
 
-    await expect.poll(() => dialogMessage).not.toBe('')
+    await expect
+      .poll(
+        async () =>
+          Boolean(dialogMessage) ||
+          (await page.locator('[data-slot="toast-description"]').isVisible()),
+      )
+      .toBe(true)
     await expect(page).not.toHaveURL('/dashboard')
   })
 

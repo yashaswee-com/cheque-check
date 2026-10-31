@@ -28,13 +28,15 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslations } from 'next-intl'
 import { publicEnv } from '@/lib/env/client'
 import { PhoneAuthForm } from '@/features/auth/components/phone-auth-form'
+import { toast } from '@/components/ui/toast'
+import { getAuthErrorMessageKey } from '@/features/auth/auth-error-message'
 
 const PHONE_AUTH_ENABLED = publicEnv.NEXT_PUBLIC_PHONE_AUTH_ENABLED === 'true'
 
 export default function SignupPage() {
   const t = useTranslations('Auth')
   const tp = useTranslations('PhoneAuth')
-  const [usePhone, setUsePhone] = useState(false)
+  const [usePhone, setUsePhone] = useState(PHONE_AUTH_ENABLED)
   const tc = useTranslations('Common')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,6 +44,14 @@ export default function SignupPage() {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const reportError = (error: unknown) => {
+    toast.add({
+      title: t('errorTitle'),
+      description: t(getAuthErrorMessageKey(error)),
+      type: 'error',
+    })
+  }
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,13 +63,13 @@ export default function SignupPage() {
         name,
       )
       if (error) {
-        alert(error.message)
+        reportError(error)
       } else {
         alert(t('checkEmailConfirmation'))
         router.push('/login')
       }
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : String(error))
+      reportError(error)
     } finally {
       setLoading(false)
     }
@@ -68,14 +78,14 @@ export default function SignupPage() {
   const handleOAuthSignup = async (provider: 'google' | 'facebook') => {
     try {
       const { error } = await authService.loginWithOAuth(provider)
-      if (error) alert(error.message)
+      if (error) reportError(error)
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : String(error))
+      reportError(error)
     }
   }
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center bg-canvas-parchment px-6 dark:bg-black">
+    <div className="flex min-h-full flex-col items-center justify-center bg-canvas-parchment min-[360px]:px-3 sm:px-6 dark:bg-black">
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white shadow-sm overflow-hidden">
@@ -94,7 +104,7 @@ export default function SignupPage() {
           </p>
         </div>
 
-        <div className="space-y-4 rounded-lg bg-white p-8 dark:bg-surface-tile-1 border border-primary/5">
+        <div className="space-y-4 rounded-lg bg-white p-2 py-8 min-[360px]:px-4 sm:px-8 dark:bg-surface-tile-1 border border-primary/5">
           {PHONE_AUTH_ENABLED && usePhone ? (
             <PhoneAuthForm
               purpose="signup"
@@ -171,11 +181,16 @@ export default function SignupPage() {
           {PHONE_AUTH_ENABLED && (
             <Button
               type="button"
-              variant="ghost"
-              className="w-full"
+              variant="outline"
+              className="h-12 w-full gap-2 rounded-sm font-normal"
               data-testid="signup-toggle-phone-button"
               onClick={() => setUsePhone((value) => !value)}
             >
+              <HugeiconsIcon
+                icon={usePhone ? Mail : Phone}
+                className="h-4 w-4"
+                aria-hidden="true"
+              />
               {usePhone ? tp('useEmail') : tp('usePhone')}
             </Button>
           )}

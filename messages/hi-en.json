@@ -375,6 +375,7 @@
     "signOut": "Sign Out karein"
   },
   "PhoneAuth": {
+    "errorTitle": "Phone verification mein dhyan dein",
     "usePhone": "Phone number se continue karein",
     "useEmail": "Email se continue karein",
     "phoneLabel": "Mobile number",
@@ -407,21 +408,33 @@
     "errors": {
       "name_required": "Account banane ke liye apna naam enter karein.",
       "invalid_request": "Request mein kuch galat tha. Dobara try karein.",
-      "invalid_phone": "10-digit ka sahi Indian mobile number daalein.",
+      "invalid_phone": "6, 7, 8 ya 9 se shuru hone wala 10-digit Indian mobile number daalein. +91 country code pehle se selected hai.",
       "unsupported_country": "Abhi sirf Indian (+91) mobile numbers chalte hain.",
-      "invalid_or_expired_code": "Code galat hai ya expire ho gaya. Check karein ya naya code mangayein.",
-      "rate_limited": "Bahut zyada koshishein. Naya code mangane se pehle thoda rukein.",
-      "captcha_failed": "Security check fail ho gaya. Dobara try karein.",
-      "captcha_required": "Aage badhne ke liye security check poora karein.",
+      "invalid_or_expired_code": "6-digit code galat hai ya expire ho gaya. SMS ka latest code daalein, ya countdown ke baad code dobara mangayein.",
+      "rate_limited": "Bahut zyada code ya verification requests hui hain. Dobara try karne se pehle rukein; resend countdown dikh raha ho to uska intezar karein.",
+      "captcha_failed": "Cloudflare security check fail hua ya expire ho gaya. Naya check poora karke code dobara mangayein.",
+      "captcha_required": "Code bhejne ya dobara mangane se pehle Cloudflare security check poora karein. Har code request ke liye naya check zaroori hai.",
       "phone_in_use": "Yeh number kisi aur account mein use ho raha hai. Accounts apne aap merge nahi hote; support se sampark karein.",
       "already_linked": "Yeh number pehle se aapke account ke liye verified hai.",
       "unauthorized": "Aage badhne ke liye dobara sign in karein.",
       "account_deactivated": "Yeh account deactivate ho chuka hai. Galti lage to support se sampark karein.",
-      "provider_unavailable": "Abhi code bhejna ya check karna possible nahi hai. Koi code confirm nahi hua. Thodi der baad try karein.",
-      "unknown": "Kuch galat ho gaya. Dobara try karein."
+      "provider_unavailable": "SMS ya verification service se connection nahi ho saka. Apna connection check karke thodi der baad try karein. SMS na aaye to resend available hone par naya code mangayein.",
+      "unknown": "Phone verification poora nahi ho saka. Connection check karke dobara try karein. Problem bani rahe to email use karein ya support se sampark karein."
     }
   },
   "Auth": {
+    "errorTitle": "Aage nahi badh sake",
+    "errors": {
+      "invalidCredentials": "Email aur password match nahi karte. Dono check karke try karein, ya Forgot Password se password reset karein.",
+      "emailNotConfirmed": "Sign in se pehle inbox mein bheje gaye link se email confirm karein. Spam folder bhi check karein.",
+      "accountExists": "In details se account pehle se hai. Sign in karein, ya password bhool gaye hon to reset karein.",
+      "weakPassword": "Password security requirements poori nahi karta. Letters, numbers aur symbols ke saath lamba password chunein.",
+      "rateLimited": "Bahut zyada authentication requests hui hain. Kuch minute ruk kar dobara try karein.",
+      "captchaFailed": "Security check fail hua ya expire ho gaya. Page refresh karke check poora karein aur dobara try karein.",
+      "methodUnavailable": "Yeh sign-in ya sign-up method abhi available nahi hai. Phone, email ya doosra available option try karein.",
+      "accountDeactivated": "Yeh account deactivate ho chuka hai. Access restore karne ke liye support se sampark karein.",
+      "unavailable": "Request poori nahi ho saki. Connection check karke dobara try karein. Problem bani rahe to doosra sign-in method try karein ya support se sampark karein."
+    },
     "login": "Login karein",
     "signup": "Sign Up karein",
     "email": "Email",

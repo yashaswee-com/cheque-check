@@ -7,6 +7,7 @@ interface TurnstileApi {
     element: HTMLElement,
     options: {
       sitekey: string
+      size: 'flexible'
       action?: string
       callback: (token: string) => void
       'expired-callback': () => void
@@ -72,6 +73,7 @@ export function TurnstileWidget({
         if (cancelled || !container.current || !window.turnstile) return
         widgetId = window.turnstile.render(container.current, {
           sitekey: siteKey,
+          size: 'flexible',
           ...(action ? { action } : {}),
           callback: (token) => onTokenRef.current(token),
           'expired-callback': () => onTokenRef.current(null),
@@ -85,5 +87,7 @@ export function TurnstileWidget({
     }
   }, [siteKey, action])
 
-  return <div ref={container} data-testid="turnstile-widget" />
+  return (
+    <div ref={container} className="w-full" data-testid="turnstile-widget" />
+  )
 }
