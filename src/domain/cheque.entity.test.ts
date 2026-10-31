@@ -2,6 +2,59 @@ import { describe, expect, it } from 'vitest'
 import { Cheque } from './cheque.entity'
 
 describe('Cheque entity', () => {
+  it('exposes every persisted field and relation and serializes without sharing the row object', () => {
+    const row = {
+      id: '1',
+      business_id: 'b1',
+      party_id: 'p1',
+      account_id: 'a1',
+      cheque_number: '123456',
+      amount: 100,
+      cheque_date: '2026-10-31',
+      deposit_date: '2026-11-01',
+      remind_before_days: 3,
+      status: 'Received' as const,
+      type: 'Inward' as const,
+      notes: 'Note',
+      image_url: '/private-image',
+      created_at: '2026-10-01',
+      updated_at: '2026-10-02',
+      is_draft: true,
+      party: { name: 'Acme', contact: '+919876543210' },
+      account: { account_name: 'Main', bank: { name: 'Bank' } },
+    }
+    const entity = Cheque.fromRow(row)
+    expect({
+      id: entity.id,
+      business_id: entity.business_id,
+      party_id: entity.party_id,
+      account_id: entity.account_id,
+      cheque_number: entity.cheque_number,
+      amount: entity.amount,
+      cheque_date: entity.cheque_date,
+      deposit_date: entity.deposit_date,
+      remind_before_days: entity.remind_before_days,
+      status: entity.status,
+      type: entity.type,
+      notes: entity.notes,
+      image_url: entity.image_url,
+      created_at: entity.created_at,
+      updated_at: entity.updated_at,
+      is_draft: entity.is_draft,
+      party: entity.party,
+      account: entity.account,
+    }).toEqual(row)
+    const json = entity.toJSON()
+    expect(json).toEqual(row)
+    expect(json).not.toBe(row)
+    json.notes = 'Modified'
+    expect(entity.notes).toBe('Note')
+    expect(Cheque.fromRow({ ...row, is_draft: undefined }).is_draft).toBe(false)
+    expect(entity.isOverdue('2026-11-02')).toBe(true)
+    expect(Cheque.fromRow({ ...row, status: 'Cleared' }).isOverdue()).toBe(
+      false,
+    )
+  })
   it('derives initial statuses by cheque type', () => {
     expect(Cheque.initialStatusFor('Outward')).toBe('Issued')
     expect(Cheque.initialStatusFor('Inward')).toBe('Received')
