@@ -38,7 +38,7 @@ export function useEditAccount(id: string, businessId: string | undefined) {
       ifsc_code: account.ifsc_code || '',
       color: account.color,
       notes: account.notes || '',
-      opening_balance: account.opening_balance ?? 0,
+      opening_balance: account.opening_balance,
       is_default: account.is_default,
     }),
   })

@@ -151,6 +151,8 @@ describe('useCreateAccount', () => {
     expect(mocks.draft.finishPublish).toHaveBeenCalledOnce()
     expect(result.current.isSuccess).toBe(true)
     expect(result.current.isSaving).toBe(false)
+    act(() => result.current.continueAfterSuccess())
+    expect(mocks.draft.goBack).toHaveBeenCalledOnce()
   })
 
   it('publishes a resumed draft, links it to the cheque draft, and returns to the caller', async () => {
@@ -240,5 +242,34 @@ describe('useCreateAccount', () => {
     expect(mocks.draft.finishPublish).toHaveBeenCalledOnce()
     expect(result.current.isSuccess).toBe(true)
     expect(result.current.isSaving).toBe(false)
+  })
+
+  it('uses the generic error message and preserves non-draft return destinations', async () => {
+    const { result } = setup({ returnTo: '/accounts/new' })
+    mocks.draft.beginPublish.mockResolvedValue('account-draft-2')
+    mocks.publish.mockRejectedValueOnce('service unavailable')
+    setValidAccount(result)
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.toastAdd).toHaveBeenCalledWith({
+      title: 'error',
+      description: 'error',
+      type: 'error',
+    })
+    expect(mocks.draft.failPublish).toHaveBeenCalledOnce()
+    expect(result.current.isSaving).toBe(false)
+  })
+
+  it('returns to a non-draft destination without linking a cheque draft', async () => {
+    const { result } = setup({ returnTo: '/accounts/new' })
+    mocks.draft.beginPublish.mockResolvedValue('account-draft-3')
+    setValidAccount(result)
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.updateChequeDraft).not.toHaveBeenCalled()
+    act(() => result.current.continueAfterSuccess())
+    expect(mocks.routerReplace).toHaveBeenCalledWith('/accounts/new')
   })
 })

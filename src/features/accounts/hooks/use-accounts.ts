@@ -41,14 +41,13 @@ export function useAccounts(businessId: string | undefined) {
         return sortOrder === 'asc'
           ? nameA.localeCompare(nameB)
           : nameB.localeCompare(nameA)
-      } else if (sortBy === 'bank_name') {
+      } else {
         const nameA = (a.bank?.name || '').toLowerCase()
         const nameB = (b.bank?.name || '').toLowerCase()
         return sortOrder === 'asc'
           ? nameA.localeCompare(nameB)
           : nameB.localeCompare(nameA)
       }
-      return 0
     })
 
     return result

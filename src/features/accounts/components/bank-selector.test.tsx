@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
     logo_url: null
     owner_id: string | null
   }[],
+  hasData: true,
   isPending: false,
   error: null as Error | null,
   refetch: vi.fn(),
@@ -27,7 +28,7 @@ const state = vi.hoisted(() => ({
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))
 vi.mock('../hooks/use-banks', () => ({
   useBanks: () => ({
-    data: state.banks,
+    data: state.hasData ? state.banks : undefined,
     isPending: state.isPending,
     error: state.error,
     refetch: state.refetch,
@@ -44,6 +45,7 @@ beforeEach(() => {
   state.banks = [
     { id: 'bank1', name: 'Example Bank', logo_url: null, owner_id: null },
   ]
+  state.hasData = true
   state.isPending = state.create.isPending = false
   state.error = null
   state.create.mutateAsync.mockResolvedValue({ id: 'new-bank' })
@@ -73,9 +75,15 @@ afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
-function mount(value?: string) {
+function mount(value?: string, className?: string) {
   const onValueChange = vi.fn()
-  render(<BankSelector value={value} onValueChange={onValueChange} />)
+  render(
+    <BankSelector
+      value={value}
+      onValueChange={onValueChange}
+      className={className}
+    />,
+  )
   return onValueChange
 }
 function open() {
@@ -138,10 +146,35 @@ describe('BankSelector', () => {
 
   it('shows loading and blocks custom additions until the catalog loads', async () => {
     state.isPending = true
+    state.hasData = false
     mount()
     open()
     expect(await screen.findByRole('status')).toHaveTextContent('load')
     expect(screen.getByRole('button', { name: 'add' })).toBeDisabled()
+  })
+
+  it('creates a bank when the catalog has not returned data', async () => {
+    state.hasData = false
+    mount()
+    const input = await addForm()
+    fireEvent.change(input, { target: { value: 'New Bank' } })
+    submit()
+    await waitFor(() =>
+      expect(state.create.mutateAsync).toHaveBeenCalledWith('New Bank'),
+    )
+  })
+
+  it('applies the compact trigger style only when requested', () => {
+    const change = mount(undefined, 'rounded-sm')
+    expect(screen.getByTestId('bank-selector-trigger')).toHaveClass(
+      'rounded-sm',
+    )
+    change.mockClear()
+    cleanup()
+    mount(undefined, 'w-full')
+    expect(screen.getByTestId('bank-selector-trigger')).not.toHaveClass(
+      'rounded-sm',
+    )
   })
 
   it('surfaces catalog errors and retries', async () => {
@@ -190,5 +223,20 @@ describe('BankSelector', () => {
       }),
     )
     expect(input).toHaveValue('Local Bank')
+  })
+
+  it('uses the generic creation message for non-Error failures', async () => {
+    state.create.mutateAsync.mockRejectedValueOnce('permission denied')
+    mount()
+    const input = await addForm()
+    fireEvent.change(input, { target: { value: 'Local Bank' } })
+    submit()
+    await waitFor(() =>
+      expect(state.toast).toHaveBeenCalledWith({
+        title: 'saveFailed',
+        description: 'saveFailed',
+        type: 'error',
+      }),
+    )
   })
 })

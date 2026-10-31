@@ -52,6 +52,29 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('useAccounts', () => {
+  it('sorts a leading account with no bank before named banks without mutating query data', async () => {
+    const rows = [accounts[3], ...accounts.slice(0, 3)]
+    getAll.mockResolvedValue(rows)
+    const { result } = setup('b1')
+    await waitFor(() => expect(result.current.accounts).toHaveLength(4))
+    act(() => result.current.setSortBy('bank_name'))
+    expect(result.current.filteredAccounts[0].id).toBe('a4')
+    expect(result.current.accounts).toEqual(rows)
+  })
+  it('excludes nonmatching rows and sorts missing bank names in either position', async () => {
+    const { result } = setup('b1')
+    await waitFor(() => expect(result.current.accounts).toHaveLength(4))
+    act(() => result.current.setSearch('not-present'))
+    expect(result.current.filteredAccounts).toEqual([])
+    act(() => {
+      result.current.setSearch('')
+      result.current.setSortBy('bank_name')
+      result.current.setSortOrder('desc')
+    })
+    expect(result.current.filteredAccounts.at(-1)?.id).toBe('a4')
+    act(() => result.current.setBankFilter('missing-bank'))
+    expect(result.current.filteredAccounts).toEqual([])
+  })
   it('loads business accounts, deduplicates banks and sorts names without mutating cache order', async () => {
     const { result } = setup('b1')
     expect(result.current.isLoading).toBe(true)
