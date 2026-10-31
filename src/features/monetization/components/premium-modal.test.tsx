@@ -41,3 +41,17 @@ it('applies the optional redirect when declining premium', () => {
   expect(change).toHaveBeenCalledWith(false)
   expect(push).toHaveBeenCalledWith('/cheques')
 })
+
+it('does not redirect when declining without a dismissal destination', () => {
+  const change = vi.fn()
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <PremiumModal open onOpenChange={change} />
+    </NextIntlClientProvider>,
+  )
+  fireEvent.click(
+    screen.getByRole('button', { name: messages.Common.maybeLater }),
+  )
+  expect(change).toHaveBeenCalledWith(false)
+  expect(push).not.toHaveBeenCalled()
+})

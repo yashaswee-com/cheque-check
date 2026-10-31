@@ -49,6 +49,9 @@ describe('useMonetization', () => {
     ])
     mocks.quotas.mockResolvedValue([])
     const { result } = renderAccess()
+    expect(result.current.getEntitlementState(FEATURE_IDS.AI_SCANNER_SUB)).toBe(
+      'loading',
+    )
     await waitFor(() => expect(result.current.isLoading).toBe(false))
     expect(result.current.isLifetimePremium).toBe(true)
     expect(result.current.hasAiScannerSub).toBe(false)

@@ -135,6 +135,37 @@ describe('PremiumGate', () => {
 })
 
 describe('Premium execution guard', () => {
+  it('opens the plans page from the access-required toast action', () => {
+    mocks.state = 'error'
+    const { result } = renderHook(() => usePremiumAction(), {
+      wrapper: Wrapper,
+    })
+    expect(result.current.requireAccess('reports')).toBe(false)
+    expect(mocks.toast).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error' }),
+    )
+    mocks.toast.mock.calls[0][0].actionProps.onClick()
+    expect(mocks.push).toHaveBeenCalledWith('/features')
+  })
+
+  it('allows verified access and handles non-Error provider failures', async () => {
+    mocks.state = 'active'
+    mocks.verify
+      .mockResolvedValueOnce(true)
+      .mockRejectedValueOnce('unavailable')
+    const { result } = renderHook(() => usePremiumAction(), {
+      wrapper: Wrapper,
+    })
+    expect(await result.current.verifyAccess('reports')).toBe(true)
+    expect(mocks.refresh).not.toHaveBeenCalled()
+    expect(await result.current.verifyAccess('reports')).toBe(false)
+    expect(mocks.toast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        description: messages.Premium.states.error,
+      }),
+    )
+  })
   it('does not even call protected authorization for a blocked user', async () => {
     const { result } = renderHook(() => usePremiumAction(), {
       wrapper: Wrapper,

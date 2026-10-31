@@ -2,6 +2,38 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { paymentService } from './payment.service'
 
 describe('PaymentService', () => {
+  it.each([null, 'unavailable', {}, { message: 'unavailable' }])(
+    'uses a safe error when the server does not return an error property: %j',
+    async (body) => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify(body), { status: 503 }),
+      )
+      await expect(
+        paymentService.createOrder('lifetime_premium'),
+      ).rejects.toThrow('Unable to create payment order')
+    },
+  )
+
+  it('preserves non-method property access on the lazy service', () => {
+    expect(Reflect.get(paymentService, 'missing')).toBeUndefined()
+  })
+
+  it('rejects an invalid success-shaped provider response', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: '',
+          amount: -1,
+          currency: 'USD',
+          productId: 'unknown',
+          name: '',
+        }),
+      ),
+    )
+    await expect(
+      paymentService.createOrder('lifetime_premium'),
+    ).rejects.toThrow()
+  })
   afterEach(() => {
     vi.restoreAllMocks()
   })

@@ -83,4 +83,20 @@ describe('useRazorpay', () => {
     alert.mockRestore()
     log.mockRestore()
   })
+
+  it('uses the generic message when checkout creation rejects without an Error', async () => {
+    mocks.order.mockRejectedValue('network unavailable')
+    const alert = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    const { result } = renderHook(() => useRazorpay())
+
+    await act(async () => {
+      await result.current.processPayment({
+        productId: PRODUCT_IDS.AI_SCANNER_30D,
+      })
+    })
+
+    expect(alert).toHaveBeenCalledWith('Failed to initiate payment')
+    expect(result.current.isProcessing).toBe(false)
+    alert.mockRestore()
+  })
 })
