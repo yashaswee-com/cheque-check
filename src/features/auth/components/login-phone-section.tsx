@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/client'
+import { authService } from '../services/auth.service'
+import { logger } from '@/lib/logger'
+import { toast } from '@/components/ui/toast'
 import { maskPhone } from '@/lib/phone-auth'
 import { PhoneAuthForm } from './phone-auth-form'
 
@@ -14,9 +16,14 @@ export function LoginPhoneSection() {
   const [linked, setLinked] = useState(false)
 
   const refresh = useCallback(async () => {
-    const { data } = await createClient().auth.getUser()
-    setPhone(data.user?.phone ? `+${data.user.phone.replace(/^\+/, '')}` : null)
-  }, [])
+    try {
+      const user = await authService.getUser()
+      setPhone(user?.phone ? `+${user.phone.replace(/^\+/, '')}` : null)
+    } catch (error) {
+      logger.error('Failed to load linked login phone', error)
+      toast.add({ title: t('errors.unknown'), type: 'error' })
+    }
+  }, [t])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

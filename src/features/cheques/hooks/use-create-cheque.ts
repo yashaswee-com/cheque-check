@@ -5,7 +5,6 @@ import { chequeSchema } from '@/validators'
 import { chequeService } from '@/features/cheques/services/cheque.service'
 import { useRouter } from 'next/navigation'
 import { storageService } from '@/services/storage.service'
-import { z } from 'zod'
 import { toast } from '@/components/ui/toast'
 import { useTranslations } from 'next-intl'
 import { Party, type ChequeDraft } from '@/types'
@@ -27,7 +26,7 @@ import { buildNotifyPartyAction } from '@/features/cheques/lib/notify-party'
 import { queryKeys } from '@/lib/query-keys'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
 
-type ChequeFormValues = z.infer<typeof chequeSchema>
+import type { ChequeFormValues } from '@/types'
 
 const optimisticId = () => `temp-${Date.now()}`
 

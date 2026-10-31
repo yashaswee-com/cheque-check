@@ -27,6 +27,13 @@ export type PremiumState =
   | 'canceled'
   | 'expired'
 
+export function isEntitlementCurrent(
+  validUntil: string | null,
+  now: number,
+): boolean {
+  return validUntil === null || Date.parse(validUntil) > now
+}
+
 export function entitlementHasAccess(
   entitlement: Entitlement | undefined,
   now: number,
@@ -36,11 +43,7 @@ export function entitlementHasAccess(
     return false
   if (entitlement.status === 'trialing' && entitlement.valid_until === null)
     return false
-  return (
-    entitlement.valid_until === null ||
-    (Number.isFinite(Date.parse(entitlement.valid_until)) &&
-      Date.parse(entitlement.valid_until) > now)
-  )
+  return isEntitlementCurrent(entitlement.valid_until, now)
 }
 
 export function resolvePremiumState(

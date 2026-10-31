@@ -4,8 +4,10 @@ import type {
   ChequeType,
   PartyDraftFields,
 } from '@/types'
+import { chequeSchema } from '@/validators'
 
-export type DraftEntity = 'cheque' | 'party' | 'account'
+import type { DraftEntity } from '@/types'
+export type { DraftEntity } from '@/types'
 
 export const DRAFT_CREATE_PATHS: Record<DraftEntity, string> = {
   cheque: '/cheques/create',
@@ -27,8 +29,10 @@ const positiveNumber = (value: unknown) =>
     ? value
     : null
 
-const chequeType = (value: unknown): ChequeType | null =>
-  value === 'Inward' || value === 'Outward' ? value : null
+const chequeType = (value: unknown): ChequeType | null => {
+  const result = chequeSchema.shape.type.safeParse(value)
+  return result.success ? result.data : null
+}
 
 export function toChequeDraftFields(
   values: Record<string, unknown>,
@@ -119,7 +123,12 @@ export function accountDraftToFormValues(draft: AccountDraftFields) {
 }
 
 export function firstIncompleteChequeStep(draft: ChequeDraftFields) {
-  if (!draft.amount || !/^\d{6}$/.test(draft.cheque_number ?? '')) return 1
+  if (
+    !draft.amount ||
+    !chequeSchema.shape.cheque_number.safeParse(draft.cheque_number ?? '')
+      .success
+  )
+    return 1
   if (!draft.party_id || !draft.account_id) return 2
   return 3
 }

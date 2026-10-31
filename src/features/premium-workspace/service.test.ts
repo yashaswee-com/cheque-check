@@ -11,7 +11,7 @@ vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({ rpc }) }))
 
 beforeEach(() => {
   rpc.mockReset()
-  rpc.mockResolvedValue({ data: null, error: null })
+  rpc.mockResolvedValue({ data: 0, error: null })
 })
 
 describe('fresh authenticated premium RPC contracts', () => {
@@ -66,6 +66,10 @@ describe('fresh authenticated premium RPC contracts', () => {
     })
   })
   it('sends explicit statement scope and dates to the ownership checked snapshot', async () => {
+    rpc.mockResolvedValue({
+      data: { businesses: [], cheques: [] },
+      error: null,
+    })
     await premiumWorkspaceService.snapshot(
       ['b1'],
       'p1',
@@ -106,5 +110,19 @@ describe('fresh authenticated premium RPC contracts', () => {
     await expect(
       premiumWorkspaceService.bulkStatus('b1', ['c1'], 'Received'),
     ).rejects.toThrow('Invalid status transition')
+  })
+  it('does not turn missing batch results into apparent success', async () => {
+    rpc.mockResolvedValue({ data: null, error: null })
+    await expect(
+      premiumWorkspaceService.bulkStatus('b1', ['c1'], 'Cleared'),
+    ).rejects.toThrow('No data returned from the database')
+  })
+  it('accepts successful void writes and nullable lookups', async () => {
+    rpc.mockResolvedValue({ data: null, error: null })
+    await expect(
+      premiumWorkspaceService.deleteTool('tool1'),
+    ).resolves.toBeUndefined()
+    await expect(getMessageTemplate('b1')).resolves.toBeNull()
+    await expect(getPrintLayout('a1')).resolves.toBeNull()
   })
 })

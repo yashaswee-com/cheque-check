@@ -7,7 +7,15 @@ import type {
   SafeChequePrefill,
   WorkspaceContext,
 } from './types'
-import { isValidE164Phone } from '@/lib/phone'
+import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
+import { chequeSchema } from '@/validators'
+import {
+  importPartyValidators,
+  importChequeValidators,
+  validDate,
+  validAmount,
+} from '@/validators/premium-workspace'
+export { validDate, validAmount } from '@/validators/premium-workspace'
 
 export const placeholders = [
   'party',
@@ -54,33 +62,11 @@ export function safeChequePrefill(
     result.account_id = source.account_id
   const amount = Number(source.amount)
   if (validAmount(source.amount) && amount > 0) result.amount = amount
-  if (source.type === 'Inward' || source.type === 'Outward')
-    result.type = source.type
+  const type = chequeSchema.shape.type.safeParse(source.type)
+  if (type.success) result.type = type.data
   if (typeof source.notes === 'string' && source.notes.length <= 2000)
     result.notes = source.notes
   return result
-}
-
-export function validDate(value: string): boolean {
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-    value < '1900-01-01' ||
-    value > '2200-12-31'
-  )
-    return false
-  const parsed = new Date(`${value}T00:00:00Z`)
-  return (
-    !Number.isNaN(parsed.getTime()) &&
-    parsed.toISOString().slice(0, 10) === value
-  )
-}
-
-export function validAmount(value: unknown): boolean {
-  return (
-    /^(?:\d+)(?:\.\d{1,2})?$/.test(String(value)) &&
-    Number(value) > 0 &&
-    Number(value) <= 999999999999.99
-  )
 }
 
 const columns = {
@@ -137,14 +123,12 @@ export function validateImport(
       const name = norm(String(data.name ?? ''))
       const contact = String(data.contact ?? '')
       const email = norm(String(data.email ?? ''))
-      if (!name || name.length > 200) add('name', name ? 'invalid' : 'required')
-      if (!isValidE164Phone(contact)) add('contact', 'invalid')
-      if (
-        email &&
-        (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)
-      )
-        add('email', 'invalid')
-      if (String(data.address ?? '').length > 1000) add('address', 'invalid')
+      if (!importPartyValidators.name(name))
+        add('name', name ? 'invalid' : 'required')
+      if (!importPartyValidators.contact(contact)) add('contact', 'invalid')
+      if (!importPartyValidators.email(email)) add('email', 'invalid')
+      if (!importPartyValidators.address(String(data.address ?? '')))
+        add('address', 'invalid')
       if (
         partyNames.has(name) ||
         contacts.has(phone(contact)) ||
@@ -157,7 +141,9 @@ export function validateImport(
     } else {
       if (!parties.has(String(data.party_id))) add('party_id', 'reference')
       if (!accounts.has(String(data.account_id))) add('account_id', 'reference')
-      if (!/^\d{6}$/.test(String(data.cheque_number ?? '')))
+      if (
+        !importChequeValidators.cheque_number(String(data.cheque_number ?? ''))
+      )
         add('cheque_number', 'invalid')
       if (!validAmount(data.amount)) add('amount', 'invalid')
       if (!validDate(String(data.cheque_date ?? '')))
@@ -168,7 +154,7 @@ export function validateImport(
           String(data.deposit_date) < String(data.cheque_date))
       )
         add('deposit_date', 'invalid')
-      if (!['Inward', 'Outward'].includes(String(data.type)))
+      if (!importChequeValidators.type(String(data.type)))
         add('type', 'invalid')
       const key = `${data.account_id}:${data.cheque_number}`
       if (chequeKeys.has(key)) add('cheque_number', 'duplicate')
@@ -219,10 +205,7 @@ export function canBulkTransition(
     !!cheque.status &&
     !!cheque.type &&
     !!status &&
-    cheque.status !== status &&
-    (status === 'Cleared' ||
-      status === 'Bounced' ||
-      status === (cheque.type === 'Inward' ? 'Received' : 'Issued'))
+    ChequeEntity.canTransitionFor(cheque.type, cheque.status, status)
   )
 }
 

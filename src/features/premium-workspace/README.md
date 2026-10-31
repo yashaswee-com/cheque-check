@@ -27,6 +27,15 @@ savePrintLayout(accountId: string, layout: PrintLayout): Promise<void>
 renderMessageTemplate(body: string, values: MessageValues): string
 ```
 
+Persistence is implemented once in `repositories/workspace.repository.ts`.
+`service.ts` is a compatibility re-export. Native tools and the legacy workspace
+share `hooks/use-workspace.ts` for context/tool queries and
+`hooks/use-workspace-action.ts` for execution state and cache refresh.
+Cache keys come from `src/lib/query-keys.ts`. Import primitives come from
+`src/validators/premium-workspace.ts`, with common cheque-number/type rules
+delegated to the published cheque schema. Bulk preview transitions delegate to
+`src/domain/cheque.entity.ts`; the database RPC still enforces them independently.
+
 `PrintLayout` is the existing cheque-print layout type. Prefer passing
 `cheque.business_id` to message lookup. Without an argument it returns the latest
 saved message across the owner's nondeleted businesses. Pass string values for

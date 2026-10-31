@@ -1,4 +1,4 @@
-/** Central registry of React Query keys, mirroring the `draftKeys` pattern in use-drafts.ts. */
+/** Central registry of React Query keys. */
 export const queryKeys = {
   accounts: {
     list: (businessId: string | undefined) => ['accounts', businessId] as const,
@@ -53,4 +53,20 @@ export const queryKeys = {
     forBusiness: (businessId: string | null | undefined, entityType: string) =>
       ['entity-tag-map', businessId, entityType] as const,
   },
+  drafts: {
+    list: (entity: DraftEntity, businessId: string | undefined) =>
+      ['drafts', entity, businessId] as const,
+    detail: (entity: DraftEntity, id: string | null | undefined) =>
+      ['draft', entity, id] as const,
+  },
+  premiumWorkspace: {
+    all: () => ['premium-workspace'] as const,
+    context: (businessId: string | undefined) =>
+      ['premium-workspace', 'context', businessId] as const,
+    tools: (businessId: string | undefined) =>
+      ['premium-workspace', 'tools', businessId] as const,
+    printLayout: (accountId: string) =>
+      ['premium-workspace', 'print-layout', accountId] as const,
+  },
 }
+import type { DraftEntity } from '@/types'

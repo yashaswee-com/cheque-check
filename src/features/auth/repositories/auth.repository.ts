@@ -1,8 +1,8 @@
-import {
+import type {
   Provider,
   SupabaseClient,
-  type AuthChangeEvent,
-  type Session,
+  AuthChangeEvent,
+  Session,
 } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import type {

@@ -1,10 +1,12 @@
 import { isValidE164Phone } from '@/lib/phone'
+import type { z } from 'zod'
+import type { phoneAuthPurposeSchema } from '@/validators/phone-auth'
 
 export const PHONE_AUTH_COUNTRY_CODE = '+91'
 export const OTP_LENGTH = 6
 export const OTP_RESEND_COOLDOWN_SECONDS = 60
 
-export type PhoneAuthPurpose = 'login' | 'signup' | 'link'
+export type PhoneAuthPurpose = z.infer<typeof phoneAuthPurposeSchema>
 
 export type PhoneNumberCheck =
   | { ok: true; e164: string }

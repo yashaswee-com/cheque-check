@@ -1,11 +1,10 @@
-import { z } from 'zod'
 import { partySchema } from '@/validators'
 import {
   PartyService,
   partyService,
 } from '@/features/parties/services/party.service'
 import { useRouter } from 'next/navigation'
-import { Party } from '@/types'
+import type { Party, PartyFormData } from '@/types'
 import { useEntityEditor } from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import { queryKeys } from '@/lib/query-keys'
@@ -18,7 +17,7 @@ export function useEditParty(id: string, businessId: string | undefined) {
     isLoading,
     error,
     form,
-  } = useEntityEditor<Party, z.infer<typeof partySchema>>({
+  } = useEntityEditor<Party, PartyFormData>({
     queryKey: queryKeys.parties.detail(id),
     fetchFn: () => partyService.getById(id),
     schema: partySchema,

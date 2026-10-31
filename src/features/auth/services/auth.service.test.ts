@@ -26,4 +26,22 @@ describe('AuthService', () => {
 
     await expect(service.getUser()).resolves.toEqual(user)
   })
+
+  it('does not silently treat an auth-provider error as an unsigned user', async () => {
+    const error = new Error('Auth lookup failed')
+    const repository = {
+      getUser: vi.fn().mockResolvedValue({ data: { user: null }, error }),
+    } as unknown as IAuthRepository
+    await expect(new AuthService(repository).getUser()).rejects.toBe(error)
+  })
+
+  it('preserves the normal signed-out state when no auth session exists', async () => {
+    const repository = {
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: null },
+        error: { name: 'AuthSessionMissingError' },
+      }),
+    } as unknown as IAuthRepository
+    await expect(new AuthService(repository).getUser()).resolves.toBeNull()
+  })
 })

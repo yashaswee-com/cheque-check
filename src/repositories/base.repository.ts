@@ -1,6 +1,23 @@
 import { createClient } from '@/lib/supabase/client'
 import { DatabaseError, mapSupabaseError } from '@/lib/errors'
 
+export function unwrapSupabaseResult<T>({
+  data,
+  error,
+}: {
+  data: T | null
+  error: unknown
+}): T {
+  if (error) throw mapSupabaseError(error)
+  if (data === null || data === undefined)
+    throw new DatabaseError('No data returned from the database')
+  return data
+}
+
+export function unwrapSupabaseVoid({ error }: { error: unknown }): void {
+  if (error) throw mapSupabaseError(error)
+}
+
 export interface Repository<
   Entity,
   CreateDTO = Partial<Entity>,
@@ -19,27 +36,13 @@ export abstract class SupabaseRepository {
   protected async handle<T>(
     operation: PromiseLike<{ data: T | null; error: any }>,
   ): Promise<T> {
-    const { data, error } = await operation
-
-    if (error) {
-      throw mapSupabaseError(error)
-    }
-
-    if (data === null || data === undefined) {
-      throw new DatabaseError('No data returned from the database')
-    }
-
-    return data as T
+    return unwrapSupabaseResult(await operation)
   }
 
   protected async handleVoid(
     operation: PromiseLike<{ error: any }>,
   ): Promise<void> {
-    const { error } = await operation
-
-    if (error) {
-      throw mapSupabaseError(error)
-    }
+    unwrapSupabaseVoid(await operation)
   }
 
   /** Like `handle`, but allows `null` as a legitimate result (e.g. `maybeSingle()` lookups). */

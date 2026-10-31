@@ -2,13 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import { chequeService } from '@/features/cheques/services/cheque.service'
 import { useState, useMemo } from 'react'
 import { ChequeStatus, ChequeWithRelations } from '@/types'
-import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
+import { useChequeStatusMutation } from './use-cheque-status-mutation'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useOptimisticMutation } from '@/hooks/use-optimistic-mutation'
 import { queryKeys } from '@/lib/query-keys'
 
-export type SortBy = 'date' | 'amount'
-export type SortOrder = 'asc' | 'desc'
+import type { ChequeSortBy as SortBy, SortOrder } from '@/types/cheque-list'
+export type { ChequeSortBy as SortBy, SortOrder } from '@/types/cheque-list'
 
 export function useCheques(businessId: string | undefined) {
   const [search, setSearch] = useState('')
@@ -27,23 +27,7 @@ export function useCheques(businessId: string | undefined) {
     enabled: !!businessId,
   })
 
-  const mutation = useOptimisticMutation<
-    ChequeEntity[],
-    { id: string; status: ChequeStatus },
-    ChequeEntity
-  >({
-    queryKey: queryKeys.cheques.list(businessId),
-    mutationFn: ({ id, status }: { id: string; status: ChequeStatus }) =>
-      chequeService.updateStatus(id, status),
-    update: (current, { id, status }) => {
-      if (!current) return current
-      return current.map((cheque) =>
-        cheque.id === id
-          ? ChequeEntity.fromRow({ ...cheque.toJSON(), status })
-          : cheque,
-      )
-    },
-  })
+  const mutation = useChequeStatusMutation(businessId)
 
   const deleteMutation = useOptimisticMutation<
     ChequeWithRelations[],

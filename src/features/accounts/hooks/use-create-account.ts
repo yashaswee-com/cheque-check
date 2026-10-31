@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { accountSchema } from '@/validators'
 import { accountService } from '@/features/accounts/services/account.service'
 import { useEntityCreateMutation } from '@/hooks/use-entity-mutations'
 import { useRouter } from 'next/navigation'
-import type { Account, AccountDraft } from '@/types'
+import type {
+  Account,
+  AccountDraft,
+  AccountFormInput,
+  AccountFormData,
+} from '@/types'
 import { toast } from '@/components/ui/toast'
 import { useTranslations } from 'next-intl'
 import { getChequeDraftIdFromReturnTo } from '@/lib/cheque-draft'
@@ -21,9 +25,6 @@ import {
   useDraftController,
 } from '@/features/drafts'
 import { queryKeys } from '@/lib/query-keys'
-
-type AccountFormInput = z.input<typeof accountSchema>
-type AccountFormData = z.output<typeof accountSchema>
 
 export function useCreateAccount(
   businessId: string | undefined,

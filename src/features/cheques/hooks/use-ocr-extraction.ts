@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { z } from 'zod'
 import type { UseFormSetValue, UseFormWatch } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
-import { chequeSchema } from '@/validators'
+import { ChequeDetailsSchema } from '@/validators/ocr'
 import { toast } from '@/components/ui/toast'
 import { logger } from '@/lib/logger'
 import { monitoredFetch } from '@/lib/monitoring/telemetry'
@@ -12,9 +11,7 @@ import { partyService } from '@/features/parties/services/party.service'
 import { accountService } from '@/features/accounts/services/account.service'
 import { queryKeys } from '@/lib/query-keys'
 import { ScanStore } from '@/lib/scan-store'
-import type { Account, Bank, Party } from '@/types'
-
-type ChequeFormValues = z.infer<typeof chequeSchema>
+import type { Account, Bank, Party, ChequeFormValues } from '@/types'
 
 interface UnmatchedEntities {
   payee_name?: string
@@ -86,7 +83,7 @@ export function useOcrExtraction({
         )
       }
 
-      const data = await response.json()
+      const data = ChequeDetailsSchema.parse(await response.json())
 
       if (data.amount !== null) setValue('amount', data.amount)
       if (data.cheque_number !== null)
@@ -179,10 +176,12 @@ export function useOcrExtraction({
           payee_name: !matchedPartyId
             ? partyNameToMatch || undefined
             : undefined,
-          account_name: data.account_name,
-          account_number: !matchedAccountId ? data.account_number : undefined,
-          ifsc_code: data.ifsc_code,
-          bank_name: data.bank_name,
+          account_name: data.account_name ?? undefined,
+          account_number: !matchedAccountId
+            ? (data.account_number ?? undefined)
+            : undefined,
+          ifsc_code: data.ifsc_code ?? undefined,
+          bank_name: data.bank_name ?? undefined,
           bank_id: matchedBankId,
         })
 

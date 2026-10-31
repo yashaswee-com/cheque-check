@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useParty } from '@/features/parties/hooks/use-party'
+import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { useChequeDetail } from '@/features/cheques/hooks/use-cheque-detail'
 import { useParams, useRouter } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -28,14 +29,12 @@ import { chequeDraftService } from '@/features/drafts'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useSignedMediaUrl } from '@/hooks/use-signed-media-url'
 import { TextTruncate } from '@/components/ui/text-truncate'
-import { queryKeys } from '@/lib/query-keys'
 import { cn } from '@/lib/utils'
 import { ChequeStatus } from '@/types'
 import { StatusPill } from '@/components/ui/status-pill'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useRedirectIfDraft } from '@/features/drafts'
-import { partyService } from '@/features/parties/services/party.service'
 import {
   isPartySmsEnabled,
   preparePartySms,
@@ -109,11 +108,7 @@ export default function ChequeDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [printLayoutOpen, setPrintLayoutOpen] = useState(false)
   const duplicating = useRef(false)
-  const { data: party } = useQuery({
-    queryKey: queryKeys.parties.detail(cheque?.party_id),
-    queryFn: () => partyService.getById(cheque!.party_id),
-    enabled: !!cheque?.party_id,
-  })
+  const { data: party } = useParty(cheque?.party_id)
   const isDraft = useRedirectIfDraft('cheque', cheque)
 
   if (isLoading || isDraft) {
@@ -132,8 +127,7 @@ export default function ChequeDetailPage() {
       </div>
     )
 
-  const pendingStatus: ChequeStatus =
-    cheque.type === 'Outward' ? 'Issued' : 'Received'
+  const pendingStatus: ChequeStatus = ChequeEntity.initialStatusFor(cheque.type)
   const statusActions: SpeedDialAction[] = (
     [
       { status: pendingStatus, icon: Hourglass },
@@ -141,7 +135,7 @@ export default function ChequeDetailPage() {
       { status: 'Bounced', icon: XCircle },
     ] as const
   )
-    .filter(({ status }) => status !== cheque.status)
+    .filter(({ status }) => cheque.canTransition(status))
     .map(({ status, icon }) => ({
       label: t('markAs', { status }),
       icon,

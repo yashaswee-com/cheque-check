@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { Cheque } from './cheque.entity'
 
 describe('Cheque entity', () => {
@@ -62,5 +62,20 @@ describe('Cheque entity', () => {
 
     expect(overdue.isOverdue(new Date('2024-01-05T00:00:00.000Z'))).toBe(true)
     expect(overdue.isOverdue(new Date('2023-12-31T00:00:00.000Z'))).toBe(false)
+    expect(overdue.displayStatus('2024-01-01')).toBe('Today')
+    expect(overdue.displayStatus('2024-01-05')).toBe('Overdue')
+    expect(overdue.displayStatus('2023-12-31')).toBe('Upcoming')
+    expect(
+      Cheque.fromRow({
+        ...overdue.toJSON(),
+        status: 'Cleared',
+      }).displayStatus(),
+    ).toBe('Cleared')
+    expect(
+      Cheque.fromRow({
+        ...overdue.toJSON(),
+        status: 'Bounced',
+      }).displayStatus(),
+    ).toBe('Bounced')
   })
 })

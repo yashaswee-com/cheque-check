@@ -1,5 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { z } from 'zod'
+import {
+  phoneOtpSendSchema as sendSchema,
+  phoneOtpVerifySchema as verifySchema,
+} from '@/validators/phone-auth'
+import { TABLES } from '@/lib/supabase/tables'
 import {
   OTP_LENGTH,
   OTP_RESEND_COOLDOWN_SECONDS,
@@ -18,31 +22,6 @@ export const LINK_SEND_RATE_LIMIT = {
   limit: 5,
   windowSeconds: 3600,
 } as const
-
-const purposeSchema = z.enum(['login', 'signup', 'link'])
-
-const sendSchema = z
-  .object({
-    phone: z.string().min(1).max(32),
-    purpose: purposeSchema,
-    captchaToken: z.string().min(1).max(4096).optional(),
-    name: z.string().trim().min(1).max(120).optional(),
-  })
-  .superRefine(({ purpose, name }, context) => {
-    if (purpose === 'signup' && !name) {
-      context.addIssue({
-        code: 'custom',
-        path: ['name'],
-        message: 'Name is required for phone sign-up',
-      })
-    }
-  })
-
-const verifySchema = z.object({
-  phone: z.string().min(1).max(32),
-  token: z.string().min(1).max(16),
-  purpose: purposeSchema,
-})
 
 const STATUS: Record<PhoneAuthErrorCode, number> = {
   invalid_request: 400,
@@ -119,7 +98,7 @@ async function isProfileDeactivated(
   userId: string,
 ): Promise<boolean | 'error'> {
   const { data, error } = await supabase
-    .from('profiles')
+    .from(TABLES.PROFILES)
     .select('deleted_at')
     .eq('user_id', userId)
     .maybeSingle()

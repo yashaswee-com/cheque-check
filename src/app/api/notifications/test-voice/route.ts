@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import { createServerClient } from '@supabase/ssr'
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import { publicEnv } from '@/lib/env/client'
 import { getSupabaseAdminEnv } from '@/lib/env/server'
@@ -16,12 +15,7 @@ const QUOTA_EXHAUSTED_ERROR = 'Voice reminder quota exhausted'
 
 async function testVoice() {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      publicEnv.NEXT_PUBLIC_SUPABASE_URL,
-      publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      { cookies: { get: (name) => cookieStore.get(name)?.value } },
-    )
+    const supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -68,11 +62,7 @@ async function testVoice() {
     }
 
     const adminEnv = getSupabaseAdminEnv()
-    const admin = createSupabaseAdmin(
-      publicEnv.NEXT_PUBLIC_SUPABASE_URL,
-      adminEnv.SUPABASE_SERVICE_ROLE_KEY,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    )
+    const admin = createAdminClient()
 
     const jobId = randomUUID()
     const { error: insertError } = await admin

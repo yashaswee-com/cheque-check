@@ -9,6 +9,7 @@ import { toast } from '@/components/ui/toast'
 import { useTranslations } from 'next-intl'
 import { queryKeys } from '@/lib/query-keys'
 import { usePremiumAccess } from '@/features/monetization/hooks/use-premium-access'
+import { useChequeStatusMutation } from './use-cheque-status-mutation'
 
 export function useChequeActions() {
   const { activeBusiness } = useBusiness()
@@ -18,31 +19,9 @@ export function useChequeActions() {
   const tc = useTranslations('Common')
   const tp = useTranslations('Premium')
 
-  const updateStatusMutation = useOptimisticMutation<
-    ChequeEntity[],
-    { id: string; status: ChequeStatus },
-    ChequeEntity
-  >({
-    queryKey: queryKeys.cheques.list(activeBusiness?.id),
-    additionalMutations: [
-      {
-        queryKey: ({ id }) => queryKeys.cheques.detail(id),
-        update: (current: ChequeEntity | undefined, { id, status }) => {
-          if (!current || current.id !== id) return current
-          return ChequeEntity.fromRow({ ...current.toJSON(), status })
-        },
-      },
-    ],
-    mutationFn: ({ id, status }) => chequeService.updateStatus(id, status),
-    update: (current, { id, status }) => {
-      if (!current) return current
-      return current.map((cheque) =>
-        cheque.id === id
-          ? ChequeEntity.fromRow({ ...cheque.toJSON(), status })
-          : cheque,
-      )
-    },
-    onSuccess: async (updated) => {
+  const updateStatusMutation = useChequeStatusMutation(
+    activeBusiness?.id,
+    async (updated) => {
       const actionProps = await buildNotifyPartyAction(
         updated,
         profile,
@@ -57,7 +36,7 @@ export function useChequeActions() {
         actionProps,
       })
     },
-  })
+  )
 
   const deleteMutation = useOptimisticMutation<ChequeEntity[], string, void>({
     queryKey: queryKeys.cheques.list(activeBusiness?.id),

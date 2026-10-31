@@ -1,28 +1,13 @@
-import { createServerClient } from '@supabase/ssr'
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import Razorpay from 'razorpay'
-import { publicEnv } from '@/lib/env/client'
-import { getRazorpayEnv, getSupabaseAdminEnv } from '@/lib/env/server'
+import { getRazorpayEnv } from '@/lib/env/server'
 import { CreatePaymentOrderSchema } from '@/lib/payments'
 import { logger } from '@/lib/logger'
 import { TABLES } from '@/lib/supabase/tables'
 import { setRequestUser, withMonitoringRequest } from '@/lib/monitoring/server'
-
-type PaymentProduct = {
-  id: string
-  name: string
-  transaction_type: 'lifetime' | 'subscription' | 'top_up'
-  feature_id: string
-  amount: number
-  currency: 'INR'
-  required_entitlement_id: string | null
-}
-
-function isEntitlementActive(validUntil: string | null) {
-  return validUntil === null || new Date(validUntil).getTime() > Date.now()
-}
+import { isEntitlementCurrent } from '@/features/monetization/lib/premium-access'
 
 async function createPaymentOrder(request: Request) {
   try {
@@ -41,12 +26,7 @@ async function createPaymentOrder(request: Request) {
       )
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      publicEnv.NEXT_PUBLIC_SUPABASE_URL,
-      publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      { cookies: { get: (name) => cookieStore.get(name)?.value } },
-    )
+    const supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -72,12 +52,7 @@ async function createPaymentOrder(request: Request) {
       )
     }
 
-    const adminEnv = getSupabaseAdminEnv()
-    const admin = createSupabaseAdmin(
-      publicEnv.NEXT_PUBLIC_SUPABASE_URL,
-      adminEnv.SUPABASE_SERVICE_ROLE_KEY,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    )
+    const admin = createAdminClient()
     const { data: productData, error: productError } = await admin
       .from(TABLES.PAYMENT_PRODUCTS)
       .select(
@@ -93,7 +68,7 @@ async function createPaymentOrder(request: Request) {
         { status: 404 },
       )
     }
-    const product = productData as PaymentProduct
+    const product = productData
 
     const { data: entitlements, error: entitlementError } = await admin
       .from(TABLES.USER_ENTITLEMENTS)
@@ -105,7 +80,9 @@ async function createPaymentOrder(request: Request) {
 
     const activeEntitlements = new Set(
       (entitlements ?? [])
-        .filter((entitlement) => isEntitlementActive(entitlement.valid_until))
+        .filter((entitlement) =>
+          isEntitlementCurrent(entitlement.valid_until, Date.now()),
+        )
         .map((entitlement) => entitlement.feature_id),
     )
 

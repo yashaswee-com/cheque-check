@@ -1,10 +1,9 @@
-import { z } from 'zod'
 import { businessSchema } from '@/validators'
 import { businessService } from '@/features/businesses/services/business.service'
 import { useRouter } from 'next/navigation'
 import { useEntityEditor } from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
-import type { Business } from '@/types'
+import type { Business, BusinessFormData } from '@/types'
 import { storageService } from '@/services/storage.service'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
@@ -17,7 +16,7 @@ export function useEditBusiness(id: string) {
     isLoading,
     error,
     form,
-  } = useEntityEditor<Business, z.infer<typeof businessSchema>>({
+  } = useEntityEditor<Business, BusinessFormData>({
     queryKey: queryKeys.businesses.detail(id),
     fetchFn: () => businessService.getById(id),
     schema: businessSchema,
@@ -43,7 +42,7 @@ export function useEditBusiness(id: string) {
 
   const { updateMutation, deleteMutation } = useEntityMutations<
     Business,
-    z.infer<typeof businessSchema>,
+    BusinessFormData,
     Business
   >({
     listQueryKey: queryKeys.businesses.all(),

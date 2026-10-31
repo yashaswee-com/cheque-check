@@ -1,19 +1,10 @@
-import { z } from 'zod'
+import { closedProfileChoices } from '@/validators/profile'
 import { Profile } from '@/types'
 import type { Database } from '@/types/database.types'
 import { TABLES } from '@/lib/supabase/tables'
 import { SupabaseRepository } from '@/repositories/base.repository'
 
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
-
-const closedProfileChoices = z
-  .object({
-    currency: z.enum(['₹', '$', '€', '£']),
-    date_format: z.enum(['dd/MM/yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd']),
-    time_format: z.enum(['12h', '24h']),
-    language: z.enum(['en', 'hi', 'hi-en']),
-  })
-  .partial()
 
 // Lifecycle and identity columns change only through trusted RPCs.
 const PROTECTED_PROFILE_FIELDS = [

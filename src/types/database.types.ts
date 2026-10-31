@@ -780,8 +780,7 @@ export interface Database {
       }
       consume_user_quota: {
         Args: {
-          requested_feature_id: Database['public']['Enums']['feature_type']
-          increment: number
+          requested_feature: Database['public']['Enums']['feature_type']
         }
         Returns: boolean
       }

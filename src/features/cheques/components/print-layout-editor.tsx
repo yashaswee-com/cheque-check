@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
+import { usePrintLayout } from '../hooks/use-print-layout'
+import { queryKeys } from '@/lib/query-keys'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -21,10 +23,7 @@ import {
   PremiumGate,
   usePremiumAction,
 } from '@/features/monetization/components/premium-gate'
-import {
-  getPrintLayout,
-  savePrintLayout,
-} from '@/features/premium-workspace/services/workspace.service'
+import { savePrintLayout } from '@/features/premium-workspace/services/workspace.service'
 import { toast } from '@/components/ui/toast'
 
 const fields: Array<keyof PrintLayout> = [
@@ -36,12 +35,6 @@ const fields: Array<keyof PrintLayout> = [
   'dateY',
   'chequeNumberX',
   'chequeNumberY',
-]
-
-const layoutQueryKey = (accountId: string) => [
-  'premium-workspace',
-  'print-layout',
-  accountId,
 ]
 
 function layoutInputs(layout: PrintLayout): Record<keyof PrintLayout, string> {
@@ -107,12 +100,7 @@ function PrintLayoutLoader({
   onSaved: () => void
 }) {
   const tp = useTranslations('Premium')
-  const query = useQuery({
-    queryKey: layoutQueryKey(accountId),
-    queryFn: () => getPrintLayout(accountId),
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: false,
-  })
+  const query = usePrintLayout(accountId)
   if (query.isPending || query.isFetching)
     return <p role="status">{tp('loading')}</p>
   if (query.isError)
@@ -172,7 +160,10 @@ function PrintLayoutForm({
     try {
       if (!(await premium.verifyAccess('cheque-printing'))) return
       await savePrintLayout(accountId, parsed)
-      queryClient.setQueryData(layoutQueryKey(accountId), parsed)
+      queryClient.setQueryData(
+        queryKeys.premiumWorkspace.printLayout(accountId),
+        parsed,
+      )
       onSaved()
     } catch (error) {
       toast.add({

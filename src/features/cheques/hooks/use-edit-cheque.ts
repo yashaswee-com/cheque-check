@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { z } from 'zod'
 import { chequeSchema } from '@/validators'
 import { chequeService } from '@/features/cheques/services/cheque.service'
 import { storageService } from '@/services/storage.service'
@@ -11,7 +10,7 @@ import { useEntityEditor } from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import { queryKeys } from '@/lib/query-keys'
 
-type ChequeFormData = z.infer<typeof chequeSchema>
+import type { ChequeFormValues as ChequeFormData } from '@/types'
 
 export function useEditCheque(id: string) {
   const router = useRouter()

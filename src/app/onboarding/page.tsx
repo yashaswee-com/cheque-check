@@ -46,8 +46,16 @@ import {
 import { useTranslations } from 'next-intl'
 import { EditableAvatar } from '@/components/ui/editable-avatar'
 import { PhoneInput } from '@/components/ui/phone-input'
-import { isValidE164Phone } from '@/lib/phone'
+import { businessSchema } from '@/validators'
 import { celebrate } from '@/lib/celebrate'
+import {
+  CURRENCY_OPTIONS,
+  DATE_FORMAT_OPTIONS,
+  TIME_FORMAT_OPTIONS,
+  ONBOARDING_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS,
+  TIMEZONE_OPTIONS,
+} from '@/features/profile/lib/preference-options'
+import { useReminderOptions } from '@/features/profile/hooks/use-reminder-options'
 
 const COLORS = [
   '#0066cc',
@@ -57,36 +65,6 @@ const COLORS = [
   '#AF52DE',
   '#5856D6',
   '#8E8E93',
-]
-
-const CURRENCY_OPTIONS = [
-  { label: '₹ (INR)', value: '₹' },
-  { label: '$ (USD)', value: '$' },
-  { label: '€ (EUR)', value: '€' },
-  { label: '£ (GBP)', value: '£' },
-]
-
-const DATE_FORMAT_OPTIONS = [
-  { label: 'DD/MM/YYYY', value: 'dd/MM/yyyy' },
-  { label: 'MM/DD/YYYY', value: 'MM/dd/yyyy' },
-  { label: 'YYYY-MM-DD', value: 'yyyy-MM-dd' },
-]
-
-const TIME_FORMAT_OPTIONS = [
-  { label: '12-hour (AM/PM)', value: '12h' },
-  { label: '24-hour', value: '24h' },
-]
-
-const LANGUAGE_OPTIONS = [
-  { label: 'English', value: 'en' },
-  { label: 'Hindi', value: 'hi' },
-]
-
-const TIMEZONE_OPTIONS = [
-  { label: 'IST (UTC+5:30)', value: 'Asia/Kolkata' },
-  { label: 'UTC', value: 'UTC' },
-  { label: 'EST (UTC-5)', value: 'America/New_York' },
-  { label: 'GMT (UTC+0)', value: 'Europe/London' },
 ]
 
 export default function OnboardingPage() {
@@ -100,17 +78,8 @@ export default function OnboardingPage() {
   const { profile, updateProfile } = useProfile()
   const { setActiveBusiness } = useBusiness()
 
-  const REMINDERS_PER_DAY_OPTIONS = [
-    { label: t('remindersPerDay', { count: 1 }), value: '1' },
-    { label: t('remindersPerDay', { count: 2 }), value: '2' },
-    { label: t('remindersPerDay', { count: 3 }), value: '3' },
-  ]
-
-  const REMINDER_FREQUENCY_OPTIONS = [
-    { label: t('reminderDays', { count: 1 }), value: '1' },
-    { label: t('reminderDays', { count: 3 }), value: '3' },
-    { label: t('reminderDays', { count: 7 }), value: '7' },
-  ]
+  const { REMINDERS_PER_DAY_OPTIONS, REMINDER_FREQUENCY_OPTIONS } =
+    useReminderOptions()
 
   // Form State
   const [formData, setFormData] = useState({
@@ -149,8 +118,9 @@ export default function OnboardingPage() {
 
   const nextStep = () => setStep((s) => Math.min(s + 1, 5))
   const prevStep = () => setStep((s) => Math.max(s - 1, 1))
-  const isBusinessPhoneValid =
-    !formData.businessPhone || isValidE164Phone(formData.businessPhone)
+  const isBusinessPhoneValid = businessSchema.shape.phone.safeParse(
+    formData.businessPhone,
+  ).success
 
   const handleFinish = async () => {
     setLoading(true)

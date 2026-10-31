@@ -4,6 +4,7 @@ import { useSwipeable } from 'react-swipeable'
 import { ChequeStatus, ChequeWithRelations, type Tag } from '@/types'
 import { TagChips } from '@/features/tags/components/tag-chips'
 import { cn } from '@/lib/utils'
+import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Tick02Icon as Check,
@@ -94,16 +95,7 @@ export function ChequeCard({ cheque, onStatusUpdate, tags }: ChequeCardProps) {
     trackMouse: true,
   })
 
-  const getStatusDisplay = () => {
-    if (cheque.status === 'Cleared') return 'Cleared'
-    if (cheque.status === 'Bounced') return 'Bounced'
-    const today = new Date().toISOString().split('T')[0]
-    if (cheque.cheque_date === today) return 'Today'
-    if (cheque.cheque_date < today) return 'Overdue'
-    return 'Upcoming'
-  }
-
-  const statusLabel = getStatusDisplay()
+  const statusLabel = ChequeEntity.fromRow(cheque).displayStatus()
 
   return (
     <div className="relative overflow-hidden rounded-lg">

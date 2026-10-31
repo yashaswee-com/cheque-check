@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { AccountDraft, ChequeDraft, PartyDraft } from '@/types'
 import type { DraftEntity } from '../lib/draft-fields'
+import { queryKeys } from '@/lib/query-keys'
 import {
   accountDraftService,
   chequeDraftService,
@@ -19,12 +20,7 @@ export const draftServices = {
   account: accountDraftService,
 } as const
 
-export const draftKeys = {
-  list: (entity: DraftEntity, businessId: string | undefined) =>
-    ['drafts', entity, businessId] as const,
-  detail: (entity: DraftEntity, id: string | null | undefined) =>
-    ['draft', entity, id] as const,
-}
+export const draftKeys = queryKeys.drafts
 
 export function useDrafts<E extends DraftEntity>(
   entity: E,

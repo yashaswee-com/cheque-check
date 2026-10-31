@@ -1,4 +1,4 @@
-import { Provider } from '@supabase/supabase-js'
+import type { Provider } from '@supabase/supabase-js'
 import type {
   PhoneOtpSendInput,
   PhoneOtpVerifyInput,
@@ -67,7 +67,9 @@ export class AuthService {
   async getUser() {
     const {
       data: { user },
+      error,
     } = await this.repository.getUser()
+    if (error && error.name !== 'AuthSessionMissingError') throw error
     return user
   }
 }

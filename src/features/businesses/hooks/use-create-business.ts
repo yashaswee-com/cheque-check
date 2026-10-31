@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { businessSchema } from '@/validators'
 import { businessService } from '@/features/businesses/services/business.service'
 import { useEntityCreateMutation } from '@/hooks/use-entity-mutations'
@@ -11,7 +10,7 @@ import type { Business } from '@/types'
 import { queueCelebration } from '@/lib/celebrate'
 import { queryKeys } from '@/lib/query-keys'
 
-type BusinessFormData = z.infer<typeof businessSchema>
+import type { BusinessFormData } from '@/types'
 
 export function useCreateBusiness({
   onCreated,

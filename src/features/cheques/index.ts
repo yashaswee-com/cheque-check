@@ -1,5 +1,6 @@
 export * from './hooks/use-cheque-actions'
 export * from './hooks/use-cheque-detail'
+export * from './hooks/use-cheque-number-conflict'
 export * from './hooks/use-cheque-stats'
 export * from './hooks/use-cheques'
 export * from './hooks/use-create-cheque'

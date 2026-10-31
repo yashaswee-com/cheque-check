@@ -1,7 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { PrintLayoutEditor } from '@/features/cheques/components/print-layout-editor'
@@ -9,14 +8,14 @@ import { PremiumGate } from '@/features/monetization/components/premium-gate'
 import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useProfile } from '@/features/profile/hooks/use-profile'
-import { premiumWorkspaceService } from '../service'
+import { useWorkspaceContext, useWorkspaceTools } from '../hooks/use-workspace'
+import { useWorkspaceAction } from '../hooks/use-workspace-action'
 import type { ChequeFilters, ImportKind } from '../types'
 import { FiltersPanel } from './filters-panel'
 import { ImportPanel } from './import-panel'
 import { MessagePanel } from './message-panel'
 import { ReportsPanel } from './reports-panel'
 import { TemplatesPanel } from './templates-panel'
-import type { RunAction } from './workspace'
 
 type Destination =
   'cheques' | 'parties' | 'party' | 'business' | 'account' | 'businesses'
@@ -77,7 +76,6 @@ export function NativeTools({
   onFiltersChange?: (filters: ChequeFilters) => void
 }) {
   const t = useTranslations('NativeTools')
-  const queryClient = useQueryClient()
   const { activeBusiness, businesses: availableBusinesses } = useBusiness()
   const { profile } = useProfile()
   const businessId =
@@ -90,43 +88,12 @@ export function NativeTools({
     availableBusinesses.map(({ id, name }) => ({ id, name }))
   const currency = profile?.currency || '₹'
   const needsContext = destination !== 'account'
-  const context = useQuery({
-    queryKey: ['premium-workspace', 'context', businessId],
-    queryFn: () => premiumWorkspaceService.context(businessId!),
-    enabled: needsContext && !!businessId,
-  })
-  const tools = useQuery({
-    queryKey: ['premium-workspace', 'tools', businessId],
-    queryFn: () => premiumWorkspaceService.tools(businessId!),
-    enabled:
-      !!businessId &&
-      ['cheques', 'business', 'businesses'].includes(destination),
-  })
-  const [busy, setBusy] = useState(false)
-  const [notice, setNotice] = useState<'success' | 'error' | null>(null)
-  const lock = useRef(false)
-  const run = useCallback<RunAction>(
-    async (action) => {
-      if (lock.current) return
-      lock.current = true
-      setBusy(true)
-      setNotice(null)
-      try {
-        await action()
-        await queryClient.invalidateQueries()
-        setNotice('success')
-      } catch {
-        setNotice('error')
-        void queryClient.invalidateQueries({
-          queryKey: ['premium-workspace'],
-        })
-      } finally {
-        lock.current = false
-        setBusy(false)
-      }
-    },
-    [queryClient],
+  const context = useWorkspaceContext(businessId, needsContext)
+  const tools = useWorkspaceTools(
+    businessId,
+    ['cheques', 'business', 'businesses'].includes(destination),
   )
+  const { busy, notice, run } = useWorkspaceAction()
 
   if (destination === 'account') {
     return accountId ? (

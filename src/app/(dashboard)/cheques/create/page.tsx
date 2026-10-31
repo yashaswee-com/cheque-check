@@ -45,8 +45,7 @@ import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
 import { useTranslations } from 'next-intl'
 import { useState, useEffect } from 'react'
 import { useBanks } from '@/features/accounts/hooks/use-banks'
-import { useQuery } from '@tanstack/react-query'
-import { queryKeys } from '@/lib/query-keys'
+import { useChequeNumberConflict } from '@/features/cheques/hooks/use-cheque-number-conflict'
 import {
   Dialog,
   DialogContent,
@@ -65,12 +64,7 @@ import { buildChequeReturnTo } from '@/lib/cheque-draft'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useDraftTags } from '@/features/tags/hooks/use-draft-tags'
 import { useOcrExtraction } from '@/features/cheques/hooks/use-ocr-extraction'
-import {
-  chequeDraftService,
-  DraftLeaveDialog,
-  DraftSaveFab,
-  DraftToolbar,
-} from '@/features/drafts'
+import { DraftLeaveDialog, DraftSaveFab, DraftToolbar } from '@/features/drafts'
 
 export default function CreateChequePage() {
   const t = useTranslations('Cheques')
@@ -129,21 +123,11 @@ export default function CreateChequePage() {
 
   const chequeNumber = watch('cheque_number') ?? ''
   const selectedAccountId = watch('account_id')
-  const { data: hasNumberConflict } = useQuery({
-    queryKey: queryKeys.cheques.numberConflict(
-      businessId,
-      selectedAccountId,
-      chequeNumber,
-    ),
-    queryFn: () =>
-      chequeDraftService.hasNumberConflict(
-        businessId!,
-        selectedAccountId,
-        chequeNumber,
-      ),
-    enabled:
-      !!businessId && !!selectedAccountId && /^\d{6}$/.test(chequeNumber),
-  })
+  const { data: hasNumberConflict } = useChequeNumberConflict(
+    businessId,
+    selectedAccountId,
+    chequeNumber,
+  )
   const numberConflictWarning = (
     <p
       className={cn(

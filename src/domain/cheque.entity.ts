@@ -16,6 +16,19 @@ export class Cheque {
     return type === 'Inward' ? 'Received' : 'Issued'
   }
 
+  static canTransitionFor(
+    type: ChequeType,
+    currentStatus: ChequeStatus,
+    nextStatus: ChequeStatus,
+  ): boolean {
+    return (
+      nextStatus !== currentStatus &&
+      (nextStatus === 'Cleared' ||
+        nextStatus === 'Bounced' ||
+        nextStatus === Cheque.initialStatusFor(type))
+    )
+  }
+
   static fromRow(row: ChequeWithRelations): Cheque {
     return new Cheque(row)
   }
@@ -93,17 +106,16 @@ export class Cheque {
   }
 
   canTransition(nextStatus: ChequeStatus): boolean {
-    if (nextStatus === this.status) {
-      return false
-    }
-
     // Statuses are correctable, so the only invalid target is the pending
     // status belonging to the opposite cheque type.
-    return (
-      nextStatus === 'Cleared' ||
-      nextStatus === 'Bounced' ||
-      nextStatus === Cheque.initialStatusFor(this.type)
-    )
+    return Cheque.canTransitionFor(this.type, this.status, nextStatus)
+  }
+
+  displayStatus(asOf = new Date().toISOString().split('T')[0]) {
+    if (this.status === 'Cleared' || this.status === 'Bounced')
+      return this.status
+    if (this.cheque_date === asOf) return 'Today'
+    return this.cheque_date < asOf ? 'Overdue' : 'Upcoming'
   }
 
   isOverdue(asOf: Date | string = new Date()): boolean {

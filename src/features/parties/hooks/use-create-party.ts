@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { partySchema } from '@/validators'
 import { partyService } from '@/features/parties/services/party.service'
@@ -22,7 +21,7 @@ import {
 } from '@/features/drafts'
 import { queryKeys } from '@/lib/query-keys'
 
-type PartyFormData = z.infer<typeof partySchema>
+import type { PartyFormData } from '@/types'
 
 export function useCreateParty(
   businessId: string | undefined,

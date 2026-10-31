@@ -11,6 +11,8 @@ import {
   validateImport,
 } from './logic'
 import type { ChequeRow, WorkspaceContext } from './types'
+import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
+import type { ChequeStatus, ChequeType } from '@/types'
 
 const cheque = (overrides: Partial<ChequeRow> = {}): ChequeRow => ({
   id: 'c1',
@@ -187,6 +189,31 @@ describe('premium import validation', () => {
 })
 
 describe('safe reusable workflows', () => {
+  it('uses the domain transition rule for every type, current status and target', () => {
+    const statuses: ChequeStatus[] = [
+      'Issued',
+      'Received',
+      'Cleared',
+      'Bounced',
+    ]
+    const types: ChequeType[] = ['Inward', 'Outward']
+    for (const type of types) {
+      for (const currentStatus of statuses) {
+        for (const nextStatus of statuses) {
+          const row = cheque({ type, status: currentStatus })
+          expect(canBulkTransition(row, nextStatus)).toBe(
+            ChequeEntity.canTransitionFor(type, currentStatus, nextStatus),
+          )
+          expect(
+            canBulkTransition({ ...row, is_draft: true }, nextStatus),
+          ).toBe(false)
+        }
+      }
+    }
+    expect(canBulkTransition(cheque({ status: null }), 'Cleared')).toBe(false)
+    expect(canBulkTransition(cheque({ type: null }), 'Cleared')).toBe(false)
+  })
+
   it('never carries numbers, dates, status, images, IDs or draft flags into templates', () => {
     expect(
       safeChequePrefill({ ...cheque(), amount: '10.25', is_draft: true }),

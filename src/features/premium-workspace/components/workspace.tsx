@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { PremiumGate } from '@/features/monetization/components/premium-gate'
-import { premiumWorkspaceService } from '../service'
+import { useWorkspaceContext, useWorkspaceTools } from '../hooks/use-workspace'
+import { useWorkspaceAction } from '../hooks/use-workspace-action'
 import { ImportPanel } from './import-panel'
 import { TemplatesPanel } from './templates-panel'
 import { FiltersPanel } from './filters-panel'
@@ -15,7 +15,7 @@ import { ReportsPanel } from './reports-panel'
 import { MessagePanel } from './message-panel'
 import { SelectField } from './controls'
 
-export type RunAction = (action: () => Promise<unknown>) => Promise<void>
+export type { RunAction } from '../hooks/use-workspace-action'
 const tabs = [
   ['import', 'bulk-import'],
   ['templates', 'cheque-templates'],
@@ -48,20 +48,11 @@ function BusinessWorkspace({
   currency: string
 }) {
   const t = useTranslations('PremiumWorkspace')
-  const queryClient = useQueryClient()
   const [tab, setTab] = useState<Tab>('import')
   const [initialPartyId, setInitialPartyId] = useState('')
-  const [busy, setBusy] = useState(false)
-  const lock = useRef(false)
-  const [notice, setNotice] = useState<'success' | 'error' | null>(null)
-  const context = useQuery({
-    queryKey: ['premium-workspace', 'context', businessId],
-    queryFn: () => premiumWorkspaceService.context(businessId),
-  })
-  const tools = useQuery({
-    queryKey: ['premium-workspace', 'tools', businessId],
-    queryFn: () => premiumWorkspaceService.tools(businessId),
-  })
+  const { busy, notice, setNotice, run } = useWorkspaceAction()
+  const context = useWorkspaceContext(businessId)
+  const tools = useWorkspaceTools(businessId)
   useEffect(() => {
     const applyLocation = () => {
       const entry = Object.entries(anchors).find(
@@ -76,24 +67,6 @@ function BusinessWorkspace({
     window.addEventListener('hashchange', applyLocation)
     return () => window.removeEventListener('hashchange', applyLocation)
   }, [])
-  const run: RunAction = async (action) => {
-    if (lock.current) return
-    lock.current = true
-    setBusy(true)
-    setNotice(null)
-    try {
-      await action()
-      // Refresh existing individual cheque/party surfaces as well as this workspace.
-      await queryClient.invalidateQueries()
-      setNotice('success')
-    } catch {
-      setNotice('error')
-      void queryClient.invalidateQueries({ queryKey: ['premium-workspace'] })
-    } finally {
-      lock.current = false
-      setBusy(false)
-    }
-  }
   if (context.isPending || tools.isPending)
     return <p role="status">{t('loading')}</p>
   if (context.isError || tools.isError)

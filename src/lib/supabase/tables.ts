@@ -23,6 +23,7 @@ export const TABLES = {
   NOTIFICATION_LOGS: 'notification_logs',
   PUSH_SUBSCRIPTIONS: 'push_subscriptions',
   ADMIN_AUDIT_LOG: 'admin_audit_log',
+  PREMIUM_WORKSPACE_TOOLS: 'premium_workspace_tools',
 } as const satisfies Record<string, PublicTableName>
 
 export type TableName = (typeof TABLES)[keyof typeof TABLES]

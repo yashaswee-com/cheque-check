@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import { accountSchema } from '@/validators'
 import {
   AccountService,
@@ -7,7 +6,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { useEntityEditor } from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
-import type { Account } from '@/types'
+import type { Account, AccountFormData } from '@/types'
 import { queryKeys } from '@/lib/query-keys'
 
 export function useEditAccount(id: string, businessId: string | undefined) {
@@ -18,7 +17,7 @@ export function useEditAccount(id: string, businessId: string | undefined) {
     isLoading,
     error,
     form,
-  } = useEntityEditor<Account, z.infer<typeof accountSchema>>({
+  } = useEntityEditor<Account, AccountFormData>({
     queryKey: queryKeys.accounts.detail(id),
     fetchFn: () => accountService.getById(id),
     schema: accountSchema,

@@ -105,8 +105,10 @@ yet. See `e2e/README.md` before adding tests.
 src/app/          Next.js routes, layouts, and API handlers
 src/features/     Feature-owned hooks, components, services, repositories, and entry points
 src/components/   Shared application and UI components
-src/hooks/        Query, mutation, form, and business-context hooks
-src/services/     Supabase data-access services
+src/hooks/        Shared query, optimistic mutation, form, and browser hooks
+src/services/     Cross-feature service APIs (for example, storage)
+src/repositories/ Shared repository contracts, error handling, and storage access
+src/domain/       Shared business rules and entities
 src/lib/          Environment, logging, utilities, and Supabase clients
 src/validators/   Shared Zod form contracts
 src/types/        Application domain types
@@ -115,8 +117,9 @@ supabase/         Migrations and Edge Functions
 docs/prd/         Product requirements and acceptance criteria
 ```
 
-Components should not query Supabase directly. Keep database access in services
-and expose it through typed hooks. Server-only credentials belong in server
+Components should not query Supabase directly. Keep database access in repositories,
+or authenticated server handlers, orchestrate it through services, and expose
+reactive data through typed hooks. Server-only credentials belong in server
 modules or Edge Functions.
 
 Feature code belongs under `src/features/<feature>`. Current feature areas are
@@ -125,6 +128,45 @@ Feature code belongs under `src/features/<feature>`. Current feature areas are
 cross-feature infrastructure remain in their existing top-level folders. The
 old hook, component, and repository paths are compatibility facades; new code
 should import from the relevant feature entry point.
+
+### Single sources of truth
+
+- Shared contracts live in `src/validators`; feature-specific validators may
+  live in `src/features/<feature>/validators`. Form types in `src/types/forms.ts`
+  are inferred from those schemas, not handwritten in each hook.
+- Drafts deliberately accept incomplete values. OCR accepts nullable extracted
+  fields. CSV imports retain stricter amount/date/length limits matching their
+  atomic database RPC. These are different contracts, not substitutes for the
+  published form schema; common cheque-number/type and phone rules are reused.
+- Cheque status transitions live in `src/domain/cheque.entity.ts`. Individual
+  edits, status menus, and bulk previews use that entity. Draft exclusion is an
+  additional bulk-workflow rule. Shared status mutations synchronize and roll
+  back both list and detail caches; account/party views reuse the same hook.
+- Cache key factories live in `src/lib/query-keys.ts`, including drafts and
+  premium workspace keys. `draftKeys` is a compatibility alias, not another registry.
+- Supabase browser, server, middleware, and admin clients live in
+  `src/lib/supabase`. They are separate because their credentials and cookie
+  lifecycles differ. Table references use its `TABLES` registry.
+- Premium workspace persistence lives in its feature repository. Both workspace
+  UIs share context/tool queries and execution state through feature hooks.
+  Legacy service paths re-export the same API; they contain no second implementation.
+- Profile closed choices and request-locale validation share
+  `src/validators/profile.ts`. Onboarding and preferences share the same option
+  definitions and localized reminder-option hook; onboarding retains its existing
+  English/Hindi subset. An unsupported locale cookie is logged and falls
+  back to English rather than attempting to load an unknown message catalog.
+- Environment schemas remain next to environment infrastructure. Monetization
+  identifier constants and their enum schema remain together as their canonical
+  feature registry. Local component props/state types and repository interfaces
+  belong next to their owners; not every local type needs a global export.
+
+ESLint enforces these boundaries in production source: no SDK client construction
+outside `src/lib/supabase`, no runtime Zod imports outside validator/registry modules,
+no query hooks or runtime repository imports in UI, no inline query-key arrays,
+and no string-literal database table references. Type-only imports remain allowed.
+These checks prevent common layer bypasses, not arbitrary semantic duplication.
+Database constraints and Edge Functions must still independently validate requests;
+changing a TypeScript rule does not update deployed SQL or server functions.
 
 ## Database Workflow
 

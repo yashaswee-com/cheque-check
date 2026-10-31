@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { chequeService } from '@/features/cheques/services/cheque.service'
 import { ChequeStatus } from '@/types'
-import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
-import { useOptimisticMutation } from '@/hooks/use-optimistic-mutation'
+import { useChequeStatusMutation } from './use-cheque-status-mutation'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { buildNotifyPartyAction } from '@/features/cheques/lib/notify-party'
 import { toast } from '@/components/ui/toast'
@@ -26,22 +25,9 @@ export function useChequeDetail(id: string) {
     queryFn: () => chequeService.getById(id),
   })
 
-  const mutation = useOptimisticMutation<
-    ChequeEntity,
-    ChequeStatus,
-    ChequeEntity
-  >({
-    queryKey: queryKeys.cheques.detail(id),
-    additionalQueryKeys: cheque?.business_id
-      ? [queryKeys.cheques.list(cheque.business_id)]
-      : [],
-    mutationFn: (status: ChequeStatus) =>
-      chequeService.updateStatus(id, status),
-    update: (current, status) => {
-      if (!current) return current
-      return ChequeEntity.fromRow({ ...current.toJSON(), status })
-    },
-    onSuccess: async (updated) => {
+  const mutation = useChequeStatusMutation(
+    cheque?.business_id,
+    async (updated) => {
       const actionProps = await buildNotifyPartyAction(
         updated,
         profile,
@@ -56,10 +42,10 @@ export function useChequeDetail(id: string) {
         actionProps,
       })
     },
-  })
+  )
 
   const updateStatus = (status: ChequeStatus) => {
-    mutation.mutate(status)
+    mutation.mutate({ id, status })
   }
 
   return {
