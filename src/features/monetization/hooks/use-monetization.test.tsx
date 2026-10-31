@@ -114,6 +114,9 @@ describe('useMonetization', () => {
     expect(result.current.isLifetimePremium).toBe(false)
     expect(result.current.hasAiScannerSub).toBe(true)
     expect(result.current.hasVoiceReminderSub).toBe(true)
+    expect(result.current.getEntitlementState(FEATURE_IDS.AI_SCANNER_SUB)).toBe(
+      'active',
+    )
     expect(result.current.getQuota('ai_scan')).toEqual(
       expect.objectContaining({ max_limit: 20, current_usage: 2 }),
     )
