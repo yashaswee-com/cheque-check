@@ -7,13 +7,21 @@ import { useCheques } from './use-cheques'
 
 const mocks = vi.hoisted(() => ({
   getAll: vi.fn(),
+  deleteService: vi.fn(),
   updateStatus: vi.fn(),
   deleteMutation: vi.fn(),
   profile: null as { received_cheques_enabled?: boolean } | null,
+  deleteMutationFn: null as null | ((id: string) => Promise<void>),
+  deleteUpdate: null as
+    | null
+    | ((
+        current: ChequeWithRelations[] | undefined,
+        id: string,
+      ) => ChequeWithRelations[] | undefined),
 }))
 
 vi.mock('@/features/cheques/services/cheque.service', () => ({
-  chequeService: { getAll: mocks.getAll },
+  chequeService: { getAll: mocks.getAll, delete: mocks.deleteService },
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
   useProfile: () => ({ profile: mocks.profile }),
@@ -25,10 +33,17 @@ vi.mock('./use-cheque-status-mutation', () => ({
   }),
 }))
 vi.mock('@/hooks/use-optimistic-mutation', () => ({
-  useOptimisticMutation: () => ({
-    mutate: mocks.deleteMutation,
-    isPending: false,
-  }),
+  useOptimisticMutation: (options: {
+    mutationFn: (id: string) => Promise<void>
+    update: (
+      current: ChequeWithRelations[] | undefined,
+      id: string,
+    ) => ChequeWithRelations[] | undefined
+  }) => {
+    mocks.deleteMutationFn = options.mutationFn
+    mocks.deleteUpdate = options.update
+    return { mutate: mocks.deleteMutation, isPending: false }
+  },
 }))
 
 const fixtures = [
@@ -74,7 +89,10 @@ function setup(businessId: string | undefined = 'business-1') {
 beforeEach(() => {
   vi.resetAllMocks()
   mocks.profile = null
+  mocks.deleteMutationFn = null
+  mocks.deleteUpdate = null
   mocks.getAll.mockResolvedValue(fixtures)
+  mocks.deleteService.mockResolvedValue(undefined)
 })
 
 afterEach(cleanup)
@@ -151,5 +169,24 @@ describe('useCheques', () => {
     })
     expect(mocks.deleteMutation).toHaveBeenCalledWith('c2')
     expect(result.current.isUpdating).toBe(false)
+  })
+
+  it('handles optimistic deletion with an empty cache and removes only the requested cheque', async () => {
+    const { result } = setup()
+    await waitFor(() => expect(result.current.cheques).toHaveLength(3))
+
+    expect(mocks.deleteUpdate?.(undefined, 'c1')).toBeUndefined()
+    expect(mocks.deleteUpdate?.(fixtures, 'c2')?.map(({ id }) => id)).toEqual([
+      'c1',
+      'c3',
+    ])
+    await expect(mocks.deleteMutationFn?.('c2')).resolves.toBeUndefined()
+
+    act(() => result.current.setSortBy('unsupported' as never))
+    expect(result.current.filteredCheques.map(({ id }) => id)).toEqual([
+      'c1',
+      'c2',
+      'c3',
+    ])
   })
 })

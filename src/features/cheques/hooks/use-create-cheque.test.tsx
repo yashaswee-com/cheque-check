@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   routerPush: vi.fn(),
   toastAdd: vi.fn(),
   useDraftController: vi.fn(),
+  firstIncompleteChequeStep: vi.fn(),
   draft: {
     draftId: null as string | null,
     status: 'idle',
@@ -45,7 +46,7 @@ vi.mock('@/services/storage.service', () => ({
 vi.mock('@/features/drafts', () => ({
   chequeDraftService: { publish: mocks.publish },
   chequeDraftToFormValues: vi.fn(),
-  firstIncompleteChequeStep: vi.fn(),
+  firstIncompleteChequeStep: mocks.firstIncompleteChequeStep,
   toChequeDraftFields: vi.fn(),
   draftKeys: {
     list: (entity: string, businessId: string) => [
@@ -133,6 +134,7 @@ beforeEach(() => {
   mocks.useDraftController.mockReturnValue(mocks.draft)
   mocks.draft.draftId = null
   mocks.draft.beginPublish.mockResolvedValue(null)
+  mocks.firstIncompleteChequeStep.mockReturnValue(2)
   mocks.create.mockResolvedValue(createdCheque)
   mocks.publish.mockResolvedValue(createdCheque)
   mocks.uploadImage.mockResolvedValue('/uploads/cheque.png')
@@ -293,5 +295,48 @@ describe('useCreateCheque', () => {
     expect(result.current.isSuccess).toBe(true)
     act(() => result.current.continueAfterSuccess())
     expect(mocks.routerPush).toHaveBeenCalledWith('/cheques')
+  })
+
+  it('hydrates the wizard step and includes the profile reminder in autosaved fields', () => {
+    const { result } = setup()
+    const controllerOptions = mocks.useDraftController.mock.calls[0][0]
+
+    act(() => controllerOptions.onHydrated({ id: 'draft-1' }))
+    expect(result.current.step).toBe(2)
+    expect(
+      controllerOptions.toFields({ cheque_number: '123456' }),
+    ).toMatchObject({ remind_before_days: 5 })
+  })
+
+  it('surfaces publish errors and rejects cheque creation without a business', async () => {
+    const { result } = setup('Outward', { draftId: 'draft-1' })
+    mocks.draft.beginPublish.mockResolvedValue('draft-1')
+    mocks.publish.mockRejectedValueOnce(new ConflictError('Duplicate'))
+    setValidCheque(result)
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.draft.failPublish).toHaveBeenCalledOnce()
+    expect(mocks.toastAdd).toHaveBeenCalledWith({
+      title: 'error',
+      description: 'duplicateChequeError',
+      type: 'error',
+    })
+
+    mocks.create.mockClear()
+    const missingBusiness = setup('Outward', {}, '')
+    mocks.draft.beginPublish.mockResolvedValue(null)
+    setValidCheque(missingBusiness.result)
+    await act(async () => {
+      await expect(missingBusiness.result.current.onSubmit()).rejects.toThrow(
+        'Select a business before creating a cheque',
+      )
+    })
+    expect(mocks.create).not.toHaveBeenCalled()
+    expect(mocks.toastAdd).toHaveBeenLastCalledWith({
+      title: 'error',
+      description: 'Select a business before creating a cheque',
+      type: 'error',
+    })
   })
 })
