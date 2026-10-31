@@ -95,6 +95,29 @@ describe('TurnstileWidget', () => {
     )
   })
 
+  it('waits for an existing script element instead of adding another one', async () => {
+    const script = document.createElement('script')
+    script.id = SCRIPT_ID
+    document.head.appendChild(script)
+    const renderWidget = vi.fn(
+      (_element: HTMLElement, _options: RenderOptions) => 'existing-widget',
+    )
+    const remove = vi.fn()
+    const { container } = render(
+      <TurnstileWidget siteKey="site-key" onToken={vi.fn()} />,
+    )
+    expect(document.querySelectorAll(`#${SCRIPT_ID}`)).toHaveLength(1)
+    Object.defineProperty(window, 'turnstile', {
+      configurable: true,
+      value: { render: renderWidget, remove },
+    })
+    fireEvent.load(script)
+    await waitFor(() => expect(renderWidget).toHaveBeenCalledOnce())
+    expect(renderWidget.mock.calls[0][0]).toBe(
+      container.querySelector('[data-testid="turnstile-widget"]'),
+    )
+  })
+
   it('clears the token when script loading fails', async () => {
     const onToken = vi.fn()
     render(<TurnstileWidget siteKey="site-key" onToken={onToken} />)

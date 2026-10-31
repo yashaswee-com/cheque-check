@@ -202,6 +202,50 @@ describe('PhoneAuthForm signup name', () => {
       messages.PhoneAuth.errors.captcha_required,
     )
   })
+
+  it('preserves non-rate-limit send and verification failures for correction', async () => {
+    mocks.sendPhoneOtp
+      .mockResolvedValueOnce({
+        ok: false,
+        code: 'provider_unavailable',
+        status: 503,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        phone: '+919876543210',
+        resendAfterSeconds: 0,
+      })
+    mocks.verifyPhoneOtp.mockResolvedValue({
+      ok: false,
+      code: 'phone_in_use',
+      status: 409,
+    })
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PhoneAuthForm purpose="login" onVerified={vi.fn()} />
+      </NextIntlClientProvider>,
+    )
+    fireEvent.change(screen.getByTestId('phone-auth-number-input'), {
+      target: { value: '9876543210' },
+    })
+    fireEvent.click(screen.getByTestId('phone-auth-send-button'))
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        messages.PhoneAuth.errors.provider_unavailable,
+      ),
+    )
+    fireEvent.click(screen.getByTestId('phone-auth-send-button'))
+    const code = await screen.findByTestId('phone-auth-code-input')
+    fireEvent.change(code, { target: { value: '123456' } })
+    fireEvent.click(screen.getByTestId('phone-auth-verify-button'))
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        messages.PhoneAuth.errors.phone_in_use,
+      ),
+    )
+    expect(code).toHaveValue('123456')
+  })
+
   it('requires a name before requesting a signup code', async () => {
     const user = userEvent.setup()
     renderForm()

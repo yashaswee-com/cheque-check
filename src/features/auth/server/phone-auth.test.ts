@@ -30,6 +30,47 @@ function makeClient(overrides: Record<string, unknown> = {}) {
 }
 
 describe('sendPhoneOtp', () => {
+  it('rejects invalid national phones and maps conflicts while linking', async () => {
+    const invalid = makeClient()
+    expect(
+      await sendPhoneOtp(invalid.client, {
+        phone: '1234567890',
+        purpose: 'login',
+      }),
+    ).toMatchObject({ code: 'invalid_phone' })
+    expect(invalid.auth.signInWithOtp).not.toHaveBeenCalled()
+    const linking = makeClient()
+    linking.auth.updateUser.mockResolvedValueOnce({
+      error: { code: 'phone_exists', status: 409 },
+    })
+    expect(
+      await sendPhoneOtp(linking.client, {
+        phone: '9876543210',
+        purpose: 'link',
+      }),
+    ).toMatchObject({ code: 'phone_in_use' })
+  })
+
+  it('handles a confirmed user with no stored phone', async () => {
+    const { client, auth } = makeClient({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: {
+            user: {
+              id: 'u1',
+              phone: null,
+              phone_confirmed_at: '2026-01-01',
+            },
+          },
+          error: null,
+        }),
+      },
+    })
+    expect(
+      await sendPhoneOtp(client, { phone: '9876543210', purpose: 'link' }),
+    ).toMatchObject({ ok: true })
+    expect(auth.updateUser).toHaveBeenCalledOnce()
+  })
   it('fails closed when linked profile lookup or rate-limit storage is unavailable', async () => {
     const lookup = makeClient()
     lookup.query.maybeSingle.mockResolvedValueOnce({
@@ -227,6 +268,36 @@ describe('sendPhoneOtp', () => {
 })
 
 describe('verifyPhoneOtp', () => {
+  it.each([
+    { body: null, code: 'invalid_request' },
+    {
+      body: { phone: '+14155552671', token: '123456', purpose: 'login' },
+      code: 'unsupported_country',
+    },
+    {
+      body: { phone: '1234567890', token: '123456', purpose: 'login' },
+      code: 'invalid_phone',
+    },
+  ])(
+    'rejects invalid verification input as $code without contacting Auth',
+    async ({ body, code }) => {
+      const { client, auth } = makeClient()
+      expect(await verifyPhoneOtp(client, body)).toMatchObject({ code })
+      expect(auth.verifyOtp).not.toHaveBeenCalled()
+    },
+  )
+
+  it('maps verification exceptions to a safe provider failure', async () => {
+    const { client, auth } = makeClient()
+    auth.verifyOtp.mockRejectedValueOnce(new Error('provider secret'))
+    expect(
+      await verifyPhoneOtp(client, {
+        phone: '9876543210',
+        token: '123456',
+        purpose: 'login',
+      }),
+    ).toEqual({ ok: false, status: 503, code: 'provider_unavailable' })
+  })
   it('requires an authenticated linking user and a complete resulting session', async () => {
     const unauthenticated = makeClient()
     unauthenticated.auth.getUser.mockResolvedValueOnce({
@@ -393,6 +464,19 @@ describe('mapPhoneAuthError', () => {
 })
 
 describe('deactivateAccount', () => {
+  it('reports incomplete cleanup when global session revocation fails after a successful ban', async () => {
+    const { client, auth, rpc } = makeClient()
+    rpc.mockResolvedValueOnce({ error: null })
+    auth.signOut.mockResolvedValueOnce({ error: { message: 'offline' } })
+    const updateUserById = vi.fn().mockResolvedValue({ error: null })
+    expect(
+      await deactivateAccount(client, { auth: { admin: { updateUserById } } }),
+    ).toEqual({ ok: true, providerCleanup: false })
+    expect(updateUserById).toHaveBeenCalledWith('u1', {
+      ban_duration: '876000h',
+    })
+    expect(auth.signOut).toHaveBeenCalledWith({ scope: 'global' })
+  })
   it('runs the lifecycle RPC before the ban and global sign-out', async () => {
     const order: string[] = []
     const supabase = {
