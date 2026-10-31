@@ -58,6 +58,20 @@ test.describe('premium reports', () => {
         ),
       ).toHaveAttribute('data-status', /^(queued|processing|ready)$/)
     }
+
+    // The owner changes their mind about the CSV export and removes it.
+    const csvJob = page.locator(
+      '[data-testid="report-export-job"][data-format="csv"]',
+    )
+    await csvJob.getByRole('button', { name: 'Cancel / remove' }).click()
+    await expect(
+      page.locator(
+        '[data-testid="report-export-job"][data-format="csv"]:not([data-status="expired"])',
+      ),
+    ).toHaveCount(0)
+    await expect(
+      page.locator('[data-testid="report-export-job"][data-format="json"]'),
+    ).not.toHaveAttribute('data-status', 'expired')
   })
 
   test('export is disabled for a premium user with no cheques yet', async ({

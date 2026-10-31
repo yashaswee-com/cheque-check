@@ -193,7 +193,10 @@ export default function PartyDetailPage() {
             <p className="text-[10px] font-semibold opacity-70 uppercase tracking-wider">
               {tCommon('outstanding')}
             </p>
-            <p className="mt-2 text-2xl font-semibold">
+            <p
+              className="mt-2 text-2xl font-semibold"
+              data-testid="party-detail-outstanding"
+            >
               {currency}
               {outstanding.toLocaleString()}
             </p>
@@ -202,7 +205,12 @@ export default function PartyDetailPage() {
             <p className="text-[10px] font-semibold opacity-70 uppercase tracking-wider">
               {tCommon('totalCheques')}
             </p>
-            <p className="mt-2 text-2xl font-semibold">{partyCheques.length}</p>
+            <p
+              className="mt-2 text-2xl font-semibold"
+              data-testid="party-detail-total-cheques"
+            >
+              {partyCheques.length}
+            </p>
           </div>
         </div>
 

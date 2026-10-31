@@ -99,62 +99,78 @@ and switching back to email. OTP and CAPTCHA are mocked; these tests do not
 cover SMS delivery or successful session creation. See `e2e/README.md` for
 running this spec without the hosted QA setup.
 
-| Flow                                                                            | Risk | Freq          | Complexity | Spec                                           |
-| ------------------------------------------------------------------------------- | ---- | ------------- | ---------- | ---------------------------------------------- |
-| Signup/login/logout/forgot-password                                             | 3    | 3             | 2          | `auth.spec.ts` (existing)                      |
-| Onboarding wizard + first-run empty cheque list                                 | 3    | 1 (once/user) | 2          | `onboarding.spec.ts` (existing)                |
-| Cheque create (Outward/Inward, invalid-value blocking)                          | 3    | 3             | 3          | `cheques.spec.ts`, `cheque-management.spec.ts` |
-| Cheque status transition via swipe + detail actions + pending-status correction | 3    | 3             | 3          | `cheque-management.spec.ts`                    |
-| Cheque edit                                                                     | 3    | 2             | 2          | `cheque-management.spec.ts`                    |
-| Cheque delete (type-to-confirm)                                                 | 3    | 2             | 2          | `cheque-management.spec.ts`                    |
-| Per-business data isolation when switching active business                      | 3    | 2             | 3          | `businesses.spec.ts`                           |
-| Dashboard current balance + today's cheque list                                 | 3    | 3             | 2          | `dashboard.spec.ts`                            |
+| Flow                                                                               | Risk | Freq          | Complexity | Spec                                           |
+| ---------------------------------------------------------------------------------- | ---- | ------------- | ---------- | ---------------------------------------------- |
+| Signup/login/logout/forgot-password (reached from the login page)                  | 3    | 3             | 2          | `auth.spec.ts`                                 |
+| Landing page entry points and auth route guards                                    | 3    | 3             | 1          | `landing.spec.ts`                              |
+| Onboarding wizard + first-run empty cheque list                                    | 3    | 1 (once/user) | 2          | `onboarding.spec.ts`                           |
+| First day: first cheque with inline party/account creation from an empty workspace | 3    | 1 (once/user) | 3          | `first-run.spec.ts`                            |
+| Cheque create (Outward; Premium Inward; invalid-value blocking)                    | 3    | 3             | 3          | `cheques.spec.ts`, `cheque-management.spec.ts` |
+| Cheque status transition via swipe + detail actions + pending-status correction    | 3    | 3             | 3          | `cheque-management.spec.ts`                    |
+| Bounced cheque re-presented and cleared; party outstanding follows each status     | 3    | 2             | 3          | `cheque-lifecycle.spec.ts`                     |
+| Crore-scale amounts keep exact value and amount in words                           | 3    | 1             | 2          | `cheque-lifecycle.spec.ts`                     |
+| Cheque edit                                                                        | 3    | 2             | 2          | `cheque-management.spec.ts`                    |
+| Cheque delete (type-to-confirm)                                                    | 3    | 2             | 2          | `cheque-management.spec.ts`                    |
+| Per-business data isolation when switching active business                         | 3    | 2             | 3          | `businesses.spec.ts`                           |
+| Dashboard pending net + today's cheque list                                        | 3    | 3             | 2          | `dashboard.spec.ts`                            |
+| Free-plan Premium walls (Inward, duplicate, print, reports) lead to the plan       | 3    | 2             | 2          | `premium-gating.spec.ts`                       |
 
 ## P1 — High
 
 Frequently used supporting flows; broken state degrades UX but has a workaround.
 
-| Flow                                                        | Risk | Freq | Complexity | Spec                  |
-| ----------------------------------------------------------- | ---- | ---- | ---------- | --------------------- |
-| Cheque list filter/search/sort (status, party, date/amount) | 2    | 3    | 2          | `cheques.spec.ts`     |
-| Cheque/party/account drafts: save, resume, publish          | 2    | 2    | 3          | `drafts.spec.ts`      |
-| Tags: create, assign to cheque, verify linked cheque        | 2    | 2    | 2          | `tags.spec.ts`        |
-| Party create/edit/delete                                    | 2    | 3    | 2          | `parties.spec.ts`     |
-| Account create/edit/delete                                  | 2    | 3    | 2          | `accounts.spec.ts`    |
-| Business create/edit/delete                                 | 2    | 1    | 3          | `businesses.spec.ts`  |
-| Global search across cheques/parties/accounts               | 2    | 2    | 2          | `search.spec.ts`      |
-| Settings > Preferences (currency/date format propagation)   | 2    | 1    | 2          | `preferences.spec.ts` |
-| Reports: chart + CSV/JSON/PDF/Excel export (premium-gated)  | 2    | 2    | 3          | `reports.spec.ts`     |
-| Settings > Preferences language switch (locale propagation) | 2    | 1    | 2          | `locale.spec.ts`      |
+| Flow                                                                                                                      | Risk | Freq | Complexity | Spec                     |
+| ------------------------------------------------------------------------------------------------------------------------- | ---- | ---- | ---------- | ------------------------ |
+| Cheque list filter/search/sort (status, party, date/amount)                                                               | 2    | 3    | 2          | `cheques.spec.ts`        |
+| Cheque/party/account drafts: save, resume, publish                                                                        | 2    | 2    | 3          | `drafts.spec.ts`         |
+| Interrupted cheque entry: leave sheet saves a draft, resume, then discard                                                 | 2    | 2    | 3          | `drafts.spec.ts`         |
+| Tags: create, assign to cheque, verify linked cheque                                                                      | 2    | 2    | 2          | `tags.spec.ts`           |
+| Party create/edit/delete                                                                                                  | 2    | 3    | 2          | `parties.spec.ts`        |
+| Party with optional details + inline tag, duplicate warning, linked cheques                                               | 2    | 3    | 3          | `parties.spec.ts`        |
+| Account create/edit/delete                                                                                                | 2    | 3    | 2          | `accounts.spec.ts`       |
+| Accounts: bank catalog search, private bank, IFSC validation, opening balance, default account preselected on new cheques | 2    | 2    | 3          | `accounts.spec.ts`       |
+| Business create/edit/delete                                                                                               | 2    | 1    | 3          | `businesses.spec.ts`     |
+| Business switching from the list; delete only after typing the exact name                                                 | 2    | 1    | 2          | `businesses.spec.ts`     |
+| Global search across cheques/parties/accounts                                                                             | 2    | 2    | 2          | `search.spec.ts`         |
+| Mobile navigation: bottom tabs, create button per tab, back button                                                        | 2    | 3    | 2          | `navigation.spec.ts`     |
+| Settings > Preferences (currency/date format propagation)                                                                 | 2    | 1    | 2          | `preferences.spec.ts`    |
+| Reports: PDF/Excel download, CSV/JSON background export jobs, cancel a job                                                | 2    | 2    | 3          | `reports.spec.ts`        |
+| Premium duplicate cheque to a prefilled draft                                                                             | 2    | 2    | 2          | `cheque-premium.spec.ts` |
+| Settings > Preferences language switch (locale propagation)                                                               | 2    | 1    | 2          | `locale.spec.ts`         |
 
 ## P2 — Medium
 
 Occasional configuration/management flows; workarounds exist.
 
-| Flow                                                           | Risk | Freq | Complexity | Spec                                             |
-| -------------------------------------------------------------- | ---- | ---- | ---------- | ------------------------------------------------ |
-| Settings > Notifications (reminder-day save)                   | 1    | 1    | 1          | `settings-misc.spec.ts`                          |
-| Settings > Notifications (channel state persists after reload) | 1    | 1    | 2          | `settings-misc.spec.ts`, `notifications.spec.ts` |
-| Settings > Transactions route and history view load            | 1    | 1    | 1          | `settings-misc.spec.ts`                          |
-| Feedback / NPS prompt                                          | 1    | 1    | 2          | `feedback.spec.ts`                               |
-| Premium paywall correctness for non-premium users              | 2    | 1    | 1          | `reports.spec.ts`                                |
-| Tags: edit/delete existing tag                                 | 2    | 1    | 2          | `tags.spec.ts`                                   |
+| Flow                                                             | Risk | Freq | Complexity | Spec                                             |
+| ---------------------------------------------------------------- | ---- | ---- | ---------- | ------------------------------------------------ |
+| Settings > Notifications (reminder-day save)                     | 1    | 1    | 1          | `settings-misc.spec.ts`                          |
+| Settings > Notifications (channel state persists after reload)   | 1    | 1    | 2          | `settings-misc.spec.ts`, `notifications.spec.ts` |
+| Settings > Transactions route and history view load              | 1    | 1    | 1          | `settings-misc.spec.ts`                          |
+| Settings hub: every entry opens a working page                   | 1    | 2    | 1          | `settings.spec.ts`                               |
+| Profile name change; account deletion blocks later sign-in       | 3    | 1    | 2          | `profile.spec.ts`                                |
+| Premium checkout opened and dismissed; failed order is explained | 2    | 1    | 2          | `premium-checkout.spec.ts`                       |
+| Feedback / NPS prompt                                            | 1    | 1    | 2          | `feedback.spec.ts`                               |
+| Premium paywall correctness for non-premium users                | 2    | 1    | 1          | `reports.spec.ts`                                |
+| Tags: edit/delete existing tag                                   | 2    | 1    | 2          | `tags.spec.ts`                                   |
 
 ## P3 — Low
 
 Static/informational, cosmetic only, rarely changes.
 
-| Flow                                                         | Risk | Freq | Complexity | Spec                   |
-| ------------------------------------------------------------ | ---- | ---- | ---------- | ---------------------- |
-| About / Help & Support / Privacy Policy / Terms / What's New | 1    | 1    | 1          | `static-pages.spec.ts` |
-| Calculator widget (open, compute, reset, close)              | 1    | 2    | 1          | `calculator.spec.ts`   |
-| PWA service worker registration                              | 1    | 1    | 1          | `pwa.spec.ts`          |
+| Flow                                                                  | Risk | Freq | Complexity | Spec                                       |
+| --------------------------------------------------------------------- | ---- | ---- | ---------- | ------------------------------------------ |
+| About / Help & Support / Privacy Policy / Terms / What's New / Refund | 1    | 1    | 1          | `static-pages.spec.ts`, `settings.spec.ts` |
+| Calculator widget from the top bar "More actions" menu                | 1    | 2    | 1          | `calculator.spec.ts`                       |
+| PWA service worker registration                                       | 1    | 1    | 1          | `pwa.spec.ts`                              |
+| Premium workspace: bulk status change for one party's cheques         | 2    | 1    | 3          | `premium-workspace.spec.ts`                |
 
 ## Out of scope (unchanged from `e2e/README.md`)
 
-Google/Facebook OAuth, real Razorpay checkout, OpenAI OCR cheque-scan extraction, and reminder
-(voice/SMS/email) delivery. Reports/export premium-gating is tested by seeding an entitlement row
-directly via `grantLifetimePremium()` in `e2e/admin-client.ts` rather than driving a real payment.
+Google/Facebook OAuth, real Razorpay payments, OpenAI OCR cheque-scan extraction, completion of
+background report exports by the worker, and reminder (voice/SMS/email) delivery. Premium-only
+flows seed an entitlement row directly via `grantLifetimePremium()` in `e2e/admin-client.ts`;
+checkout is exercised only up to a stubbed Razorpay modal.
 
 ## Shared infrastructure added for this plan
 
@@ -177,3 +193,15 @@ directly via `grantLifetimePremium()` in `e2e/admin-client.ts` rather than drivi
   of only `getByRole('switch').first()`.
 - `src/app/onboarding/page.tsx`: `data-testid="onboarding-back-button"` on the stepper's back
   button (previously unreachable except by icon).
+- `e2e/flows.ts`: `signInAsNewOnboardedUser(page, label, { premium })` creates an isolated
+  user, signs in, completes onboarding, and waits on `/dashboard` (optionally after granting
+  Premium). Journeys that need their own account or Premium use it instead of the shared session.
+- `e2e/pages/app-shell.page.ts`, `profile.page.ts`: shell navigation (tabs, create button, back,
+  "More actions" menu, upgrade toasts) and profile actions. `AccountsPage` covers catalog
+  search, private banks, opening balance, IFSC, and the default-account checkbox.
+- New `data-testid`s where only styled text existed: `report-export-job` (with `data-format` and
+  `data-status`), `account-detail-ifsc`, `account-detail-opening-balance`,
+  `account-default-checkbox`, `party-detail-outstanding`, `party-detail-total-cheques`,
+  `cheque-detail-duplicate`, `cheque-detail-print`, and `cheque-amount-words`.
+- Account create/edit now show the IFSC validation message; previously an invalid IFSC blocked
+  submission without feedback.

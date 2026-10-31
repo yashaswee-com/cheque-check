@@ -57,8 +57,13 @@ logged in with a business set up.
 `auth.spec.ts` and `onboarding.spec.ts` opt out of the shared session
 (`test.use({ storageState: { cookies: [], origins: [] } })`) and create their
 own admin-confirmed users before driving login/logout/onboarding through the
-browser. The signup spec covers native required-field validation; password
-reset stubs only the email-delivery endpoint so the QA project sends no mail.
+browser. Journeys that need an isolated account or Premium access (first run,
+profile, Inward cheques, reports, duplicate, bulk actions) use
+`signInAsNewOnboardedUser(page, label, { premium })` from `e2e/flows.ts`, which
+lands on `/dashboard`. The shared global-setup user stays on the free plan so
+Premium walls remain testable. The signup spec covers native required-field
+validation; password reset stubs only the email-delivery endpoint so the QA
+project sends no mail.
 Use `example.com` for synthetic user addresses; it is reserved for examples.
 
 `phone-auth.spec.ts` also starts logged out. It covers local mobile validation,
@@ -137,10 +142,12 @@ not be reachable from IPv4-only networks.
 
 ## Out of scope
 
-`features.spec.ts` checks feature management, phone-save gating, purchase-status
-display, and alignment at 320px, 390px, and 1280px. Profile, entitlement, quota,
-and transaction responses are intercepted so these checks do not change a
-user's real plan or place calls.
+`features.spec.ts` checks feature management, phone-save gating, and alignment
+at 320px, 390px, and 1280px. Profile, entitlement, and quota responses are
+intercepted so these checks do not change a user's real plan or place calls.
+`premium-checkout.spec.ts` intercepts order creation and replaces the Razorpay
+modal with a stub, so no payment is attempted.
 
-Google/Facebook OAuth, Razorpay payments, OpenAI OCR cheque-scan extraction,
+Google/Facebook OAuth, real Razorpay payments, OpenAI OCR cheque-scan
+extraction, completion of background CSV/JSON report exports by the worker,
 and reminder (email/SMS) sending are not covered by this suite.

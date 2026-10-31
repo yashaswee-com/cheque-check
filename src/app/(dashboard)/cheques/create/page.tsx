@@ -430,7 +430,10 @@ export default function CreateChequePage() {
                 className="h-12 font-semibold rounded-sm"
               />
               <div className="flex flex-col gap-1 ml-1">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                <p
+                  className="text-[10px] text-muted-foreground uppercase tracking-widest"
+                  data-testid="cheque-amount-words"
+                >
                   {amountInWords}
                 </p>
               </div>

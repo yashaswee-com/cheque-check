@@ -52,7 +52,9 @@ test.describe('authentication', () => {
     await expect(page).toHaveURL('/login')
   })
 
-  test('forgot password shows a confirmation message', async ({ page }) => {
+  test('a user who forgot their password requests a link from login and returns', async ({
+    page,
+  }) => {
     const user = e2eUser('forgot')
     await page.route('**/auth/v1/recover**', (route) =>
       route.fulfill({
@@ -61,13 +63,16 @@ test.describe('authentication', () => {
         body: '{}',
       }),
     )
-    await page.goto('/forgot-password')
+    await new LoginPage(page).goto()
+    await page.locator('a[href="/forgot-password"]').click()
+    await expect(page).toHaveURL('/forgot-password')
     await page.getByTestId('forgot-password-email-input').fill(user.email)
     await page.getByTestId('forgot-password-submit-button').click()
 
-    await expect(
-      page.getByTestId('forgot-password-sent-confirmation'),
-    ).toBeVisible()
+    const confirmation = page.getByTestId('forgot-password-sent-confirmation')
+    await expect(confirmation).toContainText(user.email)
+    await confirmation.getByRole('button', { name: 'Back to Login' }).click()
+    await expect(page).toHaveURL('/login')
   })
 
   test('signup with an already-registered email does not reach the app', async ({

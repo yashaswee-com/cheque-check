@@ -240,6 +240,11 @@ export default function EditAccountPage() {
               placeholder={t('ifscPlaceholder')}
               className="h-14 bg-canvas-parchment border-none uppercase rounded-sm"
             />
+            {errors.ifsc_code && (
+              <p className="text-xs text-destructive ml-1">
+                {errors.ifsc_code.message as string}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

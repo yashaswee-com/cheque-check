@@ -114,4 +114,45 @@ test.describe('businesses', () => {
       .fill(uniqueE2eName('no-such-business'))
     await expect(page.getByRole('option')).toHaveCount(0)
   })
+
+  test('an owner switches business from the list and deletes one only after typing its name', async ({
+    page,
+  }) => {
+    const businessesPage = new BusinessesPage(page)
+    const keepName = e2eBusinessName('keep')
+    const closingName = e2eBusinessName('closing')
+    const switcher = page.getByTestId('business-switcher-trigger')
+    await businessesPage.createBusiness(keepName, uniqueE2eEmail('keep'))
+    await businessesPage.createBusiness(closingName, uniqueE2eEmail('closing'))
+
+    await page.goto('/businesses')
+    const cards = page.locator('[data-testid^="business-card-"]')
+    const keepCard = cards.filter({ hasText: keepName })
+    const closingCard = cards.filter({ hasText: closingName })
+    await keepCard.getByText(keepName).click()
+    await expect(switcher).toHaveAttribute(
+      'data-active-business-name',
+      keepName,
+    )
+    await expect(keepCard).toContainText('Active')
+
+    await closingCard
+      .locator('[data-testid^="business-delete-trigger-"]')
+      .click()
+    const confirmInput = page.locator('#confirm_name')
+    const confirmButton = page.getByTestId('delete-dialog-confirm-button')
+    await confirmInput.fill(closingName.slice(0, -1))
+    await expect(confirmButton).toBeDisabled()
+    await confirmInput.fill(closingName)
+    await expect(confirmButton).toBeEnabled()
+    await confirmButton.click()
+
+    await expect(closingCard).toHaveCount(0)
+    await expect(switcher).toHaveAttribute(
+      'data-active-business-name',
+      keepName,
+    )
+    await page.reload()
+    await expect(closingCard).toHaveCount(0)
+  })
 })

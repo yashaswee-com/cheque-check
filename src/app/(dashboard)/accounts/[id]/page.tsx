@@ -192,7 +192,10 @@ export default function AccountDetailPage() {
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
               {t('ifscCode')}
             </p>
-            <p className="font-mono font-semibold uppercase">
+            <p
+              className="font-mono font-semibold uppercase"
+              data-testid="account-detail-ifsc"
+            >
               {account.ifsc_code || tc('notAvailable')}
             </p>
           </div>
@@ -202,7 +205,10 @@ export default function AccountDetailPage() {
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
             {t('openingBalance')}
           </p>
-          <p className="text-lg font-semibold">
+          <p
+            className="text-lg font-semibold"
+            data-testid="account-detail-opening-balance"
+          >
             {profile?.currency || '₹'}
             {account.opening_balance.toLocaleString(undefined, {
               minimumFractionDigits: 2,

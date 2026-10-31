@@ -184,6 +184,7 @@ export default function ChequeDetailPage() {
     {
       label: t('printCheque'),
       icon: Download,
+      testId: 'cheque-detail-print',
       onClick: async () => {
         if (!(await premium.verifyAccess('cheque-printing'))) return
         try {
@@ -212,6 +213,7 @@ export default function ChequeDetailPage() {
     {
       label: t('duplicate'),
       icon: Copy,
+      testId: 'cheque-detail-duplicate',
       onClick: () => void duplicateCheque(),
     },
     {

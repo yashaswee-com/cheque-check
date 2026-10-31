@@ -22,6 +22,18 @@ export function uniqueChequeNumber() {
   return String(Math.floor(100000 + Math.random() * 900000))
 }
 
+/** `YYYY-MM-DD` for a date relative to today, as native date inputs expect. */
+export function isoDateFromToday(days: number) {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0]
+}
+
+/** Account numbers only need to be unique; two cheque numbers give 12 digits. */
+export function uniqueAccountNumber() {
+  return uniqueChequeNumber() + uniqueChequeNumber()
+}
+
 export function e2eUser(label = 'user') {
   return {
     name: uniqueE2eName(label),

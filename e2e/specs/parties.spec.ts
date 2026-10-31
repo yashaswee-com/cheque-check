@@ -4,12 +4,82 @@ import { ChequesPage } from '../pages/cheques.page'
 import { PartiesPage } from '../pages/parties.page'
 import {
   E2E_PHONE,
+  uniqueAccountNumber,
   uniqueChequeNumber,
   uniqueE2eName,
 } from '../fixtures/test-data'
 
 // Uses the shared authenticated + onboarded session from global.setup.ts.
 test.describe('parties', () => {
+  test('an owner records a customer with details and follows their cheques', async ({
+    page,
+  }) => {
+    const partyName = uniqueE2eName('client')
+    const tagName = uniqueE2eName('vip')
+    const address = '12 Market Road, Pune'
+    const accountNumber = uniqueAccountNumber()
+    const chequeNumber = uniqueChequeNumber()
+    const partiesPage = new PartiesPage(page)
+    const chequesPage = new ChequesPage(page)
+
+    await page.goto('/parties/create')
+    await page.locator('#name').fill(partyName)
+    await page.locator('#contact').fill(E2E_PHONE)
+    await page.getByText('Optional details', { exact: true }).click()
+    await page.locator('#email').fill(`${partyName}@example.com`)
+    await page.locator('#address').fill(address)
+    await page.getByTestId('tag-selector-trigger').click()
+    await page.getByTestId('tag-selector-create-input').fill(tagName)
+    await page.getByTestId('tag-selector-create-button').click()
+    await expect(
+      page
+        .locator('[data-testid^="tag-selector-option-"]')
+        .filter({ hasText: tagName }),
+    ).toHaveAttribute('aria-pressed', 'true')
+    await page.keyboard.press('Escape')
+    await page.getByTestId('party-submit-button').click()
+    await page.getByTestId('creation-success-continue').click()
+
+    // Re-entering the same customer warns before a duplicate is saved.
+    await page.goto('/parties/create')
+    await page.locator('#name').fill(partyName.toUpperCase())
+    await expect(
+      page
+        .getByRole('status')
+        .filter({ hasText: 'Similar parties already exist' }),
+    ).toContainText(partyName)
+    await page.getByRole('button', { name: 'Go back', exact: true }).click()
+    await page
+      .getByRole('dialog', { name: 'Save this as a draft?' })
+      .getByRole('button', { name: 'Discard', exact: true })
+      .click()
+    await expect(page).not.toHaveURL(/\/parties\/create/)
+
+    await new AccountsPage(page).createAccount(
+      uniqueE2eName('account'),
+      accountNumber,
+    )
+    await chequesPage.createCheque({
+      partyName,
+      accountSearch: accountNumber.slice(-4),
+      chequeNumber,
+      amount: 3300,
+    })
+
+    await partiesPage.openByName(partyName)
+    await expect(page.getByText(address)).toBeVisible()
+    await expect(page.getByText(tagName).first()).toBeVisible()
+    await expect(page.getByTestId('party-detail-outstanding')).toHaveText(
+      '₹3,300',
+    )
+    await expect(page.getByTestId('party-detail-total-cheques')).toHaveText('1')
+    await chequesPage.openByChequeNumber(chequeNumber)
+    await expect(page.getByTestId('cheque-detail-amount')).toContainText(
+      '3,300',
+    )
+    await expect(page.getByText(partyName).first()).toBeVisible()
+  })
+
   test('creates, edits, and deletes a party', async ({ page }) => {
     const partyName = uniqueE2eName('party')
     const updatedName = `${partyName}-updated`

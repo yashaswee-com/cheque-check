@@ -4,12 +4,77 @@ import { ChequesPage } from '../pages/cheques.page'
 import { PartiesPage } from '../pages/parties.page'
 import {
   E2E_PHONE,
+  uniqueAccountNumber,
   uniqueChequeNumber,
   uniqueE2eName,
 } from '../fixtures/test-data'
 
 // Uses the shared authenticated + onboarded session from global.setup.ts.
 test.describe('accounts', () => {
+  test('an owner adds bank accounts and new cheques use the default one', async ({
+    page,
+  }) => {
+    const accountsPage = new AccountsPage(page)
+    const chequesPage = new ChequesPage(page)
+    const primaryName = uniqueE2eName('primary')
+    const primaryNumber = uniqueAccountNumber()
+
+    await accountsPage.fillUntilFinalStep(primaryName, primaryNumber, {
+      bankSearch: 'HDFC Bank Limited',
+      openingBalance: 75000,
+      isDefault: true,
+      ifsc: 'HDFC1234',
+    })
+    await page.getByTestId('account-submit-button').click()
+    await expect(
+      page.getByText('Enter a valid 11-character IFSC code'),
+    ).toBeVisible()
+    await expect(page.getByTestId('creation-success-continue')).toHaveCount(0)
+    await page.locator('#ifsc_code').fill('hdfc0001234')
+    await accountsPage.submitAndContinue()
+
+    await accountsPage.openByName(primaryName)
+    await expect(page.getByTestId('account-detail-ifsc')).toHaveText(
+      'HDFC0001234',
+    )
+    await expect(
+      page.getByTestId('account-detail-opening-balance'),
+    ).toContainText('75,000.00')
+
+    await chequesPage.goto()
+    await chequesPage.openCreate()
+    await chequesPage.fillDetails({
+      amount: 100,
+      chequeNumber: uniqueChequeNumber(),
+    })
+    await expect(page.getByTestId('cheque-account-combobox')).toContainText(
+      `(${primaryNumber.slice(-4)})`,
+    )
+    await chequesPage.discardAndLeave()
+
+    // A local bank missing from the catalog is added privately and becomes the new default.
+    const coopBank = uniqueE2eName('coop-bank')
+    const secondaryNumber = uniqueAccountNumber()
+    await accountsPage.createAccount(
+      uniqueE2eName('secondary'),
+      secondaryNumber,
+      { customBankName: coopBank, isDefault: true },
+    )
+
+    await chequesPage.goto()
+    await chequesPage.openCreate()
+    await chequesPage.fillDetails({
+      amount: 100,
+      chequeNumber: uniqueChequeNumber(),
+    })
+    const accountCombobox = page.getByTestId('cheque-account-combobox')
+    await expect(accountCombobox).toContainText(coopBank)
+    await expect(accountCombobox).toContainText(
+      `(${secondaryNumber.slice(-4)})`,
+    )
+    await chequesPage.discardAndLeave()
+  })
+
   test('creates, edits, and deletes a bank account', async ({ page }) => {
     const accountName = uniqueE2eName('account')
     const updatedName = `${accountName}-updated`

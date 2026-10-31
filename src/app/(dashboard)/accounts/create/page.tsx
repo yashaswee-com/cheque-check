@@ -350,6 +350,7 @@ export default function CreateAccountPage() {
             </div>
             <label className="flex items-center gap-3 rounded-sm border border-primary/10 bg-primary/5 p-4">
               <Checkbox
+                data-testid="account-default-checkbox"
                 checked={watch('is_default')}
                 onCheckedChange={(checked) =>
                   setUserValue('is_default', checked === true)
@@ -393,6 +394,11 @@ export default function CreateAccountPage() {
                   className="h-14  bg-canvas-parchment border-none uppercase rounded-sm"
                 />
               </div>
+              {errors.ifsc_code && (
+                <p className="text-xs text-destructive ml-1">
+                  {errors.ifsc_code.message as string}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

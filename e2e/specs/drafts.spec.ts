@@ -11,6 +11,39 @@ import {
 
 // Uses the shared authenticated + onboarded session from global.setup.ts.
 test.describe('drafts', () => {
+  test('an interrupted cheque entry is kept as a draft, resumed, then discarded', async ({
+    page,
+  }) => {
+    const chequesPage = new ChequesPage(page)
+    const draftsPage = new DraftsPage(page)
+    const amount = 7000 + Math.floor(Math.random() * 999)
+    const amountLabel = new RegExp(amount.toLocaleString('en-US'))
+
+    await chequesPage.goto()
+    await chequesPage.openCreate()
+    await page.getByTestId('cheque-amount-input').fill(String(amount))
+    await page.getByTestId('cheque-number-input').fill(uniqueChequeNumber())
+
+    await page.getByRole('button', { name: 'Go back', exact: true }).click()
+    await chequesPage.leaveSheet
+      .getByRole('button', { name: 'Save draft', exact: true })
+      .click()
+    await expect(page).toHaveURL('/cheques')
+
+    await draftsPage.goto()
+    await page.getByRole('link', { name: amountLabel }).click()
+    await expect(page).toHaveURL(/\/cheques\/create\?draftId=/)
+    await expect(page.getByTestId('cheque-amount-input')).toHaveValue(
+      String(amount),
+    )
+
+    // Changing the resumed draft makes it unfinished again; this time it is thrown away.
+    await page.getByTestId('cheque-amount-input').fill(String(amount + 1))
+    await chequesPage.discardAndLeave()
+    await draftsPage.goto()
+    await expect(page.getByRole('link', { name: amountLabel })).toHaveCount(0)
+  })
+
   test('saves, resumes, and publishes an account draft', async ({ page }) => {
     const accountName = uniqueE2eName('account-draft')
     const accountNumber = uniqueChequeNumber() + uniqueChequeNumber()
