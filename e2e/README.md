@@ -61,6 +61,33 @@ browser. The signup spec covers native required-field validation; password
 reset stubs only the email-delivery endpoint so the QA project sends no mail.
 Use `example.com` for synthetic user addresses; it is reserved for examples.
 
+`phone-auth.spec.ts` also starts logged out. It covers local mobile validation,
+expired-code recovery, resend cooldown, provider-error retry, and switching back
+to email. OTP API responses and Turnstile are intercepted; no SMS is sent and no
+account is created. Phone authentication must be enabled in the application
+environment (`NEXT_PUBLIC_PHONE_AUTH_ENABLED=true`), otherwise these tests
+explicitly skip. With a running application, these isolated browser tests can
+run without the hosted QA setup:
+
+```bash
+npx playwright test phone-auth.spec --project=chromium --no-deps
+```
+
+To let Playwright start an isolated local application, enable the phone feature
+in the test command's environment. For example, in PowerShell:
+
+```powershell
+$env:NEXT_PUBLIC_PHONE_AUTH_ENABLED = 'true'
+$env:NEXT_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:54321'
+$env:NEXT_PUBLIC_SUPABASE_ANON_KEY = 'example-anon-key'
+npx playwright test phone-auth.spec --project=chromium --no-deps --workers=1
+```
+
+These synthetic public settings need no running Supabase instance for this
+mocked spec. Unset `PLAYWRIGHT_BASE_URL` to use the managed local server; if
+using an existing server, it must have been started with the phone feature
+enabled. Playwright tears down its managed server after the run.
+
 ## Data reset & cleanup
 
 **Primary (QA):** `npm run test:e2e:qa` fully resets the QA database before
