@@ -33,7 +33,7 @@ interface SettingsItem {
   name: string
   description?: string
   icon: IconType
-  href?: string
+  href: string
   action?: () => void
   component?: React.ReactNode
   value?: string
@@ -263,14 +263,11 @@ export default function SettingsPage() {
                   </div>
                 )
 
-                if (item.href) {
-                  return (
-                    <Link href={item.href} key={item.name}>
-                      {content}
-                    </Link>
-                  )
-                }
-                return content
+                return (
+                  <Link href={item.href} key={item.name}>
+                    {content}
+                  </Link>
+                )
               })}
             </div>
           </div>
