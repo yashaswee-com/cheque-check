@@ -66,9 +66,9 @@ export function useDraftAutosave<TValues extends FieldValues>({
       const fields = convert(form.getValues() as Record<string, unknown>)
       const service = draftServices[entity]
       try {
-        const saved = draftIdRef.current
-          ? await service.update(draftIdRef.current, fields)
-          : await service.create(currentBusinessId, fields)
+        const saved = await (draftIdRef.current
+          ? service.update(draftIdRef.current, fields)
+          : service.create(currentBusinessId, fields))
 
         if (!draftIdRef.current) {
           draftIdRef.current = saved.id

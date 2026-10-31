@@ -15,6 +15,7 @@ import type { DraftCardProps } from './draft-card'
 const state = vi.hoisted(() => ({
   drafts: {} as Record<string, object[] | undefined>,
   loading: false,
+  currency: '$' as string | null,
   mutateAsync: vi.fn(),
   toast: vi.fn(),
 }))
@@ -22,7 +23,9 @@ vi.mock('@/features/businesses/hooks/use-business', () => ({
   useBusiness: () => ({ activeBusiness: { id: 'b1' } }),
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
-  useProfile: () => ({ profile: { currency: '$' } }),
+  useProfile: () => ({
+    profile: state.currency ? { currency: state.currency } : null,
+  }),
 }))
 vi.mock('../hooks/use-drafts', () => ({
   useDrafts: (entity: string) => ({
@@ -45,6 +48,7 @@ vi.mock('./draft-card', () => ({
 beforeEach(() => {
   state.drafts = {}
   state.loading = false
+  state.currency = '$'
   vi.clearAllMocks()
   state.mutateAsync.mockResolvedValue(undefined)
 })
@@ -120,6 +124,24 @@ describe('DraftList', () => {
       }),
     )
     expect(state.mutateAsync).toHaveBeenCalledExactlyOnceWith('p1')
+  })
+
+  it('uses the fallback currency and unnamed party label for incomplete drafts', () => {
+    state.currency = null
+    state.drafts.cheque = [
+      { id: 'c1', amount: 25, party: { name: null }, type: null },
+    ]
+    state.drafts.party = [{ id: 'p1', name: null, contact: null }]
+    mount(
+      <>
+        <DraftList entity="cheque" />
+        <DraftList entity="party" />
+      </>,
+    )
+    expect(screen.getByRole('link', { name: '₹25' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: messages.Drafts.untitled }),
+    ).toBeInTheDocument()
   })
 
   it('masks account numbers and uses bank and untitled fallbacks', () => {

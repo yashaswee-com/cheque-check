@@ -52,6 +52,17 @@ describe('DraftCard', () => {
     expect(onDelete).not.toHaveBeenCalled()
   })
 
+  it('omits optional subtitle and metadata when absent', () => {
+    render(
+      <DraftCard {...props} subtitle={null} meta={null} onDelete={vi.fn()} />,
+    )
+    expect(
+      screen.getByRole('link', { name: 'Asha cheque' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Asha')).not.toBeInTheDocument()
+    expect(screen.getByText(/edited/)).toBeInTheDocument()
+  })
+
   it('requires confirmation and permits canceling', async () => {
     const onDelete = vi.fn().mockResolvedValue(undefined)
     render(<DraftCard {...props} onDelete={onDelete} />)

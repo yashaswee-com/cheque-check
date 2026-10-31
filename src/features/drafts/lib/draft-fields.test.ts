@@ -115,6 +115,15 @@ describe('party and account draft fields', () => {
     })
   })
 
+  it('restores a null opening balance from a stored draft', () => {
+    expect(
+      accountDraftToFormValues({
+        ...toAccountDraftFields({}),
+        opening_balance: null,
+      }),
+    ).toMatchObject({ opening_balance: 0, is_default: false })
+  })
+
   it('normalizes account values', () => {
     expect(
       toAccountDraftFields({ bank_id: 'b1', account_number: ' ' }),
@@ -151,6 +160,7 @@ describe('first incomplete step', () => {
         cheque_number: '12345',
       }),
     ).toBe(1)
+    expect(firstIncompleteChequeStep({ ...empty, amount: 10 })).toBe(1)
     expect(
       firstIncompleteChequeStep({
         ...empty,

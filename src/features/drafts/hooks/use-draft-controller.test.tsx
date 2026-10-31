@@ -55,7 +55,10 @@ vi.mock('./use-leave-guard', () => ({
 
 type Values = { name: string }
 
-function setup(initialDraftId: string | null = 'draft-1') {
+function setup(
+  initialDraftId: string | null = 'draft-1',
+  notifyHydration = true,
+) {
   const client = new QueryClient()
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
@@ -77,7 +80,7 @@ function setup(initialDraftId: string | null = 'draft-1') {
         initialDraftId,
         toFields: (values) => values,
         toFormValues,
-        onHydrated,
+        onHydrated: notifyHydration ? onHydrated : undefined,
         draftsHref: '/parties/drafts',
       })
       return { form, controller }
@@ -109,6 +112,21 @@ afterEach(() => {
 })
 
 describe('useDraftController', () => {
+  it('marks publishing complete and does not confirm navigation after failed leave saves', async () => {
+    const { result } = setup()
+    act(() => result.current.controller.finishPublish())
+    mocks.autosave.save.mockRejectedValueOnce(new Error('offline'))
+    await act(() => result.current.controller.leaveDialogProps.onSave())
+    expect(mocks.guard.confirmLeave).not.toHaveBeenCalled()
+    expect(mocks.toastAdd).toHaveBeenCalledWith({
+      title: 'error',
+      description: 'saveFailed',
+      type: 'error',
+    })
+    mocks.autosave.save.mockRejectedValueOnce(new Error('offline'))
+    await act(() => result.current.controller.saveDraft())
+    expect(mocks.toastAdd).toHaveBeenCalledTimes(2)
+  })
   it('hydrates only after a fresh fetch and does not reset the same draft twice', async () => {
     const { result, rerender, toFormValues, onHydrated } = setup()
     mocks.draftQuery.data = { id: 'draft-1', name: 'Restored' }
@@ -129,8 +147,19 @@ describe('useDraftController', () => {
       name: 'Restored',
     })
 
+    mocks.draftQuery.data = { ...mocks.draftQuery.data }
     rerender()
     expect(toFormValues).toHaveBeenCalledOnce()
+  })
+
+  it('hydrates a draft when no optional hydration callback is supplied', async () => {
+    mocks.draftQuery.data = { id: 'draft-1', name: 'Restored' }
+    mocks.draftQuery.isFetchedAfterMount = true
+    const { result, onHydrated } = setup('draft-1', false)
+    await waitFor(() =>
+      expect(result.current.form.getValues('name')).toBe('Restored'),
+    )
+    expect(onHydrated).not.toHaveBeenCalled()
   })
 
   it('drops an unavailable draft id from the URL and forgets autosave state', async () => {

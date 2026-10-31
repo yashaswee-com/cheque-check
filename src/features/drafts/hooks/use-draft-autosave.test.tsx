@@ -62,6 +62,51 @@ async function typeName(
 }
 
 describe('useDraftAutosave', () => {
+  it('updates an existing draft without rewriting its URL or identity', async () => {
+    window.history.replaceState(null, '', '/parties/create?draftId=d1&keep=yes')
+    const { result } = renderAutosave('d1')
+    let saved: string | null = null
+    await act(async () => {
+      saved = await result.current.autosave.save()
+    })
+    expect(saved).toBe('d1')
+    expect(result.current.autosave.status).toBe('saved')
+    expect(result.current.autosave.draftId).toBe('d1')
+    expect(service.update).toHaveBeenCalledWith('d1', expect.any(Object))
+    expect(service.create).not.toHaveBeenCalled()
+    expect(window.location.search).toBe('?draftId=d1&keep=yes')
+  })
+  it('resumes after publishing is interrupted and forgets deleted draft identities', async () => {
+    const { result } = renderAutosave('d1')
+    await act(() => result.current.autosave.stop())
+    act(() => {
+      result.current.autosave.resume()
+      result.current.autosave.forget()
+    })
+    expect(result.current.autosave.draftId).toBeNull()
+    await typeName(result, 'Fresh')
+    await act(() => vi.advanceTimersByTimeAsync(1500))
+    expect(service.create).toHaveBeenCalledWith(
+      'b1',
+      expect.objectContaining({ name: 'Fresh' }),
+    )
+    expect(service.update).not.toHaveBeenCalled()
+  })
+
+  it('catches debounced save failures, cancels pending timers on unmount and unsubscribes the form', async () => {
+    const { result, unmount } = renderAutosave()
+    service.create.mockRejectedValueOnce(new Error('offline'))
+    await typeName(result, 'Unsaved')
+    await act(() => vi.advanceTimersByTimeAsync(1500))
+    expect(result.current.autosave.status).toBe('error')
+    await typeName(result, 'Pending')
+    unmount()
+    await act(() => vi.advanceTimersByTimeAsync(1500))
+    expect(service.create).toHaveBeenCalledOnce()
+    await typeName(result, 'After unmount')
+    await act(() => vi.advanceTimersByTimeAsync(1500))
+    expect(service.create).toHaveBeenCalledOnce()
+  })
   beforeEach(() => {
     vi.useFakeTimers()
     service.create.mockResolvedValue({ id: 'd1' })

@@ -118,7 +118,7 @@ export function accountDraftToFormValues(draft: AccountDraftFields) {
     color: draft.color ?? '#007AFF',
     notes: draft.notes ?? '',
     opening_balance: draft.opening_balance ?? 0,
-    is_default: draft.is_default ?? false,
+    is_default: draft.is_default,
   }
 }
 

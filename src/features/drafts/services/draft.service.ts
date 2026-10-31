@@ -28,10 +28,7 @@ function parseOrThrow<T extends z.ZodTypeAny>(
 ): z.infer<T> {
   const result = schema.safeParse(values)
   if (!result.success) {
-    throw new ValidationError(
-      result.error.issues[0]?.message ?? 'Draft is incomplete',
-      result.error,
-    )
+    throw new ValidationError(result.error.issues[0].message, result.error)
   }
   return result.data
 }
