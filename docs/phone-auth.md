@@ -51,7 +51,13 @@ Never enable Supabase test OTPs in production.
 2. Configure Twilio in Supabase Auth (`[auth.sms.twilio]`, with
    `SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN` in the shell for `supabase config push`,
    or the dashboard). Provider secrets never go in Vercel or `NEXT_PUBLIC_*`.
-3. Turnstile site key (`NEXT_PUBLIC_TURNSTILE_SITE_KEY`) and secret
-   (`SUPABASE_AUTH_CAPTCHA_SECRET`, Auth config), then uncomment `[auth.captcha]`.
-4. Apply migrations `20261021050000` and `20261021070000`, push auth config.
+3. Configure the Turnstile site key (`NEXT_PUBLIC_TURNSTILE_SITE_KEY`) for the
+   frontend environment and the matching hostname in the Cloudflare widget. The
+   production hostname approved for this widget is `cheque-check.vercel.app`.
+   The secret belongs in Supabase Auth as `SUPABASE_AUTH_CAPTCHA_SECRET`, never
+   in Vercel or a `NEXT_PUBLIC_*` variable.
+4. Apply migrations `20261021050000` and `20261021070000`, then push Auth
+   config. The repository enables `[auth.captcha]` with the secret read from
+   `SUPABASE_AUTH_CAPTCHA_SECRET`; provide that variable securely to the
+   `supabase config push` process.
 5. Set `NEXT_PUBLIC_PHONE_AUTH_ENABLED=true` per Vercel environment.
