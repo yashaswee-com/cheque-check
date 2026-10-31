@@ -30,9 +30,52 @@ vi.mock('@sentry/nextjs', () => ({
 vi.mock('./config', () => ({ monitoringConfig: config }))
 
 describe('authenticated recording lifecycle', () => {
+  it('accepts explicit opt-in and refreshes the same identity without rotating its diagnostics', async () => {
+    const browser = await import('./browser')
+    browser.setTrackingPreference(true)
+    expect(browser.readTrackingPreference()).toBe(true)
+    browser.setMonitoringUser({ id: 'u1' })
+    const reference = browser.getDiagnosticId()
+    sdk.clearBreadcrumbs.mockClear()
+    browser.setMonitoringUser({ id: 'u1', name: 'Updated' })
+    expect(browser.getDiagnosticId()).toBe(reference)
+    expect(sdk.clearBreadcrumbs).not.toHaveBeenCalled()
+    expect(sdk.setUser).toHaveBeenLastCalledWith({
+      id: 'u1',
+      email: undefined,
+      username: 'Updated',
+    })
+    browser.setMonitoringUser(null)
+    expect(sdk.setUser).toHaveBeenLastCalledWith(null)
+  })
+
+  it('does not start recording twice and reloads before another user can inherit a live recording', async () => {
+    const browser = await import('./browser')
+    browser.setMonitoringUser({ id: 'u1' })
+    browser.syncMonitoringPage('/cheques')
+    await vi.waitFor(() => expect(sdk.addIntegration).toHaveBeenCalledOnce())
+    const script = document.querySelector('#microsoft-clarity')
+    browser.syncMonitoringPage('/accounts')
+    expect(document.querySelector('#microsoft-clarity')).toBe(script)
+    expect(sdk.addIntegration).toHaveBeenCalledOnce()
+    browser.setMonitoringUser({ id: 'u2' })
+    expect(location.reload).toHaveBeenCalledOnce()
+    expect(document.querySelector('#microsoft-clarity')).toBeNull()
+    expect(sdk.setUser).toHaveBeenLastCalledWith(null)
+  })
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    Object.assign(config, {
+      enabled: true,
+      policyApproved: true,
+      clarityEnabled: true,
+      clarityProjectId: 'qa123',
+      replayEnabled: true,
+      dsn: 'test',
+      replaySampleRate: 0.01,
+      errorReplaySampleRate: 0.25,
+    })
     localStorage.clear()
     sessionStorage.clear()
     document.head.innerHTML = ''
@@ -50,6 +93,84 @@ describe('authenticated recording lifecycle', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
+  })
+
+  it('honors explicit consent and global privacy controls and stays inert when disabled', async () => {
+    const browser = await import('./browser')
+    localStorage.setItem(browser.trackingPreferenceKey, 'allowed')
+    expect(browser.readTrackingPreference()).toBe(true)
+    vi.stubGlobal('navigator', { globalPrivacyControl: true })
+    expect(browser.readTrackingPreference()).toBe(false)
+    vi.stubGlobal('navigator', { globalPrivacyControl: false })
+    config.enabled = false
+    expect(browser.trackingAllowed()).toBe(false)
+    expect(browser.diagnosticHeaders()).toEqual({})
+    browser.setMonitoringUser({ id: 'u1' })
+    sdk.setContext.mockClear()
+    browser.syncMonitoringPage('/cheques')
+    expect(sdk.setContext).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { replayEnabled: false, dsn: 'test' },
+    { replayEnabled: true, dsn: '' },
+  ])('does not start an unconfigured replay: %j', async (values) => {
+    Object.assign(config, values)
+    const browser = await import('./browser')
+    browser.setMonitoringUser({ id: 'u1' })
+    browser.syncMonitoringPage('/cheques')
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(sdk.addIntegration).not.toHaveBeenCalled()
+  })
+
+  it('does not restart existing replay sessions or buffer when error sampling is disabled', async () => {
+    config.clarityEnabled = false
+    config.errorReplaySampleRate = 0
+    const browser = await import('./browser')
+    browser.setMonitoringUser({ id: 'u1' })
+    const replay = {
+      getReplayId: vi.fn().mockReturnValue('existing'),
+      start: vi.fn(),
+      startBuffering: vi.fn(),
+      stop: vi.fn().mockRejectedValue(new Error('sdk failed')),
+    }
+    sdk.getReplay.mockReturnValue(replay)
+    browser.syncMonitoringPage('/cheques')
+    await vi.waitFor(() => expect(replay.getReplayId).toHaveBeenCalled())
+    expect(replay.start).not.toHaveBeenCalled()
+    await browser.stopRecordings()
+    replay.getReplayId.mockReturnValue(undefined)
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    browser.syncMonitoringPage('/cheques')
+    await vi.waitFor(() => expect(replay.getReplayId).toHaveBeenCalledTimes(2))
+    expect(replay.startBuffering).not.toHaveBeenCalled()
+  })
+
+  it('contains replay initialization failures without loading an integration', async () => {
+    const browser = await import('./browser')
+    sdk.replayIntegration.mockImplementationOnce(() => {
+      throw new Error('sdk initialization')
+    })
+    browser.setMonitoringUser({ id: 'u1' })
+    browser.syncMonitoringPage('/cheques')
+    await vi.waitFor(() => expect(sdk.replayIntegration).toHaveBeenCalled())
+    expect(sdk.addIntegration).not.toHaveBeenCalled()
+  })
+
+  it('blocks queued Clarity commands after consent revocation and ignores missing project configuration', async () => {
+    const browser = await import('./browser')
+    config.clarityProjectId = ''
+    browser.setMonitoringUser({ id: 'u1' })
+    browser.syncMonitoringPage('/cheques')
+    expect(document.querySelector('#microsoft-clarity')).toBeNull()
+    await browser.stopRecordings()
+    config.clarityProjectId = 'qa123'
+    browser.syncMonitoringPage('/cheques')
+    const queued = window.clarity!
+    const previous = queued.q!.length
+    browser.setTrackingPreference(false)
+    queued('event', 'private')
+    expect(queued.q).toHaveLength(previous)
   })
 
   it('respects privacy signals and unavailable preference storage', async () => {

@@ -198,7 +198,7 @@ function syncClarity() {
     release: monitoringConfig.release,
     deployment_kind: monitoringConfig.deploymentKind,
   })) {
-    if (value !== undefined) clarity?.('set', key, String(value))
+    clarity?.('set', key, String(value))
   }
 }
 

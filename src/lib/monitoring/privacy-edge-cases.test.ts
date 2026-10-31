@@ -8,6 +8,45 @@ import {
 } from './privacy'
 
 describe('telemetry privacy edge cases', () => {
+  it('scrubs sparse events and missing breadcrumb metadata without introducing user data', () => {
+    expect(scrubBreadcrumb({})).toBeNull()
+    expect(scrubBreadcrumb({ category: 'navigation' })?.data).toEqual({
+      from: '/',
+      to: '/',
+    })
+    expect(scrubBreadcrumb({ category: 'http' })?.data).toEqual({
+      url: '/',
+      method: 'GET',
+      status_code: undefined,
+    })
+    const event = scrubEvent({
+      request: { method: 'GET' },
+      user: {},
+      contexts: {},
+      exception: {
+        values: [{ type: 'Error' }, { stacktrace: { frames: [{}] } }],
+      },
+    })
+    expect(event.request).toEqual({ method: 'GET', url: undefined })
+    expect(event.user).toBeUndefined()
+    expect(event.contexts).toEqual({
+      trace: undefined,
+      app: {},
+      replay: undefined,
+      browser: undefined,
+      os: undefined,
+    })
+    expect(event.exception?.values?.[0]).toEqual(
+      expect.objectContaining({
+        value:
+          'Exception message withheld; inspect stack and operation context',
+      }),
+    )
+    expect(safeContext('private')).toEqual({})
+    expect(safeContext({ operation: null, outcome: false, status: 0 })).toEqual(
+      { outcome: false, status: 0 },
+    )
+  })
   it('rejects invalid absolute URLs and nonfinite context values', () => {
     expect(safeRoute('http://[')).toBe('[invalid-url]')
     expect(safeContext(null)).toEqual({})

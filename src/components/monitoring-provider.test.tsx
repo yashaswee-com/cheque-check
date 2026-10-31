@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => ({
   profile: null as Record<string, unknown> | null,
   business: null as Record<string, unknown> | null,
   enabled: true,
-  entitlements: [] as Entitlement[],
+  entitlements: [] as Entitlement[] | undefined,
 }))
 vi.mock('next/navigation', () => ({ usePathname: () => '/cheques' }))
 vi.mock('@/features/auth/services/auth.service', () => ({
@@ -191,10 +191,129 @@ describe('MonitoringProvider', () => {
       'old@example.test',
     )
   })
+
+  it('uses matching profile preferences and a trial entitlement instead of stale or unrelated entitlements', async () => {
+    mocks.profile = {
+      user_id: 'u1',
+      email: 'profile@example.test',
+      name: 'Profile Name',
+      language: 'hi',
+      time_zone: 'Asia/Kolkata',
+      currency: 'INR',
+    }
+    mocks.business = { id: 'b1', user_id: 'u1' }
+    mocks.entitlements = [
+      {
+        id: 'old',
+        user_id: 'old-user',
+        feature_id: FEATURE_IDS.LIFETIME_PREMIUM,
+        status: 'active',
+        valid_until: null,
+      },
+      {
+        id: 'other',
+        user_id: 'u1',
+        feature_id: FEATURE_IDS.AI_SCANNER_SUB,
+        status: 'active',
+        valid_until: null,
+      },
+      {
+        id: 'trial',
+        user_id: 'u1',
+        feature_id: FEATURE_IDS.LIFETIME_PREMIUM,
+        status: 'trialing',
+        valid_until: new Date(Date.now() + 86_400_000).toISOString(),
+      },
+    ]
+    mocks.getUser.mockResolvedValue({
+      id: 'u1',
+      email: 'auth@example.test',
+      user_metadata: { name: 'Auth Name' },
+    })
+    render(<MonitoringProvider />)
+    await waitFor(() =>
+      expect(mocks.setUser).toHaveBeenLastCalledWith({
+        id: 'u1',
+        email: 'profile@example.test',
+        name: 'Profile Name',
+      }),
+    )
+    expect(mocks.syncPage).toHaveBeenLastCalledWith('/cheques', {
+      business_id: 'b1',
+      language: 'hi',
+      timezone: 'Asia/Kolkata',
+      currency: 'INR',
+      entitlement: 'trialing',
+      tier: 'premium',
+    })
+  })
+
+  it('falls back to authenticated metadata while entitlement and profile fields are unavailable', async () => {
+    mocks.profile = { user_id: 'u1', email: null, name: null }
+    mocks.entitlements = undefined
+    mocks.getUser.mockResolvedValue({
+      id: 'u1',
+      email: 'auth@example.test',
+      user_metadata: { name: 123 },
+    })
+    render(<MonitoringProvider />)
+    await waitFor(() =>
+      expect(mocks.setUser).toHaveBeenCalledWith({
+        id: 'u1',
+        email: 'auth@example.test',
+        name: undefined,
+      }),
+    )
+    expect(mocks.syncPage).toHaveBeenLastCalledWith(
+      '/cheques',
+      expect.objectContaining({
+        entitlement: 'unknown',
+        tier: 'unknown',
+      }),
+    )
+  })
+
+  it('does not overwrite a newer sign-in when the initial identity lookup fails', async () => {
+    let rejectLookup!: (reason: Error) => void
+    mocks.getUser.mockReturnValue(
+      new Promise((_resolve, reject) => {
+        rejectLookup = reject
+      }),
+    )
+    render(<MonitoringProvider />)
+    act(() =>
+      mocks.subscribe.mock.calls[0][0]('SIGNED_IN', {
+        user: { id: 'new-user', user_metadata: {} },
+      }),
+    )
+    mocks.setUser.mockClear()
+    await act(async () => rejectLookup(new Error('stale lookup')))
+    expect(mocks.setUser).not.toHaveBeenCalledWith(null)
+  })
 })
 
 describe('MonitoringPreferences', () => {
   afterEach(cleanup)
+
+  it('explains why tracking is unavailable when monitoring is disabled', () => {
+    mocks.enabled = false
+    try {
+      const view = render(
+        <NextIntlClientProvider
+          locale="en"
+          messages={{ Monitoring: messages.Monitoring }}
+        >
+          <MonitoringPreferences />
+        </NextIntlClientProvider>,
+      )
+      expect(view.getByRole('switch')).toHaveAttribute('aria-disabled', 'true')
+      expect(
+        view.getByText(messages.Monitoring.unavailable),
+      ).toBeInTheDocument()
+    } finally {
+      mocks.enabled = true
+    }
+  })
 
   it('refreshes browser preference only for relevant storage and preference events', () => {
     mocks.readPreference.mockReturnValue(true)

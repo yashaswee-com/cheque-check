@@ -29,7 +29,6 @@ function EnabledMonitoringProvider() {
   const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
-    if (!monitoringConfig.enabled) return
     let active = true
     let authRevision = 0
     const applyUser = (next: User | null) => {
@@ -70,7 +69,6 @@ function EnabledMonitoringProvider() {
   }, [])
 
   useEffect(() => {
-    if (!monitoringConfig.enabled) return
     const ownProfile = profile?.user_id === user?.id ? profile : null
     const ownBusiness =
       activeBusiness?.user_id === user?.id ? activeBusiness : null

@@ -1,8 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getErrorReference, logger, subscribeErrorReferences } from './logger'
 
 const mocks = vi.hoisted(() => ({
   config: { enabled: true, dsn: 'test' },
+  diagnosticId: 'diagnostic-id' as string | undefined,
+  level: 'debug' as string | undefined,
+  factory: vi.fn(),
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -11,7 +14,12 @@ const mocks = vi.hoisted(() => ({
   captureException: vi.fn(() => 'sentry-error-id'),
   captureMessage: vi.fn(() => 'sentry-message-id'),
 }))
-vi.mock('pino', () => ({ default: () => mocks }))
+vi.mock('pino', () => ({
+  default: (options: unknown) => {
+    mocks.factory(options)
+    return mocks
+  },
+}))
 vi.mock('@sentry/nextjs', () => ({
   ...mocks,
   getIsolationScope: () => ({
@@ -19,19 +27,67 @@ vi.mock('@sentry/nextjs', () => ({
   }),
 }))
 vi.mock('@/lib/env/client', () => ({
-  publicEnv: { NEXT_PUBLIC_LOG_LEVEL: 'debug' },
+  publicEnv: {
+    get NEXT_PUBLIC_LOG_LEVEL() {
+      return mocks.level
+    },
+  },
 }))
 vi.mock('@/lib/monitoring/config', () => ({ monitoringConfig: mocks.config }))
 vi.mock('@/lib/monitoring/browser', () => ({
-  getDiagnosticId: () => 'diagnostic-id',
+  getDiagnosticId: () => mocks.diagnosticId,
 }))
 
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.config.enabled = true
+  mocks.config.dsn = 'test'
+  mocks.diagnosticId = 'diagnostic-id'
+  mocks.level = 'debug'
 })
+afterEach(() => vi.unstubAllEnvs())
 
 describe('structured logger', () => {
+  it.each([
+    { environment: 'development', expected: 'debug' },
+    { environment: 'production', expected: 'info' },
+  ])(
+    'uses $expected when no explicit log level is configured in $environment',
+    async ({ environment, expected }) => {
+      vi.resetModules()
+      mocks.level = undefined
+      vi.stubEnv('NODE_ENV', environment)
+      await import('./logger')
+      expect(mocks.factory).toHaveBeenCalledWith({
+        level: expected,
+        browser: { asObject: true },
+      })
+    },
+  )
+  it('warns for expected errors and retains local references when the DSN is absent', () => {
+    const expected = Object.assign(new Error('invalid'), {
+      name: 'ValidationError',
+      digest: 'digest-id',
+    })
+    expected.stack = undefined
+    expect(logger.error('Validation failed', expected)).toBe('diagnostic-id')
+    expect(mocks.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        digest: 'digest-id',
+        error: { name: 'ValidationError', stack: undefined },
+      }),
+      'Validation failed',
+    )
+    expect(mocks.captureException).not.toHaveBeenCalled()
+    mocks.config.dsn = ''
+    mocks.diagnosticId = undefined
+    const reference = logger.error('Offline', new Error('offline'))
+    expect(reference).toMatch(/^[a-f0-9-]{36}$/)
+    expect(mocks.captureException).not.toHaveBeenCalled()
+    expect(mocks.error.mock.calls[0][0]).not.toHaveProperty(
+      'diagnostic_session_id',
+    )
+  })
   it.each(['debug', 'info', 'warn'] as const)(
     'scrubs %s messages and allowlists context',
     (level) => {
