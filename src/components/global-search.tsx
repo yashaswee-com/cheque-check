@@ -153,7 +153,6 @@ export function GlobalSearch({
         onValueChange={setQuery}
       />
       <CommandList className="max-h-[400px]">
-        {chequesLoading && <p role="status">{t('loading')}</p>}
         {chequesError && <p role="alert">{t('loadDataError')}</p>}
         {query.length > 0 &&
           !hasResults &&

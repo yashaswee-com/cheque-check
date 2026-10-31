@@ -156,7 +156,7 @@ beforeEach(() => {
 })
 
 describe('GlobalSearch', () => {
-  it('shows loading and error states without claiming missing records are an empty search result', () => {
+  it('hides loading text, preserves errors, and waits before showing no results', () => {
     state.loading = true
     state.active = false
     state.cheques = undefined
@@ -167,7 +167,8 @@ describe('GlobalSearch', () => {
     fireEvent.change(screen.getByTestId('global-search-input'), {
       target: { value: 'missing' },
     })
-    expect(screen.getByRole('status')).toHaveTextContent('loading')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByText('loading')).not.toBeInTheDocument()
     expect(screen.queryByText('noResultsFor missing')).not.toBeInTheDocument()
     state.loading = false
     state.error = new Error('offline')
@@ -178,6 +179,28 @@ describe('GlobalSearch', () => {
     rerender(<GlobalSearch open onOpenChange={vi.fn()} />)
     expect(screen.getByText('noResultsFor missing')).toBeInTheDocument()
   })
+
+  it.each(['', 'Asha'])(
+    'keeps search usable without loading text for query "%s"',
+    (query) => {
+      state.loading = true
+      render(<GlobalSearch open onOpenChange={vi.fn()} />)
+      const input = screen.getByTestId('global-search-input')
+      expect(input).toBeEnabled()
+      fireEvent.change(input, { target: { value: query } })
+
+      expect(screen.queryByText('loading')).not.toBeInTheDocument()
+      expect(screen.queryByRole('status')).not.toBeInTheDocument()
+      expect(screen.queryByText(/^noResultsFor/)).not.toBeInTheDocument()
+      expect(screen.queryAllByTestId(/^global-search-result-/)).toHaveLength(
+        query ? 6 : 0,
+      )
+      if (query) {
+        fireEvent.click(screen.getByTestId('global-search-result-party'))
+        expect(state.push).toHaveBeenCalledExactlyOnceWith('/parties/p1')
+      }
+    },
+  )
 
   it('searches incomplete drafts and records with missing optional relationships', () => {
     state.cheques = [{ id: 'c1', cheque_number: '000001', amount: 123 }]

@@ -40,6 +40,10 @@ Top navigation retains back/title/search; secondary actions are named controls
 inside the More popover. Dashboard quick actions scroll within their own
 equal-size, keyboard-focusable horizontal row.
 
+Global search does not display loading text while fetching results. Existing
+results remain usable, no-results feedback waits for loading to finish, and
+fetch failures still show the error message.
+
 Cheque cards no longer expose deletion; confirmed detail deletion remains.
 Tag Selector alone opts into a modal dim/blur backdrop. Other popovers do not
 receive it. The selector retains multi-select, outside dismissal, Escape,
