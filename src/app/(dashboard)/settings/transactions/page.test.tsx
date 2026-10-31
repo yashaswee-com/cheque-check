@@ -14,13 +14,15 @@ import type { Transaction } from '@/features/monetization/repositories/monetizat
 import TransactionsPage from './page'
 
 const mocks = vi.hoisted(() => ({ refresh: vi.fn(), copy: vi.fn() }))
-let transactions: Transaction[] = []
+let transactions: Transaction[] | undefined = []
 let error: Error | null = null
+let isLoading = false
+let isRefreshing = false
 vi.mock('@/features/monetization/hooks/use-transactions', () => ({
   useTransactions: () => ({
     transactions,
-    isLoading: false,
-    isRefreshing: false,
+    isLoading,
+    isRefreshing,
     error,
     refresh: mocks.refresh,
   }),
@@ -29,6 +31,8 @@ afterEach(cleanup)
 beforeEach(() => {
   vi.clearAllMocks()
   error = null
+  isLoading = false
+  isRefreshing = false
   mocks.copy.mockResolvedValue(undefined)
   Object.defineProperty(navigator, 'clipboard', {
     configurable: true,
@@ -155,5 +159,94 @@ describe('payment history cards', () => {
       screen.getByRole('button', { name: messages.Premium.retry }),
     )
     expect(mocks.refresh).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows loading and empty-history states when no transactions are available', () => {
+    isLoading = true
+    const { container, unmount } = page()
+    expect(container.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(5)
+    unmount()
+
+    isLoading = false
+    transactions = undefined
+    page()
+    expect(
+      screen.getByText(messages.Transactions.noTransactionsYet),
+    ).toBeVisible()
+  })
+
+  it('filters by type and status, then sorts by amount in ascending order', () => {
+    transactions = [
+      {
+        ...transactions![0],
+        id: 'sub-large',
+        type: 'subscription',
+        status: 'captured',
+        amount: 300,
+      },
+      {
+        ...transactions![1],
+        id: 'sub-small',
+        type: 'subscription',
+        status: 'authorized',
+        amount: 100,
+      },
+      { ...transactions![2], id: 'top-up', type: 'top_up', amount: 50 },
+    ]
+    page()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Transactions.sortAndFilter }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Transactions.subscription }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Transactions.amount }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Transactions.ascending }),
+    )
+    const amounts = Array.from(
+      document.querySelectorAll('div.text-right p.font-bold'),
+    ).map((node) =>
+      Number(node.textContent?.match(/[\d,]+\.\d{2}/)?.[0].replace(',', '')),
+    )
+    expect(amounts).toEqual([1, 3])
+
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Transactions.captured }),
+    )
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(
+      screen.getAllByRole('heading', {
+        name: messages.ProductNames.ai_scan_250,
+      }),
+    ).toHaveLength(1)
+  })
+
+  it('shows payment type fallback when product identifiers are absent', () => {
+    transactions = [
+      {
+        ...transactions![0],
+        id: 'missing-product',
+        product_id: undefined,
+        type: 'top_up',
+        status: 'captured',
+        razorpay_order_id: null,
+        razorpay_payment_id: null,
+      },
+    ]
+    page()
+    expect(
+      screen.getByRole('heading', {
+        name: messages.ProductNames.ai_scan_250,
+      }),
+    ).toBeVisible()
+    expect(screen.getByText(messages.Transactions.captured)).toBeVisible()
+    fireEvent.change(
+      screen.getByPlaceholderText(messages.Transactions.searchPlaceholder),
+      { target: { value: 'absent' } },
+    )
+    expect(screen.getByText(messages.Transactions.adjustFilters)).toBeVisible()
   })
 })
