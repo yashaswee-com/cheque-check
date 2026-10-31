@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   countryFromTimeZone,
   isValidE164Phone,
@@ -20,6 +20,16 @@ describe('countryFromTimeZone', () => {
 })
 
 describe('resolveDefaultPhoneCountry', () => {
+  it('falls back safely when browser time zone discovery fails', () => {
+    const format = vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => {
+      throw new Error('Intl unavailable')
+    })
+    try {
+      expect(resolveDefaultPhoneCountry(null)).toBe('IN')
+    } finally {
+      format.mockRestore()
+    }
+  })
   it('prefers the profile time zone', () => {
     expect(resolveDefaultPhoneCountry('Europe/London', 'Asia/Kolkata')).toBe(
       'GB',

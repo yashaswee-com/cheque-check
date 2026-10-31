@@ -7,6 +7,46 @@ import {
 } from './storage'
 
 describe('private storage helpers', () => {
+  it('rejects empty and mismatched image payloads', async () => {
+    await expect(
+      validateImageFile(new File([], 'empty.png', { type: 'image/png' }), 100),
+    ).rejects.toThrow('empty')
+    await expect(
+      validateImageFile(
+        new File([new Uint8Array([0xff, 0xd8, 0xff])], 'wrong.png', {
+          type: 'image/png',
+        }),
+        100,
+      ),
+    ).rejects.toThrow('do not match')
+  })
+
+  it('accepts genuine JPEG and WebP signatures', async () => {
+    await expect(
+      validateImageFile(
+        new File([new Uint8Array([0xff, 0xd8, 0xff])], 'image.jpg', {
+          type: 'image/jpeg',
+        }),
+        100,
+      ),
+    ).resolves.toBe('jpg')
+    await expect(
+      validateImageFile(
+        new File(['RIFF0000WEBP'], 'image.webp', { type: 'image/webp' }),
+        100,
+      ),
+    ).resolves.toBe('webp')
+  })
+
+  it('rejects malformed encoding and non-private URL paths', () => {
+    expect(
+      parsePrivateMediaUrl('/api/storage/private-avatars/%E0%A4%A'),
+    ).toBeNull()
+    expect(parsePrivateMediaUrl('/public/avatar.png')).toBeNull()
+    expect(
+      parsePrivateMediaUrl('/api/storage/private-avatars//image.png'),
+    ).toBeNull()
+  })
   it('uses the file signature rather than the supplied extension', async () => {
     const signature = new Uint8Array([0x89, 0x50, 0x4e, 0x47])
     const file = new File([signature], 'avatar.exe', { type: 'image/png' })
