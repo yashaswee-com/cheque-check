@@ -48,6 +48,16 @@ files exceed 95% line coverage (lowest: 95.12%). Global coverage is 99.16% lines
 These are a measured snapshot, not a guarantee that future changes retain
 these values; the per-file line gate enforces the minimum on subsequent runs.
 
+The subsequent feature-wide expansion adds more validation, error-path,
+hook lifecycle, UI, and streamed-download tests. The 100% all-metric target
+was stopped by request; the existing 95% per-file line gate remains unchanged.
+The snapshot above belongs to the earlier verified coverage run, not this
+newer test batch. Generated `coverage/` and `coverage-*/` reports are ignored
+by Git and can be regenerated locally when needed.
+The expanded unit suite passed 1,947 tests across 215 files, with only the
+acknowledged bank-seed freshness case skipped. This verification did not
+collect coverage and does not establish a new coverage percentage.
+
 The known bank-seed freshness failure is not disabled in the repository.
 To measure coverage while leaving only that acknowledged test unexecuted:
 
