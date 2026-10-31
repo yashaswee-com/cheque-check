@@ -107,7 +107,7 @@ test.describe('businesses', () => {
   test('switcher search with no match shows no selectable business', async ({
     page,
   }) => {
-    await page.goto('/')
+    await page.goto('/dashboard')
     await new BusinessesPage(page).openSwitcher()
     await page
       .getByTestId('business-switcher-search')

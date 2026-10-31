@@ -23,7 +23,15 @@ export class ChequesPage {
     type?: 'Outward' | 'Inward'
   }) {
     if (type === 'Inward') {
-      await this.page.getByTestId('cheque-type-inward').click()
+      const inwardTab = this.page.getByTestId('cheque-type-inward')
+      // Inward is Premium-only and entitlements load asynchronously; the tab
+      // rejects clicks (with an upgrade toast) until access is known.
+      await expect(async () => {
+        await inwardTab.click()
+        await expect(inwardTab).toHaveAttribute('aria-selected', 'true', {
+          timeout: 1_000,
+        })
+      }).toPass()
     }
     await this.page.getByTestId('cheque-amount-input').fill(String(amount))
     await this.page.getByTestId('cheque-number-input').fill(chequeNumber)
@@ -47,6 +55,22 @@ export class ChequesPage {
     await this.page.getByTestId('cheque-step2-continue').click()
   }
 
+  /** Step 3: picks existing tags; the selector is a modal popover, so close it before continuing. */
+  async selectTags(...tagNames: string[]) {
+    await this.page.getByTestId('tag-selector-trigger').click()
+    for (const tagName of tagNames) {
+      const option = this.page
+        .locator('[data-testid^="tag-selector-option-"]')
+        .filter({ hasText: tagName })
+      await option.click()
+      await expect(option).toHaveAttribute('aria-pressed', 'true')
+    }
+    await this.page.keyboard.press('Escape')
+    await expect(
+      this.page.getByTestId('tag-selector-create-input'),
+    ).toHaveCount(0)
+  }
+
   /** Step 3: fills the required deposit date and submits. */
   async finishAndSubmit(
     depositDate: string,
@@ -68,6 +92,39 @@ export class ChequesPage {
         await this.page.getByTestId('nps-dismiss-button').click()
       }
     }
+  }
+
+  /** The "Save this as a draft?" sheet shown when leaving an unfinished form. */
+  get leaveSheet() {
+    return this.page.getByRole('dialog', { name: 'Save this as a draft?' })
+  }
+
+  /** Leaves an unfinished cheque form through the top bar and discards it. */
+  async discardAndLeave() {
+    await this.page
+      .getByRole('button', { name: 'Go back', exact: true })
+      .click()
+    await this.leaveSheet
+      .getByRole('button', { name: 'Discard', exact: true })
+      .click()
+    await expect(this.page).not.toHaveURL(/\/cheques\/create/)
+  }
+
+  /** On a cheque detail page: changes status through the speed-dial menu. */
+  async setStatusFromDetail(
+    status: 'Issued' | 'Received' | 'Cleared' | 'Bounced',
+  ) {
+    await this.page.getByTestId('speed-dial-toggle').click()
+    await this.page.getByTestId(`cheque-status-${status.toLowerCase()}`).click()
+    await expect(this.page.getByTestId('cheque-detail-status')).toContainText(
+      status,
+    )
+  }
+
+  card(chequeNumber: string) {
+    return this.page
+      .locator('[data-testid^="cheque-card-"]')
+      .filter({ hasText: `#${chequeNumber}` })
   }
 
   async openByChequeNumber(chequeNumber: string) {

@@ -43,17 +43,17 @@ test.describe('parties', () => {
     ).toHaveCount(0)
   })
 
-  test('blocks an invalid phone number from advancing past step 2', async ({
+  test('blocks an invalid phone number from creating the party', async ({
     page,
   }) => {
     await page.goto('/parties/create')
     await page.locator('#name').fill(uniqueE2eName('party'))
-    await page.getByTestId('party-step1-continue').click()
 
     await page.locator('#contact').fill('123')
-    await page.getByTestId('party-step2-continue').click()
+    await page.getByTestId('party-submit-button').click()
     await expect(page.getByText('Enter a valid phone number')).toBeVisible()
-    await expect(page.getByTestId('party-submit-button')).toHaveCount(0)
+    await expect(page.getByTestId('creation-success-continue')).toHaveCount(0)
+    await expect(page).toHaveURL(/\/parties\/create/)
   })
 
   test('soft-deletes a party without removing its linked cheque', async ({

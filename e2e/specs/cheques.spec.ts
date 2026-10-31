@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import { PartiesPage } from '../pages/parties.page'
 import { AccountsPage } from '../pages/accounts.page'
 import { ChequesPage } from '../pages/cheques.page'
+import { signInAsNewOnboardedUser } from '../flows'
 import {
   E2E_PHONE,
   uniqueChequeNumber,
@@ -89,47 +90,53 @@ test.describe('cheques', () => {
     await expect(cards.last()).toContainText(`#${earlierCheque}`)
   })
 
-  test('filters the cheque list by status', async ({ page }) => {
-    const partyName = uniqueE2eName('party')
-    const accountName = uniqueE2eName('account')
-    const accountNumber = uniqueChequeNumber() + uniqueChequeNumber()
-    const receivedNumber = uniqueChequeNumber()
-    const clearedNumber = uniqueChequeNumber()
+  // Inward (Received) cheques are Premium-only.
+  test.describe('with premium access', () => {
+    test.use({ storageState: { cookies: [], origins: [] } })
 
-    await new PartiesPage(page).createParty(partyName, E2E_PHONE)
-    await new AccountsPage(page).createAccount(accountName, accountNumber)
-    const chequesPage = new ChequesPage(page)
+    test('filters the cheque list by status', async ({ page }) => {
+      await signInAsNewOnboardedUser(page, 'cheque-filter', { premium: true })
+      const partyName = uniqueE2eName('party')
+      const accountName = uniqueE2eName('account')
+      const accountNumber = uniqueChequeNumber() + uniqueChequeNumber()
+      const receivedNumber = uniqueChequeNumber()
+      const clearedNumber = uniqueChequeNumber()
 
-    // Inward cheques start as Received - a distinct status without needing a transition.
-    await chequesPage.createCheque({
-      partyName,
-      accountSearch: accountNumber.slice(-4),
-      chequeNumber: receivedNumber,
-      type: 'Inward',
+      await new PartiesPage(page).createParty(partyName, E2E_PHONE)
+      await new AccountsPage(page).createAccount(accountName, accountNumber)
+      const chequesPage = new ChequesPage(page)
+
+      // Inward cheques start as Received - a distinct status without needing a transition.
+      await chequesPage.createCheque({
+        partyName,
+        accountSearch: accountNumber.slice(-4),
+        chequeNumber: receivedNumber,
+        type: 'Inward',
+      })
+      await chequesPage.createCheque({
+        partyName,
+        accountSearch: accountNumber.slice(-4),
+        chequeNumber: clearedNumber,
+      })
+      await chequesPage.openByChequeNumber(clearedNumber)
+      await page.getByTestId('speed-dial-toggle').click()
+      await page.getByTestId('cheque-status-cleared').click()
+
+      await chequesPage.goto()
+      await page.getByTestId('cheque-search-input').fill(partyName)
+      await page.getByTestId('cheque-filter-trigger').click()
+      await page.getByTestId('cheque-filter-status-received').click()
+      await expect(page.locator('[data-testid^="cheque-card-"]')).toHaveCount(1)
+      await expect(page.getByText(`#${receivedNumber}`)).toBeVisible()
+
+      await page.getByTestId('cheque-filter-trigger').click()
+      await page.getByTestId('cheque-filter-status-cleared').click()
+      await expect(page.locator('[data-testid^="cheque-card-"]')).toHaveCount(1)
+      await expect(page.getByText(`#${clearedNumber}`)).toBeVisible()
+
+      await page.getByTestId('cheque-filter-trigger').click()
+      await page.getByTestId('cheque-filter-status-bounced').click()
+      await expect(page.locator('[data-testid^="cheque-card-"]')).toHaveCount(0)
     })
-    await chequesPage.createCheque({
-      partyName,
-      accountSearch: accountNumber.slice(-4),
-      chequeNumber: clearedNumber,
-    })
-    await chequesPage.openByChequeNumber(clearedNumber)
-    await page.getByTestId('speed-dial-toggle').click()
-    await page.getByTestId('cheque-status-cleared').click()
-
-    await chequesPage.goto()
-    await page.getByTestId('cheque-search-input').fill(partyName)
-    await page.getByTestId('cheque-filter-trigger').click()
-    await page.getByTestId('cheque-filter-status-received').click()
-    await expect(page.locator('[data-testid^="cheque-card-"]')).toHaveCount(1)
-    await expect(page.getByText(`#${receivedNumber}`)).toBeVisible()
-
-    await page.getByTestId('cheque-filter-trigger').click()
-    await page.getByTestId('cheque-filter-status-cleared').click()
-    await expect(page.locator('[data-testid^="cheque-card-"]')).toHaveCount(1)
-    await expect(page.getByText(`#${clearedNumber}`)).toBeVisible()
-
-    await page.getByTestId('cheque-filter-trigger').click()
-    await page.getByTestId('cheque-filter-status-bounced').click()
-    await expect(page.locator('[data-testid^="cheque-card-"]')).toHaveCount(0)
   })
 })

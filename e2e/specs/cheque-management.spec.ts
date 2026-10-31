@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 import { AccountsPage } from '../pages/accounts.page'
 import { ChequesPage } from '../pages/cheques.page'
 import { PartiesPage } from '../pages/parties.page'
+import { signInAsNewOnboardedUser } from '../flows'
 import {
   E2E_PHONE,
   uniqueChequeNumber,
@@ -158,30 +159,35 @@ test.describe('cheque lifecycle', () => {
     await expect(page.getByText(`#${chequeNumber}`)).toHaveCount(0)
   })
 
-  test('creates an inward cheque with Received as its initial status', async ({
-    page,
-  }) => {
-    const partyName = uniqueE2eName('party')
-    const accountName = uniqueE2eName('account')
-    const accountNumber = uniqueChequeNumber() + uniqueChequeNumber()
-    const chequeNumber = uniqueChequeNumber()
+  test.describe('with premium access', () => {
+    test.use({ storageState: { cookies: [], origins: [] } })
 
-    await new PartiesPage(page).createParty(partyName, E2E_PHONE)
-    await new AccountsPage(page).createAccount(accountName, accountNumber)
+    test('creates an inward cheque with Received as its initial status', async ({
+      page,
+    }) => {
+      await signInAsNewOnboardedUser(page, 'cheque-inward', { premium: true })
+      const partyName = uniqueE2eName('party')
+      const accountName = uniqueE2eName('account')
+      const accountNumber = uniqueChequeNumber() + uniqueChequeNumber()
+      const chequeNumber = uniqueChequeNumber()
 
-    const chequesPage = new ChequesPage(page)
-    await chequesPage.createCheque({
-      partyName,
-      accountSearch: accountNumber.slice(-4),
-      chequeNumber,
-      type: 'Inward',
+      await new PartiesPage(page).createParty(partyName, E2E_PHONE)
+      await new AccountsPage(page).createAccount(accountName, accountNumber)
+
+      const chequesPage = new ChequesPage(page)
+      await chequesPage.createCheque({
+        partyName,
+        accountSearch: accountNumber.slice(-4),
+        chequeNumber,
+        type: 'Inward',
+      })
+      await chequesPage.goto()
+      await chequesPage.openByChequeNumber(chequeNumber)
+
+      await expect(page.getByTestId('cheque-detail-status')).toContainText(
+        'Received',
+      )
     })
-    await chequesPage.goto()
-    await chequesPage.openByChequeNumber(chequeNumber)
-
-    await expect(page.getByTestId('cheque-detail-status')).toContainText(
-      'Received',
-    )
   })
 
   test('sorts the cheque list by amount in ascending order', async ({

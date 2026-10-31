@@ -4,11 +4,12 @@ import { expect, test } from '@playwright/test'
 // Drag/position persistence is already covered at the unit level (calculator.test.tsx);
 // this only verifies the calculator is reachable and functional from the real app shell.
 test.describe('calculator', () => {
-  test('opens from the top nav, computes a result, and closes', async ({
+  test('opens from the top bar menu, computes a result, and closes', async ({
     page,
   }) => {
-    await page.goto('/')
-    await page.getByRole('button', { name: 'Open calculator' }).click()
+    await page.goto('/dashboard')
+    await page.getByRole('button', { name: 'More actions' }).click()
+    await page.getByRole('button', { name: 'Calculator', exact: true }).click()
 
     const calculator = page.getByRole('dialog', { name: 'Calculator' })
     await expect(calculator).toBeVisible()

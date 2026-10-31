@@ -1,14 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { AccountsPage } from '../pages/accounts.page'
 import { ChequesPage } from '../pages/cheques.page'
-import { LoginPage } from '../pages/login.page'
-import { OnboardingPage } from '../pages/onboarding.page'
 import { PartiesPage } from '../pages/parties.page'
-import { createConfirmedE2eUser, grantLifetimePremium } from '../admin-client'
+import { signInAsNewOnboardedUser } from '../flows'
 import {
   E2E_PHONE,
-  e2eBusinessName,
-  e2eUser,
   uniqueChequeNumber,
   uniqueE2eName,
 } from '../fixtures/test-data'
@@ -22,19 +18,10 @@ test('non-premium users see the reports paywall', async ({ page }) => {
 test.describe('premium reports', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
-  test('premium user can download every report format', async ({ page }) => {
-    const user = e2eUser('reports')
-    const createdUser = await createConfirmedE2eUser(user)
-    await grantLifetimePremium(createdUser.id)
-
-    const login = new LoginPage(page)
-    await login.goto()
-    await login.login(user.email, user.password)
-    await page.waitForURL('/onboarding')
-    await new OnboardingPage(page).completeWithDefaults(
-      e2eBusinessName('reports'),
-    )
-    await page.waitForURL('/')
+  test('premium user downloads PDF/Excel and queues CSV/JSON exports', async ({
+    page,
+  }) => {
+    await signInAsNewOnboardedUser(page, 'reports', { premium: true })
 
     const partyName = uniqueE2eName('party')
     const accountName = uniqueE2eName('account')
@@ -49,37 +36,34 @@ test.describe('premium reports', () => {
 
     await page.goto('/reports')
     await expect(page.getByTestId('reports-content')).toBeVisible()
-    const formats = [
-      ['csv', '.csv'],
-      ['json', '.json'],
+
+    for (const [format, extension] of [
       ['pdf', '.pdf'],
       ['excel', '.xlsx'],
-    ] as const
-
-    for (const [format, extension] of formats) {
+    ] as const) {
       await page.getByTestId('reports-export-trigger').click()
       const downloadPromise = page.waitForEvent('download')
       await page.getByTestId(`reports-export-${format}`).click()
       const download = await downloadPromise
       expect(download.suggestedFilename().endsWith(extension)).toBe(true)
     }
+
+    // CSV/JSON are durable background jobs; the worker finishes them out of band.
+    for (const format of ['csv', 'json'] as const) {
+      await page.getByTestId('reports-export-trigger').click()
+      await page.getByTestId(`reports-export-${format}`).click()
+      await expect(
+        page.locator(
+          `[data-testid="report-export-job"][data-format="${format}"]`,
+        ),
+      ).toHaveAttribute('data-status', /^(queued|processing|ready)$/)
+    }
   })
 
   test('export is disabled for a premium user with no cheques yet', async ({
     page,
   }) => {
-    const user = e2eUser('reports-empty')
-    const createdUser = await createConfirmedE2eUser(user)
-    await grantLifetimePremium(createdUser.id)
-
-    const login = new LoginPage(page)
-    await login.goto()
-    await login.login(user.email, user.password)
-    await page.waitForURL('/onboarding')
-    await new OnboardingPage(page).completeWithDefaults(
-      e2eBusinessName('reports-empty'),
-    )
-    await page.waitForURL('/')
+    await signInAsNewOnboardedUser(page, 'reports-empty', { premium: true })
 
     await page.goto('/reports')
     await expect(page.getByTestId('reports-export-trigger')).toBeDisabled()

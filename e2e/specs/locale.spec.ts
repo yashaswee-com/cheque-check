@@ -18,7 +18,7 @@ test.describe('locale', () => {
 
     // Language switch sets a cookie + calls window.location.reload().
     await expect(page.locator('html')).toHaveAttribute('lang', 'hi')
-    await page.goto('/')
+    await page.goto('/dashboard')
     await expect(page.getByTestId('bottom-nav-parties')).toContainText(
       'पार्टियाँ',
     )
@@ -32,7 +32,7 @@ test.describe('locale', () => {
     await language.click()
     await page.getByRole('option', { name: 'English' }).click()
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
-    await page.goto('/')
+    await page.goto('/dashboard')
     await expect(page.getByTestId('bottom-nav-parties')).toContainText(
       'Parties',
     )

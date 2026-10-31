@@ -3,6 +3,7 @@ import { AccountsPage } from '../pages/accounts.page'
 import { BusinessesPage } from '../pages/businesses.page'
 import { ChequesPage } from '../pages/cheques.page'
 import { PartiesPage } from '../pages/parties.page'
+import { signInAsNewOnboardedUser } from '../flows'
 import {
   E2E_PHONE,
   e2eBusinessName,
@@ -33,7 +34,7 @@ test("dashboard shows the current balance and today's cheque", async ({
     amount: 1500,
   })
 
-  await page.goto('/')
+  await page.goto('/dashboard')
   await expect(page.getByTestId('dashboard-current-balance')).toHaveText(
     '-₹1,500',
   )
@@ -44,42 +45,43 @@ test("dashboard shows the current balance and today's cheque", async ({
   ).toBeVisible()
 })
 
-// A second, separate business keeps this chart assertion independent of the
-// single-cheque scenario above.
-test('stats chart only shows legend entries for statuses with cheques', async ({
-  page,
-}) => {
-  await new BusinessesPage(page).createBusiness(
-    e2eBusinessName('dashboard-chart'),
-    uniqueE2eEmail('dashboard-chart'),
-  )
+// Inward cheques are Premium-only, so this runs as its own premium user whose
+// fresh business keeps the chart assertion independent of other specs.
+test.describe('premium dashboard', () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
 
-  const partyName = uniqueE2eName('party')
-  const accountName = uniqueE2eName('account')
-  const accountNumber = uniqueChequeNumber() + uniqueChequeNumber()
-  await new PartiesPage(page).createParty(partyName, E2E_PHONE)
-  await new AccountsPage(page).createAccount(accountName, accountNumber)
+  test('stats chart only shows legend entries for statuses with cheques', async ({
+    page,
+  }) => {
+    await signInAsNewOnboardedUser(page, 'dashboard-chart', { premium: true })
 
-  const chequesPage = new ChequesPage(page)
-  await chequesPage.createCheque({
-    partyName,
-    accountSearch: accountNumber.slice(-4),
-    chequeNumber: uniqueChequeNumber(),
-    amount: 1000,
-    type: 'Outward',
+    const partyName = uniqueE2eName('party')
+    const accountName = uniqueE2eName('account')
+    const accountNumber = uniqueChequeNumber() + uniqueChequeNumber()
+    await new PartiesPage(page).createParty(partyName, E2E_PHONE)
+    await new AccountsPage(page).createAccount(accountName, accountNumber)
+
+    const chequesPage = new ChequesPage(page)
+    await chequesPage.createCheque({
+      partyName,
+      accountSearch: accountNumber.slice(-4),
+      chequeNumber: uniqueChequeNumber(),
+      amount: 1000,
+      type: 'Outward',
+    })
+    await chequesPage.createCheque({
+      partyName,
+      accountSearch: accountNumber.slice(-4),
+      chequeNumber: uniqueChequeNumber(),
+      amount: 2500,
+      type: 'Inward',
+    })
+
+    await page.goto('/dashboard')
+    const chart = page.locator('.recharts-responsive-container')
+    await expect(chart.getByText('Issued', { exact: true })).toBeVisible()
+    await expect(chart.getByText('Received', { exact: true })).toBeVisible()
+    await expect(chart.getByText('Cleared', { exact: true })).toHaveCount(0)
+    await expect(chart.getByText('Bounced', { exact: true })).toHaveCount(0)
   })
-  await chequesPage.createCheque({
-    partyName,
-    accountSearch: accountNumber.slice(-4),
-    chequeNumber: uniqueChequeNumber(),
-    amount: 2500,
-    type: 'Inward',
-  })
-
-  await page.goto('/')
-  const chart = page.locator('.recharts-responsive-container')
-  await expect(chart.getByText('Issued', { exact: true })).toBeVisible()
-  await expect(chart.getByText('Received', { exact: true })).toBeVisible()
-  await expect(chart.getByText('Cleared', { exact: true })).toHaveCount(0)
-  await expect(chart.getByText('Bounced', { exact: true })).toHaveCount(0)
 })

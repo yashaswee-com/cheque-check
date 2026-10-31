@@ -1,14 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { AccountsPage } from '../pages/accounts.page'
 import { ChequesPage } from '../pages/cheques.page'
-import { LoginPage } from '../pages/login.page'
-import { OnboardingPage } from '../pages/onboarding.page'
 import { PartiesPage } from '../pages/parties.page'
-import { createConfirmedE2eUser } from '../admin-client'
+import { signInAsNewOnboardedUser } from '../flows'
 import {
   E2E_PHONE,
-  e2eBusinessName,
-  e2eUser,
   uniqueChequeNumber,
   uniqueE2eName,
 } from '../fixtures/test-data'
@@ -20,17 +16,7 @@ test.describe('feedback', () => {
   test('submits an NPS response after the first cheque is created', async ({
     page,
   }) => {
-    const user = e2eUser('feedback')
-    await createConfirmedE2eUser(user)
-
-    const login = new LoginPage(page)
-    await login.goto()
-    await login.login(user.email, user.password)
-    await page.waitForURL('/onboarding')
-    await new OnboardingPage(page).completeWithDefaults(
-      e2eBusinessName('feedback'),
-    )
-    await page.waitForURL('/')
+    await signInAsNewOnboardedUser(page, 'feedback')
 
     const partyName = uniqueE2eName('party')
     const accountName = uniqueE2eName('account')

@@ -50,8 +50,7 @@ test.describe('tags', () => {
     await chequesPage.openCreate()
     await chequesPage.fillDetails({ amount: 875, chequeNumber })
     await chequesPage.selectPartyAndAccount(partyName, accountNumber.slice(-4))
-    await page.getByTestId('tag-selector-trigger').click()
-    await page.getByRole('button', { name: tagName }).click()
+    await chequesPage.selectTags(tagName)
 
     const depositDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       .toISOString()
@@ -84,8 +83,7 @@ test.describe('tags', () => {
     await chequesPage.openCreate()
     await chequesPage.fillDetails({ amount: 950, chequeNumber })
     await chequesPage.selectPartyAndAccount(partyName, accountNumber.slice(-4))
-    await page.getByTestId('tag-selector-trigger').click()
-    await page.getByRole('button', { name: tagName }).click()
+    await chequesPage.selectTags(tagName)
     const depositDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split('T')[0]
@@ -123,8 +121,7 @@ test.describe('tags', () => {
     await chequesPage.openCreate()
     await chequesPage.fillDetails({ amount: 950, chequeNumber })
     await chequesPage.selectPartyAndAccount(partyName, accountNumber.slice(-4))
-    await page.getByTestId('tag-selector-trigger').click()
-    await page.getByRole('button', { name: tagName }).click()
+    await chequesPage.selectTags(tagName)
     const depositDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split('T')[0]
@@ -162,9 +159,7 @@ test.describe('tags', () => {
     await chequesPage.openCreate()
     await chequesPage.fillDetails({ amount: 950, chequeNumber })
     await chequesPage.selectPartyAndAccount(partyName, accountNumber.slice(-4))
-    await page.getByTestId('tag-selector-trigger').click()
-    await page.getByRole('button', { name: firstTag }).click()
-    await page.getByRole('button', { name: secondTag }).click()
+    await chequesPage.selectTags(firstTag, secondTag)
     const depositDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split('T')[0]

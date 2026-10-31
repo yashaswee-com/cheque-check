@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test'
 // only verifies registration - not caching/offline behavior that doesn't exist.
 test.describe('pwa', () => {
   test('registers a service worker on a dashboard route', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/dashboard')
     const registration = await page.evaluate(async () => {
       if (!('serviceWorker' in navigator)) return null
       const reg = await navigator.serviceWorker.ready

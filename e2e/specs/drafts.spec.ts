@@ -62,10 +62,9 @@ test.describe('drafts', () => {
     await expect(draft).toBeVisible()
     await draft.click()
     await expect(page).toHaveURL(/\/parties\/create\?draftId=/)
-    await expect(page.getByTestId('party-step2-continue')).toBeVisible()
+    await expect(page.locator('#name')).toHaveValue(partyName)
 
     await page.locator('#contact').fill(E2E_PHONE)
-    await page.getByTestId('party-step2-continue').click()
     await page.getByTestId('party-submit-button').click()
     await expect(page.getByTestId('creation-success-continue')).toBeVisible()
     await page.getByTestId('creation-success-continue').click()

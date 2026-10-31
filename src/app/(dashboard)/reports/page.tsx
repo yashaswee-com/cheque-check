@@ -197,6 +197,9 @@ function ReportsContent() {
           return (
             <div
               key={job.id}
+              data-testid="report-export-job"
+              data-format={job.format}
+              data-status={status}
               className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"
             >
               <div>

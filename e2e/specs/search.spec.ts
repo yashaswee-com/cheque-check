@@ -76,7 +76,7 @@ test.describe('global search', () => {
     page,
   }) => {
     const query = uniqueE2eName('no-such-match')
-    await page.goto('/')
+    await page.goto('/dashboard')
     await page.getByTestId('global-search-trigger').click()
     await page.getByTestId('global-search-input').fill(query)
     await expect(
@@ -87,7 +87,7 @@ test.describe('global search', () => {
   test('only returns results from the active business', async ({ page }) => {
     const partyName = uniqueE2eName('search-isolated')
     await new PartiesPage(page).createParty(partyName, E2E_PHONE)
-    await page.goto('/')
+    await page.goto('/dashboard')
     await page.getByTestId('global-search-trigger').click()
     await page.getByTestId('global-search-input').fill(partyName)
     await expect(page.getByTestId('global-search-result-party')).toBeVisible()
@@ -101,7 +101,7 @@ test.describe('global search', () => {
       uniqueE2eEmail('search-isolation'),
     )
 
-    await page.goto('/')
+    await page.goto('/dashboard')
     await page.getByTestId('global-search-trigger').click()
     await page.getByTestId('global-search-input').fill(partyName)
     await expect(

@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { LoginPage } from '../pages/login.page'
 import { SignupPage } from '../pages/signup.page'
-import { OnboardingPage } from '../pages/onboarding.page'
-import { e2eBusinessName, e2eUser } from '../fixtures/test-data'
+import { e2eUser } from '../fixtures/test-data'
 import { createConfirmedE2eUser } from '../admin-client'
+import { signInAsNewOnboardedUser } from '../flows'
 
 // Each test starts with a clean, logged-out context.
 // Logout must not reuse the shared storageState: Supabase signOut() revokes the
@@ -136,20 +136,7 @@ test.describe('logout', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
   test('logs the user out and redirects to login', async ({ page }) => {
-    const user = e2eUser('logout')
-    await createConfirmedE2eUser(user)
-
-    const loginPage = new LoginPage(page)
-    await loginPage.goto()
-    await loginPage.login(user.email, user.password)
-    await expect(page).not.toHaveURL('/login')
-
-    // Fresh account has no business yet, so it lands on onboarding, not settings.
-    await page.waitForURL('/onboarding')
-    await new OnboardingPage(page).completeWithDefaults(
-      e2eBusinessName('logout'),
-    )
-    await page.waitForURL('/')
+    await signInAsNewOnboardedUser(page, 'logout')
 
     await page.goto('/settings')
     await page.getByTestId('settings-logout-button').click()
@@ -160,17 +147,7 @@ test.describe('logout', () => {
   test('a protected route redirects to login after logout, not just the button', async ({
     page,
   }) => {
-    const user = e2eUser('logout-guard')
-    await createConfirmedE2eUser(user)
-
-    const loginPage = new LoginPage(page)
-    await loginPage.goto()
-    await loginPage.login(user.email, user.password)
-    await page.waitForURL('/onboarding')
-    await new OnboardingPage(page).completeWithDefaults(
-      e2eBusinessName('logout-guard'),
-    )
-    await page.waitForURL('/')
+    await signInAsNewOnboardedUser(page, 'logout-guard')
 
     await page.goto('/settings')
     await page.getByTestId('settings-logout-button').click()

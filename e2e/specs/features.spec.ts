@@ -56,30 +56,13 @@ test.describe('feature management', () => {
           ],
         }),
       )
-      await page.route('**/rest/v1/transactions?**', (route) =>
-        route.fulfill({
-          json: [
-            {
-              id: 'preview-order',
-              feature_id: 'voice_reminder_sub',
-              type: 'subscription',
-              status: 'authorized',
-              amount: 5000,
-              currency: 'INR',
-              created_at: '2026-10-17T00:00:00Z',
-              razorpay_order_id:
-                'order_long_reference_123456789012345678901234567890',
-            },
-          ],
-        }),
-      )
       await page.goto('/features')
       const features = page.getByTestId('features-page')
       await expect(
         features.getByRole('heading', { name: 'Your tools. Your way.' }),
       ).toBeVisible()
       const voice = features.getByRole('article', {
-        name: 'Daily Voice Reminder',
+        name: 'Voice Reminders - 30-Day Pack (100 calls)',
       })
       await expect(voice.getByText('Turned off', { exact: true })).toBeVisible()
       await expect(voice.getByLabel('Your Phone Number')).toBeVisible()
@@ -103,11 +86,6 @@ test.describe('feature management', () => {
         voice.getByRole('button', { name: 'Send test call', exact: true }),
       ).toBeEnabled()
 
-      await expect(
-        features.getByText(
-          'Payment authorized. Waiting for payment confirmation before activation.',
-        ),
-      ).toBeVisible()
       const overflowing = await features.evaluate((element) => {
         const bounds = element.getBoundingClientRect()
         return Array.from(
@@ -126,8 +104,8 @@ test.describe('feature management', () => {
       })
       expect(overflowing).toEqual([])
       await expect(
-        features.getByRole('link', { name: 'View all transactions' }),
-      ).toHaveAttribute('href', '/settings/transactions')
+        features.getByRole('link', { name: 'Open reports' }),
+      ).toHaveAttribute('href', '/reports')
     })
   }
 })
