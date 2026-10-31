@@ -53,6 +53,127 @@ beforeEach(() => {
     })
 })
 describe('private export download stream', () => {
+  it('sets CSV content type and filename while preserving streamed bytes', async () => {
+    mocks.rpc.mockResolvedValue({
+      data: {
+        ...job,
+        format: 'csv',
+        row_count: 1,
+        part_count: 1,
+        next_part: 1,
+      },
+      error: null,
+    })
+    mocks.stream.mockReset().mockResolvedValue({
+      data: new Blob(['amount\r\n1\r\n']).stream(),
+      error: null,
+    })
+    const response = await GET(request(), params())
+    expect(response.headers.get('Content-Type')).toBe('text/csv; charset=utf-8')
+    expect(response.headers.get('Content-Disposition')).toContain(
+      `cheques-${id}.csv`,
+    )
+    expect(await response.text()).toBe('amount\r\n1\r\n')
+  })
+  it.each([
+    { data: null, error: null },
+    { data: null, error: { code: 'XX000' } },
+  ])(
+    'reports unavailable authorization metadata as a server failure: %j',
+    async (result) => {
+      mocks.rpc.mockResolvedValue(result)
+      expect((await GET(request(), params())).status).toBe(500)
+      expect(mocks.download).not.toHaveBeenCalled()
+      if (result.error)
+        expect(mocks.error).toHaveBeenCalledWith(
+          'Export download authorization failed',
+          result.error,
+        )
+      else expect(mocks.error).not.toHaveBeenCalled()
+    },
+  )
+
+  it('rejects valid metadata for an export that is not ready', async () => {
+    mocks.rpc.mockResolvedValue({
+      data: { ...job, status: 'queued' },
+      error: null,
+    })
+    expect((await GET(request(), params())).status).toBe(500)
+    expect(mocks.error).toHaveBeenCalledWith(
+      'Invalid export download metadata',
+      undefined,
+    )
+  })
+
+  it('rejects a missing part even when storage returns no error', async () => {
+    mocks.stream.mockReset().mockResolvedValue({ data: null, error: null })
+    const response = await GET(request(), params())
+    await expect(response.text()).rejects.toThrow('Export part missing')
+  })
+
+  it('rejects non-byte stream chunks instead of returning a malformed attachment', async () => {
+    mocks.stream.mockReset().mockResolvedValue({
+      data: new ReadableStream<unknown>({
+        start(controller) {
+          controller.enqueue('not bytes')
+        },
+      }),
+      error: null,
+    })
+    const response = await GET(request(), params())
+    await expect(response.text()).rejects.toThrow('Invalid export stream chunk')
+  })
+
+  it('cancels a storage stream arriving after the client disconnected', async () => {
+    let resolvePart!: (value: {
+      data: ReadableStream<Uint8Array>
+      error: null
+    }) => void
+    const upstreamCancel = vi.fn()
+    mocks.stream.mockReset().mockReturnValue(
+      new Promise((resolve) => {
+        resolvePart = resolve
+      }),
+    )
+    const response = await GET(request(), params())
+    await vi.waitFor(() => expect(mocks.stream).toHaveBeenCalledOnce())
+    await response.body!.cancel('client disconnected')
+    resolvePart({
+      data: new ReadableStream<Uint8Array>({ cancel: upstreamCancel }),
+      error: null,
+    })
+    await vi.waitFor(() => expect(upstreamCancel).toHaveBeenCalledOnce())
+    expect(mocks.error).not.toHaveBeenCalled()
+  })
+
+  it('does not log a late upstream failure after the client cancelled', async () => {
+    let rejectPart!: (reason: Error) => void
+    mocks.stream.mockReset().mockReturnValue(
+      new Promise((_resolve, reject) => {
+        rejectPart = reject
+      }),
+    )
+    const response = await GET(request(), params())
+    await vi.waitFor(() => expect(mocks.stream).toHaveBeenCalledOnce())
+    await response.body!.cancel('client disconnected')
+    rejectPart(new Error('late storage failure'))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(mocks.error).not.toHaveBeenCalled()
+  })
+
+  it('cancels an active pending read without enqueuing a chunk after disconnect', async () => {
+    const upstreamCancel = vi.fn()
+    const upstream = new ReadableStream<Uint8Array>({ cancel: upstreamCancel })
+    mocks.stream.mockReset().mockResolvedValue({ data: upstream, error: null })
+    const response = await GET(request(), params())
+    const reader = response.body!.getReader()
+    const pendingRead = reader.read()
+    await vi.waitFor(() => expect(upstream.locked).toBe(true))
+    await reader.cancel('client disconnected')
+    expect(await pendingRead).toEqual({ done: true, value: undefined })
+    expect(upstreamCancel).toHaveBeenCalledWith('client disconnected')
+    expect(mocks.error).not.toHaveBeenCalled()
+  })
   it('rejects malformed IDs before authentication', async () => {
     expect((await GET(request(), params('../bad'))).status).toBe(400)
     expect(mocks.client).not.toHaveBeenCalled()

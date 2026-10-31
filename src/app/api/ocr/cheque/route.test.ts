@@ -66,6 +66,41 @@ beforeEach(() => {
 })
 
 describe('OCR shared contracts and client', () => {
+  it.each(['consume_api_rate_limit', 'consume_user_quota'])(
+    'logs %s failures and does not invoke OCR',
+    async (endpoint) => {
+      const error = new Error('database offline')
+      mocks.rpc.mockImplementation(async (name: string) =>
+        name === endpoint ? { data: null, error } : { data: true, error: null },
+      )
+      const response = await POST(
+        request({ imageUrl: 'https://app.test/image.png' }),
+      )
+      expect(response.status).toBe(500)
+      expect(mocks.error).toHaveBeenCalledWith('[OcrController Error]', error)
+      expect(mocks.processImage).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each([null, {}])(
+    'rejects an unsigned private image even without a storage error: %j',
+    async (data) => {
+      mocks.createSignedUrl.mockResolvedValueOnce({ data, error: null })
+      expect(
+        (
+          await POST(
+            request({
+              imageUrl: buildPrivateMediaUrl(
+                PRIVATE_CHEQUE_BUCKET,
+                'u1/missing.png',
+              ),
+            }),
+          )
+        ).status,
+      ).toBe(404)
+      expect(mocks.processImage).not.toHaveBeenCalled()
+    },
+  )
   it('rejects invalid JSON before authentication', async () => {
     const response = await POST(
       new Request('https://app.test/api/ocr/cheque', {

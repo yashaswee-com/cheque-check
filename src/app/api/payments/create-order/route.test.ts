@@ -127,6 +127,47 @@ beforeEach(() => {
 })
 
 describe('payment order route', () => {
+  it.each(['rate', 'entitlements'])(
+    'logs %s database failures without creating an order',
+    async (stage) => {
+      const error = new Error('database offline')
+      if (stage === 'rate')
+        mocks.rateLimitRpc.mockResolvedValueOnce({ data: null, error })
+      else mocks.entitlementError = error
+      const response = await POST(
+        request(JSON.stringify({ productId: PRODUCT_IDS.LIFETIME_PREMIUM })),
+      )
+      expect(response.status).toBe(500)
+      expect(mocks.createOrder).not.toHaveBeenCalled()
+      expect(mocks.error).toHaveBeenCalledWith(
+        'Failed to create payment order',
+        error,
+      )
+    },
+  )
+
+  it('handles an empty entitlement response and an absent product without a query error', async () => {
+    mocks.from.mockImplementation((table: string) =>
+      table === TABLES.PAYMENT_PRODUCTS
+        ? makeQuery(mocks.product, () => null)
+        : makeQuery(null, () => null),
+    )
+    expect(
+      (
+        await POST(
+          request(JSON.stringify({ productId: PRODUCT_IDS.LIFETIME_PREMIUM })),
+        )
+      ).status,
+    ).toBe(200)
+    mocks.product = null
+    expect(
+      (
+        await POST(
+          request(JSON.stringify({ productId: PRODUCT_IDS.LIFETIME_PREMIUM })),
+        )
+      ).status,
+    ).toBe(404)
+  })
   it('rejects invalid JSON and unknown products before authentication', async () => {
     const invalidJson = await POST(request('{'))
     expect(invalidJson.status).toBe(400)

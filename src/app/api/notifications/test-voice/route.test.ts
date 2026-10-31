@@ -115,6 +115,40 @@ afterEach(() => {
 })
 
 describe('test voice route', () => {
+  it.each(['rateError', 'profileError', 'insertError', 'jobError'] as const)(
+    'logs %s and returns an explicit server failure',
+    async (key) => {
+      const error = new Error(`${key} unavailable`)
+      mocks[key] = error
+      const response = await POST(request())
+      expect(response.status).toBe(500)
+      expect(await response.json()).toEqual({
+        error: 'Unable to trigger test call',
+      })
+      expect(mocks.error).toHaveBeenCalledWith(
+        'Failed to trigger test voice call',
+        error,
+      )
+    },
+  )
+
+  it.each([null, { phone: null, voice_call_enabled: true }])(
+    'rejects missing profile or phone without dispatching: %j',
+    async (profile) => {
+      mocks.profile = profile
+      expect((await POST(request())).status).toBe(400)
+      expect(fetch).not.toHaveBeenCalled()
+    },
+  )
+
+  it('returns a gateway fallback for failed jobs without provider details', async () => {
+    mocks.job = { status: 'failed', last_error: null }
+    const response = await POST(request())
+    expect(response.status).toBe(502)
+    expect(await response.json()).toEqual({
+      error: 'Could not place the test call.',
+    })
+  })
   it('requires authentication before applying the rate limit', async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null }, error: null })
 
