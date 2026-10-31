@@ -276,17 +276,42 @@ describe('onboarding page', () => {
     expect(mocks.celebrate).not.toHaveBeenCalled()
   })
 
+  it('creates a workspace without optional contact fields and reports unknown failures generically', async () => {
+    mocks.create.mockRejectedValueOnce('offline')
+    renderPage(<OnboardingPage />)
+
+    fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
+      target: { value: 'Acme' },
+    })
+    fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
+    fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
+    fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
+    fireEvent.click(screen.getByTestId('onboarding-step4-finish'))
+
+    await waitFor(() =>
+      expect(alert).toHaveBeenCalledWith(messages.Common.error),
+    )
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Acme',
+        email: null,
+        phone: null,
+        address: null,
+      }),
+    )
+  })
+
   it('synchronizes onboarding defaults when the loaded profile changes', () => {
     profile = null
     const view = renderPage(<OnboardingPage />)
     profile = {
       id: 'loaded-profile',
       name: '',
-      currency: '$',
-      language: 'hi',
-      date_format: 'MM/dd/yyyy',
-      time_format: '24h',
-      time_zone: 'UTC',
+      currency: '',
+      language: '',
+      date_format: '',
+      time_format: '',
+      time_zone: '',
       reminders_per_day: 2,
       default_reminder_days: 7,
     }
@@ -312,8 +337,12 @@ describe('onboarding page', () => {
       { target: { value: '+919876543210' } },
     )
     fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
-    expect(screen.getAllByRole('combobox')[0]).toHaveValue('$')
-    expect(screen.getAllByRole('combobox')[1]).toHaveValue('hi')
+    const preferences = screen.getAllByRole('combobox')
+    expect(preferences[0]).toHaveValue('₹')
+    expect(preferences[1]).toHaveValue('en')
+    expect(preferences[2]).toHaveValue('dd/MM/yyyy')
+    expect(preferences[3]).toHaveValue('12h')
+    expect(preferences[4]).toHaveValue('Asia/Kolkata')
   })
 })
 
@@ -378,6 +407,29 @@ describe('notification preferences page', () => {
       screen.getByTestId('notifications-toggle-push_enabled'),
     ).toBeEnabled()
   })
+
+  it('uses the default reminder value when the saved lead time is zero', () => {
+    profile = { ...profile, default_reminder_days: 0 }
+    renderPage(<NotificationsPage />)
+
+    expect(screen.getByTestId('notifications-reminder-days')).toHaveValue('3')
+  })
+
+  it('uses a generic message when preference persistence rejects a non-error value', async () => {
+    mocks.update.mockRejectedValueOnce('offline')
+    renderPage(<NotificationsPage />)
+
+    fireEvent.click(screen.getByTestId('notifications-toggle-sms_enabled'))
+
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: messages.Common.error,
+          type: 'error',
+        }),
+      ),
+    )
+  })
 })
 describe('general preferences page', () => {
   it('persists currency, date/time formats, timezone, reminder counts and reduce motion', () => {
@@ -414,5 +466,20 @@ describe('general preferences page', () => {
     })
     expect(mocks.update).toHaveBeenCalledWith({ language: 'hi' })
     expect(document.cookie).toContain('NEXT_LOCALE=hi')
+  })
+
+  it('defaults blank time formats and zero-valued reminder settings', () => {
+    profile = {
+      ...profile,
+      time_format: '',
+      reminders_per_day: 0,
+      default_reminder_days: 0,
+    }
+
+    renderPage(<PreferencesPage />)
+
+    expect(screen.getByTestId('preferences-time-format')).toHaveValue('12h')
+    expect(screen.getAllByRole('combobox')[5]).toHaveValue('1')
+    expect(screen.getAllByRole('combobox')[6]).toHaveValue('3')
   })
 })

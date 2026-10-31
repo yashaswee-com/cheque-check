@@ -112,7 +112,7 @@ export default function PreferencesPage() {
             </Label>
             <Combobox
               options={REMINDERS_PER_DAY_OPTIONS}
-              value={profile.reminders_per_day?.toString() || '1'}
+              value={profile.reminders_per_day.toString()}
               onValueChange={(v) =>
                 updateProfile({ reminders_per_day: parseInt(v) })
               }
@@ -129,7 +129,7 @@ export default function PreferencesPage() {
             </Label>
             <Combobox
               options={REMINDER_FREQUENCY_OPTIONS}
-              value={profile.default_reminder_days?.toString() || '3'}
+              value={profile.default_reminder_days.toString()}
               onValueChange={(v) =>
                 updateProfile({ default_reminder_days: parseInt(v) })
               }

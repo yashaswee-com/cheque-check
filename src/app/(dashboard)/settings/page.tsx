@@ -35,8 +35,6 @@ interface SettingsItem {
   icon: IconType
   href: string
   action?: () => void
-  component?: React.ReactNode
-  value?: string
 }
 
 interface SettingsSection {
@@ -245,21 +243,12 @@ export default function SettingsPage() {
                         )}
                       </div>
                     </div>
-                    {item.component ? (
-                      item.component
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        {item.value && (
-                          <span className="text-xs font-semibold text-muted-foreground">
-                            {item.value}
-                          </span>
-                        )}
-                        <HugeiconsIcon
-                          icon={ChevronRight}
-                          className="h-4 w-4 text-muted-foreground opacity-30"
-                        />
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <HugeiconsIcon
+                        icon={ChevronRight}
+                        className="h-4 w-4 text-muted-foreground opacity-30"
+                      />
+                    </div>
                   </div>
                 )
 

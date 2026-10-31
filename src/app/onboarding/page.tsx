@@ -111,8 +111,8 @@ export default function OnboardingPage() {
       timeFormat: profile.time_format || '12h',
       timeZone: profile.time_zone || 'Asia/Kolkata',
       language: profile.language || 'en',
-      remindersPerDay: profile.reminders_per_day?.toString() || '1',
-      defaultReminderDays: profile.default_reminder_days?.toString() || '3',
+      remindersPerDay: profile.reminders_per_day.toString(),
+      defaultReminderDays: profile.default_reminder_days.toString(),
     }))
   }
 
@@ -568,7 +568,7 @@ export default function OnboardingPage() {
                 <div className="space-y-6">
                   <div className="flex flex-col items-center gap-3 py-2">
                     <EditableAvatar
-                      name={formData.businessName || t('businessDetails')}
+                      name={formData.businessName}
                       color={formData.businessColor}
                       imageUrl={formData.businessLogoUrl}
                       onUpload={async (url) =>
@@ -630,7 +630,7 @@ export default function OnboardingPage() {
                       className="h-12 w-12 rounded-full flex items-center justify-center text-white text-xl font-bold"
                       style={{ backgroundColor: formData.businessColor }}
                     >
-                      {formData.businessName?.charAt(0) || 'B'}
+                      {formData.businessName.charAt(0)}
                     </div>
                     <div>
                       <h3 className="font-semibold text-ink dark:text-white">

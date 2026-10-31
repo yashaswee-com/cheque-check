@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { transactionProductId } from '@/features/monetization/lib/transaction-product'
 import { PaymentReferences } from '@/features/monetization/components/payment-references'
+import type { Transaction } from '@/features/monetization/repositories/monetization.repository'
 
 export default function TransactionsPage() {
   const t = useTranslations('Transactions')
@@ -43,8 +44,12 @@ export default function TransactionsPage() {
   const { transactions, isLoading, isRefreshing, error, refresh } =
     useTransactions()
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterType, setFilterType] = useState('all')
-  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterType, setFilterType] = useState<Transaction['type'] | 'all'>(
+    'all',
+  )
+  const [filterStatus, setFilterStatus] = useState<
+    Transaction['status'] | 'all'
+  >('all')
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date')
 
@@ -84,7 +89,7 @@ export default function TransactionsPage() {
         const dateA = new Date(a.created_at).getTime()
         const dateB = new Date(b.created_at).getTime()
         comparison = dateA - dateB
-      } else if (sortBy === 'amount') {
+      } else {
         comparison = a.amount - b.amount
       }
       return sortOrder === 'desc' ? -comparison : comparison
@@ -114,65 +119,43 @@ export default function TransactionsPage() {
     )
   }
 
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case 'captured':
-        return {
-          icon: Success,
-          color: 'text-green-500 bg-green-500/10 border-green-500/20',
-        }
-      case 'authorized':
-        return {
-          icon: Pending,
-          color: 'text-primary bg-primary/10 border-primary/20',
-        }
-      case 'failed':
-        return {
-          icon: Failed,
-          color: 'text-red-500 bg-red-500/10 border-red-500/20',
-        }
-      case 'refunded':
-        return {
-          icon: Refunded,
-          color: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20',
-        }
-      default:
-        return {
-          icon: Pending,
-          color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-        }
-    }
-  }
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'lifetime':
-        return t('lifetimePremium')
-      case 'subscription':
-        return t('subscription')
-      case 'top_up':
-        return t('topUp')
-      default:
-        return type
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'captured':
-        return t('captured')
-      case 'authorized':
-        return t('authorized')
-      case 'failed':
-        return t('failed')
-      case 'refunded':
-        return t('refunded')
-      case 'created':
-        return t('created')
-      default:
-        return status
-    }
-  }
+  const statusConfigs = {
+    captured: {
+      icon: Success,
+      color: 'text-green-500 bg-green-500/10 border-green-500/20',
+    },
+    authorized: {
+      icon: Pending,
+      color: 'text-primary bg-primary/10 border-primary/20',
+    },
+    failed: {
+      icon: Failed,
+      color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    },
+    refunded: {
+      icon: Refunded,
+      color: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20',
+    },
+    created: {
+      icon: Pending,
+      color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    },
+  } satisfies Record<
+    Transaction['status'],
+    { icon: typeof Pending; color: string }
+  >
+  const typeLabels = {
+    lifetime: t('lifetimePremium'),
+    subscription: t('subscription'),
+    top_up: t('topUp'),
+  } satisfies Record<Transaction['type'], string>
+  const statusLabels = {
+    captured: t('captured'),
+    authorized: t('authorized'),
+    failed: t('failed'),
+    refunded: t('refunded'),
+    created: t('created'),
+  } satisfies Record<Transaction['status'], string>
 
   if (error)
     return (
@@ -234,28 +217,30 @@ export default function TransactionsPage() {
                   {t('type')}
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {['all', 'lifetime', 'subscription', 'top_up'].map((opt) => (
-                    <button
-                      key={opt}
-                      onClick={() => setFilterType(opt)}
-                      className={cn(
-                        'flex items-center justify-between px-4 py-3 rounded-xl border transition-all active:scale-[0.98]',
-                        filterType === opt
-                          ? 'bg-primary/5 border-primary text-primary'
-                          : 'bg-muted/30 border-transparent text-foreground',
-                      )}
-                    >
-                      <span className="font-bold text-sm">
-                        {opt === 'all' ? t('allTypes') : getTypeLabel(opt)}
-                      </span>
-                      {filterType === opt && (
-                        <HugeiconsIcon
-                          icon={Check}
-                          className="h-4 w-4 stroke-[3]"
-                        />
-                      )}
-                    </button>
-                  ))}
+                  {(['all', 'lifetime', 'subscription', 'top_up'] as const).map(
+                    (opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setFilterType(opt)}
+                        className={cn(
+                          'flex items-center justify-between px-4 py-3 rounded-xl border transition-all active:scale-[0.98]',
+                          filterType === opt
+                            ? 'bg-primary/5 border-primary text-primary'
+                            : 'bg-muted/30 border-transparent text-foreground',
+                        )}
+                      >
+                        <span className="font-bold text-sm">
+                          {opt === 'all' ? t('allTypes') : typeLabels[opt]}
+                        </span>
+                        {filterType === opt && (
+                          <HugeiconsIcon
+                            icon={Check}
+                            className="h-4 w-4 stroke-[3]"
+                          />
+                        )}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
 
@@ -265,14 +250,16 @@ export default function TransactionsPage() {
                   {t('status')}
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {[
-                    'all',
-                    'captured',
-                    'authorized',
-                    'failed',
-                    'refunded',
-                    'created',
-                  ].map((opt) => (
+                  {(
+                    [
+                      'all',
+                      'captured',
+                      'authorized',
+                      'failed',
+                      'refunded',
+                      'created',
+                    ] as const
+                  ).map((opt) => (
                     <button
                       key={opt}
                       onClick={() => setFilterStatus(opt)}
@@ -284,7 +271,7 @@ export default function TransactionsPage() {
                       )}
                     >
                       <span className="font-bold text-sm capitalize">
-                        {opt === 'all' ? t('allStatuses') : getStatusLabel(opt)}
+                        {opt === 'all' ? t('allStatuses') : statusLabels[opt]}
                       </span>
                       {filterStatus === opt && (
                         <HugeiconsIcon
@@ -373,7 +360,7 @@ export default function TransactionsPage() {
       ) : (
         <div className="space-y-4">
           {filteredAndSortedTransactions.map((tx) => {
-            const statusConfig = getStatusConfig(tx.status)
+            const statusConfig = statusConfigs[tx.status]
             const StatusIcon = statusConfig.icon
             const productId = transactionProductId(tx)
 
@@ -391,7 +378,7 @@ export default function TransactionsPage() {
                       <h4 className="text-base font-semibold leading-snug">
                         {productId
                           ? productNames(productId)
-                          : (tx.product_id ?? getTypeLabel(tx.type))}
+                          : (tx.product_id ?? typeLabels[tx.type])}
                       </h4>
                       <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">
                         {format(new Date(tx.created_at), 'PPP at p')}
@@ -415,7 +402,7 @@ export default function TransactionsPage() {
                       className={`mt-1.5 gap-1 text-[10px] font-semibold border ${statusConfig.color}`}
                     >
                       <HugeiconsIcon icon={StatusIcon} className="w-3 h-3" />
-                      {getStatusLabel(tx.status)}
+                      {statusLabels[tx.status]}
                     </Badge>
                   </div>
                 </div>

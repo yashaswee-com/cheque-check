@@ -11,6 +11,7 @@ import messages from '../../../../../messages/en.json'
 import hindi from '../../../../../messages/hi.json'
 import hinglish from '../../../../../messages/hi-en.json'
 import type { Transaction } from '@/features/monetization/repositories/monetization.repository'
+import { FEATURE_IDS } from '@/features/monetization/constants'
 import TransactionsPage from './page'
 
 const mocks = vi.hoisted(() => ({ refresh: vi.fn(), copy: vi.fn() }))
@@ -224,25 +225,42 @@ describe('payment history cards', () => {
     ).toHaveLength(1)
   })
 
-  it('shows payment type fallback when product identifiers are absent', () => {
+  it('falls back to the transaction type when product identifiers are unknown', () => {
     transactions = [
       {
         ...transactions![0],
         id: 'missing-product',
         product_id: undefined,
         type: 'top_up',
+        feature_id: FEATURE_IDS.VOICE_REMINDER_SUB,
         status: 'captured',
+        currency: 'USD',
+        razorpay_order_id: null,
+        razorpay_payment_id: null,
+      },
+      {
+        ...transactions![0],
+        id: 'unknown-currency',
+        product_id: undefined,
+        type: 'top_up',
+        feature_id: FEATURE_IDS.VOICE_REMINDER_SUB,
+        status: 'captured',
+        currency: 'CAD',
         razorpay_order_id: null,
         razorpay_payment_id: null,
       },
     ]
     page()
     expect(
-      screen.getByRole('heading', {
-        name: messages.ProductNames.ai_scan_250,
-      }),
-    ).toBeVisible()
-    expect(screen.getByText(messages.Transactions.captured)).toBeVisible()
+      screen.getAllByRole('heading', { name: messages.Transactions.topUp }),
+    ).toHaveLength(2)
+    expect(screen.getAllByText(messages.Transactions.captured)).toHaveLength(2)
+    const amounts = Array.from(
+      document.querySelectorAll('p.font-bold'),
+      (node) => node.textContent ?? '',
+    )
+    expect(amounts.some((value) => value.includes('$'))).toBe(true)
+    expect(amounts.some((value) => value.includes('CAD'))).toBe(true)
     fireEvent.change(
       screen.getByPlaceholderText(messages.Transactions.searchPlaceholder),
       { target: { value: 'absent' } },
