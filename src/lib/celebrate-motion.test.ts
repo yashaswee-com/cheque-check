@@ -9,6 +9,11 @@ afterEach(() => {
 })
 
 describe('celebration motion', () => {
+  it('does not load browser-only confetti during server rendering', () => {
+    vi.stubGlobal('window', undefined)
+    celebrate()
+    expect(confetti).not.toHaveBeenCalled()
+  })
   it('respects both application and browser motion preferences', () => {
     document.documentElement.setAttribute('data-reduce-motion', '')
     celebrate()

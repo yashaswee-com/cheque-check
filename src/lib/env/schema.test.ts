@@ -97,6 +97,13 @@ describe('monitoringEnvSchema', () => {
     expect(config.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE).toBe(0.05)
     expect(config.NEXT_PUBLIC_SENTRY_REPLAY_SAMPLE_RATE).toBe(0.01)
     expect(config.NEXT_PUBLIC_SENTRY_ERROR_REPLAY_SAMPLE_RATE).toBe(0.25)
+    expect(
+      monitoringEnvSchema.parse({
+        NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE: '',
+        NEXT_PUBLIC_SENTRY_REPLAY_SAMPLE_RATE: '',
+        NEXT_PUBLIC_SENTRY_ERROR_REPLAY_SAMPLE_RATE: '',
+      }).NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE,
+    ).toBe(0.05)
   })
 
   it('requires explicit environment and release when enabled', () => {

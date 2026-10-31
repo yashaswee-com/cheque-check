@@ -9,6 +9,13 @@ import {
 } from './errors'
 
 describe('mapSupabaseError', () => {
+  it('does not expose blank messages or mistake unrelated details for missing rows', () => {
+    const cause = { message: '  ', details: 'permission denied' }
+    const error = mapSupabaseError(cause)
+    expect(error).toBeInstanceOf(DatabaseError)
+    expect(error.message).toBe('Database request failed')
+    expect(error.cause).toBe(cause)
+  })
   it('preserves existing application errors', () => {
     const error = new ValidationError('Invalid input')
 

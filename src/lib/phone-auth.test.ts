@@ -18,6 +18,10 @@ describe('phone-auth helpers', () => {
   )
 
   it('rejects other countries and invalid numbers', () => {
+    expect(checkIndianMobile('9876543210ext')).toEqual({
+      ok: false,
+      reason: 'invalid',
+    })
     expect(checkIndianMobile('+14155550123')).toMatchObject({ ok: false })
     expect(checkIndianMobile('1234567890')).toMatchObject({ ok: false })
     expect(checkIndianMobile('')).toMatchObject({ ok: false })
@@ -31,6 +35,7 @@ describe('phone-auth helpers', () => {
   })
 
   it('masks the middle digits', () => {
+    expect(maskPhone('+91')).toBe('+91')
     expect(maskPhone('+919876543210')).not.toContain('98765')
     expect(maskPhone('+919876543210')).toBe('+91 98•••••210')
   })
