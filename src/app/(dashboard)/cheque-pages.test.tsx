@@ -13,6 +13,7 @@ import messages from '../../../messages/en.json'
 import CreateChequePage from './cheques/create/page'
 import EditChequePage from './cheques/[id]/edit/page'
 import ChequeDetailPage from './cheques/[id]/page'
+import ChequesPage from './cheques/page'
 
 const mocks = vi.hoisted(() => ({
   submit: vi.fn(),
@@ -36,6 +37,10 @@ const mocks = vi.hoisted(() => ({
   pdf: vi.fn(),
   layout: vi.fn(),
   sms: vi.fn(),
+  filterSearch: vi.fn(),
+  filterStatus: vi.fn(),
+  filterSortBy: vi.fn(),
+  filterSortOrder: vi.fn(),
 }))
 let loading = false
 let saving = false
@@ -52,6 +57,9 @@ let originalType = 'Outward'
 let defaults: Record<string, unknown> = {}
 let errors: Record<string, { message: string }> = {}
 let unmatched: Record<string, string> | null = null
+let listedCheques: Array<typeof cheque> = []
+let filteredCheques: Array<typeof cheque> | null = null
+let listError: Error | null = null
 const party = { id: 'party', name: 'Customer', contact: '+919876543210' }
 const account = {
   id: 'account',
@@ -75,6 +83,8 @@ const cheque = {
   image_url: 'scan-image',
   canTransition: (status: string) => status !== 'Issued',
 }
+listedCheques = [cheque]
+filteredCheques = listedCheques
 
 function useChequeForm(options?: {
   beforePublish?: (id: string) => Promise<void>
@@ -159,6 +169,23 @@ vi.mock('@/features/cheques/hooks/use-cheque-detail', () => ({
     updateStatus: mocks.status,
   }),
 }))
+vi.mock('@/features/cheques/hooks/use-cheques', () => ({
+  useCheques: () => ({
+    cheques: listedCheques,
+    filteredCheques,
+    isLoading: loading,
+    error: listError,
+    search: '',
+    setSearch: mocks.filterSearch,
+    filter: 'All',
+    setFilter: mocks.filterStatus,
+    sortBy: 'date',
+    setSortBy: mocks.filterSortBy,
+    sortOrder: 'desc',
+    setSortOrder: mocks.filterSortOrder,
+    updateStatus: mocks.status,
+  }),
+}))
 vi.mock('@/features/cheques/hooks/use-cheque-actions', () => ({
   useChequeActions: () => ({ deleteCheque: mocks.delete }),
 }))
@@ -210,10 +237,79 @@ vi.mock('@/features/tags/hooks/use-draft-tags', () => ({
   },
 }))
 vi.mock('@/features/tags/hooks/use-entity-tags', () => ({
+  useEntityTagMap: () => ({ cheque: [] }),
   useEntityTagsDraft: () => {
     const [tagIds, setTagIds] = useState<string[]>([])
     return { tagIds, setTagIds, commit: mocks.commit }
   },
+}))
+vi.mock('@/features/cheques/components/cheque-filter-bar', () => ({
+  ChequeFilterBar: ({
+    setSearch,
+    setFilter,
+  }: {
+    setSearch: (value: string) => void
+    setFilter: (value: string) => void
+  }) => (
+    <div>
+      <button onClick={() => setSearch('100123')}>Search cheque</button>
+      <button onClick={() => setFilter('Cleared')}>Filter cleared</button>
+    </div>
+  ),
+}))
+vi.mock('@/features/premium-workspace/components/native-tools', () => ({
+  NativeTools: ({
+    onFiltersChange,
+  }: {
+    onFiltersChange: (filters: Record<string, string>) => void
+  }) => (
+    <button onClick={() => onFiltersChange({ status: 'Bounced' })}>
+      Native filter
+    </button>
+  ),
+}))
+vi.mock('@/components/ui/data-state', () => ({
+  DataState: ({
+    children,
+    isLoading,
+    isError,
+    data,
+    allData,
+    onClearFilters,
+    loadingComponent,
+    emptyState,
+  }: {
+    children: ReactNode
+    isLoading: boolean
+    isError: boolean
+    data: unknown[]
+    allData: unknown[]
+    onClearFilters: () => void
+    loadingComponent: ReactNode
+    emptyState: ReactNode
+  }) => {
+    if (isLoading) return loadingComponent
+    if (isError) return <p role="alert">Could not load cheques</p>
+    if (!data.length && allData.length)
+      return <button onClick={onClearFilters}>Clear filters</button>
+    if (!data.length) return emptyState
+    return <>{children}</>
+  },
+}))
+vi.mock('@/components/cheque-card', () => ({
+  ChequeCard: ({
+    cheque: row,
+    onStatusUpdate,
+    tags,
+  }: {
+    cheque: typeof cheque
+    onStatusUpdate: (id: string, status: string) => void
+    tags?: unknown[]
+  }) => (
+    <button onClick={() => onStatusUpdate(row.id, 'Cleared')}>
+      {row.cheque_number} ({tags?.length ?? 0} tags)
+    </button>
+  ),
 }))
 vi.mock('@/features/tags/components/tag-selector', () => ({
   TagSelector: ({ onChange }: { onChange: (ids: string[]) => void }) => (
@@ -234,6 +330,7 @@ vi.mock('@/features/monetization/components/premium-gate', () => ({
 }))
 vi.mock('@/components/ui/toast', () => ({ toast: { add: mocks.toast } }))
 vi.mock('@/features/drafts', () => ({
+  DraftsLink: ({ entity }: { entity: string }) => <span>{entity} drafts</span>,
   DraftToolbar: () => <span>Draft saved</span>,
   DraftLeaveDialog: () => null,
   DraftSaveFab: ({ onSave }: { onSave: () => void }) => (
@@ -302,7 +399,20 @@ vi.mock('@/components/ui/combobox', () => ({
   ),
 }))
 vi.mock('@/components/bank-selector', () => ({
-  BankSelector: () => <span>Select OCR bank</span>,
+  BankSelector: ({
+    value,
+    onValueChange,
+  }: {
+    value: string
+    onValueChange: (value: string) => void
+  }) => (
+    <button
+      data-testid="ocr-bank-selector"
+      onClick={() => onValueChange('bank-id')}
+    >
+      {value || 'Select OCR bank'}
+    </button>
+  ),
 }))
 vi.mock('@/components/speed-dial-fab', () => ({
   SpeedDialFab: ({
@@ -394,6 +504,9 @@ beforeEach(() => {
   defaults = {}
   errors = {}
   unmatched = null
+  listError = null
+  listedCheques = [cheque]
+  filteredCheques = listedCheques
   mocks.trigger.mockResolvedValue(true)
   mocks.require.mockReturnValue(true)
   mocks.verify.mockResolvedValue(true)
@@ -401,6 +514,49 @@ beforeEach(() => {
   mocks.layout.mockResolvedValue({ remote: true })
 })
 afterEach(cleanup)
+
+describe('cheque list page', () => {
+  it('renders cheque records with tags and forwards status updates', () => {
+    renderPage(<ChequesPage />)
+    fireEvent.click(screen.getByRole('button', { name: '100123 (0 tags)' }))
+    expect(mocks.status).toHaveBeenCalledWith('cheque', 'Cleared')
+  })
+
+  it('shows loading, failure, and no-cheques states', () => {
+    loading = true
+    renderPage(<ChequesPage />)
+    expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
+    cleanup()
+
+    loading = false
+    listError = new Error('Offline')
+    renderPage(<ChequesPage />)
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Could not load cheques',
+    )
+    cleanup()
+
+    listError = null
+    listedCheques = []
+    filteredCheques = []
+    renderPage(<ChequesPage />)
+    expect(screen.getByTestId('cheques-empty-state')).toBeVisible()
+  })
+
+  it('clears local and native filters after no results', () => {
+    renderPage(<ChequesPage />)
+    fireEvent.click(screen.getByRole('button', { name: 'Native filter' }))
+    expect(screen.getByRole('button', { name: 'Clear filters' })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+    expect(mocks.filterSearch).toHaveBeenCalledWith('')
+    expect(mocks.filterStatus).toHaveBeenCalledWith('All')
+    expect(mocks.filterSortBy).toHaveBeenCalledWith('date')
+    expect(mocks.filterSortOrder).toHaveBeenCalledWith('desc')
+    expect(
+      screen.getByRole('button', { name: '100123 (0 tags)' }),
+    ).toBeVisible()
+  })
+})
 
 describe('cheque creation page', () => {
   it('captures amount, entities, dates and notes, then flushes tags before and after publishing', async () => {
@@ -414,6 +570,12 @@ describe('cheque creation page', () => {
         name: messages.Cheques.accountPlaceholder,
       }),
     ).toHaveValue('account')
+    fireEvent.change(
+      screen.getByRole('combobox', {
+        name: messages.Cheques.accountPlaceholder,
+      }),
+      { target: { value: 'account' } },
+    )
     fireEvent.change(
       screen.getByRole('combobox', { name: messages.Cheques.partyPlaceholder }),
       { target: { value: 'party' } },
@@ -490,14 +652,18 @@ describe('cheque creation page', () => {
       expect.stringContaining('/accounts/create?name=New+entity'),
     )
   })
-  it('uploads a selected scan image and ignores an empty selection', () => {
+  it('uploads a selected scan image, extracts returned data, and ignores empty selection', async () => {
+    mocks.upload.mockResolvedValue('scan-image')
     const { container } = renderPage(<CreateChequePage />)
     const input = container.querySelector('input[type="file"]')!
     fireEvent.change(input, { target: { files: [] } })
     expect(mocks.upload).not.toHaveBeenCalled()
     const file = new File(['scan'], 'scan.png', { type: 'image/png' })
     fireEvent.change(input, { target: { files: [file] } })
-    expect(mocks.upload).toHaveBeenCalledWith(file)
+    await waitFor(() => expect(mocks.upload).toHaveBeenCalledWith(file))
+    await waitFor(() =>
+      expect(mocks.extract).toHaveBeenCalledWith('scan-image'),
+    )
   })
   it('displays scanning feedback and lets a user remove the imported photo', () => {
     query = new URLSearchParams({ imageUrl: 'scan-image' })
@@ -519,6 +685,20 @@ describe('cheque creation page', () => {
     renderPage(<CreateChequePage />)
     expect(await screen.findByText('Create Party: New payee')).toBeVisible()
     expect(screen.getByText('Create Account: New account')).toBeVisible()
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: 'Create Party: New payee' }),
+    )
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: 'Create Account: New account' }),
+    )
+    expect(
+      screen.getByRole('button', { name: /Create Selected/i }),
+    ).toBeDisabled()
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: 'Create Account: New account' }),
+    )
+    fireEvent.click(screen.getByTestId('ocr-bank-selector'))
+    expect(screen.getByTestId('ocr-bank-selector')).toHaveTextContent('bank-id')
     fireEvent.click(screen.getByRole('button', { name: /Create Selected/i }))
     expect(mocks.inline).toHaveBeenCalledOnce()
   })

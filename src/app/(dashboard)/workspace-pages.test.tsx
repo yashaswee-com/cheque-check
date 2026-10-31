@@ -44,7 +44,13 @@ let active = true
 let empty = false
 let noResults = false
 let balance = -100
-let profile = {
+let profile: {
+  id: string
+  name: string
+  email: string
+  avatar_url: string | null
+  currency: string
+} | null = {
   id: 'profile',
   name: 'Original Person',
   email: 'person@example.test',
@@ -271,7 +277,13 @@ describe('dashboard page', () => {
   )
   it('stores a scan locally before navigating to cheque creation', async () => {
     const { container } = renderPage(<DashboardPage />)
-    const input = container.querySelector('input[type="file"]')!
+    const input =
+      container.querySelector<HTMLInputElement>('input[type="file"]')!
+    const openPicker = vi.spyOn(input, 'click')
+    fireEvent.click(
+      screen.getByText(messages.Dashboard.scanCheque).closest('button')!,
+    )
+    expect(openPicker).toHaveBeenCalledOnce()
     fireEvent.change(input, { target: { files: [] } })
     expect(mocks.scan).not.toHaveBeenCalled()
     const file = new File(['scan'], 'scan.png', { type: 'image/png' })
@@ -394,6 +406,8 @@ describe('profile page', () => {
     expect(
       screen.getByRole('button', { name: messages.Settings.saveProfile }),
     ).toBeDisabled()
+    fireEvent.submit(name.closest('form')!)
+    expect(mocks.update).not.toHaveBeenCalled()
     fireEvent.change(name, { target: { value: '  Revised Person  ' } })
     fireEvent.click(
       screen.getByRole('button', { name: messages.Settings.saveProfile }),
@@ -438,6 +452,39 @@ describe('profile page', () => {
       await screen.findByRole('button', { name: 'Confirm Original Person' }),
     )
     expect(mocks.deleteProfile).toHaveBeenCalledOnce()
+  })
+
+  it('clears browser caches and unregisters service workers on request', async () => {
+    const cacheDelete = vi.fn().mockResolvedValue(true)
+    const unregister = vi.fn().mockResolvedValue(true)
+    Object.defineProperty(window, 'caches', {
+      configurable: true,
+      value: {
+        keys: vi.fn().mockResolvedValue(['app-cache']),
+        delete: cacheDelete,
+      },
+    })
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        getRegistrations: vi.fn().mockResolvedValue([{ unregister }]),
+      },
+    })
+    renderPage(<ProfilePage />)
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Confirm CLEAR' }),
+    )
+    await waitFor(() => expect(cacheDelete).toHaveBeenCalledWith('app-cache'))
+    expect(unregister).toHaveBeenCalledOnce()
+  })
+
+  it('uses the fallback name and email when the profile is unavailable', () => {
+    profile = null
+    renderPage(<ProfilePage />)
+    expect(screen.getByLabelText(messages.Settings.fullName)).toHaveValue('')
+    expect(screen.getByLabelText(messages.Common.email)).toHaveValue(
+      messages.PhoneAuth.noEmail,
+    )
   })
 })
 

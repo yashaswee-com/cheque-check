@@ -40,6 +40,7 @@ let defaults: FieldValues = {}
 let errors: Record<string, { message: string }> = {}
 let values: FieldValues = {}
 let initialStep = 1
+let deferDynamic = false
 let parties: Array<{ id: string; name: string; contact: string }> = []
 
 function useEntityForm(options?: {
@@ -96,11 +97,17 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => query,
 }))
 vi.mock('next/dynamic', () => ({
-  default: (load: () => Promise<React.ComponentType>) => {
+  default: (
+    load: () => Promise<React.ComponentType>,
+    options?: { loading?: () => ReactNode },
+  ) => {
     const Component = lazy(async () => ({ default: await load() }))
     return function Dynamic(props: Record<string, unknown>) {
+      if (deferDynamic) return <>{options?.loading?.()}</>
       return (
-        <Suspense fallback={<span>Loading widget</span>}>
+        <Suspense
+          fallback={options?.loading?.() ?? <span>Loading widget</span>}
+        >
           <Component {...props} />
         </Suspense>
       )
@@ -280,6 +287,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   loading = saving = success = false
   initialStep = 1
+  deferDynamic = false
   query = new URLSearchParams()
   defaults = {}
   errors = {}
@@ -314,6 +322,9 @@ describe('business creation page', () => {
     renderPage(<CreateBusinessPage />)
     expect(screen.getByTestId('business-step1-continue')).toBeDisabled()
     change('name', 'Acme Trading')
+    fireEvent.click(
+      document.querySelector('button[style*="background-color"]')!,
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Upload avatar' }))
     expect(values.logo_url).toBe('avatar-url')
     fireEvent.click(screen.getByRole('button', { name: 'Remove avatar' }))
@@ -334,6 +345,7 @@ describe('business creation page', () => {
           email: 'accounts@example.test',
           phone: '+919876543210',
           address: 'Warehouse Road',
+          color: expect.any(String),
         }),
       ),
     )
@@ -369,8 +381,19 @@ describe('business creation page', () => {
 })
 
 describe('account creation page', () => {
+  it('uses the bank selector loading placeholder while the dynamic widget loads', () => {
+    deferDynamic = true
+    renderPage(<CreateAccountPage />)
+    expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
+    deferDynamic = false
+  })
+
   it('requires bank and account identity, captures balance/default status, and attaches selected tags', async () => {
     renderPage(<CreateAccountPage />)
+    fireEvent.click(
+      document.querySelector('button[style*="background-color"]')!,
+    )
+    expect(values.color).toBeTruthy()
     expect(screen.getByTestId('account-step1-continue')).toBeDisabled()
     fireEvent.change(await screen.findByRole('combobox', { name: 'Bank' }), {
       target: { value: 'bank' },
@@ -488,6 +511,13 @@ describe.each([
     submitLabel: messages.Parties.updateParty,
   },
 ])('$name edit page', ({ Component, avatar }) => {
+  it('uses the dynamic control loading fallback', () => {
+    deferDynamic = true
+    renderPage(<Component />)
+    expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
+    deferDynamic = false
+  })
+
   it('shows loading placeholders instead of editable controls', () => {
     loading = true
     const { container } = renderPage(<Component />)

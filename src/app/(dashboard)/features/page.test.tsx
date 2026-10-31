@@ -32,6 +32,7 @@ let profile: Profile
 let premium = false
 let subscribed: string[] = []
 let quotas: Quota[] = []
+let entitlements: Array<{ feature_id: string; valid_until?: string }> = []
 let accessError: Error | null = null
 let loading = false
 let processing = false
@@ -52,7 +53,7 @@ vi.mock('@/features/monetization/hooks/use-monetization', () => ({
     isLifetimePremium: premium,
     checkEntitlement: (id: string) => subscribed.includes(id),
     getQuota: (id: string) => quotas.find((quota) => quota.feature_id === id),
-    entitlements: [],
+    entitlements,
     isLoading: loading,
     error: accessError,
     getEntitlementState: (id: string) =>
@@ -171,6 +172,7 @@ beforeEach(() => {
   finitePremium = false
   subscribed = []
   quotas = []
+  entitlements = []
   accessError = null
   loading = false
   processing = false
@@ -377,6 +379,20 @@ describe('Features page', () => {
     expect(
       within(voiceCard()).queryByRole('button', { name: /Top up/ }),
     ).not.toBeInTheDocument()
+  })
+
+  it('displays the expiration date for a matching subscription entitlement', () => {
+    subscribed = [FEATURE_IDS.VOICE_REMINDER_SUB]
+    profile.voice_call_enabled = true
+    voiceCredits()
+    entitlements = [
+      {
+        feature_id: FEATURE_IDS.VOICE_REMINDER_SUB,
+        valid_until: '2099-01-01T00:00:00.000Z',
+      },
+    ]
+    renderPage()
+    expect(within(voiceCard()).getByText(/2099/)).toBeInTheDocument()
   })
 
   it('shows exhausted credits and offers the correct top-up without hiding setup', () => {
