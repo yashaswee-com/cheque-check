@@ -8,6 +8,7 @@ import {
 } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ErrorView } from './error-view'
+import { renderToString } from 'react-dom/server'
 
 const state = vi.hoisted(() => ({
   reference: undefined as string | undefined,
@@ -30,6 +31,11 @@ afterEach(() => {
 })
 
 describe('ErrorView', () => {
+  it('provides an explicit support reference during server rendering', () => {
+    expect(
+      renderToString(<ErrorView supportReference="server-reference" />),
+    ).toContain('server-reference')
+  })
   it('renders safe default text rather than the raw exception message', () => {
     render(<ErrorView error={new Error('private account details')} />)
     expect(screen.getByText('unexpectedError')).toBeInTheDocument()

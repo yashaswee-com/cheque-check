@@ -1,11 +1,29 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EntityAvatar } from './entity-avatar'
 import { SkeletonImage } from './skeleton-image'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
 
 describe('SkeletonImage', () => {
+  it('shows cached images without a loading placeholder', () => {
+    vi.spyOn(HTMLImageElement.prototype, 'complete', 'get').mockReturnValue(
+      true,
+    )
+    vi.spyOn(HTMLImageElement.prototype, 'naturalWidth', 'get').mockReturnValue(
+      100,
+    )
+    const { container } = render(
+      <SkeletonImage src="/cached.png" alt="Cached cheque" />,
+    )
+    expect(screen.getByAltText('Cached cheque')).not.toHaveClass('invisible')
+    expect(
+      container.querySelector('[data-slot="skeleton"]'),
+    ).not.toBeInTheDocument()
+  })
   it('shows a skeleton until load and resets when the source changes', () => {
     const { container, rerender } = render(
       <SkeletonImage
