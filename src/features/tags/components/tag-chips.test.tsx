@@ -13,6 +13,14 @@ const tags = [
   { id: 'one', name: 'Urgent', color: '#ff0000' },
   { id: 'two', name: 'Paid', color: '#00ff00' },
 ] as Tag[]
+it('renders no chips for undefined tags and preserves unlinked chips without a limit', () => {
+  const { container, rerender } = render(<TagChips tags={undefined} />)
+  expect(container).toBeEmptyDOMElement()
+  rerender(<TagChips tags={tags} />)
+  expect(screen.getByText('Urgent').tagName).toBe('SPAN')
+  expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  expect(screen.queryByText(/^\+/)).not.toBeInTheDocument()
+})
 it('renders linked tags and a hidden-count chip', () => {
   render(<TagChips tags={tags} max={1} linked />)
   expect(screen.getByRole('link', { name: 'Urgent' })).toHaveAttribute(

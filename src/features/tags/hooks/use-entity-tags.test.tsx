@@ -13,11 +13,13 @@ const service = vi.hoisted(() => ({
   getForEntity: vi.fn(),
   getTagMap: vi.fn(),
   syncForEntity: vi.fn(),
+  loggerError: vi.fn(),
 }))
 
 vi.mock('@/features/tags/services/tag.service', () => ({
   tagService: service,
 }))
+vi.mock('@/lib/logger', () => ({ logger: { error: service.loggerError } }))
 
 function setup<T>(hook: () => T) {
   const client = new QueryClient({
@@ -123,5 +125,32 @@ describe('useEntityTagMap', () => {
     setup(() => useEntityTagMap(undefined, 'party'))
 
     expect(service.getTagMap).not.toHaveBeenCalled()
+  })
+
+  it('loads a scoped map when entity ids are supplied and skips empty id lists', async () => {
+    const { result } = setup(() =>
+      useEntityTagMap('business-1', 'party', ['party-1']),
+    )
+    await waitFor(() => expect(result.current['party-1']).toBeDefined())
+    expect(service.getTagMap).toHaveBeenCalledWith('business-1', 'party', [
+      'party-1',
+    ])
+
+    service.getTagMap.mockClear()
+    setup(() => useEntityTagMap('business-1', 'party', []))
+    expect(service.getTagMap).not.toHaveBeenCalled()
+  })
+
+  it('logs entity-map query errors and keeps a safe empty result', async () => {
+    service.getTagMap.mockRejectedValue(new Error('Map unavailable'))
+    const { result } = setup(() => useEntityTagMap('business-1', 'party'))
+
+    await waitFor(() =>
+      expect(service.loggerError).toHaveBeenCalledWith(
+        'Entity tags could not be loaded',
+        expect.objectContaining({ message: 'Map unavailable' }),
+      ),
+    )
+    expect(result.current).toEqual({})
   })
 })

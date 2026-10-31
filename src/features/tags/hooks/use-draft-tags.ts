@@ -9,11 +9,9 @@ export function useDraftTags(draftId: string | null) {
   const dirty = useRef(false)
   const target = useRef(draftId)
   const pending = useRef<Promise<void>>(Promise.resolve())
-  const loadError = useRef<unknown>(null)
 
   const persist = useCallback((id: string, ids: string[]) => {
     const write = pending.current.then(async () => {
-      if (loadError.current) throw loadError.current
       const current = await tagService.getForEntity('cheque', id)
       await tagService.syncForEntity(
         'cheque',
@@ -32,18 +30,13 @@ export function useDraftTags(draftId: string | null) {
     target.current = draftId
     if (!draftId) return
     let cancelled = false
-    const load = pending.current
-      .then(async () => {
-        const tags = await tagService.getForEntity('cheque', draftId)
-        if (!cancelled && !dirty.current) {
-          selected.current = tags.map((tag: Tag) => tag.id)
-          setSelected(selected.current)
-        }
-      })
-      .catch((error) => {
-        loadError.current = error
-        throw error
-      })
+    const load = pending.current.then(async () => {
+      const tags = await tagService.getForEntity('cheque', draftId)
+      if (!cancelled && !dirty.current) {
+        selected.current = tags.map((tag: Tag) => tag.id)
+        setSelected(selected.current)
+      }
+    })
     pending.current = load
     void load.catch(() => undefined)
     if (dirty.current) void persist(draftId, [...selected.current])
@@ -65,7 +58,6 @@ export function useDraftTags(draftId: string | null) {
   const flush = useCallback(
     async (id: string | null) => {
       await pending.current
-      if (loadError.current) throw loadError.current
       if (id) await persist(id, [...selected.current])
     },
     [persist],

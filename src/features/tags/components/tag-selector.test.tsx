@@ -17,13 +17,17 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 
-const mocks = vi.hoisted(() => ({ create: vi.fn(), isLoading: false }))
+const mocks = vi.hoisted(() => ({
+  create: vi.fn(),
+  isLoading: false,
+  tags: [
+    { id: 'tag-1', name: 'Urgent', color: '#ff0000' },
+    { id: 'tag-2', name: 'Paid', color: '#00ff00' },
+  ],
+}))
 vi.mock('@/features/tags/hooks/use-tags', () => ({
   useTags: () => ({
-    tags: [
-      { id: 'tag-1', name: 'Urgent', color: '#ff0000' },
-      { id: 'tag-2', name: 'Paid', color: '#00ff00' },
-    ],
+    tags: mocks.tags,
     isLoading: mocks.isLoading,
     isCreating: false,
     createTag: mocks.create,
@@ -33,6 +37,10 @@ afterEach(cleanup)
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.isLoading = false
+  mocks.tags = [
+    { id: 'tag-1', name: 'Urgent', color: '#ff0000' },
+    { id: 'tag-2', name: 'Paid', color: '#00ff00' },
+  ]
 })
 
 function selector(onChange = vi.fn()) {
@@ -77,6 +85,15 @@ describe('Tag Selector modal backdrop', () => {
     expect(
       document.querySelectorAll('[data-slot="skeleton"]').length,
     ).toBeGreaterThan(3)
+  })
+
+  it('shows an empty state after the tag catalog finishes loading', async () => {
+    mocks.tags = []
+    selector()
+    fireEvent.click(screen.getByTestId('tag-selector-trigger'))
+    expect(
+      await screen.findByText(messages.SharedUI.noTags),
+    ).toBeInTheDocument()
   })
   it('dims only its own overlay, supports multiselect, Escape and focus return', async () => {
     const user = userEvent.setup()
