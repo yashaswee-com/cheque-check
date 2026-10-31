@@ -10,6 +10,8 @@ import TagsPage from './tags/page'
 let loading = false
 let empty = false
 let noResults = false
+let missingAccountDetails = false
+let profile: { currency: string } | null = null
 let error: Error | null = null
 const account = {
   id: 'account',
@@ -27,9 +29,12 @@ function useList() {
   const [bankFilter, setBankFilter] = useState('All')
   const [color, setColor] = useState<string | null>(null)
   const [usage, setUsage] = useState('all')
+  const listedAccount = missingAccountDetails
+    ? { ...account, bank: undefined, ifsc_code: null }
+    : account
   return {
-    accounts: empty ? [] : [account],
-    filteredAccounts: empty || noResults ? [] : [account],
+    accounts: empty ? [] : [listedAccount],
+    filteredAccounts: empty || noResults ? [] : [listedAccount],
     parties: empty ? [] : [party],
     filteredParties: empty || noResults ? [] : [party],
     tags: empty ? [] : [tag],
@@ -62,7 +67,7 @@ vi.mock('@/features/businesses/hooks/use-business', () => ({
   useBusiness: () => ({ activeBusiness: { id: 'business' } }),
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
-  useProfile: () => ({ profile: { currency: '$' } }),
+  useProfile: () => ({ profile }),
 }))
 vi.mock('@/features/accounts/hooks/use-accounts', () => ({
   useAccounts: () => useList(),
@@ -107,6 +112,8 @@ function renderPage(page: ReactNode) {
 }
 beforeEach(() => {
   loading = empty = noResults = false
+  missingAccountDetails = false
+  profile = { currency: '$' }
   error = null
 })
 afterEach(cleanup)
@@ -188,6 +195,21 @@ describe.each([
   )
 })
 describe('list-specific filters', () => {
+  it('uses the default currency when the party list has no profile', () => {
+    profile = null
+    renderPage(<PartiesPage />)
+
+    expect(screen.getByText('₹1,500')).toBeVisible()
+  })
+
+  it('uses safe defaults when account bank and IFSC data are missing', () => {
+    missingAccountDetails = true
+    renderPage(<AccountsPage />)
+
+    expect(screen.getByText(messages.Accounts.bank.charAt(0))).toBeVisible()
+    expect(screen.getByText(messages.Common.noIfsc)).toBeVisible()
+  })
+
   it('selects and resets an account bank filter', () => {
     renderPage(<AccountsPage />)
     const bank = screen.getByRole('button', { name: 'Example Bank' })
@@ -213,5 +235,10 @@ describe('list-specific filters', () => {
     const unused = screen.getByRole('button', { name: messages.Tags.unused })
     fireEvent.click(unused)
     expect(unused).toHaveClass('border-primary')
+    const allOptions = screen.getAllByRole('button', {
+      name: messages.Common.all,
+    })
+    fireEvent.click(allOptions[1])
+    expect(allOptions[1]).toHaveClass('border-primary')
   })
 })

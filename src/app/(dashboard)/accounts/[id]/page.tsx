@@ -204,7 +204,7 @@ export default function AccountDetailPage() {
           </p>
           <p className="text-lg font-semibold">
             {profile?.currency || '₹'}
-            {(account.opening_balance ?? 0).toLocaleString(undefined, {
+            {account.opening_balance.toLocaleString(undefined, {
               minimumFractionDigits: 2,
             })}
           </p>

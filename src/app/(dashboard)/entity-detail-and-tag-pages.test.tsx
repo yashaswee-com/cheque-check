@@ -78,6 +78,11 @@ let filterState = {
   sortOrder: 'desc',
 }
 let hasContact = true
+let profileCurrency: string | null = '$'
+let missingAccountBank = false
+let missingAccountIfsc = false
+let missingTagCollections = false
+let deferTagDeleteDialog = false
 
 function useDetail() {
   const [search, setSearch] = useState(filterState.search)
@@ -88,7 +93,13 @@ function useDetail() {
     filterState = { search, filter, sortBy, sortOrder }
   }, [search, filter, sortBy, sortOrder])
   return {
-    account: found ? account : null,
+    account: found
+      ? {
+          ...account,
+          bank: missingAccountBank ? undefined : account.bank,
+          ifsc_code: missingAccountIfsc ? null : account.ifsc_code,
+        }
+      : null,
     party: found ? { ...party, email: hasContact ? party.email : null } : null,
     business: found
       ? {
@@ -126,9 +137,13 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 vi.mock('next/dynamic', () => ({
-  default: (load: () => Promise<React.ComponentType>) => {
+  default: (
+    load: () => Promise<React.ComponentType>,
+    options?: { loading?: () => ReactNode },
+  ) => {
     const Component = lazy(async () => ({ default: await load() }))
     return function Dynamic(props: Record<string, unknown>) {
+      if (deferTagDeleteDialog) return <>{options?.loading?.()}</>
       return (
         <Suspense fallback={<span>Loading widget</span>}>
           <Component {...props} />
@@ -153,7 +168,9 @@ vi.mock('@/features/businesses/hooks/use-business', () => ({
   }),
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
-  useProfile: () => ({ profile: { currency: '$' } }),
+  useProfile: () => ({
+    profile: profileCurrency ? { currency: profileCurrency } : null,
+  }),
 }))
 vi.mock('@/features/drafts', () => ({ useRedirectIfDraft: () => draft }))
 vi.mock('@/features/tags/hooks/use-entity-tags', () => ({
@@ -289,18 +306,32 @@ vi.mock('@/features/tags/hooks/use-tag-list', () => ({
 }))
 vi.mock('@/features/cheques/hooks/use-cheques', () => ({
   useCheques: () => ({
-    cheques: [cheque, { ...cheque, id: 'unlinked' }],
+    cheques: missingTagCollections
+      ? undefined
+      : [cheque, { ...cheque, id: 'unlinked' }],
     isLoading: listLoading,
   }),
 }))
 vi.mock('@/features/parties/hooks/use-parties', () => ({
   useParties: () => ({
-    parties: [party, { ...party, id: 'unlinked', name: 'Unlinked party' }],
+    parties: missingTagCollections
+      ? undefined
+      : [party, { ...party, id: 'unlinked', name: 'Unlinked party' }],
     isLoading: listLoading,
   }),
 }))
 vi.mock('@/features/accounts/hooks/use-accounts', () => ({
-  useAccounts: () => ({ accounts: [account], isLoading: listLoading }),
+  useAccounts: () => ({
+    accounts: missingTagCollections
+      ? undefined
+      : [
+          {
+            ...account,
+            bank: missingAccountBank ? undefined : account.bank,
+          },
+        ],
+    isLoading: listLoading,
+  }),
 }))
 vi.mock('@/components/ui/toast', () => ({ toast: { add: mocks.toast } }))
 vi.mock('@/components/ui/delete-dialog', () => ({
@@ -333,6 +364,10 @@ beforeEach(() => {
   vi.resetAllMocks()
   loading = draft = empty = noResults = saving = listLoading = false
   active = found = hasContact = true
+  profileCurrency = '$'
+  missingAccountBank = missingAccountIfsc = false
+  missingTagCollections = false
+  deferTagDeleteDialog = false
   error = null
   filterState = { search: '', filter: 'All', sortBy: 'date', sortOrder: 'desc' }
   links = []
@@ -375,6 +410,15 @@ describe.each([
     renderPage(<Component />)
     expect(screen.getByText(notFound)).toBeVisible()
   })
+  it('uses the default currency when profile data is unavailable', () => {
+    profileCurrency = null
+    renderPage(<Component />)
+    expect(
+      screen.getByText(
+        kind === 'account' ? '₹2,500.50' : kind === 'party' ? '₹500' : '₹2,500',
+      ),
+    ).toBeVisible()
+  })
   it('shows entity data, edit navigation, tags and cheque status actions', () => {
     renderPage(<Component />)
     expect(screen.getByText(title)).toBeVisible()
@@ -402,6 +446,7 @@ describe.each([
       ).toBeVisible()
     }
   })
+
   it('connects search, sorting and status filters and restores defaults when no results remain', () => {
     noResults = true
     renderPage(<Component />)
@@ -502,6 +547,14 @@ describe.each([
   }
 })
 
+it('shows safe account fallbacks when optional bank details are absent', () => {
+  missingAccountBank = missingAccountIfsc = true
+  profileCurrency = null
+  renderPage(<AccountDetailPage />)
+  expect(screen.getByText(messages.Common.notAvailable)).toBeVisible()
+  expect(screen.getByText('₹2,500.50')).toBeVisible()
+})
+
 describe('business detail error state', () => {
   it('shows a history loading error without rendering stale cheque cards', () => {
     error = new Error('Could not load cheques')
@@ -593,6 +646,13 @@ describe('tag create and edit pages', () => {
       screen.queryByLabelText(messages.Tags.tagName),
     ).not.toBeInTheDocument()
   })
+  it('shows the delete-dialog placeholder while the dynamic dialog loads', () => {
+    deferTagDeleteDialog = true
+    const { container } = renderPage(<EditTagPage />)
+    expect(
+      container.querySelector('[data-slot="skeleton"]'),
+    ).toBeInTheDocument()
+  })
   it('prefills the existing tag, saves its update, and returns only after success', async () => {
     renderPage(<EditTagPage />)
     expect(screen.getByLabelText(messages.Tags.tagName)).toHaveValue('Urgent')
@@ -658,6 +718,28 @@ describe('tag detail page', () => {
       'href',
       '/businesses/business',
     )
+  })
+  it('handles unavailable linked collections and accounts without a bank relation', () => {
+    missingTagCollections = true
+    links = [
+      { entity_type: 'cheque', entity_id: 'cheque' },
+      { entity_type: 'party', entity_id: 'party' },
+      { entity_type: 'account', entity_id: 'account' },
+    ]
+    renderPage(<TagDetailPage />)
+    expect(screen.getByText(messages.Tags.noLinkedItems)).toBeVisible()
+    fireEvent.click(screen.getByRole('tab', { name: /Parties/ }))
+    expect(screen.getByText(messages.Tags.noLinkedItems)).toBeVisible()
+    fireEvent.click(screen.getByRole('tab', { name: /Accounts/ }))
+    expect(screen.getByText(messages.Tags.noLinkedItems)).toBeVisible()
+
+    cleanup()
+    missingTagCollections = false
+    missingAccountBank = true
+    links = [{ entity_type: 'account', entity_id: 'account' }]
+    renderPage(<TagDetailPage />)
+    fireEvent.click(screen.getByRole('tab', { name: /Accounts/ }))
+    expect(screen.getByText('5678')).toBeVisible()
   })
   it('shows linked-list placeholders until the selected entity collection resolves', () => {
     listLoading = true

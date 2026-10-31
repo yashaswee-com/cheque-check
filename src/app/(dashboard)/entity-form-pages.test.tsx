@@ -41,6 +41,8 @@ let errors: Record<string, { message: string }> = {}
 let values: FieldValues = {}
 let initialStep = 1
 let deferDynamic = false
+let profileCurrency: string | null = '$'
+let emptyConfirmName = false
 let parties: Array<{ id: string; name: string; contact: string }> = []
 
 function useEntityForm(options?: {
@@ -67,9 +69,15 @@ function useEntityForm(options?: {
     isLoading: loading,
     isSaving: saving,
     isSuccess: success,
-    business: { id: 'entity', name: 'Original business' },
-    account: { id: 'entity', account_name: 'Original account' },
-    party: { id: 'entity', name: 'Original party' },
+    business: {
+      id: 'entity',
+      name: emptyConfirmName ? '' : 'Original business',
+    },
+    account: {
+      id: 'entity',
+      account_name: emptyConfirmName ? '' : 'Original account',
+    },
+    party: { id: 'entity', name: emptyConfirmName ? '' : 'Original party' },
     continueAfterSuccess: mocks.continue,
     onDelete: mocks.delete,
     onSubmit: async (event: React.FormEvent) => {
@@ -118,7 +126,9 @@ vi.mock('@/features/businesses/hooks/use-business', () => ({
   useBusiness: () => ({ activeBusiness: { id: 'business' } }),
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
-  useProfile: () => ({ profile: { currency: '$' } }),
+  useProfile: () => ({
+    profile: profileCurrency ? { currency: profileCurrency } : null,
+  }),
 }))
 vi.mock('@/features/businesses/hooks/use-create-business', () => ({
   useCreateBusiness: () => useEntityForm(),
@@ -288,6 +298,8 @@ beforeEach(() => {
   loading = saving = success = false
   initialStep = 1
   deferDynamic = false
+  profileCurrency = '$'
+  emptyConfirmName = false
   query = new URLSearchParams()
   defaults = {}
   errors = {}
@@ -351,7 +363,11 @@ describe('business creation page', () => {
     )
   })
   it('displays field errors and prevents duplicate final submissions while saving', () => {
-    errors = { name: { message: 'Business name required' } }
+    errors = {
+      name: { message: 'Business name required' },
+      email: { message: 'Business email invalid' },
+      phone: { message: 'Business phone invalid' },
+    }
     const view = renderPage(<CreateBusinessPage />)
     expect(screen.getByText('Business name required')).toBeVisible()
     cleanup()
@@ -360,6 +376,16 @@ describe('business creation page', () => {
     view.unmount()
     renderPage(<CreateBusinessPage />)
     expect(screen.getByTestId('business-submit-button')).toBeDisabled()
+  })
+  it('displays contact-field validation errors on the contact step', () => {
+    initialStep = 2
+    errors = {
+      email: { message: 'Business email invalid' },
+      phone: { message: 'Business phone invalid' },
+    }
+    renderPage(<CreateBusinessPage />)
+    expect(screen.getByText('Business email invalid')).toBeVisible()
+    expect(screen.getByText('Business phone invalid')).toBeVisible()
   })
   it('allows returning from contact step and continuing after success', () => {
     initialStep = 2
@@ -381,6 +407,13 @@ describe('business creation page', () => {
 })
 
 describe('account creation page', () => {
+  it('uses the default currency when profile data is unavailable', () => {
+    profileCurrency = null
+    initialStep = 2
+    renderPage(<CreateAccountPage />)
+    expect(screen.getByText('₹')).toBeVisible()
+  })
+
   it('uses the bank selector loading placeholder while the dynamic widget loads', () => {
     deferDynamic = true
     renderPage(<CreateAccountPage />)
@@ -510,7 +543,7 @@ describe.each([
     avatar: 'avatar_url',
     submitLabel: messages.Parties.updateParty,
   },
-])('$name edit page', ({ Component, avatar }) => {
+])('$name edit page', ({ name, Component, avatar }) => {
   it('uses the dynamic control loading fallback', () => {
     deferDynamic = true
     renderPage(<Component />)
@@ -525,6 +558,33 @@ describe.each([
     expect(
       container.querySelector('[data-slot="skeleton"]'),
     ).toBeInTheDocument()
+  })
+  it('renders validation errors and falls back for an empty confirmation name', async () => {
+    errors = {
+      bank_id: { message: 'Bank required' },
+      account_number: { message: 'Account number required' },
+      opening_balance: { message: 'Balance required' },
+      email: { message: 'Email invalid' },
+      phone: { message: 'Phone invalid' },
+      contact: { message: 'Contact required' },
+    }
+    emptyConfirmName = true
+    if (name === 'account') profileCurrency = null
+    renderPage(<Component />)
+    if (name === 'account') expect(screen.getByText('₹')).toBeVisible()
+    const expectedErrors =
+      name === 'account'
+        ? ['Bank required', 'Account number required', 'Balance required']
+        : name === 'business'
+          ? ['Email invalid', 'Phone invalid']
+          : ['Contact required']
+    for (const message of expectedErrors)
+      expect(screen.getByText(message)).toBeVisible()
+    expect(
+      await screen.findByRole('button', {
+        name: name === 'account' ? /Confirm delete Account/ : 'Confirm delete',
+      }),
+    ).toBeVisible()
   })
   it('edits identity, color and tags before persisting, and invokes deletion', async () => {
     defaults = {
@@ -597,6 +657,16 @@ describe.each([
 })
 
 describe('party creation page', () => {
+  it('shows party name and contact validation errors', () => {
+    errors = {
+      name: { message: 'Party name required' },
+      contact: { message: 'Contact required' },
+    }
+    renderPage(<CreatePartyPage />)
+    expect(screen.getByText('Party name required')).toBeVisible()
+    expect(screen.getByText('Contact required')).toBeVisible()
+  })
+
   it('prefills a scanned name, warns about duplicates, and flushes tags before creating', async () => {
     query = new URLSearchParams({ name: 'Existing Customer' })
     parties = [
@@ -667,6 +737,28 @@ describe('party creation page', () => {
     expect(document.getElementById('contact')).toHaveValue('+919876543210')
     expect(select).toHaveBeenCalledWith(['name', 'tel'], { multiple: false })
   })
+  it('preserves empty contact fields and falls back when a phone is not parseable', async () => {
+    const select = vi
+      .fn()
+      .mockResolvedValueOnce([{ name: [], tel: [] }])
+      .mockResolvedValueOnce([{ name: ['Contact'], tel: ['not a phone'] }])
+    Object.defineProperty(navigator, 'contacts', {
+      configurable: true,
+      value: { select },
+    })
+    renderPage(<CreatePartyPage />)
+    const importButton = screen.getByRole('button', {
+      name: messages.Parties.importFromContacts,
+    })
+    fireEvent.click(importButton)
+    await waitFor(() => expect(select).toHaveBeenCalledTimes(1))
+    expect(document.getElementById('name')).toHaveValue('')
+    expect(document.getElementById('contact')).toHaveValue('')
+    fireEvent.click(importButton)
+    await waitFor(() =>
+      expect(document.getElementById('contact')).toHaveValue('not a phone'),
+    )
+  })
   it.each([
     { error: new DOMException('Cancelled', 'AbortError'), notify: false },
     { error: new Error('Permission denied'), notify: true },
@@ -716,6 +808,16 @@ describe('party creation page', () => {
         'blob:preview',
       ),
     )
+    fireEvent.change(container.querySelector('input[type="file"]')!, {
+      target: {
+        files: [
+          new File(['replacement'], 'replacement.png', { type: 'image/png' }),
+        ],
+      },
+    })
+    await waitFor(() =>
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview'),
+    )
     finishUpload('uploaded-avatar')
     await waitFor(() => expect(values.avatar_url).toBe('uploaded-avatar'))
     expect(mocks.validateImage).toHaveBeenCalledWith(file, 5 * 1024 * 1024)
@@ -725,6 +827,20 @@ describe('party creation page', () => {
       'uploaded-avatar',
     )
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview')
+  })
+  it('opens the optional avatar picker and ignores an empty file selection', () => {
+    const { container } = renderPage(<CreatePartyPage />)
+    fireEvent.click(screen.getByText(messages.Parties.optionalDetails))
+    const input =
+      container.querySelector<HTMLInputElement>('input[type="file"]')!
+    const click = vi.spyOn(input, 'click')
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Parties.addPhoto }),
+    )
+    expect(click).toHaveBeenCalledOnce()
+    fireEvent.change(input, { target: { files: [] } })
+    expect(mocks.validateImage).not.toHaveBeenCalled()
+    expect(mocks.upload).not.toHaveBeenCalled()
   })
   it.each(['validation', 'upload'])(
     'reports avatar %s failures without assigning an image',
@@ -763,6 +879,14 @@ describe('party creation page', () => {
       ),
     )
     expect(mocks.exit).not.toHaveBeenCalled()
+  })
+  it('saves the party draft and flushes its tags from the save shortcut', async () => {
+    renderPage(<CreatePartyPage />)
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+    await waitFor(() => {
+      expect(mocks.saveDraft).toHaveBeenCalledOnce()
+      expect(mocks.flush).toHaveBeenCalledWith(null)
+    })
   })
   it('shows success and continues without leaving a form visible', () => {
     success = true

@@ -96,9 +96,9 @@ export default function PartyDetailPage() {
   }
 
   const sortOptions = [
-    { label: tc('date') || tCommon('date'), value: 'date', icon: DateIcon },
+    { label: tc('date'), value: 'date', icon: DateIcon },
     {
-      label: tc('amount') || tCommon('amount'),
+      label: tc('amount'),
       value: 'amount',
       icon: AmountIcon,
     },
@@ -106,36 +106,36 @@ export default function PartyDetailPage() {
 
   const orderOptions = [
     {
-      label: tc('descending') || tCommon('descending'),
+      label: tc('descending'),
       value: 'desc',
       icon: DescIcon,
     },
     {
-      label: tc('ascending') || tCommon('ascending'),
+      label: tc('ascending'),
       value: 'asc',
       icon: AscIcon,
     },
   ]
 
   const statusOptions = [
-    { label: tc('all') || tCommon('all'), value: 'All', icon: AllIcon },
+    { label: tc('all'), value: 'All', icon: AllIcon },
     {
-      label: tc('issued') || tCommon('issued'),
+      label: tc('issued'),
       value: 'Issued',
       icon: IssuedIcon,
     },
     {
-      label: tc('received') || tCommon('received'),
+      label: tc('received'),
       value: 'Received',
       icon: ReceivedIcon,
     },
     {
-      label: tc('cleared') || tCommon('cleared'),
+      label: tc('cleared'),
       value: 'Cleared',
       icon: ClearedIcon,
     },
     {
-      label: tc('bounced') || tCommon('bounced'),
+      label: tc('bounced'),
       value: 'Bounced',
       icon: BouncedIcon,
     },
@@ -284,14 +284,14 @@ export default function PartyDetailPage() {
                     icon={Filter}
                     className="h-5 w-5 text-primary"
                   />
-                  {tCommon ? tCommon('sortAndFilter') : tc('sortAndFilter')}
+                  {tCommon('sortAndFilter')}
                 </SheetTitle>
               </SheetHeader>
 
               <div className="space-y-6 py-4">
                 <div className="space-y-3">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    {tCommon ? tCommon('sortBy') : tc('sortBy')}
+                    {tCommon('sortBy')}
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
                     {sortOptions.map((option) => (
@@ -316,7 +316,7 @@ export default function PartyDetailPage() {
 
                 <div className="space-y-3">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    {tCommon ? tCommon('order') : tc('order')}
+                    {tCommon('order')}
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
                     {orderOptions.map((option) => (
@@ -341,7 +341,7 @@ export default function PartyDetailPage() {
 
                 <div className="space-y-3">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    {tCommon ? tCommon('filterStatus') : tc('filterStatus')}
+                    {tCommon('filterStatus')}
                   </h3>
                   <div className="grid grid-cols-1 gap-2">
                     {statusOptions.map((s) => (
