@@ -46,6 +46,17 @@ afterEach(() => {
 })
 
 describe('profile persistence', () => {
+  it('creates a missing phone-only profile without inventing an email or display name', async () => {
+    mocks.getUser.mockResolvedValueOnce({ data: { user: { id: 'u1' } } })
+    query.maybeSingle.mockResolvedValue({ data: null, error: null })
+    query.single.mockResolvedValueOnce({ data: { id: 'p1' }, error: null })
+    await expect(new SupabaseProfileRepository().get()).resolves.toEqual({
+      id: 'p1',
+    })
+    expect(query.insert).toHaveBeenCalledWith([
+      { user_id: 'u1', email: null, name: '' },
+    ])
+  })
   it('does not query or update an anonymous profile', async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null } })
     await expect(new SupabaseProfileRepository().get()).resolves.toBeNull()
