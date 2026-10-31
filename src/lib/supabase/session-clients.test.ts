@@ -46,16 +46,21 @@ function adapter(): CookieAdapter {
 }
 
 describe('session middleware', () => {
-  it.each(['/', '/login', '/signup', '/forgot-password', '/auth/callback'])(
-    'permits anonymous access to %s',
-    async (path) => {
-      const response = await updateSession(
-        new NextRequest(`https://app.example${path}`),
-      )
-      expect(response.headers.get('x-middleware-next')).toBe('1')
-      expect(response.headers.get('location')).toBeNull()
-    },
-  )
+  it.each([
+    '/',
+    '/login',
+    '/signup',
+    '/forgot-password',
+    '/auth/callback',
+    '/api/auth/phone/send',
+    '/api/auth/phone/verify',
+  ])('permits anonymous access to %s', async (path) => {
+    const response = await updateSession(
+      new NextRequest(`https://app.example${path}`),
+    )
+    expect(response.headers.get('x-middleware-next')).toBe('1')
+    expect(response.headers.get('location')).toBeNull()
+  })
 
   it('redirects anonymous private routes to login while preserving the URL query', async () => {
     const response = await updateSession(
