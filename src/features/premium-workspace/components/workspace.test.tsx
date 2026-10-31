@@ -13,6 +13,7 @@ import { FiltersPanel } from './filters-panel'
 import { ReportsPanel } from './reports-panel'
 import { MessagePanel } from './message-panel'
 import { SavedTools } from './saved-tools'
+import { PremiumWorkspace } from './workspace'
 import type { ChequeRow, SavedTool, WorkspaceContext } from '../types'
 
 const {
@@ -31,6 +32,57 @@ const {
   saveTool: vi.fn(),
   deleteTool: vi.fn(),
   downloadPdf: vi.fn(),
+}))
+const hookState = vi.hoisted(() => ({
+  isLoading: false,
+  activeBusiness: null as { id: string; name: string } | null,
+  businesses: [] as { id: string; name: string }[],
+  contextPending: false,
+  contextError: false,
+  toolsPending: false,
+  toolsError: false,
+  busy: false,
+  notice: null as 'success' | 'error' | null,
+  setActiveBusiness: vi.fn(),
+  setNotice: vi.fn(),
+  refetchContext: vi.fn(),
+  refetchTools: vi.fn(),
+}))
+vi.mock('@/features/businesses/hooks/use-business', () => ({
+  useBusiness: () => ({
+    activeBusiness: hookState.activeBusiness,
+    businesses: hookState.businesses,
+    setActiveBusiness: hookState.setActiveBusiness,
+    isLoading: hookState.isLoading,
+  }),
+}))
+vi.mock('@/features/profile/hooks/use-profile', () => ({
+  useProfile: () => ({ profile: null }),
+}))
+vi.mock('../hooks/use-workspace', () => ({
+  useWorkspaceContext: () => ({
+    data: context,
+    isPending: hookState.contextPending,
+    isError: hookState.contextError,
+    refetch: hookState.refetchContext,
+  }),
+  useWorkspaceTools: () => ({
+    data: [] as SavedTool[],
+    isPending: hookState.toolsPending,
+    isError: hookState.toolsError,
+    refetch: hookState.refetchTools,
+  }),
+}))
+vi.mock('../hooks/use-workspace-action', () => ({
+  useWorkspaceAction: () => ({
+    busy: hookState.busy,
+    notice: hookState.notice,
+    setNotice: hookState.setNotice,
+    run: async (action: () => Promise<unknown>) => action(),
+  }),
+}))
+vi.mock('@/features/monetization/components/premium-gate', () => ({
+  PremiumGate: ({ children }: { children: React.ReactNode }) => children,
 }))
 vi.mock('../service', () => ({
   premiumWorkspaceService: {
@@ -109,10 +161,83 @@ const wrap = (node: React.ReactNode) =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  hookState.isLoading = false
+  hookState.activeBusiness = null
+  hookState.businesses = []
+  hookState.contextPending = false
+  hookState.contextError = false
+  hookState.toolsPending = false
+  hookState.toolsError = false
+  hookState.busy = false
+  hookState.notice = null
 })
 afterEach(cleanup)
 
 describe('workspace workflows', () => {
+  it('distinguishes workspace loading and missing-business states', () => {
+    hookState.isLoading = true
+    const { rerender } = wrap(<PremiumWorkspace />)
+    expect(screen.getByRole('status')).toHaveTextContent(
+      messages.PremiumWorkspace.loading,
+    )
+    hookState.isLoading = false
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PremiumWorkspace />
+      </NextIntlClientProvider>,
+    )
+    expect(
+      screen.getByText(messages.PremiumWorkspace.noBusiness),
+    ).toBeInTheDocument()
+  })
+
+  it('shows workspace loading and retries context and saved-tool failures', () => {
+    const activeBusiness = { id: 'b1', name: 'Acme' }
+    hookState.activeBusiness = activeBusiness
+    hookState.businesses = [activeBusiness]
+    hookState.contextPending = true
+    const { rerender } = wrap(<PremiumWorkspace />)
+    expect(screen.getByRole('status')).toHaveTextContent(
+      messages.PremiumWorkspace.loading,
+    )
+
+    hookState.contextPending = false
+    hookState.toolsError = true
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PremiumWorkspace />
+      </NextIntlClientProvider>,
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.retry }),
+    )
+    expect(hookState.refetchContext).toHaveBeenCalledOnce()
+    expect(hookState.refetchTools).toHaveBeenCalledOnce()
+  })
+
+  it('renders the active workspace and selects another business', () => {
+    const activeBusiness = { id: 'b1', name: 'Acme' }
+    hookState.activeBusiness = activeBusiness
+    hookState.businesses = [activeBusiness, { id: 'b2', name: 'Second' }]
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PremiumWorkspace />
+      </NextIntlClientProvider>,
+    )
+    expect(
+      screen.getByRole('button', {
+        name: messages.PremiumWorkspace.tabs.import,
+      }),
+    ).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.change(
+      screen.getByLabelText(messages.PremiumWorkspace.business),
+      { target: { value: 'b2' } },
+    )
+    expect(hookState.setActiveBusiness).toHaveBeenCalledWith(
+      hookState.businesses[1],
+    )
+  })
+
   it('saves, applies and confirms deletion of named tools', async () => {
     const apply = vi.fn()
     applyTool.mockResolvedValue({ search: '123' })
@@ -226,6 +351,50 @@ describe('workspace workflows', () => {
     expect(changed).toHaveBeenLastCalledWith({})
   })
 
+  it('clears optional filters and reports an invalid date interval', () => {
+    const changed = vi.fn()
+    wrap(
+      <FiltersPanel
+        {...common}
+        currency="₹"
+        mode="bulk"
+        onFiltersChange={changed}
+      />,
+    )
+    for (const [label, value] of [
+      [messages.PremiumWorkspace.search, 'cheque'],
+      [messages.PremiumWorkspace.fields.status, 'Issued'],
+      [messages.PremiumWorkspace.fields.type, 'Outward'],
+      [messages.PremiumWorkspace.fields.party_id, 'p1'],
+      [messages.PremiumWorkspace.from, '2026-10-31'],
+      [messages.PremiumWorkspace.to, '2026-10-01'],
+    ]) {
+      fireEvent.change(screen.getByLabelText(label), { target: { value } })
+    }
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      messages.PremiumWorkspace.dateRangeError,
+    )
+    for (const label of [
+      messages.PremiumWorkspace.search,
+      messages.PremiumWorkspace.fields.status,
+      messages.PremiumWorkspace.fields.type,
+      messages.PremiumWorkspace.fields.party_id,
+      messages.PremiumWorkspace.from,
+      messages.PremiumWorkspace.to,
+    ]) {
+      fireEvent.change(screen.getByLabelText(label), { target: { value: '' } })
+    }
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(changed).toHaveBeenLastCalledWith({
+      search: '',
+      status: undefined,
+      type: undefined,
+      party_id: undefined,
+      from: undefined,
+      to: undefined,
+    })
+  })
+
   it('edits all template fields, shows validation errors and cancels a valid creation', async () => {
     applyTool.mockResolvedValue({
       party_id: 'p1',
@@ -315,6 +484,28 @@ describe('workspace workflows', () => {
     )
   })
 
+  it('uses the safe default message when no saved template is available', () => {
+    wrap(
+      <MessagePanel
+        {...common}
+        businessName="Acme"
+        currency="₹"
+        tools={[]}
+        context={{ cheques: [], parties: [], accounts: [] }}
+      />,
+    )
+    expect(
+      (
+        screen.getByLabelText(
+          messages.PremiumWorkspace.messageBody,
+        ) as HTMLTextAreaElement
+      ).value,
+    ).toContain('{party}')
+    expect(
+      screen.getByLabelText(messages.PremiumWorkspace.previewCheque),
+    ).toHaveValue('')
+  })
+
   it('invalidates report snapshots when date boundaries change', () => {
     wrap(
       <ReportsPanel
@@ -341,6 +532,135 @@ describe('workspace workflows', () => {
       screen.getByRole('button', { name: messages.PremiumWorkspace.generate }),
     ).toBeDisabled()
   })
+
+  it('generates and downloads a statement only after selecting its party', async () => {
+    snapshot.mockResolvedValue({
+      businesses: [{ id: 'b1', name: 'Acme' }],
+      cheques: [cheque],
+    })
+    wrap(
+      <ReportsPanel
+        {...common}
+        businessName="Acme"
+        businesses={[{ id: 'b1', name: 'Acme' }]}
+        currency="₹"
+        mode="statement"
+      />,
+    )
+    fireEvent.change(screen.getByLabelText('Party'), {
+      target: { value: 'p1' },
+    })
+    fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.from), {
+      target: { value: '2026-10-01' },
+    })
+    fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.to), {
+      target: { value: '2026-10-31' },
+    })
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.generate }),
+    )
+    await waitFor(() =>
+      expect(snapshot).toHaveBeenCalledWith(
+        ['b1'],
+        'p1',
+        '2026-10-01',
+        '2026-10-31',
+      ),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.exportPdf }),
+    )
+    await waitFor(() =>
+      expect(downloadPdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          business: 'Acme',
+          party: 'Asha',
+          cheques: [cheque],
+        }),
+      ),
+    )
+    expect(
+      screen.getAllByText(messages.PremiumWorkspace.summary.count),
+    ).not.toHaveLength(0)
+  })
+
+  it('uses fixed-party statement mode without rendering an editable selector', () => {
+    wrap(
+      <ReportsPanel
+        {...common}
+        businessName="Acme"
+        businesses={[{ id: 'b1', name: 'Acme' }]}
+        currency="₹"
+        mode="statement"
+        onlyPartyId="p1"
+      />,
+    )
+    expect(screen.getByText('Asha')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Party')).not.toBeInTheDocument()
+  })
+
+  it('handles a stale fixed party and invalid report dates safely', () => {
+    const { unmount } = wrap(
+      <ReportsPanel
+        {...common}
+        businessName="Acme"
+        businesses={[{ id: 'b1', name: 'Acme' }]}
+        context={{ cheques: [], parties: [], accounts: [] }}
+        currency="₹"
+        mode="statement"
+        onlyPartyId="deleted-party"
+      />,
+    )
+    expect(
+      screen.getByText(messages.PremiumWorkspace.choose),
+    ).toBeInTheDocument()
+    unmount()
+
+    wrap(
+      <ReportsPanel
+        {...common}
+        businessName="Acme"
+        businesses={[{ id: 'b1', name: 'Acme' }]}
+        currency="₹"
+        mode="statement"
+      />,
+    )
+    fireEvent.change(
+      screen.getByLabelText(messages.PremiumWorkspace.fields.party_id),
+      {
+        target: { value: 'p1' },
+      },
+    )
+    fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.from), {
+      target: { value: '2026-10-31' },
+    })
+    fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.to), {
+      target: { value: '2026-10-01' },
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      messages.PremiumWorkspace.dateRangeError,
+    )
+    expect(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.generate }),
+    ).toBeDisabled()
+  })
+
+  it('requires at least one business in consolidated report scope', () => {
+    wrap(
+      <ReportsPanel
+        {...common}
+        businessName="Acme"
+        businesses={[]}
+        context={{ cheques: [], parties: [], accounts: [] }}
+        currency="₹"
+        mode="consolidated"
+      />,
+    )
+    expect(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.generate }),
+    ).toBeDisabled()
+  })
+
   it('prefills a recurring cheque without copying its number or dates and requires confirmation to create', async () => {
     wrap(<TemplatesPanel {...common} />)
     fireEvent.change(screen.getByLabelText('Start with a previous cheque'), {
@@ -365,6 +685,35 @@ describe('workspace workflows', () => {
         }),
       ]),
     )
+  })
+
+  it('applies a saved template and leaves a new cheque number blank', async () => {
+    applyTool.mockResolvedValue({
+      party_id: 'p1',
+      account_id: 'a1',
+      amount: 300,
+      cheque_number: '999999',
+    })
+    wrap(
+      <TemplatesPanel
+        {...common}
+        tools={[
+          {
+            ...savedTool,
+            id: 'template',
+            name: 'Saved cheque',
+            kind: 'cheque-template',
+          },
+        ]}
+      />,
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.apply }),
+    )
+    await waitFor(() =>
+      expect(screen.getByLabelText('Amount')).toHaveValue('300'),
+    )
+    expect(screen.getByLabelText('Cheque number')).toHaveValue('')
   })
   it('keeps individual cheque links and confirms selection before an atomic batch action', async () => {
     wrap(<FiltersPanel {...common} currency="₹" mode="bulk" />)

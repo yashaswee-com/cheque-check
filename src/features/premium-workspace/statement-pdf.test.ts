@@ -150,6 +150,38 @@ describe('statement PDF export', () => {
     expect(pdf.save).toHaveBeenCalledOnce()
   })
 
+  it('renders nullable draft fields and unknown translated statuses as blanks', async () => {
+    await downloadStatementPdf({
+      ...input,
+      cheques: [
+        cheque({
+          cheque_number: null,
+          cheque_date: null,
+          amount: null,
+          type: null,
+          status: null,
+        }),
+        cheque({ amount: null, status: 'Cleared' }),
+        cheque({ status: 'Bounced', type: 'Outward' }),
+      ],
+      labels: { ...labels, types: {}, statuses: {} },
+    })
+    const text = ctx.fillText.mock.calls.map(([line]) => line)
+    expect(text).toContain(' |  | $0.00 |  |  | $0.00')
+    expect(text).toContain('2026-10-31 | 000001 | $0.00 |  |  | $0.00')
+    expect(text).toContain('2026-10-31 | 000001 | $125.50 |  |  | $0.00')
+  })
+
+  it('flushes an exactly full final page without adding an empty page', async () => {
+    await downloadStatementPdf({
+      ...input,
+      cheques: Array.from({ length: 32 }, () => cheque()),
+    })
+    expect(pdf.addPage).not.toHaveBeenCalled()
+    expect(pdf.addImage).toHaveBeenCalledOnce()
+    expect(ctx.fillText).toHaveBeenCalledWith('Page 1 / 1', 60, 1685)
+  })
+
   it('rejects explicitly if browser canvas rendering is unavailable', async () => {
     vi.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValue(null)
     await expect(downloadStatementPdf(input)).rejects.toThrow(

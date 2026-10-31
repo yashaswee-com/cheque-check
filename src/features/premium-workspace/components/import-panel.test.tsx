@@ -169,4 +169,15 @@ describe('ImportPanel', () => {
     expect(screen.getByLabelText(messages.PremiumWorkspace.file)).toBeDisabled()
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
   })
+
+  it('clears the preview when the selected file is removed', async () => {
+    mount()
+    upload()
+    await screen.findByText(/Asha/)
+    fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.file), {
+      target: { files: [] },
+    })
+    expect(screen.queryByText(/Asha/)).not.toBeInTheDocument()
+    expect(mocks.readImportFile).toHaveBeenCalledOnce()
+  })
 })

@@ -18,6 +18,7 @@ const state = vi.hoisted(() => ({
     isLoading: false,
     setActiveBusiness: vi.fn(),
   },
+  profile: { currency: '$' } as { currency: string } | null,
   context: {
     data: { cheques: [], parties: [], accounts: [] } as object | undefined,
     isPending: false,
@@ -29,7 +30,7 @@ const state = vi.hoisted(() => ({
       { id: 'template', kind: 'cheque-template' },
       { id: 'view', kind: 'saved-view' },
       { id: 'message', kind: 'message-template' },
-    ],
+    ] as { id: string; kind: string }[] | undefined,
     isPending: false,
     isError: false,
     fetchStatus: 'idle',
@@ -47,7 +48,7 @@ vi.mock('@/features/businesses/hooks/use-business', () => ({
   useBusiness: () => state.business,
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
-  useProfile: () => ({ profile: { currency: '$' } }),
+  useProfile: () => ({ profile: state.profile }),
 }))
 vi.mock('../hooks/use-workspace', () => ({
   useWorkspaceContext: vi.fn(() => state.context),
@@ -125,9 +126,15 @@ beforeEach(() => {
     { id: 'b2', name: 'Second' },
   ]
   state.business.isLoading = false
+  state.profile = { currency: '$' }
   state.context.data = { cheques: [], parties: [], accounts: [] }
   state.context.isPending = state.context.isError = false
   state.tools.isPending = state.tools.isError = false
+  state.tools.data = [
+    { id: 'template', kind: 'cheque-template' },
+    { id: 'view', kind: 'saved-view' },
+    { id: 'message', kind: 'message-template' },
+  ]
   state.tools.fetchStatus = 'idle'
   state.action.busy = false
   state.action.notice = null
@@ -282,6 +289,46 @@ describe('NativeTools destinations', () => {
     fireEvent.click(screen.getByRole('button', { name: 'retry' }))
     expect(state.context.refetch).toHaveBeenCalledOnce()
     expect(state.tools.refetch).toHaveBeenCalledOnce()
+    state.context.isError = false
+    state.tools.fetchStatus = 'fetching'
+    rerender(<NativeTools destination="party" />)
+    expect(screen.getByRole('alert')).toHaveTextContent('loadError')
+  })
+
+  it('renders tool destinations from an explicit business without an active one', () => {
+    state.business.activeBusiness = null
+    state.business.businesses = []
+    for (const [destination, section, expected] of [
+      ['parties', 'bulk-import', 'Import parties'],
+      ['party', 'party-statements', 'Reports statement'],
+      ['business', 'message-templates', 'Messages'],
+      ['businesses', 'consolidated-dashboard', 'Reports consolidated'],
+    ] as const) {
+      window.history.replaceState(null, '', `/#${section}`)
+      const { container, unmount } = render(
+        <NativeTools destination={destination} businessId="b1" />,
+      )
+      expect(container).toHaveTextContent(expected)
+      unmount()
+    }
+  })
+
+  it('uses empty saved tools and the default currency while reporting action state', () => {
+    state.profile = null
+    state.tools.data = undefined
+    state.action.busy = true
+    state.action.notice = 'success'
+    window.history.replaceState(null, '', '/#saved-views')
+    const { rerender } = render(<NativeTools destination="cheques" />)
+    expect(screen.getByText('Filters views ₹')).toBeInTheDocument()
+    expect(screen.getByText('operationSuccess')).toHaveAttribute(
+      'role',
+      'status',
+    )
+    expect(screen.getAllByRole('status')).toHaveLength(2)
+    state.action.notice = 'error'
+    rerender(<NativeTools destination="cheques" />)
+    expect(screen.getByRole('alert')).toHaveTextContent('operationError')
   })
 
   it('shows pending active queries and waits for actual workspace data', () => {

@@ -66,6 +66,67 @@ const validCheque = {
 }
 
 describe('premium import validation', () => {
+  it('validates all optional field limits and absent required fields', () => {
+    const [party] = validateImport(
+      'parties',
+      [
+        {
+          contact: '+919111111111',
+          email: 'invalid',
+          address: 'x'.repeat(1001),
+          notes: 'x'.repeat(2001),
+        },
+      ],
+      { ...context, parties: [] },
+    )
+    expect(party.issues).toEqual(
+      expect.arrayContaining([
+        { field: 'name', code: 'required' },
+        { field: 'email', code: 'invalid' },
+        { field: 'address', code: 'invalid' },
+        { field: 'notes', code: 'invalid' },
+      ]),
+    )
+    expect(
+      validateImport(
+        'parties',
+        [
+          {
+            name: 'x'.repeat(201),
+            contact: '+919111111111',
+          },
+        ],
+        context,
+      )[0].issues,
+    ).toContainEqual({ field: 'name', code: 'invalid' })
+    const [empty] = validateImport('cheques', [{}], context)
+    expect(empty.issues).toEqual(
+      expect.arrayContaining([
+        { field: 'cheque_number', code: 'invalid' },
+        { field: 'cheque_date', code: 'invalid' },
+      ]),
+    )
+  })
+
+  it('preserves numeric import values while trimming headers and text', () => {
+    const [row] = validateImport(
+      'cheques',
+      [{ ...validCheque, amount: 42, ' notes ': ' rent ' }],
+      context,
+    )
+    expect(row.data).toMatchObject({ amount: 42, notes: 'rent' })
+    expect(row.issues).toEqual([])
+  })
+
+  it('does not match missing date bounds when filtering partial records', () => {
+    expect(filterCheques([{}], { search: 'missing' })).toEqual([])
+    expect(filterCheques([{}], { from: '2026-01-01' })).toEqual([])
+    expect(filterCheques([{}], { to: '2026-01-01' })).toEqual([{}])
+    expect(summarizeCheques([cheque({ amount: null })])).toMatchObject({
+      count: 1,
+      outward: 0,
+    })
+  })
   it('accepts valid cheque rows and preserves leading zeros', () => {
     const preview = validateImport('cheques', [validCheque], context)
     expect(preview[0].issues).toEqual([])

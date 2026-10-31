@@ -4,10 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
 import { PremiumCompatibilityRedirect } from './premium-compatibility-redirect'
 
-const { replace, setActiveBusiness, context } = vi.hoisted(() => ({
+const { replace, setActiveBusiness, context, state } = vi.hoisted(() => ({
   replace: vi.fn(),
   setActiveBusiness: vi.fn(),
   context: vi.fn(),
+  state: { isLoading: false, activeBusiness: true },
 }))
 
 const businesses = [
@@ -20,9 +21,9 @@ vi.mock('next/navigation', () => ({
 }))
 vi.mock('@/features/businesses/hooks/use-business', () => ({
   useBusiness: () => ({
-    activeBusiness: businesses[0],
+    activeBusiness: state.activeBusiness ? businesses[0] : null,
     businesses,
-    isLoading: false,
+    isLoading: state.isLoading,
     setActiveBusiness,
   }),
 }))
@@ -39,6 +40,8 @@ const renderEntry = () =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  state.isLoading = false
+  state.activeBusiness = true
 })
 
 afterEach(() => {
@@ -52,6 +55,31 @@ describe('legacy Premium routes', () => {
     renderEntry()
     await waitFor(() =>
       expect(replace).toHaveBeenCalledWith('/businesses/b1#message-templates'),
+    )
+  })
+
+  it('waits for business data before redirecting and falls back for unknown fragments', async () => {
+    window.history.replaceState(null, '', '/premium#unknown-tool')
+    state.isLoading = true
+    const { rerender } = renderEntry()
+    expect(replace).not.toHaveBeenCalled()
+    state.isLoading = false
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PremiumCompatibilityRedirect />
+      </NextIntlClientProvider>,
+    )
+    await waitFor(() =>
+      expect(replace).toHaveBeenCalledWith('/cheques#bulk-import'),
+    )
+  })
+
+  it('uses the default cheque destination when no business is active for messages', async () => {
+    window.history.replaceState(null, '', '/premium#message-templates')
+    state.activeBusiness = false
+    renderEntry()
+    await waitFor(() =>
+      expect(replace).toHaveBeenCalledWith('/businesses#message-templates'),
     )
   })
 
