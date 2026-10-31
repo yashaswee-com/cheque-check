@@ -21,6 +21,7 @@ describe('cheque draft return paths', () => {
     'https://evil.example/cheques/create',
     '//evil.example/cheques/create',
     '/parties/create',
+    'http://[invalid',
     null,
   ])('rejects unsafe return path %s', (returnTo) => {
     expect(getSafeChequeReturnTo(returnTo)).toBeNull()

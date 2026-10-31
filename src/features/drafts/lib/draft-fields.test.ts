@@ -7,6 +7,8 @@ import {
   toAccountDraftFields,
   toChequeDraftFields,
   toPartyDraftFields,
+  partyDraftToFormValues,
+  accountDraftToFormValues,
 } from './draft-fields'
 
 describe('toChequeDraftFields', () => {
@@ -55,6 +57,56 @@ describe('toChequeDraftFields', () => {
 })
 
 describe('party and account draft fields', () => {
+  it('restores blank parties with form defaults and preserves populated fields', () => {
+    expect(partyDraftToFormValues(toPartyDraftFields({}))).toEqual({
+      name: '',
+      contact: '',
+      email: '',
+      address: '',
+      notes: '',
+      color: '#34C759',
+      avatar_url: null,
+    })
+    const populated = {
+      name: 'Acme',
+      contact: '9876543210',
+      email: 'a@example.test',
+      address: 'Delhi',
+      notes: 'Customer',
+      color: '#123456',
+      avatar_url: 'media:a',
+    }
+    expect(partyDraftToFormValues(toPartyDraftFields(populated))).toEqual(
+      populated,
+    )
+  })
+
+  it('restores blank accounts with form defaults and preserves balance and default selection', () => {
+    expect(accountDraftToFormValues(toAccountDraftFields({}))).toEqual({
+      bank_id: '',
+      account_name: '',
+      account_number: '',
+      ifsc_code: '',
+      color: '#007AFF',
+      notes: '',
+      opening_balance: 0,
+      is_default: false,
+    })
+    const populated = {
+      bank_id: 'b1',
+      account_name: 'Main',
+      account_number: '123456',
+      ifsc_code: 'SBIN0001234',
+      color: '#123456',
+      notes: 'Business',
+      opening_balance: -100,
+      is_default: true,
+    }
+    expect(accountDraftToFormValues(toAccountDraftFields(populated))).toEqual(
+      populated,
+    )
+  })
+
   it('normalizes party values', () => {
     expect(toPartyDraftFields({ name: 'Acme', contact: '' })).toMatchObject({
       name: 'Acme',

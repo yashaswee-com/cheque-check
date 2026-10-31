@@ -20,6 +20,26 @@ const props = {
 }
 
 describe('DraftCard', () => {
+  it('requires confirmation only for a long left swipe', () => {
+    render(<DraftCard {...props} onDelete={vi.fn()} />)
+    const card = screen.getByRole('link').parentElement!
+    const swipe = (distance: number) => {
+      fireEvent.mouseDown(card, { clientX: 300, clientY: 100, buttons: 1 })
+      fireEvent.mouseMove(document, {
+        clientX: 300 + distance,
+        clientY: 100,
+        buttons: 1,
+      })
+      fireEvent.mouseUp(document, { clientX: 300 + distance, clientY: 100 })
+    }
+    swipe(100)
+    swipe(-80)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    swipe(-200)
+    expect(screen.getByRole('dialog')).toHaveTextContent('deleteDescription')
+    fireEvent.click(screen.getByRole('button', { name: 'close' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
   it('links to the draft without deleting on selection', () => {
     const onDelete = vi.fn()
     render(<DraftCard {...props} onDelete={onDelete} />)

@@ -171,4 +171,63 @@ describe('useDraftAutosave', () => {
     expect(stoppedId).toBe('d1')
     expect(service.update).not.toHaveBeenCalled()
   })
+
+  it('returns the current draft without saving when there is no business', async () => {
+    const queryClient = new QueryClient()
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(
+      () => {
+        const form = useForm<Values>({
+          defaultValues: { name: '', contact: '', color: '#34C759' },
+        })
+        return useDraftAutosave({
+          entity: 'party',
+          businessId: undefined,
+          form,
+          toFields: toPartyDraftFields,
+          initialDraftId: 'draft-1',
+        })
+      },
+      { wrapper },
+    )
+
+    await act(async () => {
+      await expect(result.current.save()).resolves.toBe('draft-1')
+    })
+    expect(result.current.status).toBe('idle')
+    expect(service.create).not.toHaveBeenCalled()
+    expect(service.update).not.toHaveBeenCalled()
+  })
+
+  it('reports a failed save and permits a retry', async () => {
+    const { result } = renderAutosave()
+    service.create.mockRejectedValueOnce(new Error('Storage unavailable'))
+
+    await act(async () => {
+      await expect(result.current.autosave.save()).rejects.toThrow(
+        'Storage unavailable',
+      )
+    })
+    expect(result.current.autosave.status).toBe('error')
+
+    await act(async () => {
+      await expect(result.current.autosave.save()).resolves.toBe('d1')
+    })
+    expect(service.create).toHaveBeenCalledTimes(2)
+    expect(result.current.autosave.status).toBe('saved')
+  })
+
+  it('discards unsaved state without deleting a draft row', async () => {
+    const { result } = renderAutosave()
+
+    await act(async () => result.current.autosave.discard())
+
+    expect(service.delete).not.toHaveBeenCalled()
+    await act(async () => {
+      await expect(result.current.autosave.save()).resolves.toBeNull()
+    })
+    expect(service.create).not.toHaveBeenCalled()
+  })
 })
