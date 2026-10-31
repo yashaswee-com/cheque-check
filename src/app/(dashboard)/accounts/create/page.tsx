@@ -33,7 +33,7 @@ import {
 } from '@/components/reui/stepper'
 import { useEffect, useState } from 'react'
 import { getSafeChequeReturnTo } from '@/lib/cheque-draft'
-import { DraftLeaveDialog, DraftSaveFab, DraftToolbar } from '@/features/drafts'
+import { DraftLeaveDialog, DraftSaveFab } from '@/features/drafts'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
 import { TagSelector } from '@/features/tags/components/tag-selector'
@@ -205,7 +205,6 @@ export default function CreateAccountPage() {
         </div>
       </Stepper>
 
-      <DraftToolbar status={draft.status} />
       <DraftLeaveDialog {...draft.leaveDialogProps} />
       <DraftSaveFab
         status={draft.status}

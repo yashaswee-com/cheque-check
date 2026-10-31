@@ -14,6 +14,7 @@ import CreateChequePage from './cheques/create/page'
 import EditChequePage from './cheques/[id]/edit/page'
 import ChequeDetailPage from './cheques/[id]/page'
 import ChequesPage from './cheques/page'
+import type { DraftSaveStatus } from '@/features/drafts/hooks/use-draft-autosave'
 
 const mocks = vi.hoisted(() => ({
   submit: vi.fn(),
@@ -44,6 +45,7 @@ const mocks = vi.hoisted(() => ({
 }))
 let loading = false
 let saving = false
+let draftStatus: DraftSaveStatus = 'saved'
 let uploading = false
 let success = false
 let draft = false
@@ -124,7 +126,7 @@ function useChequeForm(options?: {
     onDelete: mocks.delete,
     draft: {
       draftId: 'draft',
-      status: 'saved',
+      status: draftStatus,
       hasUserChanges: true,
       leaveDialogProps: {},
       setUserValue: form.setValue,
@@ -352,18 +354,19 @@ vi.mock('@/features/monetization/components/premium-gate', () => ({
   }),
 }))
 vi.mock('@/components/ui/toast', () => ({ toast: { add: mocks.toast } }))
-vi.mock('@/features/drafts', () => ({
-  DraftsLink: ({ entity }: { entity: string }) => <span>{entity} drafts</span>,
-  DraftToolbar: () => <span>Draft saved</span>,
-  DraftLeaveDialog: () => null,
-  DraftSaveFab: ({ onSave }: { onSave: () => void }) => (
-    <button type="button" onClick={onSave}>
-      Save draft
-    </button>
-  ),
-  useRedirectIfDraft: () => draft,
-  chequeDraftService: { duplicate: mocks.duplicate },
-}))
+vi.mock('@/features/drafts', async () => {
+  const { DraftSaveFab } =
+    await import('@/features/drafts/components/draft-save-fab')
+  return {
+    DraftsLink: ({ entity }: { entity: string }) => (
+      <span>{entity} drafts</span>
+    ),
+    DraftLeaveDialog: () => null,
+    DraftSaveFab,
+    useRedirectIfDraft: () => draft,
+    chequeDraftService: { duplicate: mocks.duplicate },
+  }
+})
 vi.mock('@/lib/scan-store', () => ({ ScanStore: { hasFile: () => false } }))
 vi.mock('@/hooks/use-signed-media-url', () => ({
   useSignedMediaUrl: (src: string) => ({ url: src, failed: imageFailed }),
@@ -521,6 +524,7 @@ beforeEach(() => {
     imageFailed =
       false
   found = true
+  draftStatus = 'saved'
   originalType = 'Outward'
   initialStep = 1
   query = new URLSearchParams()
@@ -537,6 +541,47 @@ beforeEach(() => {
   mocks.layout.mockResolvedValue({ remote: true })
 })
 afterEach(cleanup)
+
+describe('cheque draft status presentation', () => {
+  it.each(
+    [1, 2].flatMap((step) =>
+      [false, true].flatMap((resumed) =>
+        (['idle', 'saving', 'saved', 'error'] as const).map((status) => ({
+          step,
+          resumed,
+          status,
+        })),
+      ),
+    ),
+  )(
+    'keeps only the FAB on step $step with status $status (resumed=$resumed)',
+    ({ step, resumed, status }) => {
+      initialStep = step
+      draftStatus = status
+      if (resumed) query.set('draftId', 'draft')
+      renderPage(<CreateChequePage />)
+
+      for (const label of [
+        messages.Drafts.saving,
+        messages.Drafts.saved,
+        messages.Drafts.saveFailed,
+      ]) {
+        expect(screen.queryByText(label)).not.toBeInTheDocument()
+      }
+      const button = screen.getByRole('button', { name: 'Save draft' })
+      expect(button).toHaveAttribute('data-testid', 'draft-save-button')
+      expect(button).toHaveClass('fixed', 'bottom-6', 'right-6')
+      if (status === 'saving') expect(button).toBeDisabled()
+      else expect(button).toBeEnabled()
+    },
+  )
+
+  it('does not add draft status to the published cheque editor', () => {
+    renderPage(<EditChequePage />)
+    expect(screen.queryByText(messages.Drafts.saved)).not.toBeInTheDocument()
+    expect(screen.queryByTestId('draft-save-button')).not.toBeInTheDocument()
+  })
+})
 
 describe('cheque list page', () => {
   it('renders cheque records with tags and forwards status updates', () => {

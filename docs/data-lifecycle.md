@@ -79,6 +79,14 @@ new signed URLs. The application route checks the same database predicate
 before signing. Previously issued URLs retain their short (60-second) lifetime;
 they are not a permanently public URL or immediate revocation mechanism.
 
+## Draft save feedback
+
+Cheque, account and party creation forms, including resumed draft editors, use
+the bottom-right save FAB for draft progress and completion. They do not render
+an inline draft-status label beneath the navigation steppers or above the form.
+Autosave, manual saves, leave confirmation and save-failure toasts are unchanged.
+Business creation and published-entity editors do not use this draft indicator.
+
 ## Atomic tagged duplication
 
 `duplicate_cheque_draft(requested_cheque)` freshly checks Premium entitlement,

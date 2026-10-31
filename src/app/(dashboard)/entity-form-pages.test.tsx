@@ -16,6 +16,7 @@ import CreateAccountPage from './accounts/create/page'
 import EditAccountPage from './accounts/[id]/edit/page'
 import CreatePartyPage from './parties/create/page'
 import EditPartyPage from './parties/[id]/edit/page'
+import type { DraftSaveStatus } from '@/features/drafts/hooks/use-draft-autosave'
 
 const mocks = vi.hoisted(() => ({
   submit: vi.fn(),
@@ -35,6 +36,7 @@ const mocks = vi.hoisted(() => ({
 let query = new URLSearchParams()
 let loading = false
 let saving = false
+let draftStatus: DraftSaveStatus = 'saved'
 let success = false
 let defaults: FieldValues = {}
 let errors: Record<string, { message: string }> = {}
@@ -87,7 +89,7 @@ function useEntityForm(options?: {
     },
     draft: {
       draftId: 'draft',
-      status: 'saved',
+      status: draftStatus,
       hasUserChanges: true,
       setUserValue: form.setValue,
       saveDraft: mocks.saveDraft,
@@ -261,21 +263,18 @@ vi.mock('@/components/ui/delete-dialog', () => ({
     </button>
   ),
 }))
-vi.mock('@/features/drafts', () => ({
-  DraftToolbar: ({ status }: { status: string }) => (
-    <span>Draft: {status}</span>
-  ),
-  DraftLeaveDialog: ({ onSave }: { onSave?: () => void }) => (
-    <button type="button" onClick={onSave}>
-      Save and leave
-    </button>
-  ),
-  DraftSaveFab: ({ onSave }: { onSave: () => void }) => (
-    <button type="button" onClick={onSave}>
-      Save draft
-    </button>
-  ),
-}))
+vi.mock('@/features/drafts', async () => {
+  const { DraftSaveFab } =
+    await import('@/features/drafts/components/draft-save-fab')
+  return {
+    DraftLeaveDialog: ({ onSave }: { onSave?: () => void }) => (
+      <button type="button" onClick={onSave}>
+        Save and leave
+      </button>
+    ),
+    DraftSaveFab,
+  }
+})
 
 function renderPage(page: ReactNode) {
   return render(
@@ -296,6 +295,7 @@ function change(id: string, value: string) {
 beforeEach(() => {
   vi.clearAllMocks()
   loading = saving = success = false
+  draftStatus = 'saved'
   initialStep = 1
   deferDynamic = false
   profileCurrency = '$'
@@ -327,6 +327,55 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+})
+
+describe.each([
+  { entity: 'account', Page: CreateAccountPage, steps: [1, 2, 3] },
+  { entity: 'party', Page: CreatePartyPage, steps: [1] },
+])('$entity draft status presentation', ({ Page, steps }) => {
+  it.each(
+    steps.flatMap((step) =>
+      [false, true].flatMap((resumed) =>
+        (['idle', 'saving', 'saved', 'error'] as const).map((status) => ({
+          step,
+          resumed,
+          status,
+        })),
+      ),
+    ),
+  )(
+    'keeps only the FAB on step $step with status $status (resumed=$resumed)',
+    ({ step, resumed, status }) => {
+      initialStep = step
+      draftStatus = status
+      if (resumed) query.set('draftId', 'draft')
+      renderPage(<Page />)
+
+      for (const label of [
+        messages.Drafts.saving,
+        messages.Drafts.saved,
+        messages.Drafts.saveFailed,
+      ]) {
+        expect(screen.queryByText(label)).not.toBeInTheDocument()
+      }
+      const button = screen.getByRole('button', { name: 'Save draft' })
+      expect(button).toHaveAttribute('data-testid', 'draft-save-button')
+      expect(button).toHaveClass('fixed', 'bottom-6', 'right-6')
+      if (status === 'saving') expect(button).toBeDisabled()
+      else expect(button).toBeEnabled()
+    },
+  )
+})
+
+it.each([
+  { flow: 'business creation', Page: CreateBusinessPage },
+  { flow: 'business editor', Page: EditBusinessPage },
+  { flow: 'account editor', Page: EditAccountPage },
+  { flow: 'party editor', Page: EditPartyPage },
+])('does not add draft status to the $flow', ({ Page }) => {
+  renderPage(<Page />)
+  expect(screen.queryByText(messages.Drafts.saved)).not.toBeInTheDocument()
+  expect(screen.queryByTestId('draft-save-button')).not.toBeInTheDocument()
 })
 
 describe('business creation page', () => {

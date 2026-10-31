@@ -64,7 +64,7 @@ import { buildChequeReturnTo } from '@/lib/cheque-draft'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useDraftTags } from '@/features/tags/hooks/use-draft-tags'
 import { useOcrExtraction } from '@/features/cheques/hooks/use-ocr-extraction'
-import { DraftLeaveDialog, DraftSaveFab, DraftToolbar } from '@/features/drafts'
+import { DraftLeaveDialog, DraftSaveFab } from '@/features/drafts'
 
 export default function CreateChequePage() {
   const t = useTranslations('Cheques')
@@ -357,7 +357,6 @@ export default function CreateChequePage() {
         </Stepper>
       </div>
 
-      <DraftToolbar status={draft.status} />
       <DraftLeaveDialog {...draft.leaveDialogProps} />
       <DraftSaveFab
         status={draft.status}

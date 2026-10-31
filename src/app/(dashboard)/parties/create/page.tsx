@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { getSafeChequeReturnTo } from '@/lib/cheque-draft'
 import { useEffect, useRef, useState } from 'react'
-import { DraftLeaveDialog, DraftSaveFab, DraftToolbar } from '@/features/drafts'
+import { DraftLeaveDialog, DraftSaveFab } from '@/features/drafts'
 import { toast } from '@/components/ui/toast'
 import { PhoneInput, useDefaultPhoneCountry } from '@/components/ui/phone-input'
 import { toE164 } from '@/lib/phone'
@@ -231,7 +231,6 @@ export default function CreatePartyPage() {
 
   return (
     <div className="max-w-2xl space-y-8 pb-20">
-      <DraftToolbar status={draft.status} />
       <DraftLeaveDialog
         {...draft.leaveDialogProps}
         onSave={async () => {
