@@ -1,4 +1,4 @@
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { chequeService } from '@/features/cheques/services/cheque.service'
 import { businessService } from '@/features/businesses/services/business.service'

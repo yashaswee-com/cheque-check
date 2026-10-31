@@ -7,7 +7,7 @@ import {
   NoteEditIcon as DraftIcon,
   ArrowRight01Icon as ChevronRight,
 } from '@hugeicons/core-free-icons'
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { DRAFT_LIST_PATHS, type DraftEntity } from '../lib/draft-fields'
 import { useDrafts } from '../hooks/use-drafts'
 

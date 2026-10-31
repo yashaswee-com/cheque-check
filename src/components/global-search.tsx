@@ -7,10 +7,10 @@ import {
   Building03Icon as Building2,
   ArrowRight01Icon as ChevronRight,
 } from '@hugeicons/core-free-icons'
-import { useBusiness } from '@/hooks/use-business'
-import { useCheques } from '@/hooks/use-cheques'
-import { useParties } from '@/hooks/use-parties'
-import { useAccounts } from '@/hooks/use-accounts'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
+import { useCheques } from '@/features/cheques/hooks/use-cheques'
+import { useParties } from '@/features/parties/hooks/use-parties'
+import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { useRouter } from 'next/navigation'
 import {
   CommandDialog,

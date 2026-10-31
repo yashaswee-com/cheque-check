@@ -2,8 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
-import { BusinessProvider } from '@/hooks/use-business'
-import { ProfileProvider } from '@/hooks/use-profile'
+import { BusinessProvider } from '@/features/businesses/hooks/use-business'
+import { ProfileProvider } from '@/features/profile/hooks/use-profile'
 import { CelebrationHost } from '@/components/celebration-host'
 import { MonitoringProvider } from '@/components/monitoring-provider'
 

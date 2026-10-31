@@ -1,6 +1,6 @@
 'use client'
 
-import { useEditBusiness } from '@/hooks/use-edit-business'
+import { useEditBusiness } from '@/features/businesses/hooks/use-edit-business'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'

@@ -1,8 +1,8 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { useProfile } from '@/hooks/use-profile'
-import { useBusiness } from '@/hooks/use-business'
+import { useProfile } from '@/features/profile/hooks/use-profile'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowLeft01Icon as ChevronLeft,

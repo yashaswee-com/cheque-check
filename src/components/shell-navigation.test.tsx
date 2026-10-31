@@ -15,10 +15,10 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ back, push: vi.fn() }),
 }))
 vi.mock('next/dynamic', () => ({ default: () => () => null }))
-vi.mock('@/hooks/use-profile', () => ({
+vi.mock('@/features/profile/hooks/use-profile', () => ({
   useProfile: () => ({ profile: null }),
 }))
-vi.mock('@/hooks/use-business', () => ({
+vi.mock('@/features/businesses/hooks/use-business', () => ({
   useBusiness: () => ({ activeBusiness: null }),
 }))
 vi.mock('@/hooks/use-software-keyboard', () => ({

@@ -6,7 +6,7 @@ import {
 } from '@/features/accounts/services/account.service'
 import { useRouter } from 'next/navigation'
 import { useEntityEditor } from '@/hooks/use-entity-editor'
-import { useEntityMutations } from './use-entity-mutations'
+import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import type { Account } from '@/types'
 import { queryKeys } from '@/lib/query-keys'
 

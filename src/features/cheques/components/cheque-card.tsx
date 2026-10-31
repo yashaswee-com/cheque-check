@@ -13,7 +13,7 @@ import {
 } from '@hugeicons/core-free-icons'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useProfile } from '@/hooks/use-profile'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { format } from 'date-fns'
 import { StatusPill } from '@/components/ui/status-pill'
 import { EntityAvatar } from '@/components/ui/entity-avatar'

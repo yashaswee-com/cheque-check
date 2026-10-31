@@ -1,6 +1,6 @@
 'use client'
 
-import { useParties } from '@/hooks/use-parties'
+import { useParties } from '@/features/parties/hooks/use-parties'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Search01Icon as Search,
@@ -16,8 +16,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
-import { useBusiness } from '@/hooks/use-business'
-import { useProfile } from '@/hooks/use-profile'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { DataState } from '@/components/ui/data-state'

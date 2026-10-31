@@ -8,7 +8,7 @@ import { PrintLayoutEditor } from '@/features/cheques/components/print-layout-ed
 import { PremiumGate } from '@/features/monetization/components/premium-gate'
 import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
-import { useProfile } from '@/features/cheques/hooks/use-profile'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { premiumWorkspaceService } from '../service'
 import type { ChequeFilters, ImportKind } from '../types'
 import { FiltersPanel } from './filters-panel'

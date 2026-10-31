@@ -10,10 +10,10 @@ import { toast } from '@/components/ui/toast'
 import { useTranslations } from 'next-intl'
 import { Party, type ChequeDraft } from '@/types'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
-import { useProfile } from './use-profile'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { ConflictError } from '@/lib/errors'
 import { queueCelebration } from '@/lib/celebrate'
-import { useEntityCreateMutation } from './use-entity-mutations'
+import { useEntityCreateMutation } from '@/hooks/use-entity-mutations'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   chequeDraftService,

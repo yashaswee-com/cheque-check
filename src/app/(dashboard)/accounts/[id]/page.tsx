@@ -4,7 +4,7 @@ import {
   useAccountDetail,
   type SortBy,
   type SortOrder,
-} from '@/hooks/use-account-detail'
+} from '@/features/accounts/hooks/use-account-detail'
 import { ChequeCard } from '@/components/cheque-card'
 import { useParams } from 'next/navigation'
 import {
@@ -35,7 +35,7 @@ import {
   CheckmarkCircle01Icon as ClearedIcon,
   Cancel01Icon as BouncedIcon,
 } from '@hugeicons/core-free-icons'
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -49,7 +49,7 @@ import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { TextTruncate } from '@/components/ui/text-truncate'
 import { useTranslations } from 'next-intl'
-import { useProfile } from '@/hooks/use-profile'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useRedirectIfDraft } from '@/features/drafts'
 import {
   Sheet,

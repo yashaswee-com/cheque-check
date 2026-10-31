@@ -1,6 +1,6 @@
 'use client'
 
-import { useProfile } from '@/hooks/use-profile'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Button } from '@/components/ui/button'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -22,11 +22,11 @@ import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useSettings } from '@/hooks/use-settings'
+import { useSettings } from '@/features/settings/hooks/use-settings'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { useTranslations } from 'next-intl'
 import { IconType } from '@/types'
-import { useMonetization } from '@/hooks/use-monetization'
+import { useMonetization } from '@/features/monetization/hooks/use-monetization'
 import { MonitoringPreferences } from '@/components/monitoring-preferences'
 
 interface SettingsItem {

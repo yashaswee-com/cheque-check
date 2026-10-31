@@ -7,7 +7,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { Party } from '@/types'
 import { useEntityEditor } from '@/hooks/use-entity-editor'
-import { useEntityMutations } from './use-entity-mutations'
+import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import { queryKeys } from '@/lib/query-keys'
 
 export function useEditParty(id: string, businessId: string | undefined) {

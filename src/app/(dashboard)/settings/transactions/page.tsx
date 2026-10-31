@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useTransactions } from '@/hooks/use-transactions'
+import { useTransactions } from '@/features/monetization/hooks/use-transactions'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { HugeiconsIcon } from '@hugeicons/react'

@@ -1,11 +1,11 @@
 'use client'
 
-import { useCreateParty } from '@/hooks/use-create-party'
+import { useCreateParty } from '@/features/parties/hooks/use-create-party'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Tick02Icon as Check,

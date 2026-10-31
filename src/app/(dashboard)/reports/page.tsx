@@ -1,8 +1,8 @@
 'use client'
 
-import { useBusiness } from '@/hooks/use-business'
-import { useCheques } from '@/hooks/use-cheques'
-import { useProfile } from '@/hooks/use-profile'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
+import { useCheques } from '@/features/cheques/hooks/use-cheques'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { reportService } from '@/features/reports/services/report.service'
 import { Button } from '@/components/ui/button'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -13,7 +13,7 @@ import {
   Calendar01Icon as Calendar,
   Building03Icon,
 } from '@hugeicons/core-free-icons'
-import { useChequeStats } from '@/hooks/use-cheque-stats'
+import { useChequeStats } from '@/features/cheques/hooks/use-cheque-stats'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { TextTruncate } from '@/components/ui/text-truncate'

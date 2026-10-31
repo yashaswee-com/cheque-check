@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
 import { BusinessSwitcher } from './business-switcher'
 
-vi.mock('@/hooks/use-business', () => ({
+vi.mock('@/features/businesses/hooks/use-business', () => ({
   useBusiness: () => ({
     activeBusiness: null,
     businesses: [{ id: 'business-1', name: 'Acme' }],

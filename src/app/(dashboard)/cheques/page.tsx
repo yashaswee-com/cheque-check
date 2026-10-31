@@ -1,11 +1,11 @@
 'use client'
 
-import { useCheques } from '@/hooks/use-cheques'
+import { useCheques } from '@/features/cheques/hooks/use-cheques'
 import { ChequeCard } from '@/components/cheque-card'
 import { ChequeFilterBar } from '@/features/cheques/components/cheque-filter-bar'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Invoice01Icon as ReceiptText } from '@hugeicons/core-free-icons'
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'

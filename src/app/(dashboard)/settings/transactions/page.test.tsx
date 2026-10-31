@@ -16,7 +16,7 @@ import TransactionsPage from './page'
 const mocks = vi.hoisted(() => ({ refresh: vi.fn(), copy: vi.fn() }))
 let transactions: Transaction[] = []
 let error: Error | null = null
-vi.mock('@/hooks/use-transactions', () => ({
+vi.mock('@/features/monetization/hooks/use-transactions', () => ({
   useTransactions: () => ({
     transactions,
     isLoading: false,

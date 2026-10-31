@@ -1,6 +1,6 @@
 'use client'
 
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowDown01Icon as ChevronDown,

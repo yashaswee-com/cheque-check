@@ -13,7 +13,7 @@ import {
 } from '@hugeicons/core-free-icons'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
-import { useProfile } from '@/hooks/use-profile'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { resolveDefaultPhoneCountry, toE164 } from '@/lib/phone'
 import {
   Popover,

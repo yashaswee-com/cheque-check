@@ -40,14 +40,14 @@ let finitePremium = false
 
 afterEach(cleanup)
 
-vi.mock('@/hooks/use-profile', () => ({
+vi.mock('@/features/profile/hooks/use-profile', () => ({
   useProfile: () => ({
     profile,
     updateProfile: mocks.update,
     isLoading: false,
   }),
 }))
-vi.mock('@/hooks/use-monetization', () => ({
+vi.mock('@/features/monetization/hooks/use-monetization', () => ({
   useMonetization: () => ({
     isLifetimePremium: premium,
     checkEntitlement: (id: string) => subscribed.includes(id),
@@ -73,7 +73,7 @@ vi.mock('@/features/monetization/hooks/use-premium-access', () => ({
         : null,
   }),
 }))
-vi.mock('@/hooks/use-razorpay', () => ({
+vi.mock('@/features/monetization/hooks/use-razorpay', () => ({
   useRazorpay: () => ({
     processPayment: mocks.payment,
     isProcessing: processing,

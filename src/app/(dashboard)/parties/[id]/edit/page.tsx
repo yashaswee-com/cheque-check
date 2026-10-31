@@ -1,11 +1,11 @@
 'use client'
 
-import { useEditParty } from '@/hooks/use-edit-party'
+import { useEditParty } from '@/features/parties/hooks/use-edit-party'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter, useParams } from 'next/navigation'
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Tick02Icon as Check,

@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { useRouter } from 'next/navigation'
 import { useEntityEditor } from '@/hooks/use-entity-editor'
-import { useEntityMutations } from './use-entity-mutations'
+import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import { queryKeys } from '@/lib/query-keys'
 
 type ChequeFormData = z.infer<typeof chequeSchema>

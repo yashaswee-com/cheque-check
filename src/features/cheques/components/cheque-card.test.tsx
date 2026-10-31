@@ -5,7 +5,7 @@ import messages from '../../../../messages/en.json'
 import type { ChequeWithRelations } from '@/types'
 import { ChequeCard } from './cheque-card'
 
-vi.mock('@/hooks/use-profile', () => ({
+vi.mock('@/features/profile/hooks/use-profile', () => ({
   useProfile: () => ({
     profile: {
       currency: '₹',

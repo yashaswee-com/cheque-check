@@ -27,10 +27,10 @@ vi.mock('next/navigation', () => ({ usePathname: () => '/cheques' }))
 vi.mock('@/features/auth/services/auth.service', () => ({
   authService: { getUser: mocks.getUser, onAuthStateChange: mocks.subscribe },
 }))
-vi.mock('@/hooks/use-profile', () => ({
+vi.mock('@/features/profile/hooks/use-profile', () => ({
   useProfile: () => ({ profile: mocks.profile }),
 }))
-vi.mock('@/hooks/use-business', () => ({
+vi.mock('@/features/businesses/hooks/use-business', () => ({
   useBusiness: () => ({ activeBusiness: mocks.business }),
 }))
 vi.mock('@/features/monetization/hooks/use-entitlements', () => ({

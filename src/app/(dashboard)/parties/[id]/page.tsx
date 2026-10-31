@@ -1,6 +1,6 @@
 'use client'
 
-import { usePartyDetail } from '@/hooks/use-party-detail'
+import { usePartyDetail } from '@/features/parties/hooks/use-party-detail'
 import { ChequeCard } from '@/components/cheque-card'
 import { useParams } from 'next/navigation'
 import {
@@ -31,8 +31,8 @@ import {
   CheckmarkCircle01Icon as ClearedIcon,
   Cancel01Icon as BouncedIcon,
 } from '@hugeicons/core-free-icons'
-import { useBusiness } from '@/hooks/use-business'
-import { useProfile } from '@/hooks/use-profile'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { HugeiconsIcon } from '@hugeicons/react'

@@ -4,7 +4,7 @@ import { chequeService } from '@/features/cheques/services/cheque.service'
 import { ChequeStatus, Cheque } from '@/types'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { useMemo, useState } from 'react'
-import { useOptimisticMutation } from './use-optimistic-mutation'
+import { useOptimisticMutation } from '@/hooks/use-optimistic-mutation'
 import { queryKeys } from '@/lib/query-keys'
 
 export type SortBy = 'date' | 'amount'

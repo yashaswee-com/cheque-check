@@ -1,11 +1,11 @@
 'use client'
 
-import { useEditAccount } from '@/hooks/use-edit-account'
+import { useEditAccount } from '@/features/accounts/hooks/use-edit-account'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useParams } from 'next/navigation'
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Tick02Icon as Check,
@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
 import { FormSection } from '@/components/ui/form-section'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useProfile } from '@/hooks/use-profile'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { toast } from '@/components/ui/toast'

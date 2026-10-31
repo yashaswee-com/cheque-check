@@ -1,6 +1,6 @@
 'use client'
 
-import { useBusinesses } from '@/hooks/use-businesses-page'
+import { useBusinesses } from '@/features/businesses/hooks/use-businesses-page'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   UserIcon as User,
@@ -31,7 +31,7 @@ import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useProfile } from '@/hooks/use-profile'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { cn } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 import { DataState } from '@/components/ui/data-state'

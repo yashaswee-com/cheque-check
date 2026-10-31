@@ -4,7 +4,7 @@ import * as React from 'react'
 import { Label } from '@/components/ui/label'
 import { Combobox } from '@/components/ui/combobox'
 import { useTranslations } from 'next-intl'
-import { useProfile } from '@/hooks/use-profile'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Switch } from '@/components/ui/switch'
 
 const CURRENCY_OPTIONS = [

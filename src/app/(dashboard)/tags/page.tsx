@@ -28,7 +28,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useTagList } from '@/features/tags/hooks/use-tag-list'
 import { TAG_COLORS } from '@/features/tags/lib/tag-colors'
 import type { TagSortBy, TagUsageFilter } from '@/features/tags/lib/tag-list'

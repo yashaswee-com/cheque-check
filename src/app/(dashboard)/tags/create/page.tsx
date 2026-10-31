@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from '@/components/ui/toast'
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useTags } from '@/features/tags/hooks/use-tags'
 import { TagForm } from '@/features/tags/components/tag-form'
 import { nextTagColor } from '@/features/tags/lib/tag-colors'

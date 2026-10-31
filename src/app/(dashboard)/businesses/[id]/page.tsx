@@ -1,6 +1,6 @@
 'use client'
 
-import { useBusinessDetail } from '@/hooks/use-business-detail'
+import { useBusinessDetail } from '@/features/businesses/hooks/use-business-detail'
 import { ChequeCard } from '@/components/cheque-card'
 import { ChequeFilterBar } from '@/features/cheques/components/cheque-filter-bar'
 import { useParams } from 'next/navigation'
@@ -19,7 +19,7 @@ import {
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { useProfile } from '@/hooks/use-profile'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import type { ChequeWithRelations } from '@/types'
 import { SpeedDialFab } from '@/components/speed-dial-fab'
 import { EntityTagsSection } from '@/features/tags/components/tag-chips'

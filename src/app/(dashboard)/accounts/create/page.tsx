@@ -1,13 +1,13 @@
 'use client'
 
-import { useCreateAccount } from '@/hooks/use-create-account'
-import { useProfile } from '@/hooks/use-profile'
+import { useCreateAccount } from '@/features/accounts/hooks/use-create-account'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
 import { Label } from '@/components/ui/label'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowLeft01Icon as ArrowLeft,

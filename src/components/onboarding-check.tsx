@@ -1,6 +1,6 @@
 'use client'
 
-import { useBusiness } from '@/hooks/use-business'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { AppShellSkeleton } from '@/components/app-shell-skeleton'
