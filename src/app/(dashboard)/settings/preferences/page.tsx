@@ -6,6 +6,7 @@ import { Combobox } from '@/components/ui/combobox'
 import { useTranslations } from 'next-intl'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Switch } from '@/components/ui/switch'
+import { MonitoringPreferences } from '@/components/monitoring-preferences'
 import {
   CURRENCY_OPTIONS,
   DATE_FORMAT_OPTIONS,
@@ -33,7 +34,7 @@ export default function PreferencesPage() {
     <div className="max-w-2xl space-y-8 pb-20">
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
               {t('currency')}
             </Label>
@@ -45,7 +46,7 @@ export default function PreferencesPage() {
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
           </div>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
               {t('language')}
             </Label>
@@ -63,7 +64,7 @@ export default function PreferencesPage() {
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
             {t('dateFormat')}
           </Label>
@@ -77,7 +78,7 @@ export default function PreferencesPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
               {t('timeFormat')}
             </Label>
@@ -89,13 +90,14 @@ export default function PreferencesPage() {
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
           </div>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
               {t('timeZone')}
             </Label>
             <Combobox
               options={TIMEZONE_OPTIONS}
               value={profile.time_zone}
+              testId="preferences-time-zone"
               onValueChange={(v) => updateProfile({ time_zone: v })}
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
@@ -158,6 +160,10 @@ export default function PreferencesPage() {
           }
           aria-label={ts('reduceMotion')}
         />
+      </div>
+
+      <div className="border-t border-border/50 pt-6">
+        <MonitoringPreferences />
       </div>
     </div>
   )

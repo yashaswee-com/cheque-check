@@ -27,7 +27,6 @@ import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { useTranslations } from 'next-intl'
 import { IconType } from '@/types'
 import { useMonetization } from '@/features/monetization/hooks/use-monetization'
-import { MonitoringPreferences } from '@/components/monitoring-preferences'
 
 interface SettingsItem {
   name: string
@@ -262,8 +261,6 @@ export default function SettingsPage() {
           </div>
         ))}
       </div>
-
-      <MonitoringPreferences />
 
       <Button
         variant="destructive"

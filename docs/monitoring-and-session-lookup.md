@@ -72,7 +72,8 @@ diagnostic_session_id, normalized_page, display_name)` plus an explicit `email`
   fragments and private storage paths are removed from telemetry URLs. Exceptions
   retain stack locations/type and approved operation context rather than their raw
   potentially financial message. Pino uses the same context allowlist.
-- In Settings, the browser-local tracking preference disables both replay tools
+- In Settings > Preferences, the browser-local Usage Analytics & Session Recording
+  preference disables both replay tools
   and Clarity analytics. Essential sanitized Sentry error/trace collection remains
   separately governed. A policy-disabled deployment cannot be enabled by a browser
   preference. GPC and Do Not Track override analytics/replay permission.

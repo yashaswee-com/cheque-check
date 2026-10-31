@@ -41,6 +41,9 @@ vi.mock('@/features/businesses/services/business.service', () => ({
 }))
 vi.mock('@/lib/celebrate', () => ({ celebrate: mocks.celebrate }))
 vi.mock('@/components/ui/toast', () => ({ toast: { add: mocks.toast } }))
+vi.mock('@/components/monitoring-preferences', () => ({
+  MonitoringPreferences: () => <div>Monitoring preferences</div>,
+}))
 vi.mock('@/features/monetization/components/premium-gate', () => ({
   usePremiumAction: () => ({ requireAccess: mocks.require }),
 }))
@@ -432,6 +435,11 @@ describe('notification preferences page', () => {
   })
 })
 describe('general preferences page', () => {
+  it('includes the browser-local analytics and session recording preference', () => {
+    renderPage(<PreferencesPage />)
+    expect(screen.getByText('Monitoring preferences')).toBeVisible()
+  })
+
   it('persists currency, date/time formats, timezone, reminder counts and reduce motion', () => {
     renderPage(<PreferencesPage />)
     const selects = screen.getAllByRole('combobox')
