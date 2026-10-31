@@ -1,5 +1,9 @@
 /** Central registry of React Query keys. */
 export const queryKeys = {
+  reportExports: {
+    list: (businessId: string | undefined) =>
+      ['report-exports', businessId] as const,
+  },
   accounts: {
     list: (businessId: string | undefined) => ['accounts', businessId] as const,
     detail: (id: string | undefined) => ['account', id] as const,

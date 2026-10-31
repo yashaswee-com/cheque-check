@@ -277,6 +277,90 @@ An abruptly terminated worker cannot emit a final record; the database health
 and platform invocation logs are the complementary signals. Targeted scheduler
 operations retain their existing results rather than these cron-run metrics.
 
+### Background Export Operations
+
+Report CSV/JSON runs through `report_export_jobs` and service-only frozen
+`report_export_rows`. Request creation takes an account advisory lock and captures
+scalars and presentation relations in one MVCC statement; later edits/deletions
+cannot change the exported data. Resource limits are 50,000 rows, 50 MiB of JSON
+snapshot text, one queued/processing job per account, and ten requests per rolling
+24 hours. Failed and cancelled requests still count toward that daily allowance.
+Empty/oversized/rate-limited requests fail explicitly; there is no truncation.
+
+The service-role-only `report-exports` Edge Function claims one job per invocation,
+works in 500-row parts within a 40-second loop budget, and uses 15-second outbound
+request deadlines. Paths and bytes are deterministic. Upload happens before the
+transactional checkpoint; retries after lost responses safely overwrite the same
+private part. Claims have two-minute renewable leases. Healthy budget pauses do
+not exhaust the three failure/crash attempts. A completed job deletes its snapshot.
+Worker failures are surfaced in invocation logs and eventually in job status.
+`report.export.worker` JSON records contain part/ready/cleanup counts and duration,
+never cheque data, storage paths, tokens, or account identifiers.
+
+The bucket is private; only the authenticated owner of a ready, unexpired job
+with a current active account/business and premium entitlement can select objects.
+Downloads concatenate authenticated Storage streams without buffering a whole
+file or minting signed URLs, using `private, no-store`. Access is rechecked for each
+part. Revocation cannot retract bytes already sent; a later denied/missing part
+errors the stream rather than returning a success-shaped partial export.
+CSV spreadsheet-formula strings are prefixed with an apostrophe; numeric amounts
+and quoted cheque-number text are retained. PDF/Excel remain browser exports;
+settings CSV remains a browser export too.
+
+Expiry is **24 hours from request**, not from completion. Cancellation immediately
+revokes downloads. Cleanup waits until any prior worker lease has ended plus a
+one-minute quarantine (including cancelled jobs), removes objects via the Storage
+API, verifies the prefix is empty, then deletes snapshots/records cleanup. This
+ordering makes storage failures retryable; metadata is not purged before removal.
+At most five cleanup jobs and 100 part objects/job are processed at once. Cleaned
+metadata is retained seven days, including failed status/error codes. User/business
+deactivation and deletion also make jobs eligible for cleanup.
+
+#### Rollout gate
+
+The migration creates `report-exports-tick` **paused**. Do not release the new report
+UI against an unmigrated database or an inactive worker. On an explicitly approved
+QA project:
+
+1. Apply migrations; verify the private bucket/RLS and existing Vault
+   `project_url` / `service_role_key` entries. Deploy `report-exports` before enabling
+   the cron. The existing functions deployment command now includes it.
+2. Request synthetic CSV and JSON jobs, invoke the worker, and verify exact row
+   counts, quote/formula handling, frozen edits, cancellation, expiry, entitlement
+   revocation, and foreign-account denial. Include a 50,000-row hotspot and a
+   near-50-MiB snapshot. No real customer data is needed.
+3. Verify the hosting plan supports the download route's `maxDuration = 300`.
+   Streaming has a 290-second overall deadline and 60-second per-part deadline;
+   measure regional storage latency, client backpressure, maximum-part memory,
+   function limits, and complete-download success before production rollout.
+4. Enable the cron deliberately:
+
+   ```sql
+   select cron.alter_job(
+     (select jobid from cron.job where jobname = 'report-exports-tick'),
+     active := true
+   );
+   ```
+
+5. Release the UI and monitor queued age, failed jobs, cleanup lag and storage
+   usage. Pause with the same command using `active := false` if necessary; queued
+   jobs and frozen snapshots persist. PDF/Excel are unaffected.
+
+The default cron has an upper bound of **1,440 new job claims/day**, less for
+multi-tick jobs, retries, or cleanup-heavy workloads. Ten thousand registrations
+do not imply that all accounts can export simultaneously. Establish export-delay
+SLOs and measured worker/storage throughput; do not let queue wait consume the
+24-hour retention window. Production burst tests, global storage/queue budgets,
+multiple worker scheduling, and externally delivered queue alerts remain rollout
+follow-ups. No remote migration, deployment, activation or load test is performed
+by the local Vitest coverage.
+
+Local regression coverage applies the actual migration in PGlite and simulates
+Storage failures, lease recovery, lost responses, limits, frozen snapshots,
+permission checks, cancellation quarantine and streamed private downloads. PGlite
+does not certify hosted HTTP concurrency, gateways or Storage policy interactions
+with other deployed policies; QA must verify those separately.
+
 ### Before Declaring Production Readiness
 
 - Agree actual active-user distribution, peak simultaneous sessions, think time,

@@ -145,7 +145,7 @@ modules or Edge Functions.
   See [notification-system.md](docs/notification-system.md) for deployment order,
   recovery and operational limits.
 
-### Typed persistence and on-demand exports
+### Typed persistence and durable exports
 
 - Cheque repositories validate published rows and relation shapes before returning
   domain entities. Nullable database presentation fields are mapped explicitly;
@@ -155,16 +155,25 @@ modules or Edge Functions.
   The database type snapshot remains hand-authored; runtime validation complements,
   rather than replaces, regenerating and reviewing types after schema changes.
 - Reports load exact database summaries and only the ten most recent cheques.
-  Export actions verify entitlement and then fetch complete history on demand,
-  preserving the inward-cheque preference. They never export just the preview.
+  PDF/Excel verify entitlement and fetch complete history on demand, preserving
+  the inward-cheque preference. They never export just the preview.
 - Export adapters return promises. Callers await completion and expose failures;
   concurrent downloads are disabled while an export is running. PDF and Excel
   dependencies are dynamically imported only for the selected format.
-- CSV/JSON use blob parts and all formats prepare rows in batches of at most 500,
-  yielding between batches. CSV quotes are escaped, and Excel retains numeric
-  amounts and textual cheque numbers. Exports still reside in browser memory;
-  PDF/Excel final serialization may block. Very large exports need a separately
-  designed background/streaming pipeline and production measurements.
+- Report CSV/JSON requests create durable jobs with a single-statement frozen
+  snapshot, including presentation relations. The private worker prepares
+  deterministic 500-row parts with resumable checkpoints; downloads stream through
+  an authenticated route with fresh account/business/premium checks. The report
+  page shows persistent progress, download links, failures, and cancellation.
+  Jobs expire 24 hours after request, with storage cleanup after worker grace.
+  Limits: 50,000 cheques, 50 MiB snapshot JSON, one active export/account, and
+  ten requests per rolling day. Oversized requests are rejected, never truncated.
+- Browser PDF/Excel and the settings CSV export remain compatible. Browser
+  adapters yield between 500-row batches, but final PDF/Excel serialization may
+  still block. Background CSV escapes quotes and neutralizes spreadsheet formulas;
+  JSON preserves frozen scalar/relationship data (not lifecycle/internal columns).
+  Hosted storage/network performance still requires production measurements.
+  See [export rollout and operations](docs/monitoring.md#background-export-operations).
 - Explicit `any` is disallowed in these strengthened production boundaries and the
   reporting feature. This is an incremental lint gate, not a repository-wide
   type-cleanup rewrite.

@@ -1,5 +1,6 @@
 export const PRIVATE_CHEQUE_BUCKET = 'private-cheque-images'
 export const PRIVATE_AVATAR_BUCKET = 'private-avatars'
+export const PRIVATE_REPORT_EXPORT_BUCKET = 'report-exports'
 
 export type PrivateMediaBucket =
   typeof PRIVATE_CHEQUE_BUCKET | typeof PRIVATE_AVATAR_BUCKET

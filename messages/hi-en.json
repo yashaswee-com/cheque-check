@@ -886,6 +886,18 @@
     "allTransactions": "Saare transactions dekhein"
   },
   "Reports": {
+    "exportJobs": "Background exports",
+    "exportJobsHelp": "CSV aur JSON request ke samay freeze hote hain aur background mein bante hain. Download 24 ghante baad expire hota hai.",
+    "exportProgress": "{total} mein se {done} cheques taiyar",
+    "downloadExport": "Download",
+    "cancelExport": "Cancel / hataayein",
+    "jobStatus": {
+      "queued": "Queue mein",
+      "processing": "Taiyar ho raha hai",
+      "ready": "Taiyar",
+      "failed": "Fail - naya export request karein",
+      "expired": "Expire / hata diya"
+    },
     "title": "Reports",
     "subtitle": "Financial summary aur exports",
     "premiumDescription": "Reports aur Data Exports sirf Premium - Lifetime plan par available hain.",

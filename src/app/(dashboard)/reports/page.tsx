@@ -2,6 +2,7 @@
 
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useReportCheques } from '@/features/reports/hooks/use-report-cheques'
+import { useExportJobs } from '@/features/reports/hooks/use-export-jobs'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { reportService } from '@/features/reports/services/report.service'
 import { Button } from '@/components/ui/button'
@@ -64,6 +65,7 @@ function ReportsContent() {
   const { activeBusiness } = useBusiness()
   const { profile } = useProfile()
   const premium = usePremiumAction()
+  const jobs = useExportJobs(activeBusiness?.id)
 
   const {
     cheques,
@@ -85,16 +87,17 @@ function ReportsContent() {
     setExporting(true)
     try {
       if (!(await premium.verifyAccess('reports'))) return
+      if (format === 'csv' || format === 'json') {
+        await jobs.request(format)
+        setExportOpen(false)
+        return
+      }
       const exportCheques = await loadExportCheques()
       const baseName = `cheques_report_${activeBusiness?.name || 'export'}`
-      if (format === 'json') {
-        await reportService.exportToJSON(exportCheques, `${baseName}.json`)
-      } else if (format === 'pdf') {
+      if (format === 'pdf') {
         await reportService.exportToPDF(exportCheques, `${baseName}.pdf`)
       } else if (format === 'excel') {
         await reportService.exportToExcel(exportCheques, `${baseName}.xlsx`)
-      } else {
-        await reportService.exportToCSV(exportCheques, `${baseName}.csv`)
       }
       setExportOpen(false)
     } catch (error) {
@@ -179,6 +182,70 @@ function ReportsContent() {
           </PopoverContent>
         </Popover>
       </div>
+
+      <section className="space-y-3" aria-label={tr('exportJobs')}>
+        <h2 className="font-semibold">{tr('exportJobs')}</h2>
+        <p className="text-sm text-muted-foreground">{tr('exportJobsHelp')}</p>
+        {jobs.isLoading && <Skeleton className="h-12 w-full" />}
+        {jobs.error && (
+          <p role="alert" className="text-destructive">
+            {tc('loadDataError')}
+          </p>
+        )}
+        {(jobs.data ?? []).map((job) => {
+          const status = job.status
+          return (
+            <div
+              key={job.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"
+            >
+              <div>
+                <p className="text-sm font-medium">
+                  {job.format.toUpperCase()} - {tr(`jobStatus.${status}`)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {tr('exportProgress', {
+                    done: Math.min(job.next_part * 500, job.row_count),
+                    total: job.row_count,
+                  })}
+                </p>
+              </div>
+              {status === 'ready' && (
+                <a
+                  className="text-sm font-medium underline"
+                  href={`/api/reports/exports/${job.id}/download`}
+                >
+                  {tr('downloadExport')}
+                </a>
+              )}
+              {(status === 'queued' ||
+                status === 'processing' ||
+                status === 'ready') && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={exporting}
+                  onClick={async () => {
+                    try {
+                      await jobs.cancel(job.id)
+                    } catch (error) {
+                      logger.error('Export cancellation failed', error)
+                      toast.add({
+                        title: tc('error'),
+                        description:
+                          error instanceof Error ? error.message : tc('error'),
+                        type: 'error',
+                      })
+                    }
+                  }}
+                >
+                  {tr('cancelExport')}
+                </Button>
+              )}
+            </div>
+          )
+        })}
+      </section>
 
       <DataState
         isLoading={isLoading}

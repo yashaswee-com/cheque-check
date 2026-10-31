@@ -13,6 +13,7 @@ import DashboardPage from './dashboard/page'
 import ReportsPage from './reports/page'
 import ProfilePage from './profile/page'
 import BusinessesPage from './businesses/page'
+import type { ExportJob } from '@/features/reports/repositories/export-job.repository'
 
 const mocks = vi.hoisted(() => ({
   update: vi.fn(),
@@ -29,6 +30,8 @@ const mocks = vi.hoisted(() => ({
   pdf: vi.fn(),
   excel: vi.fn(),
   loadExport: vi.fn(),
+  requestExport: vi.fn(),
+  cancelExport: vi.fn(),
 }))
 const business = { id: 'business', name: 'Acme', email: 'acme@example.test' }
 const baseCheque = {
@@ -45,6 +48,7 @@ let active = true
 let empty = false
 let noResults = false
 let balance = -100
+let exportJobs: ExportJob[] = []
 let profile: {
   id: string
   name: string
@@ -122,6 +126,15 @@ vi.mock('@/features/reports/hooks/use-report-cheques', () => ({
     isLoading: loading,
     error: null,
     loadExportCheques: mocks.loadExport,
+  }),
+}))
+vi.mock('@/features/reports/hooks/use-export-jobs', () => ({
+  useExportJobs: () => ({
+    data: exportJobs,
+    isLoading: false,
+    error: null,
+    request: mocks.requestExport,
+    cancel: mocks.cancelExport,
   }),
 }))
 vi.mock('@/features/cheques/hooks/use-cheque-stats', () => ({
@@ -267,6 +280,7 @@ beforeEach(() => {
   active = true
   balance = -100
   cheques = [baseCheque]
+  exportJobs = []
   profile = {
     id: 'profile',
     name: 'Original Person',
@@ -342,7 +356,7 @@ describe('dashboard page', () => {
 
 describe('reports page', () => {
   beforeEach(() => mocks.loadExport.mockImplementation(async () => cheques))
-  it.each(['csv', 'json', 'pdf', 'excel'] as const)(
+  it.each(['pdf', 'excel'] as const)(
     'exports %s using the active business name',
     async (format) => {
       renderPage(<ReportsPage />)
@@ -363,6 +377,19 @@ describe('reports page', () => {
       )
     },
   )
+  it.each(['csv', 'json'] as const)(
+    'queues %s without fetching full history',
+    async (format) => {
+      renderPage(<ReportsPage />)
+      fireEvent.click(screen.getByTestId('reports-export-trigger'))
+      fireEvent.click(await screen.findByTestId(`reports-export-${format}`))
+      await waitFor(() =>
+        expect(mocks.requestExport).toHaveBeenCalledWith(format),
+      )
+      expect(mocks.loadExport).not.toHaveBeenCalled()
+      expect(mocks[format]).not.toHaveBeenCalled()
+    },
+  )
   it('blocks export after entitlement verification fails', async () => {
     mocks.verify.mockResolvedValue(false)
     renderPage(<ReportsPage />)
@@ -370,9 +397,10 @@ describe('reports page', () => {
     fireEvent.click(await screen.findByTestId('reports-export-csv'))
     await waitFor(() => expect(mocks.verify).toHaveBeenCalledOnce())
     expect(mocks.csv).not.toHaveBeenCalled()
+    expect(mocks.requestExport).not.toHaveBeenCalled()
   })
   it('reports export exceptions and leaves format selection available for retry', async () => {
-    mocks.csv.mockRejectedValueOnce(new Error('Export failed'))
+    mocks.requestExport.mockRejectedValueOnce(new Error('Export failed'))
     renderPage(<ReportsPage />)
     fireEvent.click(screen.getByTestId('reports-export-trigger'))
     fireEvent.click(await screen.findByTestId('reports-export-csv'))
@@ -392,7 +420,7 @@ describe('reports page', () => {
       id: `cheque-${index}`,
     }))
     let complete!: () => void
-    mocks.csv.mockImplementationOnce(
+    mocks.pdf.mockImplementationOnce(
       () =>
         new Promise<void>((resolve) => {
           complete = resolve
@@ -400,23 +428,69 @@ describe('reports page', () => {
     )
     renderPage(<ReportsPage />)
     fireEvent.click(screen.getByTestId('reports-export-trigger'))
-    fireEvent.click(await screen.findByTestId('reports-export-csv'))
+    fireEvent.click(await screen.findByTestId('reports-export-pdf'))
     await waitFor(() =>
-      expect(mocks.csv).toHaveBeenCalledWith(
+      expect(mocks.pdf).toHaveBeenCalledWith(
         cheques,
-        'cheques_report_Acme.csv',
+        'cheques_report_Acme.pdf',
       ),
     )
-    expect(screen.getByTestId('reports-export-csv')).toBeDisabled()
+    expect(screen.getByTestId('reports-export-pdf')).toBeDisabled()
     fireEvent.click(screen.getByTestId('reports-export-json'))
     expect(mocks.json).not.toHaveBeenCalled()
     complete()
     await waitFor(() =>
       expect(
-        screen.queryByTestId('reports-export-csv'),
+        screen.queryByTestId('reports-export-pdf'),
       ).not.toBeInTheDocument(),
     )
     expect(mocks.loadExport).toHaveBeenCalledOnce()
+  })
+  it('shows persistent progress, private downloads and cancellation failures', async () => {
+    exportJobs = [
+      {
+        id: 'job',
+        format: 'csv',
+        status: 'ready',
+        row_count: 501,
+        next_part: 2,
+        part_count: 2,
+        created_at: '2026-10-31',
+        expires_at: '2026-11-01',
+        error_code: null,
+      },
+      {
+        id: 'pending',
+        format: 'json',
+        status: 'processing',
+        row_count: 501,
+        next_part: 1,
+        part_count: 2,
+        created_at: '2026-10-31',
+        expires_at: '2026-11-01',
+        error_code: null,
+      },
+    ]
+    mocks.cancelExport.mockRejectedValueOnce(
+      new Error('Cancellation unavailable'),
+    )
+    renderPage(<ReportsPage />)
+    expect(screen.getByText('500 of 501 cheques prepared')).toBeVisible()
+    expect(
+      screen.getByRole('link', { name: messages.Reports.downloadExport }),
+    ).toHaveAttribute('href', '/api/reports/exports/job/download')
+    fireEvent.click(
+      screen.getAllByRole('button', { name: messages.Reports.cancelExport })[0],
+    )
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: 'Cancellation unavailable',
+          type: 'error',
+        }),
+      ),
+    )
+    expect(mocks.cancelExport).toHaveBeenCalledWith('job')
   })
   it('limits recent records to ten and explains the total count', () => {
     cheques = Array.from({ length: 12 }, (_, index) => ({

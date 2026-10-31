@@ -11,6 +11,35 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      report_export_rows: {
+        Row: { job_id: string; position: number; payload: Json }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      report_export_jobs: {
+        Row: {
+          id: string
+          user_id: string
+          business_id: string
+          format: 'csv' | 'json'
+          include_inward: boolean
+          status: 'queued' | 'processing' | 'ready' | 'failed' | 'expired'
+          row_count: number
+          next_part: number
+          part_count: number
+          attempts: number
+          claim_token: string | null
+          lease_until: string | null
+          error_code: string | null
+          created_at: string
+          expires_at: string
+          cleaned_at: string | null
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       notification_scheduler_runs: {
         Row: {
           run_at: string
@@ -603,6 +632,62 @@ export interface Database {
       }
     }
     Functions: {
+      claim_report_export: {
+        Args: Record<string, never>
+        Returns: Database['public']['Tables']['report_export_jobs']['Row'][]
+      }
+      report_export_batch: {
+        Args: { requested_job: string; requested_token: string }
+        Returns: Pick<
+          Database['public']['Tables']['report_export_rows']['Row'],
+          'position' | 'payload'
+        >[]
+      }
+      advance_report_export: {
+        Args: {
+          requested_job: string
+          requested_token: string
+          requested_part: number
+        }
+        Returns: Database['public']['Tables']['report_export_jobs']['Row']
+      }
+      release_report_export: {
+        Args: {
+          requested_job: string
+          requested_token: string
+          requested_failed?: boolean
+        }
+        Returns: undefined
+      }
+      expired_report_exports: {
+        Args: Record<string, never>
+        Returns: Database['public']['Tables']['report_export_jobs']['Row'][]
+      }
+      clean_report_export: {
+        Args: { requested_job: string }
+        Returns: undefined
+      }
+      report_export_access: {
+        Args: { requested_path: string }
+        Returns: boolean
+      }
+      request_report_export: {
+        Args: {
+          requested_id: string
+          requested_business: string
+          requested_format: string
+          requested_include_inward: boolean
+        }
+        Returns: Database['public']['Tables']['report_export_jobs']['Row']
+      }
+      cancel_report_export: {
+        Args: { requested_job: string }
+        Returns: undefined
+      }
+      report_export_download: {
+        Args: { requested_job: string }
+        Returns: Database['public']['Tables']['report_export_jobs']['Row']
+      }
       notification_health: {
         Args: { requested_window_minutes?: number }
         Returns: {

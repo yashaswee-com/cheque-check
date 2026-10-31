@@ -867,6 +867,18 @@
     "allTransactions": "View all transactions"
   },
   "Reports": {
+    "exportJobs": "Background exports",
+    "exportJobsHelp": "CSV and JSON are frozen when requested and prepared in the background. Downloads expire after 24 hours.",
+    "exportProgress": "{done} of {total} cheques prepared",
+    "downloadExport": "Download",
+    "cancelExport": "Cancel / remove",
+    "jobStatus": {
+      "queued": "Queued",
+      "processing": "Preparing",
+      "ready": "Ready",
+      "failed": "Failed - request a new export",
+      "expired": "Expired / removed"
+    },
     "title": "Reports",
     "subtitle": "Financial summary and exports",
     "premiumDescription": "Reports and Data Exports are only available on the Premium - Lifetime plan.",

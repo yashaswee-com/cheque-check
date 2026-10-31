@@ -29,6 +29,7 @@ export const EDGE_FUNCTIONS = [
   'notifications-scheduler',
   'notifications-dispatcher',
   'razorpay-webhook',
+  'report-exports',
 ] as const
 export type EdgeFunctionName = (typeof EDGE_FUNCTIONS)[number]
 

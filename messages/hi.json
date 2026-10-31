@@ -567,6 +567,18 @@
     "savePrintLayout": "लेआउट सेव करें"
   },
   "Reports": {
+    "exportJobs": "बैकग्राउंड एक्सपोर्ट",
+    "exportJobsHelp": "CSV और JSON अनुरोध के समय स्थिर किए जाते हैं और बैकग्राउंड में तैयार होते हैं। डाउनलोड 24 घंटे बाद समाप्त होता है।",
+    "exportProgress": "{total} में से {done} चेक तैयार",
+    "downloadExport": "डाउनलोड",
+    "cancelExport": "रद्द / हटाएँ",
+    "jobStatus": {
+      "queued": "कतार में",
+      "processing": "तैयार हो रहा है",
+      "ready": "तैयार",
+      "failed": "विफल - नया एक्सपोर्ट माँगें",
+      "expired": "समाप्त / हटाया गया"
+    },
     "exportFormat": "फ़ॉर्मेट चुनें",
     "csvFormat": "CSV स्प्रेडशीट",
     "jsonFormat": "JSON डेटा",
