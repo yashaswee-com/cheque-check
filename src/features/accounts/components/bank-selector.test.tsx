@@ -94,6 +94,32 @@ function submit() {
 }
 
 describe('BankSelector', () => {
+  it('removes a selected private bank only after name confirmation', async () => {
+    state.banks[0].owner_id = 'user'
+    const change = mount('bank1')
+    fireEvent.click(screen.getByRole('button', { name: 'remove' }))
+    const dialog = await screen.findByRole('dialog')
+    const input = dialog.querySelector('input')!
+    fireEvent.change(input, { target: { value: 'Example Bank' } })
+    const confirm =
+      dialog.querySelector('[data-testid="delete-confirm-button"]') ??
+      screen.getAllByRole('button', { name: /delete/i }).at(-1)!
+    fireEvent.click(confirm)
+    await waitFor(() =>
+      expect(state.remove.mutateAsync).toHaveBeenCalledWith('bank1'),
+    )
+    expect(change).toHaveBeenCalledWith('')
+  })
+
+  it('closes the create dialog without saving', async () => {
+    mount()
+    await addForm()
+    fireEvent.click(screen.getByRole('button', { name: 'close' }))
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    )
+    expect(state.create.mutateAsync).not.toHaveBeenCalled()
+  })
   it('shows the selected bank and selects another catalog entry', async () => {
     const onValueChange = mount('bank1')
     expect(screen.getByTestId('bank-selector-trigger')).toHaveTextContent(

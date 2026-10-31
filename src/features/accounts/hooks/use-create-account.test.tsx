@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   routerPush: vi.fn(),
   toastAdd: vi.fn(),
   useDraftController: vi.fn(),
+  firstIncompleteAccountStep: vi.fn(),
   draft: {
     draftId: null as string | null,
     status: 'idle',
@@ -37,7 +38,7 @@ vi.mock('@/features/drafts', () => ({
   accountDraftService: { publish: mocks.publish },
   chequeDraftService: { update: mocks.updateChequeDraft },
   accountDraftToFormValues: vi.fn(),
-  firstIncompleteAccountStep: vi.fn(),
+  firstIncompleteAccountStep: mocks.firstIncompleteAccountStep,
   toAccountDraftFields: vi.fn(),
   draftKeys: {
     list: (entity: string, businessId: string) => [
@@ -96,6 +97,7 @@ beforeEach(() => {
   mocks.useDraftController.mockReturnValue(mocks.draft)
   mocks.draft.draftId = null
   mocks.draft.beginPublish.mockResolvedValue(null)
+  mocks.firstIncompleteAccountStep.mockReturnValue(2)
   mocks.create.mockResolvedValue(account)
   mocks.publish.mockResolvedValue(account)
   mocks.updateChequeDraft.mockResolvedValue(undefined)
@@ -200,5 +202,43 @@ describe('useCreateAccount', () => {
     })
     expect(result.current.isSuccess).toBe(false)
     await waitFor(() => expect(result.current.isSaving).toBe(false))
+  })
+
+  it('hydrates the wizard step and creates a new account before returning to a cheque draft', async () => {
+    const returnTo = '/cheques/new?draftId=cheque-draft-1'
+    const onCreated = vi.fn()
+    const { result } = setup({ returnTo, onCreated })
+    const controllerOptions = mocks.useDraftController.mock.calls[0][0]
+    act(() => controllerOptions.onHydrated({ id: 'account-draft-1' }))
+    expect(result.current.step).toBe(2)
+    setValidAccount(result)
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.create).toHaveBeenCalledOnce()
+    expect(mocks.publish).not.toHaveBeenCalled()
+    expect(onCreated).toHaveBeenCalledWith(account)
+    expect(mocks.updateChequeDraft).toHaveBeenCalledWith('cheque-draft-1', {
+      account_id: account.id,
+    })
+    expect(result.current.isSuccess).toBe(true)
+    act(() => result.current.continueAfterSuccess())
+    expect(mocks.routerReplace).toHaveBeenCalledWith(returnTo)
+  })
+
+  it('publishes a draft without a return destination and marks the workflow complete', async () => {
+    const { result } = setup()
+    mocks.draft.beginPublish.mockResolvedValue('account-draft-1')
+    setValidAccount(result)
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.publish).toHaveBeenCalledWith(
+      'account-draft-1',
+      expect.objectContaining({ account_name: 'Primary' }),
+    )
+    expect(mocks.draft.finishPublish).toHaveBeenCalledOnce()
+    expect(result.current.isSuccess).toBe(true)
+    expect(result.current.isSaving).toBe(false)
   })
 })
