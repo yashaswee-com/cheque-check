@@ -80,6 +80,19 @@ function readBlob(blob: Blob) {
 }
 
 describe('BrowserReportRepository', () => {
+  it('rejects unsupported browser downloads before allocating an object URL', async () => {
+    const create = document.createElement.bind(document)
+    vi.spyOn(document, 'createElement').mockImplementation((tag, options) => {
+      const element = create(tag, options)
+      if (tag === 'a')
+        Object.defineProperty(element, 'download', { value: undefined })
+      return element
+    })
+    await expect(
+      repository.exportToCSV([cheque], 'report.csv'),
+    ).rejects.toThrow('File downloads are not supported by this browser')
+    expect(URL.createObjectURL).not.toHaveBeenCalled()
+  })
   it('does not load PDF or Excel dependencies for CSV and JSON exports', async () => {
     await repository.exportToCSV([cheque], 'report.csv')
     await repository.exportToJSON([cheque], 'report.json')
