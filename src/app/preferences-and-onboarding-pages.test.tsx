@@ -165,6 +165,10 @@ describe('onboarding page', () => {
       target: { value: 'Acme' },
     })
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
+    fireEvent.change(
+      screen.getByPlaceholderText(messages.Onboarding.businessPhonePlaceholder),
+      { target: { value: '+919876543210' } },
+    )
     fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
     fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
   }
@@ -196,6 +200,9 @@ describe('onboarding page', () => {
     fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
       target: { value: 'Acme' },
     })
+    fireEvent.click(
+      document.querySelector('button[style*="background-color"]')!,
+    )
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
     fireEvent.change(
       screen.getByPlaceholderText(messages.Onboarding.businessEmailPlaceholder),
@@ -231,6 +238,7 @@ describe('onboarding page', () => {
         phone: '+919876543210',
         address: 'Warehouse Road',
         logo_url: 'business-logo',
+        color: expect.any(String),
       }),
     )
     expect(mocks.activate).toHaveBeenCalledWith({ id: 'created', name: 'Acme' })
@@ -266,6 +274,46 @@ describe('onboarding page', () => {
     )
     expect(mocks.activate).toHaveBeenCalledOnce()
     expect(mocks.celebrate).not.toHaveBeenCalled()
+  })
+
+  it('synchronizes onboarding defaults when the loaded profile changes', () => {
+    profile = null
+    const view = renderPage(<OnboardingPage />)
+    profile = {
+      id: 'loaded-profile',
+      name: '',
+      currency: '$',
+      language: 'hi',
+      date_format: 'MM/dd/yyyy',
+      time_format: '24h',
+      time_zone: 'UTC',
+      reminders_per_day: 2,
+      default_reminder_days: 7,
+    }
+    view.rerender(
+      <QueryClientProvider
+        client={
+          new QueryClient({
+            defaultOptions: { queries: { retry: false } },
+          })
+        }
+      >
+        <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+          <OnboardingPage />
+        </NextIntlClientProvider>
+      </QueryClientProvider>,
+    )
+    fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
+      target: { value: 'Acme' },
+    })
+    fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
+    fireEvent.change(
+      screen.getByPlaceholderText(messages.Onboarding.businessPhonePlaceholder),
+      { target: { value: '+919876543210' } },
+    )
+    fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
+    expect(screen.getAllByRole('combobox')[0]).toHaveValue('$')
+    expect(screen.getAllByRole('combobox')[1]).toHaveValue('hi')
   })
 })
 
@@ -357,5 +405,14 @@ describe('general preferences page', () => {
       screen.getByRole('switch', { name: messages.Settings.reduceMotion }),
     )
     expect(mocks.update).toHaveBeenCalledWith({ reduce_motion: true })
+  })
+
+  it('updates the locale cookie and reloads after choosing a language', () => {
+    renderPage(<PreferencesPage />)
+    fireEvent.change(screen.getByTestId('preferences-language'), {
+      target: { value: 'hi' },
+    })
+    expect(mocks.update).toHaveBeenCalledWith({ language: 'hi' })
+    expect(document.cookie).toContain('NEXT_LOCALE=hi')
   })
 })
