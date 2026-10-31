@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -13,6 +14,61 @@ afterEach(() => {
 })
 
 describe('Calculator', () => {
+  it('persists an unchanged position when a primary pointer is released without movement', () => {
+    localStorage.clear()
+    render(<Calculator onClose={vi.fn()} />)
+    const header = screen.getByText('Calculator').parentElement!
+    fireEvent.pointerDown(header, {
+      pointerId: 1,
+      button: 0,
+      clientX: 10,
+      clientY: 10,
+    })
+    fireEvent.pointerUp(header, { pointerId: 1 })
+    expect(JSON.parse(localStorage.getItem('calculator-position')!)).toEqual({
+      x: 16,
+      y: 72,
+    })
+  })
+  it('applies animation frames, clamps resize and ignores unrelated pointers', () => {
+    localStorage.clear()
+    const frames: FrameRequestCallback[] = []
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback)
+      return frames.length
+    })
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {})
+    try {
+      const { unmount } = render(<Calculator onClose={vi.fn()} />)
+      const panel = screen.getByRole('dialog')
+      const header = screen.getByText('Calculator').parentElement!
+      fireEvent.pointerDown(header, { pointerId: 1, button: 1 })
+      fireEvent.pointerMove(header, { pointerId: 1, clientX: 90, clientY: 90 })
+      expect(frames).toHaveLength(0)
+      fireEvent.pointerDown(header, {
+        pointerId: 1,
+        button: 0,
+        clientX: 0,
+        clientY: 0,
+      })
+      fireEvent.pointerMove(header, { pointerId: 2, clientX: 90, clientY: 90 })
+      expect(frames).toHaveLength(0)
+      fireEvent.pointerMove(header, { pointerId: 1, clientX: 20, clientY: 20 })
+      act(() => frames[0](0))
+      expect(panel.style.transform).toBe('translate3d(36px, 92px, 0)')
+      fireEvent(window, new Event('resize'))
+      expect(panel.style.transform).toBe('translate3d(36px, 92px, 0)')
+      fireEvent.pointerUp(header, { pointerId: 2 })
+      fireEvent.pointerUp(header, { pointerId: 1 })
+      unmount()
+      expect(window.cancelAnimationFrame).toHaveBeenCalled()
+      const previousPosition = panel.style.transform
+      act(() => frames[0](0))
+      expect(panel.style.transform).toBe(previousPosition)
+    } finally {
+      vi.restoreAllMocks()
+    }
+  })
   it.each([
     { keys: ['8', '-', '3', '='], expected: '5' },
     { keys: ['8', 'x', '3', '='], expected: '24' },
@@ -23,6 +79,12 @@ describe('Calculator', () => {
     { keys: ['2', '3', 'DEL'], expected: '2' },
     { keys: ['2', 'DEL'], expected: '0' },
     { keys: ['='], expected: '0' },
+    { keys: ['1', '/', '3', '='], expected: '0.3333333333' },
+    { keys: ['8', '/', '0', '=', '7'], expected: '7' },
+    { keys: ['8', '/', '0', '=', '+'], expected: 'Error' },
+    { keys: ['1', '+', '.', '2', '='], expected: '1.2' },
+    { keys: ['1', '+', 'DEL', '2', '='], expected: '3' },
+    { keys: ['8', '/', '0', '=', '.'], expected: '0.' },
   ])('handles arithmetic and input sequence $keys', ({ keys, expected }) => {
     render(<Calculator onClose={vi.fn()} />)
     for (const key of keys)
