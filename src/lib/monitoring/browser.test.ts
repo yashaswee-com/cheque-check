@@ -47,7 +47,144 @@ describe('authenticated recording lifecycle', () => {
     sdk.replayIntegration.mockReturnValue({})
   })
 
-  afterEach(() => vi.unstubAllGlobals())
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  it('respects privacy signals and unavailable preference storage', async () => {
+    const browser = await import('./browser')
+    vi.stubGlobal('navigator', { doNotTrack: '1' })
+    expect(browser.readTrackingPreference()).toBe(false)
+    vi.stubGlobal('navigator', { doNotTrack: '0' })
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    expect(browser.readTrackingPreference()).toBe(false)
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    browser.setTrackingPreference(true)
+    expect(browser.trackingAllowed()).toBe(false)
+  })
+
+  it('reuses valid diagnostic sessions and rotates idle sessions', async () => {
+    const id = '12345678-1234-1234-1234-123456789abc'
+    sessionStorage.setItem(
+      'cheque-check:diagnostics:v1',
+      JSON.stringify({ id, owner: null, time: Date.now() }),
+    )
+    const browser = await import('./browser')
+    expect(browser.getDiagnosticId()).toBe(id)
+    expect(browser.diagnosticHeaders()).toEqual({
+      'x-diagnostic-session-id': id,
+    })
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 31 * 60 * 1000)
+    expect(browser.getDiagnosticId()).not.toBe(id)
+    expect(sdk.setTag).toHaveBeenCalledWith(
+      'diagnostic_session_id',
+      expect.any(String),
+    )
+  })
+
+  it('creates a diagnostic session despite malformed or blocked session storage', async () => {
+    sessionStorage.setItem('cheque-check:diagnostics:v1', '{broken')
+    const browser = await import('./browser')
+    expect(browser.getDiagnosticId()).toMatch(/^[a-f0-9-]{36}$/)
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    browser.setMonitoringUser({ id: 'a' })
+    browser.setMonitoringUser({ id: 'b' })
+    expect(browser.getDiagnosticId()).toMatch(/^[a-f0-9-]{36}$/)
+  })
+
+  it.each([
+    { random: 0, method: 'start' },
+    { random: 0.9, method: 'startBuffering' },
+  ] as const)(
+    'starts existing replay with $method',
+    async ({ random, method }) => {
+      const browser = await import('./browser')
+      browser.setMonitoringUser({ id: 'a' })
+      const replay = {
+        getReplayId: vi.fn().mockReturnValue(undefined),
+        start: vi.fn(),
+        startBuffering: vi.fn(),
+      }
+      sdk.getReplay.mockReturnValue(replay)
+      vi.spyOn(Math, 'random').mockReturnValue(random)
+      browser.syncMonitoringPage('/cheques')
+      await vi.waitFor(() => expect(replay[method]).toHaveBeenCalledOnce())
+      expect(sdk.addIntegration).not.toHaveBeenCalled()
+    },
+  )
+
+  it('filters replay events and error sampling at the integration boundary', async () => {
+    const browser = await import('./browser')
+    browser.setMonitoringUser({ id: 'a' })
+    browser.syncMonitoringPage('/cheques')
+    await vi.waitFor(() => expect(sdk.addIntegration).toHaveBeenCalledOnce())
+    const options = sdk.replayIntegration.mock.calls[0][0]
+    expect(options.beforeErrorSampling({ level: 'info' })).toBe(false)
+    expect(options.beforeErrorSampling({ level: 'error' })).toBe(true)
+    expect(options.beforeAddRecordingEvent({ type: 5 })).toBeNull()
+    expect(options.beforeAddRecordingEvent({ type: 2 })).toEqual({ type: 2 })
+    browser.setTrackingPreference(false)
+    expect(options.beforeAddRecordingEvent({ type: 2 })).toBeNull()
+  })
+
+  it('does not add replay without a Sentry client', async () => {
+    sdk.getClient.mockReturnValue(undefined)
+    const browser = await import('./browser')
+    browser.setMonitoringUser({ id: 'a' })
+    browser.syncMonitoringPage('/cheques')
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(sdk.addIntegration).not.toHaveBeenCalled()
+  })
+
+  it('queues consent, emits loaded events, and upgrades critical sessions', async () => {
+    const browser = await import('./browser')
+    browser.setMonitoringUser({ id: 'a' })
+    browser.syncMonitoringPage('/cheques')
+    expect(window.clarity?.q).toContainEqual([
+      'consentv2',
+      { analytics_Storage: 'granted', ad_Storage: 'denied' },
+    ])
+    const clarity = vi.fn()
+    window.clarity = clarity
+    document
+      .querySelector('#microsoft-clarity')
+      ?.dispatchEvent(new Event('load'))
+    browser.clarityEvent('saved')
+    browser.clarityEvent('failed', true)
+    expect(clarity).toHaveBeenCalledWith('event', 'saved')
+    expect(clarity).toHaveBeenCalledWith('upgrade', 'failed')
+    clarity.mockImplementation(() => {
+      throw new Error('sdk failed')
+    })
+    expect(() => browser.clarityEvent('failed', true)).not.toThrow()
+    await browser.stopRecordings()
+  })
+
+  it('removes a failed script and rejects a late script load after auth changes', async () => {
+    const browser = await import('./browser')
+    browser.setMonitoringUser({ id: 'a' })
+    browser.syncMonitoringPage('/cheques')
+    document
+      .querySelector('#microsoft-clarity')
+      ?.dispatchEvent(new Event('error'))
+    expect(document.querySelector('#microsoft-clarity')).toBeNull()
+    await browser.stopRecordings()
+    browser.syncMonitoringPage('/cheques')
+    const script = document.querySelector('#microsoft-clarity')!
+    browser.syncMonitoringPage('/login')
+    script.dispatchEvent(new Event('load'))
+    expect(location.reload).toHaveBeenCalled()
+  })
 
   it('never loads Clarity or replay on anonymous or auth pages', async () => {
     const browser = await import('./browser')

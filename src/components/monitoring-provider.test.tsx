@@ -11,6 +11,8 @@ import { MonitoringProvider } from './monitoring-provider'
 import { MonitoringPreferences } from './monitoring-preferences'
 import { NextIntlClientProvider } from 'next-intl'
 import messages from '../../messages/en.json'
+import type { Entitlement } from '@/features/monetization/repositories/monetization.repository'
+import { FEATURE_IDS } from '@/features/monetization/constants'
 
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -22,6 +24,8 @@ const mocks = vi.hoisted(() => ({
   setPreference: vi.fn(),
   profile: null as Record<string, unknown> | null,
   business: null as Record<string, unknown> | null,
+  enabled: true,
+  entitlements: [] as Entitlement[],
 }))
 vi.mock('next/navigation', () => ({ usePathname: () => '/cheques' }))
 vi.mock('@/features/auth/services/auth.service', () => ({
@@ -34,10 +38,15 @@ vi.mock('@/features/businesses/hooks/use-business', () => ({
   useBusiness: () => ({ activeBusiness: mocks.business }),
 }))
 vi.mock('@/features/monetization/hooks/use-entitlements', () => ({
-  useEntitlements: () => ({ data: [], dataUpdatedAt: 0 }),
+  useEntitlements: () => ({ data: mocks.entitlements, dataUpdatedAt: 0 }),
 }))
 vi.mock('@/lib/monitoring/config', () => ({
-  monitoringConfig: { enabled: true, policyApproved: true },
+  monitoringConfig: {
+    get enabled() {
+      return mocks.enabled
+    },
+    policyApproved: true,
+  },
 }))
 vi.mock('@/lib/monitoring/browser', () => ({
   setMonitoringUser: mocks.setUser,
@@ -53,11 +62,76 @@ describe('MonitoringProvider', () => {
     vi.clearAllMocks()
     mocks.profile = null
     mocks.business = null
+    mocks.enabled = true
+    mocks.entitlements = []
     mocks.subscribe.mockReturnValue({
       data: { subscription: { unsubscribe: mocks.unsubscribe } },
     })
   })
   afterEach(cleanup)
+
+  it('attaches only the authenticated users matching premium entitlement', async () => {
+    mocks.entitlements = [
+      {
+        id: 'ent1',
+        user_id: 'u1',
+        feature_id: FEATURE_IDS.LIFETIME_PREMIUM,
+        status: 'active',
+        valid_until: null,
+      },
+    ]
+    mocks.getUser.mockResolvedValue({ id: 'u1', user_metadata: {} })
+    render(<MonitoringProvider />)
+    await waitFor(() =>
+      expect(mocks.syncPage).toHaveBeenCalledWith(
+        '/cheques',
+        expect.objectContaining({
+          entitlement: 'active',
+          tier: 'premium',
+        }),
+      ),
+    )
+  })
+
+  it('does not subscribe when monitoring is disabled', () => {
+    mocks.enabled = false
+    const { container } = render(<MonitoringProvider />)
+    expect(container).toBeEmptyDOMElement()
+    expect(mocks.subscribe).not.toHaveBeenCalled()
+  })
+
+  it('handles failed initial identity and avoids late identity updates after unmount', async () => {
+    mocks.getUser.mockRejectedValueOnce(new Error('offline'))
+    const { unmount } = render(<MonitoringProvider />)
+    await waitFor(() => expect(mocks.setUser).toHaveBeenCalledWith(null))
+    unmount()
+    mocks.setUser.mockClear()
+    const callback = mocks.subscribe.mock.calls[0][0]
+    act(() =>
+      callback('SIGNED_IN', { user: { id: 'late', user_metadata: {} } }),
+    )
+    expect(mocks.setUser).not.toHaveBeenCalled()
+  })
+
+  it('synchronizes preference changes without unrelated storage events', async () => {
+    mocks.getUser.mockResolvedValue({
+      id: 'u1',
+      user_metadata: { name: 'Asha' },
+    })
+    render(<MonitoringProvider />)
+    await waitFor(() =>
+      expect(mocks.setUser).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Asha' }),
+      ),
+    )
+    mocks.syncPage.mockClear()
+    fireEvent(window, new StorageEvent('storage', { key: 'other' }))
+    expect(mocks.syncPage).not.toHaveBeenCalled()
+    fireEvent(window, new StorageEvent('storage', { key: 'tracking' }))
+    fireEvent(window, new StorageEvent('storage', { key: null }))
+    fireEvent(window, new Event('monitoring-change'))
+    expect(mocks.syncPage).toHaveBeenCalledTimes(3)
+  })
 
   it('identifies authenticated users even when profile loading fails', async () => {
     mocks.getUser.mockResolvedValue({
@@ -121,6 +195,31 @@ describe('MonitoringProvider', () => {
 
 describe('MonitoringPreferences', () => {
   afterEach(cleanup)
+
+  it('refreshes browser preference only for relevant storage and preference events', () => {
+    mocks.readPreference.mockReturnValue(true)
+    const view = render(
+      <NextIntlClientProvider
+        locale="en"
+        messages={{ Monitoring: messages.Monitoring }}
+      >
+        <MonitoringPreferences />
+      </NextIntlClientProvider>,
+    )
+    const control = view.getByRole('switch')
+    mocks.readPreference.mockReturnValue(false)
+    fireEvent(window, new StorageEvent('storage', { key: 'other' }))
+    expect(control).toBeChecked()
+    fireEvent(window, new StorageEvent('storage', { key: 'tracking' }))
+    expect(control).not.toBeChecked()
+    mocks.readPreference.mockReturnValue(true)
+    fireEvent(window, new StorageEvent('storage', { key: null }))
+    expect(control).toBeChecked()
+    mocks.readPreference.mockReturnValue(false)
+    fireEvent(window, new Event('monitoring-change'))
+    expect(control).not.toBeChecked()
+    mocks.readPreference.mockReturnValue(true)
+  })
 
   it('shows the current browser preference and lets the user opt out', () => {
     const view = render(
