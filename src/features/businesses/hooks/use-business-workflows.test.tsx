@@ -52,6 +52,28 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('business hooks', () => {
+  it('handles absent summaries, nonmatching searches and ascending upcoming totals', async () => {
+    mocks.getCheques.mockResolvedValueOnce([])
+    const { wrapper } = setup()
+    const { result } = renderHook(() => useBusinesses(), { wrapper })
+    await waitFor(() => expect(result.current.businesses).toHaveLength(2))
+    expect(result.current.getUpcomingTotal('absent')).toBe(0)
+    act(() => result.current.setSearch('not-present'))
+    expect(result.current.filteredBusinesses).toEqual([])
+    act(() => {
+      result.current.setSearch('')
+      result.current.setSortOrder('desc')
+    })
+    expect(result.current.filteredBusinesses.map(({ id }) => id)).toEqual([
+      'b2',
+      'b1',
+    ])
+    act(() => {
+      result.current.setSortBy('upcoming')
+      result.current.setSortOrder('asc')
+    })
+    expect(result.current.filteredBusinesses).toHaveLength(2)
+  })
   it('requires the provider, selects the first business and falls back after deletion', async () => {
     expect(() => renderHook(() => useBusiness())).toThrow('BusinessProvider')
     const { wrapper, client } = setup()

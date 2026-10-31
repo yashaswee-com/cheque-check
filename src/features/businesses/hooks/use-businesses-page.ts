@@ -48,7 +48,6 @@ export function useBusinesses() {
   )
 
   const filteredBusinesses = useMemo(() => {
-    if (!businesses) return []
     const result = businesses.filter(
       (b) =>
         b.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -60,12 +59,11 @@ export function useBusinesses() {
         return sortOrder === 'asc'
           ? a.name.localeCompare(b.name)
           : b.name.localeCompare(a.name)
-      } else if (sortBy === 'upcoming') {
+      } else {
         const totalA = getUpcomingTotal(a.id)
         const totalB = getUpcomingTotal(b.id)
         return sortOrder === 'asc' ? totalA - totalB : totalB - totalA
       }
-      return 0
     })
 
     return result

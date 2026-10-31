@@ -65,7 +65,7 @@ export function useCreateBusiness({
       },
     ],
     onSuccess: (newBusiness) => {
-      if (newBusiness) setActiveBusiness(newBusiness)
+      setActiveBusiness(newBusiness)
       queueCelebration({ target: '/businesses' })
     },
   })
