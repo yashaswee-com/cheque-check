@@ -26,10 +26,49 @@ function makeClient(overrides: Record<string, unknown> = {}) {
   }
   const rpc = vi.fn().mockResolvedValue({ data: true, error: null })
   const client = { auth, from: vi.fn(() => query), rpc }
-  return { client: client as unknown as SupabaseClient, auth, rpc }
+  return { client: client as unknown as SupabaseClient, auth, rpc, query }
 }
 
 describe('sendPhoneOtp', () => {
+  it('fails closed when linked profile lookup or rate-limit storage is unavailable', async () => {
+    const lookup = makeClient()
+    lookup.query.maybeSingle.mockResolvedValueOnce({
+      data: null,
+      error: new Error('offline'),
+    })
+    expect(
+      await sendPhoneOtp(lookup.client, {
+        phone: '9876543210',
+        purpose: 'link',
+      }),
+    ).toMatchObject({ code: 'provider_unavailable' })
+    expect(lookup.rpc).not.toHaveBeenCalled()
+    expect(lookup.auth.updateUser).not.toHaveBeenCalled()
+
+    const rateLimit = makeClient()
+    rateLimit.rpc.mockResolvedValueOnce({
+      data: null,
+      error: new Error('offline'),
+    })
+    expect(
+      await sendPhoneOtp(rateLimit.client, {
+        phone: '9876543210',
+        purpose: 'link',
+      }),
+    ).toMatchObject({ code: 'provider_unavailable' })
+    expect(rateLimit.auth.updateUser).not.toHaveBeenCalled()
+  })
+
+  it('maps thrown provider failures safely', async () => {
+    const { client, auth } = makeClient()
+    auth.signInWithOtp.mockRejectedValueOnce(
+      new Error('private provider details'),
+    )
+    expect(
+      await sendPhoneOtp(client, { phone: '9876543210', purpose: 'login' }),
+    ).toEqual({ ok: false, status: 503, code: 'provider_unavailable' })
+  })
+
   it('rejects non-Indian numbers before calling Supabase', async () => {
     const { client, auth } = makeClient()
     const result = await sendPhoneOtp(client, {
@@ -188,6 +227,50 @@ describe('sendPhoneOtp', () => {
 })
 
 describe('verifyPhoneOtp', () => {
+  it('requires an authenticated linking user and a complete resulting session', async () => {
+    const unauthenticated = makeClient()
+    unauthenticated.auth.getUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: null,
+    })
+    expect(
+      await verifyPhoneOtp(unauthenticated.client, {
+        phone: '9876543210',
+        token: '123456',
+        purpose: 'link',
+      }),
+    ).toMatchObject({ code: 'unauthorized' })
+    expect(unauthenticated.auth.verifyOtp).not.toHaveBeenCalled()
+    const incomplete = makeClient()
+    incomplete.auth.verifyOtp.mockResolvedValueOnce({
+      data: { user: { id: 'u1' }, session: null },
+      error: null,
+    })
+    expect(
+      await verifyPhoneOtp(incomplete.client, {
+        phone: '9876543210',
+        token: '123456',
+        purpose: 'login',
+      }),
+    ).toMatchObject({ code: 'provider_unavailable' })
+  })
+
+  it('signs out if profile authorization cannot be checked', async () => {
+    const { client, auth, query } = makeClient()
+    query.maybeSingle.mockResolvedValueOnce({
+      data: null,
+      error: new Error('offline'),
+    })
+    expect(
+      await verifyPhoneOtp(client, {
+        phone: '9876543210',
+        token: '123456',
+        purpose: 'login',
+      }),
+    ).toMatchObject({ code: 'provider_unavailable' })
+    expect(auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
+  })
+
   it('rejects bad codes locally', async () => {
     const { client, auth } = makeClient()
     expect(
@@ -303,6 +386,7 @@ describe('mapPhoneAuthError', () => {
     [{ status: 429 }, 'rate_limited'],
     [{}, 'provider_unavailable'],
     [{ status: 400 }, 'unknown'],
+    [{ code: 'validation_failed', status: 400 }, 'invalid_phone'],
   ])('%j -> %s', (input, code) => {
     expect(mapPhoneAuthError(input).code).toBe(code)
   })
