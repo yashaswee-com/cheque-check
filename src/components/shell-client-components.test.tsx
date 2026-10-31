@@ -38,6 +38,7 @@ let activeBusiness: {
   name: string
   logo_url: string | null
 } | null = null
+let profile: { name: string | null; avatar_url: string | null } | null = null
 let businessState = {
   businesses: [{ id: 'business', name: 'Acme' }],
   isLoading: false,
@@ -49,7 +50,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ back: mocks.back, push: mocks.push }),
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
-  useProfile: () => ({ profile: { name: 'A User', avatar_url: null } }),
+  useProfile: () => ({ profile }),
   ProfileProvider: ({ children }: { children: React.ReactNode }) => {
     mocks.profileProvider()
     return <div data-testid="profile-provider">{children}</div>
@@ -117,6 +118,7 @@ beforeEach(() => {
   pathname = '/cheques/cheque-id'
   keyboard = false
   activeBusiness = null
+  profile = { name: 'A User', avatar_url: null }
   businessState = {
     businesses: [{ id: 'business', name: 'Acme' }],
     isLoading: false,
@@ -126,6 +128,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  vi.unstubAllGlobals()
   vi.useRealTimers()
 })
 
@@ -182,6 +185,9 @@ describe('navigation components', () => {
     ['/parties/drafts', messages.Drafts.partyDrafts],
     ['/cheques/one/edit', messages.Cheques.editCheque],
     ['/tags/one', messages.Tags.viewTag],
+    ['/settings/unknown', 'Settings'],
+    ['/businesses/drafts', messages.Businesses.viewBusiness],
+    ['/tags/one/archive', messages.Navigation.dashboard],
     ['/unlisted', 'Unlisted'],
   ])(
     'shows the correct title and navigation controls for %s',
@@ -263,6 +269,29 @@ describe('navigation components', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('shows profile and business initials when their image URLs are absent or names are missing', () => {
+    pathname = '/cheques'
+    profile = { name: null, avatar_url: 'https://example.test/avatar.png' }
+    activeBusiness = {
+      id: 'business',
+      name: 'Acme',
+      logo_url: null,
+    }
+
+    renderIntl(<TopNav />)
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.SharedUI.more }),
+    )
+
+    expect(screen.getByRole('img', { name: 'User' })).toHaveAttribute(
+      'src',
+      'https://example.test/avatar.png',
+    )
+    expect(screen.getByTestId('business-switcher-trigger')).toHaveTextContent(
+      'A',
+    )
+  })
+
   it('uses the back button and closes the More menu after navigating to settings', async () => {
     const user = userEvent.setup()
     pathname = '/cheques/one'
@@ -280,6 +309,23 @@ describe('navigation components', () => {
     })
     await user.click(settings)
     expect(settings).not.toBeVisible()
+  })
+
+  it('reloads from the More menu on routes that expose the reload action', async () => {
+    const user = userEvent.setup()
+    const reload = vi.fn()
+    vi.stubGlobal('location', { reload })
+    pathname = '/cheques'
+    renderIntl(<TopNav />)
+
+    await user.click(
+      screen.getByRole('button', { name: messages.SharedUI.more }),
+    )
+    await user.click(
+      screen.getByRole('button', { name: messages.SharedUI.reload }),
+    )
+
+    expect(reload).toHaveBeenCalledOnce()
   })
 })
 
@@ -315,6 +361,30 @@ describe('shell state components', () => {
     )
     await act(async () => {})
     expect(mocks.push).not.toHaveBeenCalled()
+  })
+
+  it('keeps the skeleton during an empty background fetch and shows existing workspaces', () => {
+    businessState = { businesses: [], isLoading: false, isFetching: true }
+    const view = renderIntl(
+      <OnboardingCheck>
+        <p>Workspace</p>
+      </OnboardingCheck>,
+    )
+    expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument()
+
+    businessState = {
+      businesses: [{ id: 'business', name: 'Acme' }],
+      isLoading: false,
+      isFetching: true,
+    }
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+        <OnboardingCheck>
+          <p>Workspace</p>
+        </OnboardingCheck>
+      </NextIntlClientProvider>,
+    )
+    expect(screen.getByText('Workspace')).toBeVisible()
   })
 
   it('renders the shell skeleton and shows then dismisses the launch splash', () => {
@@ -390,6 +460,12 @@ describe('shell state components', () => {
     log.mockRestore()
     error.mockRestore()
   })
+
+  it('does nothing when the browser has no service worker API', () => {
+    Reflect.deleteProperty(navigator, 'serviceWorker')
+    render(<PwaRegistrar />)
+    expect('serviceWorker' in navigator).toBe(false)
+  })
 })
 
 describe('speed dial actions', () => {
@@ -426,6 +502,8 @@ describe('speed dial actions', () => {
     )
     const toggle = screen.getByTestId('speed-dial-toggle')
     await user.click(toggle)
+    expect(screen.getByRole('menu')).toBeVisible()
+    fireEvent.keyDown(window, { key: 'ArrowDown' })
     expect(screen.getByRole('menu')).toBeVisible()
     expect(
       screen.getByRole('menuitem', { name: 'Disabled action' }),
