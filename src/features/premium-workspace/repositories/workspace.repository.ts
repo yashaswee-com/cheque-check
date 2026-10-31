@@ -1,10 +1,15 @@
 import { createClient } from '@/lib/supabase/client'
 import { TABLES } from '@/lib/supabase/tables'
-import { mapSupabaseError } from '@/lib/errors'
+import { mapSupabaseError, ValidationError } from '@/lib/errors'
 import {
   unwrapSupabaseResult as unwrap,
   unwrapSupabaseVoid,
+  parseDatabaseValue,
 } from '@/repositories/base.repository'
+import {
+  printLayoutSchema,
+  workspaceSnapshotSchema,
+} from '@/validators/premium-workspace'
 import type { Json } from '@/types/database.types'
 import type { PrintLayout } from '@/features/cheques/lib/print-cheque'
 import type {
@@ -148,14 +153,19 @@ export const premiumWorkspaceRepository = {
     from?: string,
     to?: string,
   ): Promise<WorkspaceSnapshot> {
-    return unwrap(
+    const data = unwrap(
       await createClient().rpc('premium_workspace_snapshot', {
         requested_businesses: businessIds,
         ...(partyId ? { requested_party: partyId } : {}),
         ...(from ? { requested_from: from } : {}),
         ...(to ? { requested_to: to } : {}),
       }),
-    ) as unknown as WorkspaceSnapshot
+    )
+    return parseDatabaseValue(
+      data,
+      workspaceSnapshotSchema,
+      'workspace snapshot',
+    )
   },
 }
 
@@ -179,17 +189,22 @@ export async function getPrintLayout(
     { requested_account: accountId },
   )
   if (error) throw mapSupabaseError(error)
-  return data as unknown as PrintLayout | null
+  return data === null
+    ? null
+    : parseDatabaseValue(data, printLayoutSchema, 'print layout')
 }
 
 export async function savePrintLayout(
   accountId: string,
   layout: PrintLayout,
 ): Promise<void> {
+  const validatedLayout = printLayoutSchema.safeParse(layout)
+  if (!validatedLayout.success)
+    throw new ValidationError('Invalid print layout', validatedLayout.error)
   unwrapSupabaseVoid(
     await createClient().rpc('premium_workspace_print_layout', {
       requested_account: accountId,
-      requested_layout: { ...layout },
+      requested_layout: { ...validatedLayout.data },
     }),
   )
 }

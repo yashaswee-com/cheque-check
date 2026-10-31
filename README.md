@@ -129,7 +129,7 @@ modules or Edge Functions.
   totals/distributions and business upcoming totals are database aggregates,
   independent of list pagination; the dashboard renders at most 50 today cards
   and links to the full list when there are more.
-- Complete-history consumers (reports and existing related-entity views) use
+- Complete-history consumers (on-demand exports and existing related-entity views) use
   explicitly paginated reads, not a single response subject to the API row cap.
   These are live reads, not transactionally frozen export snapshots. Interactive
   pages use offset pagination; concurrent changes can move records between pages.
@@ -143,6 +143,30 @@ modules or Edge Functions.
   outcomes retain the reservation for reconciliation and are not auto-redelivered.
   See [notification-system.md](docs/notification-system.md) for deployment order,
   recovery and operational limits.
+
+### Typed persistence and on-demand exports
+
+- Cheque repositories validate published rows and relation shapes before returning
+  domain entities. Nullable database presentation fields are mapped explicitly;
+  missing required published fields produce a `DatabaseError`, not a cast or default.
+- Dynamic workspace snapshot JSON and print layouts are validated at the repository
+  boundary. Print coordinates use the same eight-field A4 constraints as the RPC.
+  The database type snapshot remains hand-authored; runtime validation complements,
+  rather than replaces, regenerating and reviewing types after schema changes.
+- Reports load exact database summaries and only the ten most recent cheques.
+  Export actions verify entitlement and then fetch complete history on demand,
+  preserving the inward-cheque preference. They never export just the preview.
+- Export adapters return promises. Callers await completion and expose failures;
+  concurrent downloads are disabled while an export is running. PDF and Excel
+  dependencies are dynamically imported only for the selected format.
+- CSV/JSON use blob parts and all formats prepare rows in batches of at most 500,
+  yielding between batches. CSV quotes are escaped, and Excel retains numeric
+  amounts and textual cheque numbers. Exports still reside in browser memory;
+  PDF/Excel final serialization may block. Very large exports need a separately
+  designed background/streaming pipeline and production measurements.
+- Explicit `any` is disallowed in these strengthened production boundaries and the
+  reporting feature. This is an incremental lint gate, not a repository-wide
+  type-cleanup rewrite.
 
 Feature code belongs under `src/features/<feature>`. Current feature areas are
 `auth`, `onboarding`, `dashboard`, `businesses`, `accounts`, `parties`,

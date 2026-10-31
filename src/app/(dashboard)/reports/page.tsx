@@ -1,7 +1,7 @@
 'use client'
 
 import { useBusiness } from '@/features/businesses/hooks/use-business'
-import { useCheques } from '@/features/cheques/hooks/use-cheques'
+import { useReportCheques } from '@/features/reports/hooks/use-report-cheques'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { reportService } from '@/features/reports/services/report.service'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,6 @@ import {
   Calendar01Icon as Calendar,
   Building03Icon,
 } from '@hugeicons/core-free-icons'
-import { useChequeStats } from '@/features/cheques/hooks/use-cheque-stats'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { TextTruncate } from '@/components/ui/text-truncate'
@@ -26,7 +25,8 @@ import {
   PremiumGate,
   usePremiumAction,
 } from '@/features/monetization/components/premium-gate'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { logger } from '@/lib/logger'
 import { toast } from '@/components/ui/toast'
 import {
   Popover,
@@ -58,6 +58,8 @@ function ReportsContent() {
   const tr = useTranslations('Reports')
   const tc = useTranslations('Common')
   const [exportOpen, setExportOpen] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const exportLock = useRef(false)
 
   const { activeBusiness } = useBusiness()
   const { profile } = useProfile()
@@ -66,36 +68,45 @@ function ReportsContent() {
   const {
     cheques,
     isLoading: chequesLoading,
-    filter,
-    setFilter,
-  } = useCheques(activeBusiness?.id)
-  const { outstanding } = useChequeStats(cheques, profile?.time_zone)
+    summary,
+    totalCount,
+    outstanding,
+    error,
+    loadExportCheques,
+  } = useReportCheques(activeBusiness?.id)
 
   const isLoading = chequesLoading
 
   const currency = profile?.currency || '₹'
 
   const handleExport = async (format: 'csv' | 'json' | 'pdf' | 'excel') => {
-    if (!(await premium.verifyAccess('reports'))) return
-    if (!cheques) return
+    if (exportLock.current) return
+    exportLock.current = true
+    setExporting(true)
     try {
+      if (!(await premium.verifyAccess('reports'))) return
+      const exportCheques = await loadExportCheques()
       const baseName = `cheques_report_${activeBusiness?.name || 'export'}`
       if (format === 'json') {
-        reportService.exportToJSON(cheques, `${baseName}.json`)
+        await reportService.exportToJSON(exportCheques, `${baseName}.json`)
       } else if (format === 'pdf') {
-        reportService.exportToPDF(cheques, `${baseName}.pdf`)
+        await reportService.exportToPDF(exportCheques, `${baseName}.pdf`)
       } else if (format === 'excel') {
-        reportService.exportToExcel(cheques, `${baseName}.xlsx`)
+        await reportService.exportToExcel(exportCheques, `${baseName}.xlsx`)
       } else {
-        reportService.exportToCSV(cheques, `${baseName}.csv`)
+        await reportService.exportToCSV(exportCheques, `${baseName}.csv`)
       }
       setExportOpen(false)
     } catch (error) {
+      logger.error('Report export failed', error)
       toast.add({
         title: tc('error'),
         description: error instanceof Error ? error.message : tc('error'),
         type: 'error',
       })
+    } finally {
+      exportLock.current = false
+      setExporting(false)
     }
   }
 
@@ -117,7 +128,8 @@ function ReportsContent() {
               <Button
                 className="rounded-full gap-2"
                 data-testid="reports-export-trigger"
-                disabled={!cheques || cheques.length === 0}
+                disabled={isLoading || !!error || totalCount === 0 || exporting}
+                loading={exporting}
               />
             }
           >
@@ -130,6 +142,7 @@ function ReportsContent() {
             </p>
             <button
               type="button"
+              disabled={exporting}
               data-testid="reports-export-csv"
               className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
               onClick={() => handleExport('csv')}
@@ -138,6 +151,7 @@ function ReportsContent() {
             </button>
             <button
               type="button"
+              disabled={exporting}
               data-testid="reports-export-json"
               className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
               onClick={() => handleExport('json')}
@@ -146,6 +160,7 @@ function ReportsContent() {
             </button>
             <button
               type="button"
+              disabled={exporting}
               data-testid="reports-export-pdf"
               className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
               onClick={() => handleExport('pdf')}
@@ -154,6 +169,7 @@ function ReportsContent() {
             </button>
             <button
               type="button"
+              disabled={exporting}
               data-testid="reports-export-excel"
               className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
               onClick={() => handleExport('excel')}
@@ -166,6 +182,7 @@ function ReportsContent() {
 
       <DataState
         isLoading={isLoading}
+        isError={!!error}
         data={activeBusiness ? [activeBusiness] : []}
         allData={activeBusiness ? [activeBusiness] : []}
         loadingComponent={
@@ -210,9 +227,7 @@ function ReportsContent() {
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 {tc('totalCheques')}
               </p>
-              <p className="mt-1 text-2xl font-semibold">
-                {cheques?.length || 0}
-              </p>
+              <p className="mt-1 text-2xl font-semibold">{totalCount}</p>
             </div>
           </div>
 
@@ -227,7 +242,7 @@ function ReportsContent() {
                 {tr('distribution')}
               </h2>
             </div>
-            <ChequeStatsChart cheques={cheques} currency={currency} />
+            <ChequeStatsChart summary={summary} currency={currency} />
           </div>
 
           {/* List Preview */}
@@ -275,16 +290,16 @@ function ReportsContent() {
                         {c.amount.toLocaleString()}
                       </p>
                       <StatusPill
-                        status={c.status as any}
+                        status={c.status}
                         className="scale-75 origin-right"
                       />
                     </div>
                   </div>
                 ))}
-                {(cheques?.length || 0) > 10 && (
+                {totalCount > 10 && (
                   <div className="p-3 text-center bg-muted/20">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      {tr('showingCheques', { count: cheques?.length ?? 0 })}
+                      {tr('showingCheques', { count: totalCount })}
                     </p>
                   </div>
                 )}

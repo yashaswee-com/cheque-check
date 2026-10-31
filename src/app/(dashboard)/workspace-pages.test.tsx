@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => ({
   json: vi.fn(),
   pdf: vi.fn(),
   excel: vi.fn(),
+  loadExport: vi.fn(),
 }))
 const business = { id: 'business', name: 'Acme', email: 'acme@example.test' }
 const baseCheque = {
@@ -110,6 +111,17 @@ vi.mock('@/features/cheques/hooks/use-cheques', () => ({
     cheques,
     isLoading: loading,
     updateStatus: mocks.status,
+  }),
+}))
+vi.mock('@/features/reports/hooks/use-report-cheques', () => ({
+  useReportCheques: () => ({
+    cheques: cheques.slice(0, 10),
+    summary: [],
+    totalCount: cheques.length,
+    outstanding: 1100,
+    isLoading: loading,
+    error: null,
+    loadExportCheques: mocks.loadExport,
   }),
 }))
 vi.mock('@/features/cheques/hooks/use-cheque-stats', () => ({
@@ -329,6 +341,7 @@ describe('dashboard page', () => {
 })
 
 describe('reports page', () => {
+  beforeEach(() => mocks.loadExport.mockImplementation(async () => cheques))
   it.each(['csv', 'json', 'pdf', 'excel'] as const)(
     'exports %s using the active business name',
     async (format) => {
@@ -359,9 +372,7 @@ describe('reports page', () => {
     expect(mocks.csv).not.toHaveBeenCalled()
   })
   it('reports export exceptions and leaves format selection available for retry', async () => {
-    mocks.csv.mockImplementationOnce(() => {
-      throw new Error('Export failed')
-    })
+    mocks.csv.mockRejectedValueOnce(new Error('Export failed'))
     renderPage(<ReportsPage />)
     fireEvent.click(screen.getByTestId('reports-export-trigger'))
     fireEvent.click(await screen.findByTestId('reports-export-csv'))
@@ -374,6 +385,38 @@ describe('reports page', () => {
       ),
     )
     expect(screen.getByTestId('reports-export-csv')).toBeVisible()
+  })
+  it('exports the complete fresh history, not the ten-row preview, and prevents duplicate downloads', async () => {
+    cheques = Array.from({ length: 12 }, (_, index) => ({
+      ...baseCheque,
+      id: `cheque-${index}`,
+    }))
+    let complete!: () => void
+    mocks.csv.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          complete = resolve
+        }),
+    )
+    renderPage(<ReportsPage />)
+    fireEvent.click(screen.getByTestId('reports-export-trigger'))
+    fireEvent.click(await screen.findByTestId('reports-export-csv'))
+    await waitFor(() =>
+      expect(mocks.csv).toHaveBeenCalledWith(
+        cheques,
+        'cheques_report_Acme.csv',
+      ),
+    )
+    expect(screen.getByTestId('reports-export-csv')).toBeDisabled()
+    fireEvent.click(screen.getByTestId('reports-export-json'))
+    expect(mocks.json).not.toHaveBeenCalled()
+    complete()
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId('reports-export-csv'),
+      ).not.toBeInTheDocument(),
+    )
+    expect(mocks.loadExport).toHaveBeenCalledOnce()
   })
   it('limits recent records to ten and explains the total count', () => {
     cheques = Array.from({ length: 12 }, (_, index) => ({

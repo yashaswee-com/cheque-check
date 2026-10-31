@@ -9,7 +9,7 @@ export function useSettings() {
   const router = useRouter()
   const t = useTranslations('Settings')
 
-  const handleExport = (
+  const handleExport = async (
     cheques: ChequeWithRelations[] | undefined,
     businessName: string,
   ) => {
@@ -17,7 +17,7 @@ export function useSettings() {
       alert('No cheques found to export.')
       return
     }
-    reportService.exportToCSV(
+    await reportService.exportToCSV(
       cheques,
       `${businessName || 'Business'}_Cheques.csv`,
     )

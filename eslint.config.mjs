@@ -27,6 +27,22 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    files: [
+      'src/features/reports/**/*.{ts,tsx}',
+      'src/features/cheques/repositories/cheque.repository.ts',
+      'src/features/premium-workspace/repositories/workspace.repository.ts',
+      'src/repositories/base.repository.ts',
+      'src/lib/errors.ts',
+      'src/validators/persisted-cheque.ts',
+      'src/validators/premium-workspace.ts',
+      'src/app/(dashboard)/reports/page.tsx',
+    ],
+    ignores: testFiles,
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
+  {
     files: ['src/**/*.{ts,tsx}'],
     ignores: ['src/lib/supabase/**', ...testFiles],
     rules: {

@@ -540,27 +540,27 @@ describe('default draft services', () => {
 })
 
 describe('remaining service exports', () => {
-  it('binds default report methods and supplies format-specific default filenames', () => {
+  it('binds default report methods and supplies format-specific default filenames', async () => {
     const csv = vi
       .spyOn(BrowserReportRepository.prototype, 'exportToCSV')
-      .mockImplementation(() => {})
+      .mockResolvedValue(undefined)
     const json = vi
       .spyOn(BrowserReportRepository.prototype, 'exportToJSON')
-      .mockImplementation(() => {})
+      .mockResolvedValue(undefined)
     const pdf = vi
       .spyOn(BrowserReportRepository.prototype, 'exportToPDF')
-      .mockImplementation(() => {})
+      .mockResolvedValue(undefined)
     const excel = vi
       .spyOn(BrowserReportRepository.prototype, 'exportToExcel')
-      .mockImplementation(() => {})
+      .mockResolvedValue(undefined)
     try {
       expect(reportService).toBeInstanceOf(ReportService)
       expect(Reflect.get(reportService, 'missingProperty')).toBeUndefined()
       const exportCSV = reportService.exportToCSV
-      exportCSV([])
-      reportService.exportToJSON([])
-      reportService.exportToPDF([])
-      reportService.exportToExcel([])
+      await exportCSV([])
+      await reportService.exportToJSON([])
+      await reportService.exportToPDF([])
+      await reportService.exportToExcel([])
       expect(csv).toHaveBeenCalledWith([], 'cheques_report.csv')
       expect(json).toHaveBeenCalledWith([], 'cheques_report.json')
       expect(pdf).toHaveBeenCalledWith([], 'cheques_report.pdf')

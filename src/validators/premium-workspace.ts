@@ -1,4 +1,22 @@
 import { chequeSchema, partySchema } from './index'
+import { z } from 'zod'
+import { workspaceChequeRowSchema } from './persisted-cheque'
+
+export const workspaceSnapshotSchema = z.object({
+  businesses: z.array(z.object({ id: z.string(), name: z.string() })),
+  cheques: z.array(workspaceChequeRowSchema),
+})
+
+export const printLayoutSchema = z.strictObject({
+  payeeX: z.number().min(0).max(210),
+  payeeY: z.number().min(0).max(297),
+  amountX: z.number().min(0).max(210),
+  amountY: z.number().min(0).max(297),
+  dateX: z.number().min(0).max(210),
+  dateY: z.number().min(0).max(297),
+  chequeNumberX: z.number().min(0).max(210),
+  chequeNumberY: z.number().min(0).max(297),
+})
 
 export function validDate(value: string): boolean {
   if (

@@ -1,6 +1,14 @@
 import { Cheque, ChequeStatus, ChequeWithRelations } from '@/types'
 import { TABLES } from '@/lib/supabase/tables'
-import { SupabaseRepository } from '@/repositories/base.repository'
+import {
+  parseDatabaseValue,
+  SupabaseRepository,
+} from '@/repositories/base.repository'
+import {
+  persistedChequeSchema,
+  relatedChequeSchema,
+  relatedChequesSchema,
+} from '@/validators/persisted-cheque'
 import type {
   ChequeListRequest,
   ChequePage,
@@ -58,7 +66,11 @@ export class SupabaseChequeRepository
         .order('id')
         .limit(500)
       if (cursor) query = query.gt('id', cursor)
-      const page = (await this.handle(query)) as ChequeWithRelations[]
+      const page = parseDatabaseValue(
+        await this.handle(query),
+        relatedChequesSchema,
+        'cheque relations',
+      )
       rows.push(...page)
       if (page.length < 500) break
       cursor = page[page.length - 1].id
@@ -95,15 +107,19 @@ export class SupabaseChequeRepository
       throw new DatabaseError('Cheque page metadata was not returned')
     const ids = page.flatMap((row) => (row.cheque_id ? [row.cheque_id] : []))
     const rows = ids.length
-      ? ((await this.handle(
-          this.supabase
-            .from(TABLES.CHEQUES)
-            .select(RELATIONS)
-            .in('id', ids)
-            .eq('business_id', request.businessId)
-            .is('deleted_at', null)
-            .eq('is_draft', false),
-        )) as ChequeWithRelations[])
+      ? parseDatabaseValue(
+          await this.handle(
+            this.supabase
+              .from(TABLES.CHEQUES)
+              .select(RELATIONS)
+              .in('id', ids)
+              .eq('business_id', request.businessId)
+              .is('deleted_at', null)
+              .eq('is_draft', false),
+          ),
+          relatedChequesSchema,
+          'cheque relations',
+        )
       : []
     const byId = new Map(rows.map((row) => [row.id, row]))
     return {
@@ -142,24 +158,30 @@ export class SupabaseChequeRepository
   }
 
   async getById(id: string): Promise<ChequeWithRelations> {
-    return this.handle(
-      this.supabase
-        .from(TABLES.CHEQUES)
-        .select(
-          '*, party:parties(name, contact, color, icon, avatar_url), account:accounts(account_name, color, icon, bank:banks(name, logo_url))',
-        )
-        .eq('id', id)
-        .is('deleted_at', null)
-        .single(),
-    ) as Promise<ChequeWithRelations>
+    return parseDatabaseValue(
+      await this.handle(
+        this.supabase
+          .from(TABLES.CHEQUES)
+          .select(RELATIONS)
+          .eq('id', id)
+          .is('deleted_at', null)
+          .single(),
+      ),
+      relatedChequeSchema,
+      'cheque relations',
+    )
   }
 
   async create(
     input: Omit<Cheque, 'id' | 'created_at' | 'updated_at'>,
   ): Promise<Cheque> {
-    return this.handle(
-      this.supabase.from(TABLES.CHEQUES).insert([input]).select().single(),
-    ) as Promise<Cheque>
+    return parseDatabaseValue(
+      await this.handle(
+        this.supabase.from(TABLES.CHEQUES).insert([input]).select().single(),
+      ),
+      persistedChequeSchema,
+      'cheque',
+    )
   }
 
   async update(
@@ -171,25 +193,33 @@ export class SupabaseChequeRepository
       >
     >,
   ): Promise<Cheque> {
-    return this.handle(
-      this.supabase
-        .from(TABLES.CHEQUES)
-        .update(input)
-        .eq('id', id)
-        .select()
-        .single(),
-    ) as Promise<Cheque>
+    return parseDatabaseValue(
+      await this.handle(
+        this.supabase
+          .from(TABLES.CHEQUES)
+          .update(input)
+          .eq('id', id)
+          .select()
+          .single(),
+      ),
+      persistedChequeSchema,
+      'cheque',
+    )
   }
 
   async updateStatus(id: string, status: ChequeStatus): Promise<Cheque> {
-    return this.handle(
-      this.supabase
-        .from(TABLES.CHEQUES)
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single(),
-    ) as Promise<Cheque>
+    return parseDatabaseValue(
+      await this.handle(
+        this.supabase
+          .from(TABLES.CHEQUES)
+          .update({ status, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .select()
+          .single(),
+      ),
+      persistedChequeSchema,
+      'cheque',
+    )
   }
 
   async delete(id: string): Promise<void> {

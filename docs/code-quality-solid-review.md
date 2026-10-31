@@ -7,6 +7,17 @@
 
 The OCR workflow recommendation has been implemented in `src/features/cheques/services/ocr-workflow.ts`. The route now adapts Supabase operations and HTTP outcomes to an injected workflow/provider boundary. Focused workflow tests cover rate limiting, private image ownership/signing, quota handling, provider sequencing, and dependency failures. The stale bank-seed test was intentionally left unchanged as requested.
 
+Subsequent scaling work fixed the bank-seed check's CRLF/LF comparison and added
+bounded reads and reliable notifications. Phase 3 now validates published cheque
+rows/relations, workspace snapshot JSON, and print layouts at repository boundaries.
+Shared database error handling accepts `unknown`, and the strengthened boundaries
+have an explicit-`any` lint gate. Reports use aggregate totals plus a ten-row preview;
+complete history is fetched only for an export. Asynchronous export adapters load
+PDF/Excel dependencies on demand and yield between bounded formatting batches.
+Browser-memory and final serialization limits remain; background exports and
+production load testing are not implemented by these changes. The findings below
+describe the original review baseline, not the current test status.
+
 ## Executive summary
 
 The codebase has a solid architectural foundation: feature-oriented modules, distinct domain/service/repository layers, shared validators and query-key factories, and ESLint rules that prevent common UI-to-database layer bypasses. The cheque domain entity centralizes status-transition rules, and `ChequeService` depends on an `IChequeRepository` abstraction.

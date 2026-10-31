@@ -34,7 +34,7 @@ export class DatabaseError extends AppError {
   }
 }
 
-export function mapSupabaseError(error: any): AppError {
+export function mapSupabaseError(error: unknown): AppError {
   if (error instanceof AppError) {
     return error
   }
@@ -43,9 +43,12 @@ export function mapSupabaseError(error: any): AppError {
     return new DatabaseError('Unknown database error')
   }
 
-  const code = typeof error.code === 'string' ? error.code : undefined
+  const code =
+    'code' in error && typeof error.code === 'string' ? error.code : undefined
   const message =
-    typeof error.message === 'string' && error.message.trim().length > 0
+    'message' in error &&
+    typeof error.message === 'string' &&
+    error.message.trim().length > 0
       ? error.message
       : 'Database request failed'
 
@@ -53,7 +56,12 @@ export function mapSupabaseError(error: any): AppError {
     return new ConflictError(message, error)
   }
 
-  if (code === 'PGRST116' || error?.details?.includes('0 rows')) {
+  if (
+    code === 'PGRST116' ||
+    ('details' in error &&
+      typeof error.details === 'string' &&
+      error.details.includes('0 rows'))
+  ) {
     return new NotFoundError(message, error)
   }
 

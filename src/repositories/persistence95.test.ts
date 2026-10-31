@@ -135,6 +135,21 @@ beforeEach(() => {
 })
 
 describe('production CRUD repositories at the Supabase boundary', () => {
+  it('rejects malformed joined cheque reads and nullable published fields rather than asserting a domain type', async () => {
+    const repository = new SupabaseChequeRepository()
+    boundary.result.data = [{ ...cheque, amount: '100' }]
+    await expect(repository.getAll('business-1')).rejects.toThrow(
+      'Invalid cheque relations',
+    )
+    boundary.result.data = { ...cheque, account: [] }
+    await expect(repository.getById(cheque.id)).rejects.toThrow(
+      'Invalid cheque relations',
+    )
+    boundary.result.data = { ...cheque, cheque_number: null }
+    await expect(repository.updateStatus(cheque.id, 'Cleared')).rejects.toThrow(
+      'Invalid cheque',
+    )
+  })
   it('fetches complete cheque history beyond the response cap using ID cursors', async () => {
     const rows = Array.from({ length: 1001 }, (_, i) => ({
       ...cheque,
@@ -644,6 +659,7 @@ describe('premium workspace repository', () => {
         requested_status: 'Cleared',
       },
     )
+    boundary.result.data = { businesses: [], cheques: [] }
     await premiumWorkspaceRepository.snapshot(['business-1'])
     expect(boundary.rpc).toHaveBeenLastCalledWith(
       'premium_workspace_snapshot',

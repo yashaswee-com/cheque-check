@@ -33,4 +33,18 @@ describe('mapSupabaseError', () => {
     expect(error).toBeInstanceOf(DatabaseError)
     expect(error).toBeInstanceOf(AppError)
   })
+  it('guards malformed error fields without throwing from the error mapper', () => {
+    for (const error of [
+      null,
+      undefined,
+      42,
+      { code: 42, message: 42, details: 42 },
+      { details: { includes: true } },
+    ]) {
+      expect(mapSupabaseError(error)).toBeInstanceOf(DatabaseError)
+    }
+    expect(
+      mapSupabaseError({ details: 'The result contains 0 rows' }),
+    ).toBeInstanceOf(NotFoundError)
+  })
 })

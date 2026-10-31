@@ -125,4 +125,30 @@ describe('fresh authenticated premium RPC contracts', () => {
     await expect(getMessageTemplate('b1')).resolves.toBeNull()
     await expect(getPrintLayout('a1')).resolves.toBeNull()
   })
+  it('rejects malformed JSON snapshots and print layouts at the repository boundary', async () => {
+    rpc.mockResolvedValue({
+      data: { businesses: [], cheques: 'unexpected' },
+      error: null,
+    })
+    await expect(premiumWorkspaceService.snapshot(['b1'])).rejects.toThrow(
+      'Invalid workspace snapshot',
+    )
+    rpc.mockResolvedValue({ data: { payeeX: '35' }, error: null })
+    await expect(getPrintLayout('a1')).rejects.toThrow('Invalid print layout')
+  })
+  it('rejects out-of-page print coordinates before sending a write RPC', async () => {
+    await expect(
+      savePrintLayout('a1', {
+        payeeX: 211,
+        payeeY: 55,
+        amountX: 150,
+        amountY: 55,
+        dateX: 165,
+        dateY: 25,
+        chequeNumberX: 165,
+        chequeNumberY: 35,
+      }),
+    ).rejects.toThrow('Invalid print layout')
+    expect(rpc).not.toHaveBeenCalled()
+  })
 })

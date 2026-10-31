@@ -3,57 +3,53 @@ import {
   BrowserReportRepository,
   IReportRepository,
 } from '@/features/reports/repositories/report.repository'
-import { recordOperation } from '@/lib/monitoring/telemetry'
-
-let defaultReportService: ReportService | undefined
-
-function getDefaultReportService(): ReportService {
-  if (!defaultReportService) defaultReportService = new ReportService()
-  return defaultReportService
-}
+import { monitorOperation } from '@/lib/monitoring/telemetry'
 
 export class ReportService {
   constructor(
     private readonly repository: IReportRepository = new BrowserReportRepository(),
   ) {}
 
-  exportToCSV(
+  async exportToCSV(
     cheques: ChequeWithRelations[],
     filename = 'cheques_report.csv',
-  ): void {
-    this.repository.exportToCSV(cheques, filename)
-    recordOperation('report.export_csv', 'success')
+  ): Promise<void> {
+    await monitorOperation('report.export_csv', () =>
+      this.repository.exportToCSV(cheques, filename),
+    )
   }
 
-  exportToJSON(
+  async exportToJSON(
     cheques: ChequeWithRelations[],
     filename = 'cheques_report.json',
-  ): void {
-    this.repository.exportToJSON(cheques, filename)
-    recordOperation('report.export_json', 'success')
+  ): Promise<void> {
+    await monitorOperation('report.export_json', () =>
+      this.repository.exportToJSON(cheques, filename),
+    )
   }
 
-  exportToPDF(
+  async exportToPDF(
     cheques: ChequeWithRelations[],
     filename = 'cheques_report.pdf',
-  ): void {
-    this.repository.exportToPDF(cheques, filename)
-    recordOperation('report.export_pdf', 'success')
+  ): Promise<void> {
+    await monitorOperation('report.export_pdf', () =>
+      this.repository.exportToPDF(cheques, filename),
+    )
   }
 
-  exportToExcel(
+  async exportToExcel(
     cheques: ChequeWithRelations[],
     filename = 'cheques_report.xlsx',
-  ): void {
-    this.repository.exportToExcel(cheques, filename)
-    recordOperation('report.export_excel', 'success')
+  ): Promise<void> {
+    await monitorOperation('report.export_excel', () =>
+      this.repository.exportToExcel(cheques, filename),
+    )
   }
 }
 
-export const reportService = new Proxy(Object.create(ReportService.prototype), {
+export const reportService = new Proxy(new ReportService(), {
   get(_target, property, receiver) {
-    const service = getDefaultReportService()
-    const value = Reflect.get(service, property, receiver)
-    return typeof value === 'function' ? value.bind(service) : value
+    const value = Reflect.get(_target, property, receiver)
+    return typeof value === 'function' ? value.bind(_target) : value
   },
 })
