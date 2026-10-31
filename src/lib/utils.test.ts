@@ -22,6 +22,12 @@ describe('Indian amount words', () => {
     [1000, 'One Thousand Rupees Only'],
     [100000, 'One Lakh Rupees Only'],
     [10000000, 'One Crore Rupees Only'],
+    [10000000000, 'One Thousand Crore Rupees Only'],
+    [10010000000, 'One Thousand One Crore Rupees Only'],
+    [
+      999999999999.99,
+      'Ninety Nine Thousand Nine Hundred and Ninety Nine Crore Ninety Nine Lakh Ninety Nine Thousand Nine Hundred and Ninety Nine Rupees Only',
+    ],
     [
       12345678,
       'One Crore Twenty Three Lakh Forty Five Thousand Six Hundred and Seventy Eight Rupees Only',

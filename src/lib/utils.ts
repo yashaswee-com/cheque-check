@@ -62,7 +62,11 @@ export function numberToIndianWords(num: number, currency = '₹'): string {
         ' Hundred' +
         (n % 100 !== 0 ? ' and ' + convert(n % 100) : '')
       )
-    return ''
+    return (
+      convert(Math.floor(n / 1000)) +
+      ' Thousand' +
+      (n % 1000 !== 0 ? ' ' + convert(n % 1000) : '')
+    )
   }
 
   let result = ''
