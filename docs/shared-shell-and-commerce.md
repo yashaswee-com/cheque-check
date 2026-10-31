@@ -45,6 +45,24 @@ Tag Selector alone opts into a modal dim/blur backdrop. Other popovers do not
 receive it. The selector retains multi-select, outside dismissal, Escape,
 focus restoration, and nested-overlay handling from Base UI.
 
+## App version and What's New
+
+About, the launch splash, and What's New share `APP_VERSION` from
+`src/lib/app-version.ts`, sourced from the root `package.json`. They display
+`vMAJOR.MINOR.PATCH` without an unrelated build label. The package version is
+the source of truth; UI changes do not automatically increment it.
+
+Use Semantic Versioning for releases: major for incompatible changes, minor
+for backward-compatible features, and patch for backward-compatible fixes.
+While the major version is zero, the app remains in initial development and
+its public API is not yet stable.
+
+What's New summarizes committed, user-visible improvements in English,
+Hindi, and Hinglish. Its last-updated date refers to the covered changes,
+not an inferred release date. When publishing a release, update the package
+version and localized highlights together. Do not invent intermediate
+versions from commit dates or include internal-only test and tooling changes.
+
 ## Commerce
 
 `20261021040000_product_names.sql` changes only catalog display names. Apply it

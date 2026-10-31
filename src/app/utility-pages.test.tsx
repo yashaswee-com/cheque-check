@@ -2,6 +2,8 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../messages/en.json'
+import hindiMessages from '../../messages/hi.json'
+import hinglishMessages from '../../messages/hi-en.json'
 import { version } from '../../package.json'
 import AccountsDraftsPage from './(dashboard)/accounts/drafts/page'
 import ChequeDraftsPage from './(dashboard)/cheques/drafts/page'
@@ -28,9 +30,23 @@ vi.mock('@/features/drafts', () => ({
   },
 }))
 
-function renderPage(page: React.ReactNode) {
+const locales = [
+  { locale: 'en', translations: messages },
+  { locale: 'hi', translations: hindiMessages },
+  { locale: 'hi-en', translations: hinglishMessages },
+] as const
+
+function renderPage(
+  page: React.ReactNode,
+  locale = 'en',
+  translations: (typeof locales)[number]['translations'] = messages,
+) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+    <NextIntlClientProvider
+      locale={locale}
+      messages={translations}
+      timeZone="UTC"
+    >
       {page}
     </NextIntlClientProvider>,
   )
@@ -57,21 +73,24 @@ describe('settings and draft routes', () => {
     expect(mocks.redirect).toHaveBeenCalledWith('/tags')
   })
 
-  it('shows product identity and the package version without support', () => {
-    renderPage(<AboutPage />)
-    expect(screen.getByRole('heading', { name: 'ChequeCheck' })).toBeVisible()
-    expect(screen.getByText(messages.Settings.appTagline)).toBeVisible()
-    expect(screen.getByText(messages.Settings.teamName)).toBeVisible()
-    expect(screen.getByText(`v${version}`)).toBeVisible()
-    expect(version).toMatch(/^\d+\.\d+\.\d+$/)
-    expect(
-      screen.queryByRole('link', { name: 'support@chequecheck.com' }),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByText(messages.Settings.support),
-    ).not.toBeInTheDocument()
-    expect(screen.queryByText(/Build 2026/)).not.toBeInTheDocument()
-  })
+  it.each(locales)(
+    'shows product identity and the package version without support in $locale',
+    ({ locale, translations }) => {
+      renderPage(<AboutPage />, locale, translations)
+      expect(screen.getByRole('heading', { name: 'ChequeCheck' })).toBeVisible()
+      expect(screen.getByText(translations.Settings.appTagline)).toBeVisible()
+      expect(screen.getByText(translations.Settings.teamName)).toBeVisible()
+      expect(screen.getByText(`v${version}`)).toBeVisible()
+      expect(version).toMatch(/^\d+\.\d+\.\d+$/)
+      expect(
+        screen.queryByRole('link', { name: 'support@chequecheck.com' }),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByText(translations.Settings.support),
+      ).not.toBeInTheDocument()
+      expect(screen.queryByText(/Build 2026/)).not.toBeInTheDocument()
+    },
+  )
 
   it('provides email, WhatsApp, FAQ answers, and a support action', () => {
     renderPage(<HelpPage />)
@@ -139,16 +158,46 @@ describe('settings and draft routes', () => {
     ).toBeVisible()
   })
 
-  it('lists the release date and each launch feature', () => {
-    renderPage(<WhatsNewPage />)
-    expect(screen.getByText('August 5, 2026')).toBeVisible()
-    expect(screen.getByText(`${messages.Settings.launchTitle} -`)).toBeVisible()
-    for (const key of [
-      'launchFeat1Title',
-      'launchFeat2Title',
-      'launchFeat3Title',
-    ] as const) {
-      expect(screen.getByText(messages.Settings[key])).toBeVisible()
-    }
-  })
+  it.each(locales)(
+    'lists current release highlights and the package version in $locale',
+    ({ locale, translations }) => {
+      renderPage(<WhatsNewPage />, locale, translations)
+      expect(
+        screen.getByRole('heading', {
+          level: 2,
+          name: `${translations.Settings.releaseTitle} - v${version}`,
+        }),
+      ).toBeVisible()
+      const date = new Intl.DateTimeFormat(locale, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'UTC',
+      }).format(new Date('2026-10-31T00:00:00Z'))
+      expect(
+        screen.getByText(
+          translations.Settings.lastUpdated.replace('{date}', date),
+        ),
+      ).toBeVisible()
+      expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(8)
+      for (const key of [
+        'releasePhone',
+        'releaseBanks',
+        'releaseTags',
+        'releaseDrafts',
+        'releaseReports',
+        'releasePremium',
+        'releaseReminders',
+        'releaseReliability',
+      ] as const) {
+        expect(
+          screen.getByText(translations.Settings[`${key}Title`]),
+        ).toBeVisible()
+        expect(
+          screen.getByText(translations.Settings[`${key}Desc`]),
+        ).toBeVisible()
+      }
+      expect(screen.queryByText('v1.0.0')).not.toBeInTheDocument()
+    },
+  )
 })
