@@ -37,6 +37,12 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toast'
 import { DeleteConfirmationDialog } from '@/components/ui/delete-dialog'
 import { bankNameKey, isValidBankName } from '../lib/bank-name'
+import { usePagedOptions } from '@/hooks/use-paged-options'
+import { OptionPagination } from '@/components/ui/option-pagination'
+import type { Bank } from '@/types'
+
+const bankLabel = (bank: Bank) => bank.name
+const emptyBanks: Bank[] = []
 
 interface BankSelectorProps {
   value?: string
@@ -59,6 +65,7 @@ export function BankSelector({
 
   const { data: banks, isPending, error, refetch } = useBanks()
   const { create, remove } = useBankMutations()
+  const paged = usePagedOptions(banks ?? emptyBanks, bankLabel)
 
   const selectedBank = banks?.find((bank) => bank.id === value)
   const addBank = async (event: React.FormEvent) => {
@@ -90,7 +97,13 @@ export function BankSelector({
 
   return (
     <div className="min-w-0 space-y-2">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next)
+          if (!next) paged.setQuery('')
+        }}
+      >
         <PopoverTrigger
           render={
             <button
@@ -135,9 +148,17 @@ export function BankSelector({
           className="w-(--anchor-width) max-w-[calc(100vw-2rem)] p-0 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800"
           align="start"
         >
-          <Command className="rounded-none">
-            <CommandInput placeholder={t('searchBank')} className="h-12" />
-            <CommandList className="max-h-[300px]">
+          <Command className="rounded-none" shouldFilter={false}>
+            <CommandInput
+              placeholder={t('searchBank')}
+              className="h-12"
+              value={paged.query}
+              onValueChange={paged.setQuery}
+            />
+            <CommandList
+              key={`${paged.query}:${paged.page}`}
+              className="max-h-[300px]"
+            >
               {isPending ? (
                 <p role="status" className="p-4 text-sm">
                   {tb('load')}
@@ -159,14 +180,15 @@ export function BankSelector({
                 </CommandEmpty>
               )}
               <CommandGroup>
-                {banks?.map((bank) => (
+                {paged.options.map((bank) => (
                   <CommandItem
                     key={bank.id}
-                    value={bank.name}
+                    value={bank.id}
                     data-testid="bank-option"
                     onSelect={() => {
                       onValueChange(bank.id)
                       setOpen(false)
+                      paged.setQuery('')
                     }}
                     className="flex items-center justify-between py-3 px-4 cursor-pointer"
                   >
@@ -190,6 +212,7 @@ export function BankSelector({
               </CommandGroup>
             </CommandList>
           </Command>
+          <OptionPagination {...paged} />
           <div className="border-t p-2">
             <Button
               type="button"
@@ -198,6 +221,7 @@ export function BankSelector({
               disabled={!!error || isPending}
               onClick={() => {
                 setOpen(false)
+                paged.setQuery('')
                 setAdding(true)
               }}
             >

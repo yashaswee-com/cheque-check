@@ -84,6 +84,13 @@ seeding.
   Format validation is not a bank/branch existence lookup.
 - Catalog fetching is paginated, rather than truncated at Supabase's default
   row limit. The selector reserves a fixed avatar footprint and anchor width.
+- Bank, party and account selectors render at most 50 options at once, with
+  keyboard-accessible previous/next controls. Search uses the existing fuzzy
+  matching across the entire fetched catalog, not just the visible page.
+  Search changes and dismissal reset pagination. Bank queries are cached for
+  five minutes; private-bank mutations still invalidate the cache immediately.
+  This is client-side render pagination; the full catalog remains available for
+  selected labels, duplicate checks and OCR matching.
 
 ## Validation
 

@@ -1,6 +1,23 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render as renderUI,
+  screen,
+} from '@testing-library/react'
+import { NextIntlClientProvider } from 'next-intl'
+import type { ReactNode } from 'react'
+import messages from '../../../messages/en.json'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { Combobox } from './combobox'
+
+const render = (node: ReactNode) =>
+  renderUI(node, {
+    wrapper: ({ children }) => (
+      <NextIntlClientProvider locale="en" messages={messages}>
+        {children}
+      </NextIntlClientProvider>
+    ),
+  })
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -24,6 +41,33 @@ const options = [
   { label: 'Main', value: 'main', color: '#ff0000' },
   { label: 'Savings', value: 'savings' },
 ]
+
+it('bounds rendered rows to 50 and searches all 5,000 records, including duplicate labels', async () => {
+  const many = Array.from({ length: 5000 }, (_, index) => ({
+    label: `Account ${index}`,
+    value: `a${index}`,
+  }))
+  many[4998].label = many[4999].label = 'Last account'
+  const change = vi.fn()
+  render(<Combobox options={many} onValueChange={change} testId="large" />)
+  fireEvent.click(screen.getByTestId('large'))
+  expect(await screen.findAllByRole('option')).toHaveLength(50)
+  fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
+  expect(await screen.findByTestId('large-option-a50')).toBeInTheDocument()
+  expect(screen.getAllByRole('option')).toHaveLength(50)
+  fireEvent.click(screen.getByRole('button', { name: 'Previous page' }))
+  expect(await screen.findByTestId('large-option-a0')).toBeInTheDocument()
+  fireEvent.change(screen.getByTestId('large-search'), {
+    target: { value: 'Last account' },
+  })
+  expect(await screen.findByTestId('large-option-a4999')).toBeInTheDocument()
+  expect(screen.getAllByRole('option')).toHaveLength(2)
+  fireEvent.click(screen.getByTestId('large-option-a4999'))
+  expect(change).toHaveBeenCalledWith('a4999')
+  fireEvent.click(screen.getByTestId('large'))
+  expect(await screen.findByTestId('large-search')).toHaveValue('')
+  expect(screen.getAllByRole('option')).toHaveLength(50)
+})
 
 it('selects and clears existing options', async () => {
   const change = vi.fn()

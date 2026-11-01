@@ -7,6 +7,7 @@ export function useBanks() {
   return useQuery<Bank[]>({
     queryKey: queryKeys.banks.list(),
     queryFn: () => bankService.getAll(),
+    staleTime: 5 * 60 * 1000,
   })
 }
 

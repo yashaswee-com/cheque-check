@@ -102,6 +102,30 @@ function submit() {
 }
 
 describe('BankSelector', () => {
+  it('renders only one page of a 5,000-bank catalog and searches beyond it', async () => {
+    state.banks = Array.from({ length: 5000 }, (_, index) => ({
+      id: `bank${index}`,
+      name: `Bank ${index}`,
+      logo_url: null,
+      owner_id: null,
+    }))
+    const change = mount('bank4999')
+    expect(screen.getByTestId('bank-selector-trigger')).toHaveTextContent(
+      'Bank 4999',
+    )
+    open()
+    expect(await screen.findAllByTestId('bank-option')).toHaveLength(50)
+    fireEvent.click(screen.getByRole('button', { name: 'nextPage' }))
+    expect(screen.getAllByTestId('bank-option')).toHaveLength(50)
+    expect(screen.getAllByTestId('bank-option')[0]).toHaveTextContent('Bank 50')
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'Bank 4999' },
+    })
+    const option = (await screen.findAllByTestId('bank-option'))[0]
+    expect(option).toHaveTextContent('Bank 4999')
+    fireEvent.click(option)
+    expect(change).toHaveBeenCalledWith('bank4999')
+  })
   it('removes a selected private bank only after name confirmation', async () => {
     state.banks[0].owner_id = 'user'
     const change = mount('bank1')

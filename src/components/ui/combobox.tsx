@@ -25,6 +25,10 @@ import {
 } from '@/components/ui/popover'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import Link from 'next/link'
+import { usePagedOptions } from '@/hooks/use-paged-options'
+import { OptionPagination } from './option-pagination'
+
+const optionLabel = (option: ComboboxProps['options'][number]) => option.label
 
 interface ComboboxProps {
   options: {
@@ -58,7 +62,8 @@ export function Combobox({
   testId,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
-  const [query, setQuery] = React.useState('')
+  const paged = usePagedOptions(options, optionLabel)
+  const { query, setQuery } = paged
 
   const selectedOption = options.find((option) => option.value === value)
   const trimmedQuery = query.trim()
@@ -82,6 +87,7 @@ export function Combobox({
           data-testid={testId ? `${testId}-create` : undefined}
           onClick={() => {
             setOpen(false)
+            setQuery('')
             onCreateClick(trimmedQuery)
           }}
           className="flex w-full items-center gap-2 rounded-sm px-3 py-3 text-sm font-semibold text-primary hover:bg-primary/5 transition-colors cursor-pointer"
@@ -149,7 +155,7 @@ export function Combobox({
         className="w-(--anchor-width) p-0 rounded-lg overflow-hidden border border-primary/5"
         align="start"
       >
-        <Command className="rounded-none">
+        <Command className="rounded-none" shouldFilter={false}>
           <CommandInput
             placeholder={placeholder}
             data-testid={testId ? `${testId}-search` : undefined}
@@ -157,7 +163,7 @@ export function Combobox({
             value={query}
             onValueChange={setQuery}
           />
-          <CommandList className="max-h-[300px]">
+          <CommandList key={`${query}:${paged.page}`} className="max-h-[300px]">
             {showEmptyCreate ? (
               <CommandEmpty className="p-1 text-sm">
                 {createAction}
@@ -170,16 +176,17 @@ export function Combobox({
               </CommandEmpty>
             )}
             <CommandGroup>
-              {options.map((option) => (
+              {paged.options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.label} // Command uses value for filtering
+                  value={option.value}
                   data-testid={
                     testId ? `${testId}-option-${option.value}` : undefined
                   }
                   onSelect={() => {
                     onValueChange(option.value === value ? '' : option.value)
                     setOpen(false)
+                    setQuery('')
                   }}
                   className="flex items-center justify-between py-3 px-4"
                 >
@@ -204,6 +211,7 @@ export function Combobox({
               ))}
             </CommandGroup>
           </CommandList>
+          <OptionPagination {...paged} />
           {showCreateRow && (
             <>
               <CommandSeparator />
