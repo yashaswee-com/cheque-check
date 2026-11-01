@@ -8,6 +8,7 @@ import { logger } from '@/lib/logger'
 import { TABLES } from '@/lib/supabase/tables'
 import { setRequestUser, withMonitoringRequest } from '@/lib/monitoring/server'
 import { isEntitlementCurrent } from '@/features/monetization/lib/premium-access'
+import { paymentCheckoutSchema } from '@/validators/payment-checkout'
 
 async function createPaymentOrder(request: Request) {
   try {
@@ -107,22 +108,87 @@ async function createPaymentOrder(request: Request) {
       )
     }
 
+    const checkoutId = requestResult.data.checkoutId ?? crypto.randomUUID()
+    const { data: quoteData, error: quoteError } = await admin.rpc(
+      'prepare_payment_checkout',
+      {
+        requested_id: checkoutId,
+        requested_user: user.id,
+        requested_product: product.id,
+      },
+    )
+    if (quoteError) {
+      logger.error('Payment quote failed', quoteError)
+      return NextResponse.json(
+        { error: quoteError.message },
+        {
+          status:
+            quoteError.code === '23505'
+              ? 409
+              : quoteError.code === '42501'
+                ? 403
+                : 500,
+        },
+      )
+    }
+    const quote = paymentCheckoutSchema.parse(quoteData)
+    if (
+      quote.status === 'expired' ||
+      quote.status === 'failed' ||
+      quote.status === 'refunded'
+    )
+      return NextResponse.json(
+        { error: 'Checkout expired or closed. Start a new checkout.' },
+        { status: 410 },
+      )
+    const response = (id: string, walletFunded = false) =>
+      NextResponse.json({
+        id,
+        amount: quote.provider_amount,
+        currency: quote.currency,
+        productId: product.id,
+        name: product.name,
+        discount: quote.discount,
+        walletAmount: quote.wallet_amount,
+        walletFunded,
+      })
+    if (quote.provider_amount === 0) {
+      const { error } = await admin.rpc('fulfill_wallet_checkout', {
+        requested_id: quote.id,
+      })
+      if (error) throw error
+      return response(`wallet_${quote.id}`, true)
+    }
+    if (quote.provider_order) return response(quote.provider_order)
     const razorpayEnv = getRazorpayEnv()
     const razorpay = new Razorpay({
       key_id: razorpayEnv.RAZORPAY_KEY_ID,
       key_secret: razorpayEnv.RAZORPAY_KEY_SECRET,
     })
-    const order = await razorpay.orders.create({
-      amount: product.amount,
-      currency: product.currency,
-      receipt: `cc_${user.id.slice(0, 8)}_${Date.now()}`,
-      notes: { user_id: user.id, product_id: product.id },
-    })
+    let order
+    try {
+      order = await razorpay.orders.create({
+        amount: quote.provider_amount,
+        currency: quote.currency,
+        receipt: `cc_${quote.id}`,
+        notes: {
+          user_id: user.id,
+          product_id: product.id,
+          checkout_id: quote.id,
+        },
+      })
+    } catch (error) {
+      // Do not release on network uncertainty: the provider may have created an order.
+      logger.error(
+        'Provider order creation failed; reservation awaits expiry',
+        error,
+      )
+      throw error
+    }
 
-    const { error: recordError } = await admin.rpc('record_payment_order', {
-      order_user_id: user.id,
-      requested_product_id: product.id,
-      razorpay_order: order.id,
+    const { error: recordError } = await admin.rpc('record_checkout_order', {
+      requested_id: quote.id,
+      requested_order: order.id,
     })
 
     if (recordError) {
@@ -130,13 +196,7 @@ async function createPaymentOrder(request: Request) {
       return NextResponse.json({ error: recordError.message }, { status })
     }
 
-    return NextResponse.json({
-      id: order.id,
-      amount: product.amount,
-      currency: product.currency,
-      productId: product.id,
-      name: product.name,
-    })
+    return response(order.id)
   } catch (error: unknown) {
     logger.error('Failed to create payment order', error)
     return NextResponse.json(

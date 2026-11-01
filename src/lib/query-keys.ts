@@ -1,5 +1,8 @@
 /** Central registry of React Query keys. */
 export const queryKeys = {
+  referrals: {
+    summary: (userId?: string) => ['referral-summary', userId] as const,
+  },
   announcements: {
     latest: (userId?: string) => ['developer-announcement', userId] as const,
   },

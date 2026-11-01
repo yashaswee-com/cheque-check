@@ -29,6 +29,7 @@ import { useTranslations } from 'next-intl'
 import { IconType } from '@/types'
 import { useMonetization } from '@/features/monetization/hooks/use-monetization'
 import { PremiumLink } from '@/features/monetization/components/premium-controls'
+import { PremiumMark } from '@/features/monetization/components/premium-mark'
 import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
 
 interface SettingsItem {
@@ -48,6 +49,7 @@ interface SettingsSection {
 
 export default function SettingsPage() {
   const t = useTranslations('Settings')
+  const referrals = useTranslations('Referrals')
   const tp = useTranslations('Premium')
   const tpa = useTranslations('PhoneAuth')
   const { profile, isLoading: profileLoading } = useProfile()
@@ -107,6 +109,7 @@ export default function SettingsPage() {
           icon: CrownIcon,
           href: '/features',
         },
+        { name: referrals('title'), icon: CrownIcon, href: '/referrals' },
       ],
     },
     {
@@ -236,7 +239,11 @@ export default function SettingsPage() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                        <HugeiconsIcon icon={item.icon} className="h-3 w-3" />
+                        {item.icon === CrownIcon ? (
+                          <PremiumMark />
+                        ) : (
+                          <HugeiconsIcon icon={item.icon} className="h-3 w-3" />
+                        )}
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold">

@@ -89,7 +89,7 @@ describe('local benchmark input and measurements', () => {
       settled: 3,
       accounting_verified: true,
     })
-    expect(report.reads).toHaveLength(13)
+    expect(report.reads).toHaveLength(15)
     expect(report.reads.map((read) => read.name)).toEqual(
       expect.arrayContaining([
         'free_plan_usage',
@@ -100,6 +100,8 @@ describe('local benchmark input and measurements', () => {
         'inbox_unread',
         'inbox_mark_all',
         'push_registration_and_ownership',
+        'referral_bounded_summary',
+        'referral_quote_capture_refund',
       ]),
     )
     expect(report.reads.every((read) => read.samples === 2)).toBe(true)
@@ -109,6 +111,11 @@ describe('local benchmark input and measurements', () => {
       quota_independent: true,
     })
     expect(report.scope).toContain('no HTTP')
+    expect(report.referrals).toEqual({
+      registered_users: 10,
+      ledger_rows: 190,
+      accounting_verified: true,
+    })
     expect(report.health).toMatchObject({ pending_due: 0, sent_in_window: 3 })
   }, 30000)
 })

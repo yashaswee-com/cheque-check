@@ -81,6 +81,9 @@ beforeEach(() => {
   mocks.product = {
     id: PRODUCT_IDS.LIFETIME_PREMIUM,
     name: 'Lifetime Premium',
+    discount: 0,
+    walletAmount: 0,
+    walletFunded: false,
     transaction_type: 'lifetime',
     feature_id: 'lifetime_premium',
     amount: 19900,
@@ -100,7 +103,24 @@ beforeEach(() => {
 
   mocks.getUser.mockResolvedValue({ data: { user }, error: null })
   mocks.rateLimitRpc.mockResolvedValue({ data: true, error: null })
-  mocks.adminRpc.mockImplementation(async () => ({ error: mocks.recordError }))
+  mocks.adminRpc.mockImplementation(async (name: string) =>
+    name === 'prepare_payment_checkout'
+      ? {
+          data: {
+            id: '90000000-0000-4000-8000-000000000001',
+            user_id: '10000000-0000-4000-8000-000000000001',
+            product_id: (mocks.product as { id: string }).id,
+            currency: 'INR',
+            provider_amount: (mocks.product as { amount: number }).amount,
+            discount: 0,
+            wallet_amount: 0,
+            provider_order: null,
+            status: 'reserved',
+          },
+          error: null,
+        }
+      : { error: mocks.recordError },
+  )
   mocks.from.mockImplementation((table: string) =>
     table === TABLES.PAYMENT_PRODUCTS ? productQuery : entitlementsQuery,
   )
@@ -127,6 +147,128 @@ beforeEach(() => {
 })
 
 describe('payment order route', () => {
+  it('creates the locked discounted quote rather than a client or current-catalog amount', async () => {
+    mocks.adminRpc.mockImplementation(async (name: string) =>
+      name === 'prepare_payment_checkout'
+        ? {
+            data: {
+              id: '90000000-0000-4000-8000-000000000001',
+              user_id: '10000000-0000-4000-8000-000000000001',
+              product_id: 'lifetime_premium',
+              currency: 'INR',
+              provider_amount: 24000,
+              discount: 6000,
+              wallet_amount: 0,
+              provider_order: null,
+              status: 'reserved',
+            },
+            error: null,
+          }
+        : { error: null },
+    )
+    const response = await POST(
+      request(JSON.stringify({ productId: 'lifetime_premium', amount: 1 })),
+    )
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({
+      amount: 24000,
+      discount: 6000,
+    })
+    expect(mocks.createOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 24000 }),
+    )
+  })
+  it('does not call Razorpay for a fully wallet-funded top-up', async () => {
+    mocks.product = {
+      ...(mocks.product as object),
+      id: 'ai_scan_250',
+      transaction_type: 'top_up',
+      required_entitlement_id: null,
+    }
+    mocks.adminRpc.mockImplementation(async (name: string) =>
+      name === 'prepare_payment_checkout'
+        ? {
+            data: {
+              id: '90000000-0000-4000-8000-000000000001',
+              user_id: '10000000-0000-4000-8000-000000000001',
+              product_id: 'ai_scan_250',
+              currency: 'INR',
+              provider_amount: 0,
+              discount: 0,
+              wallet_amount: 5000,
+              provider_order: null,
+              status: 'reserved',
+            },
+            error: null,
+          }
+        : { error: null },
+    )
+    // The table mock snapshots the catalog; replace it for this top-up.
+    mocks.from.mockImplementation((table: string) =>
+      makeQuery(
+        table === TABLES.PAYMENT_PRODUCTS ? mocks.product : [],
+        () => null,
+      ),
+    )
+    const response = await POST(
+      request(JSON.stringify({ productId: 'ai_scan_250' })),
+    )
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({
+      amount: 0,
+      walletFunded: true,
+      walletAmount: 5000,
+    })
+    expect(mocks.createOrder).not.toHaveBeenCalled()
+    expect(mocks.adminRpc).toHaveBeenCalledWith('fulfill_wallet_checkout', {
+      requested_id: '90000000-0000-4000-8000-000000000001',
+    })
+  })
+  it('reuses a recorded order without making a second provider order', async () => {
+    mocks.adminRpc.mockResolvedValue({
+      data: {
+        id: '90000000-0000-4000-8000-000000000001',
+        user_id: '10000000-0000-4000-8000-000000000001',
+        product_id: 'lifetime_premium',
+        currency: 'INR',
+        provider_amount: 24000,
+        discount: 6000,
+        wallet_amount: 0,
+        provider_order: 'existing',
+        status: 'reserved',
+      },
+      error: null,
+    })
+    const response = await POST(
+      request(JSON.stringify({ productId: 'lifetime_premium' })),
+    )
+    expect(await response.json()).toMatchObject({
+      id: 'existing',
+      amount: 24000,
+    })
+    expect(mocks.createOrder).not.toHaveBeenCalled()
+  })
+  it('reports an expired quote without resurrecting provider checkout', async () => {
+    mocks.adminRpc.mockResolvedValue({
+      data: {
+        id: '90000000-0000-4000-8000-000000000001',
+        user_id: '10000000-0000-4000-8000-000000000001',
+        product_id: 'lifetime_premium',
+        currency: 'INR',
+        provider_amount: 30000,
+        discount: 0,
+        wallet_amount: 0,
+        provider_order: null,
+        status: 'expired',
+      },
+      error: null,
+    })
+    const response = await POST(
+      request(JSON.stringify({ productId: 'lifetime_premium' })),
+    )
+    expect(response.status).toBe(410)
+    expect(mocks.createOrder).not.toHaveBeenCalled()
+  })
   it.each(['rate', 'entitlements'])(
     'logs %s database failures without creating an order',
     async (stage) => {
@@ -288,6 +430,9 @@ describe('payment order route', () => {
       currency: 'INR',
       productId: PRODUCT_IDS.LIFETIME_PREMIUM,
       name: 'Lifetime Premium',
+      discount: 0,
+      walletAmount: 0,
+      walletFunded: false,
     })
     expect(mocks.razorpayConstructor).toHaveBeenCalledWith({
       key_id: 'key_id',
@@ -300,15 +445,15 @@ describe('payment order route', () => {
         notes: {
           user_id: user.id,
           product_id: PRODUCT_IDS.LIFETIME_PREMIUM,
+          checkout_id: '90000000-0000-4000-8000-000000000001',
         },
       }),
     )
     expect(mocks.adminRpc).toHaveBeenCalledWith(
-      'record_payment_order',
+      'record_checkout_order',
       expect.objectContaining({
-        order_user_id: user.id,
-        requested_product_id: PRODUCT_IDS.LIFETIME_PREMIUM,
-        razorpay_order: 'order-1',
+        requested_id: '90000000-0000-4000-8000-000000000001',
+        requested_order: 'order-1',
       }),
     )
   })

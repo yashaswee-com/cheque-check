@@ -5,6 +5,7 @@ import { performance } from 'node:perf_hooks'
 import { createHash } from 'node:crypto'
 import { createScalingFixture } from './lib/scaling-fixture'
 import { benchmarkPush } from './lib/push-scaling'
+import { benchmarkReferrals } from './lib/referral-scaling'
 
 export interface BenchmarkOptions {
   users: number
@@ -443,6 +444,20 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
       name: 'push_registration_and_ownership',
       ...latencySummary(push.timings),
     })
+    const referrals = await benchmarkReferrals(
+      Math.max(2, options.users),
+      options.samples,
+    )
+    reads.push(
+      {
+        name: 'referral_bounded_summary',
+        ...latencySummary(referrals.summary),
+      },
+      {
+        name: 'referral_quote_capture_refund',
+        ...latencySummary(referrals.lifecycle),
+      },
+    )
     const budgetFailures = benchmarkBudgetFailures(reads, schedulerMs, options)
     return {
       version: 1,
@@ -475,6 +490,11 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
         queued: push.queued,
         simulated_accepted: push.simulated_accepted,
         quota_independent: push.quota_independent,
+      },
+      referrals: {
+        registered_users: referrals.users,
+        ledger_rows: referrals.ledger_rows,
+        accounting_verified: true,
       },
       health: health.rows[0],
       total_ms: performance.now() - started,

@@ -8,6 +8,7 @@ import { CelebrationHost } from '@/components/celebration-host'
 import { MonitoringProvider } from '@/components/monitoring-provider'
 import { PremiumPromptProvider } from '@/features/monetization/components/premium-prompt'
 import { PushAccountGuard } from '@/features/notifications/components/push-account-guard'
+import { ReferralCapture } from '@/features/referrals/components/referral-capture'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -28,6 +29,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           <PremiumPromptProvider>
             <MonitoringProvider />
             <PushAccountGuard />
+            <ReferralCapture />
             {children}
             <CelebrationHost />
           </PremiumPromptProvider>

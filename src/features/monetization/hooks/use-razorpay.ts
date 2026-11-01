@@ -51,6 +51,13 @@ export function useRazorpay() {
     recordOperation('payment.checkout', 'started')
     try {
       const order = await paymentService.createOrder(productId)
+      if (order.walletFunded) {
+        paymentService.complete(productId)
+        recordOperation('payment.wallet_checkout', 'success')
+        finish()
+        onSuccess?.()
+        return
+      }
       const checkout = new window.Razorpay({
         key: getRazorpayPublicKey(),
         amount: order.amount,
@@ -59,6 +66,7 @@ export function useRazorpay() {
         description: order.name,
         order_id: order.id,
         handler: () => {
+          paymentService.complete(productId)
           recordOperation('payment.checkout_callback', 'success')
           finish()
           onSuccess?.()

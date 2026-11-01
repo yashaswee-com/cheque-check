@@ -667,6 +667,40 @@ export interface Database {
       }
     }
     Functions: {
+      referral_summary: { Args: Record<string, never>; Returns: Json }
+      apply_referral_code: {
+        Args: { requested_code: string }
+        Returns: undefined
+      }
+      prepare_payment_checkout: {
+        Args: {
+          requested_id: string
+          requested_user: string
+          requested_product: string
+        }
+        Returns: Json
+      }
+      record_checkout_order: {
+        Args: { requested_id: string; requested_order: string }
+        Returns: undefined
+      }
+      release_payment_checkout: {
+        Args: { requested_id: string; requested_status?: string }
+        Returns: undefined
+      }
+      fulfill_wallet_checkout: {
+        Args: { requested_id: string }
+        Returns: undefined
+      }
+      refund_payment_checkout: {
+        Args: {
+          requested_payment: string
+          requested_amount: number
+          requested_currency: string
+        }
+        Returns: undefined
+      }
+      expire_payment_checkouts: { Args: Record<string, never>; Returns: number }
       admit_notification_delivery: {
         Args: {
           requested_job: string

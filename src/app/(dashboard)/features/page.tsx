@@ -52,6 +52,7 @@ function FeatureStatus({
 
 export default function FeaturesPage() {
   const t = useTranslations('Features')
+  const referrals = useTranslations('Referrals')
   const tc = useTranslations('Common')
   const productNames = useTranslations('ProductNames')
   const tp = useTranslations('Premium')
@@ -237,6 +238,9 @@ export default function FeaturesPage() {
                   {productNames(PRODUCT_IDS.LIFETIME_PREMIUM)}
                   <PremiumMark className="ml-2 align-middle" />
                 </h2>
+                <Link className="text-sm underline" href="/referrals">
+                  {referrals('title')}
+                </Link>
                 <p className="max-w-lg text-[17px] leading-relaxed text-muted-foreground">
                   {t('lifetimeAccess')}
                 </p>

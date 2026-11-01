@@ -1,7 +1,33 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { paymentService } from './payment.service'
+import { paymentService, PaymentService } from './payment.service'
 
 describe('PaymentService', () => {
+  it('reuses a request ID across retries and starts a new ID only after a closed quote', async () => {
+    const service = new PaymentService()
+    const order = {
+      id: 'order',
+      amount: 5000,
+      currency: 'INR',
+      productId: 'ai_scan_250',
+      name: 'Top-up',
+    }
+    const fetch = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async () => new Response(JSON.stringify(order)))
+    await service.createOrder('ai_scan_250')
+    await service.createOrder('ai_scan_250')
+    const ids = () =>
+      fetch.mock.calls.map(
+        (call) => JSON.parse(call[1]?.body as string).checkoutId,
+      )
+    expect(ids()[0]).toBe(ids()[1])
+    fetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'Closed' }), { status: 410 }),
+    )
+    await expect(service.createOrder('ai_scan_250')).rejects.toThrow('Closed')
+    await service.createOrder('ai_scan_250')
+    expect(ids()[3]).not.toBe(ids()[0])
+  })
   it.each([null, 'unavailable', {}, { message: 'unavailable' }])(
     'uses a safe error when the server does not return an error property: %j',
     async (body) => {
@@ -55,7 +81,12 @@ describe('PaymentService', () => {
     expect(fetchSpy).toHaveBeenCalledWith('/api/payments/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId: 'lifetime_premium' }),
+      body: expect.any(String),
+    })
+    const sent = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
+    expect(sent).toMatchObject({
+      productId: 'lifetime_premium',
+      checkoutId: expect.any(String),
     })
     expect(result).toEqual({
       id: 'order_123',

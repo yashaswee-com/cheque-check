@@ -1,4 +1,31 @@
 {
+  "Referrals": {
+    "title": "Referrals aur credits",
+    "rules": "Paid Lifetime owner aapko pehli Lifetime purchase par 20% discount de sakta hai. Verified payment ke baad use original price ka 20% credit milta hai. Checkout se pehle code lagayein.",
+    "yourCode": "Aapka referral code",
+    "shareLink": "Referral link",
+    "share": "Link share ya copy karein",
+    "shared": "Link share ya copy hua.",
+    "retry": "Dobara try karein",
+    "qualify": "Invites se credits kamane ke liye Lifetime khareedein.",
+    "apply": "Referral code lagayein",
+    "applied": "Referral lag gaya. Ise badal nahi sakte.",
+    "wallet": "Aapka credit wallet",
+    "balance": "INR {amount} balance; INR {reserved} reserved",
+    "emptyWallet": "Abhi credits nahi hain.",
+    "walletRules": "Credits eligible top-ups par automatic lagte hain. Matching subscription zaroori hai. Transfer ya cash withdrawal nahi. Refund se balance negative ho sakta hai.",
+    "topups": "Eligible top-ups dekhein",
+    "recent": "Pichhle 50 credit changes",
+    "loading": "Referrals load ho rahe hain",
+    "error": "Referral data load nahi hua. Dobara try karein.",
+    "invalid": "Referral code invalid hai ya save nahi hua.",
+    "entries": {
+      "reward": "Referral reward",
+      "spend": "Top-up payment",
+      "reward_reversal": "Refund reversal",
+      "spend_refund": "Top-up refund"
+    }
+  },
   "DeveloperMessage": {
     "title": "Developer ka sandesh",
     "continue": "Aage badhein",

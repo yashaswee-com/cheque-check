@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({ order: vi.fn(), open: vi.fn() }))
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 vi.mock('@/lib/env/client', () => ({ getRazorpayPublicKey: () => 'test-key' }))
 vi.mock('@/features/monetization/services/payment.service', () => ({
-  paymentService: { createOrder: mocks.order },
+  paymentService: { createOrder: mocks.order, complete: vi.fn() },
 }))
 
 let options: ConstructorParameters<typeof window.Razorpay>[0]
@@ -29,6 +29,26 @@ beforeEach(() => {
 })
 
 describe('useRazorpay', () => {
+  it('completes wallet-only purchases without opening the provider dialog', async () => {
+    mocks.order.mockResolvedValue({
+      id: 'wallet',
+      amount: 0,
+      currency: 'INR',
+      name: 'Top-up',
+      walletFunded: true,
+    })
+    const success = vi.fn()
+    const { result } = renderHook(() => useRazorpay())
+    await act(async () => {
+      await result.current.processPayment({
+        productId: PRODUCT_IDS.AI_SCAN_250,
+        onSuccess: success,
+      })
+    })
+    expect(success).toHaveBeenCalledOnce()
+    expect(mocks.open).not.toHaveBeenCalled()
+    expect(result.current.isProcessing).toBe(false)
+  })
   it('keeps checkout busy until dismissal and rejects duplicate checkout requests', async () => {
     const { result } = renderHook(() => useRazorpay())
     await act(async () => {
