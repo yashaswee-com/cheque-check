@@ -1,4 +1,34 @@
 {
+  "Tour": {
+    "progress": "Step {step} of {total}",
+    "skip": "Skip tour",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish tour",
+    "replay": "Replay dashboard tour",
+    "waiting": "Waiting for this dashboard control to load. You can skip the tour.",
+    "saveError": "Could not save tour progress. Please retry.",
+    "summary": {
+      "title": "Your dashboard summary",
+      "body": "See your pending balance, receivable and payable values for the active business."
+    },
+    "add": {
+      "title": "Create a cheque",
+      "body": "Use the plus button to add a cheque. Nothing is created by this tour."
+    },
+    "scan": {
+      "title": "Scan a cheque",
+      "body": "Upload or photograph a cheque to prefill its details. Review the result before saving; scan quotas still apply."
+    },
+    "reports": {
+      "title": "Reports and exports",
+      "body": "Open reports to review and export your records. Your plan's access rules still apply."
+    },
+    "settings": {
+      "title": "Settings and preferences",
+      "body": "Open this menu to find Settings, manage your profile, appearance and notifications."
+    }
+  },
   "EmailLink": {
     "title": "Email",
     "newEmail": "Email to link",
@@ -115,6 +145,7 @@
     }
   },
   "PWA": {
+    "waiting": "Waiting for installation confirmation. You can choose Later to continue without installing.",
     "title": "Install ChequeCheck",
     "description": "Add the app to your home screen for easier access.",
     "iosInstructions": "In Safari, tap Share, then Add to Home Screen. Open the installed app to enable push notifications.",

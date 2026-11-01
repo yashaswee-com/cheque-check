@@ -1,4 +1,34 @@
 {
+  "Tour": {
+    "progress": "Step {step} / {total}",
+    "skip": "Tour skip karein",
+    "back": "Peechhe",
+    "next": "Aage",
+    "finish": "Tour poora karein",
+    "replay": "Dashboard tour dobara chalayein",
+    "waiting": "Dashboard control load hone ka intezar hai. Tour skip kar sakte hain.",
+    "saveError": "Tour progress save nahi hui. Dobara try karein.",
+    "summary": {
+      "title": "Aapka dashboard summary",
+      "body": "Active business ka pending balance, receivable aur payable dekhein."
+    },
+    "add": {
+      "title": "Cheque banayein",
+      "body": "Plus button se cheque add karein. Is tour se kuch create nahi hota."
+    },
+    "scan": {
+      "title": "Cheque scan karein",
+      "body": "Cheque upload ya photograph karke details bharein. Save se pehle check karein; scan quotas lagu hain."
+    },
+    "reports": {
+      "title": "Reports aur exports",
+      "body": "Records dekhne aur export karne ke liye reports kholein. Plan access rules lagu hain."
+    },
+    "settings": {
+      "title": "Settings aur preferences",
+      "body": "Is menu mein Settings, profile, appearance aur notifications manage karein."
+    }
+  },
   "EmailLink": {
     "title": "Email",
     "newEmail": "Link karne ke liye email",
@@ -115,6 +145,7 @@
     }
   },
   "PWA": {
+    "waiting": "Installation confirmation ka intezar hai. Bina install kiye aage badhne ke liye Later chunein.",
     "title": "ChequeCheck install karein",
     "description": "Aasaan access ke liye app ko home screen par jodein.",
     "iosInstructions": "Safari mein Share tap karein, phir Add to Home Screen chunein. Push notifications ke liye installed app kholein.",

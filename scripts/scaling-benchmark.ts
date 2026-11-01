@@ -457,6 +457,10 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
         name: 'referral_quote_capture_refund',
         ...latencySummary(referrals.lifecycle),
       },
+      {
+        name: 'profile_appearance_and_tour_persistence',
+        ...latencySummary(referrals.preferences),
+      },
     )
     const budgetFailures = benchmarkBudgetFailures(reads, schedulerMs, options)
     return {

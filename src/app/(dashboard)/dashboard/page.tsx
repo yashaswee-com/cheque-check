@@ -165,7 +165,10 @@ export default function HomePage() {
       >
         <>
           {/* Balance Card */}
-          <div className="rounded-lg bg-primary p-5 text-primary-foreground relative overflow-hidden">
+          <div
+            data-tour="summary"
+            className="rounded-lg bg-primary p-5 text-primary-foreground relative overflow-hidden"
+          >
             <div className="relative z-10">
               <p className="text-[10px] font-semibold opacity-70 uppercase tracking-wider">
                 {tStats('pendingNet')}
@@ -284,6 +287,7 @@ export default function HomePage() {
                 className="hidden"
               />
               <button
+                data-tour="scan"
                 onClick={() => fileInputRef.current?.click()}
                 className="w-36 shrink-0 snap-start rounded-lg transition-transform focus-visible:outline-2 focus-visible:outline-primary active:scale-95"
               >
@@ -311,6 +315,7 @@ export default function HomePage() {
               </Link>
               <PremiumLink
                 feature="reports"
+                data-tour="reports"
                 href="/reports"
                 className="relative w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary [&>[data-slot=premium-mark]]:absolute [&>[data-slot=premium-mark]]:right-2 [&>[data-slot=premium-mark]]:top-2"
               >

@@ -10,7 +10,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
-import { PwaInstallCard } from '@/components/pwa-install-card'
+import { PostOnboardingTour } from '@/features/tour/components/post-onboarding-tour'
 import { logger } from '@/lib/logger'
 
 export function DeveloperMessage({
@@ -40,7 +40,7 @@ export function DeveloperMessage({
   if (query.isLoading) return null
   const message = query.data
   if (!message || (onboarding && message.read))
-    return onboarding ? <PwaInstallCard /> : null
+    return onboarding ? <PostOnboardingTour /> : null
   const body =
     message.content[locale === 'hi' || locale === 'hi-en' ? locale : 'en']
   if (!onboarding)

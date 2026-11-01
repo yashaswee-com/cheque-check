@@ -32,6 +32,7 @@ import { PremiumLink } from '@/features/monetization/components/premium-controls
 import { PremiumMark } from '@/features/monetization/components/premium-mark'
 import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
 import { version } from '../../../../package.json'
+import { ReplayTour } from '@/features/tour/components/replay-tour'
 
 interface SettingsItem {
   name: string
@@ -286,6 +287,7 @@ export default function SettingsPage() {
         ))}
       </div>
 
+      <ReplayTour />
       <Button
         variant="destructive"
         data-testid="settings-logout-button"

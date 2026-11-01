@@ -244,6 +244,7 @@ export function TopNav() {
                   size="icon"
                   className="h-9 w-9"
                   aria-label={ts('more')}
+                  data-tour="settings"
                 />
               }
             >

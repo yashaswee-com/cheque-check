@@ -57,6 +57,10 @@ describe('post-onboarding install card', () => {
     expect(event.defaultPrevented).toBe(true)
     expect(prompt).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Install' }))
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Waiting for installation',
+    )
+    fireEvent(window, new Event('appinstalled'))
     await waitFor(() =>
       expect(screen.queryByRole('complementary')).not.toBeInTheDocument(),
     )

@@ -8,7 +8,11 @@ const uuid = (n: number) => {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
 }
 export async function benchmarkReferrals(users: number, samples: number) {
-  const db = await createMigratedDb(['20261104020000_referrals_and_wallet.sql'])
+  const db = await createMigratedDb([
+    '20261104020000_referrals_and_wallet.sql',
+    '20261105010000_profile_appearance.sql',
+    '20261105020000_first_run_tour.sql',
+  ])
   try {
     await db.query(
       `INSERT INTO auth.users(id,email)
@@ -38,6 +42,7 @@ export async function benchmarkReferrals(users: number, samples: number) {
     )
     const summary: number[] = []
     const lifecycle: number[] = []
+    const preferences: number[] = []
     for (let i = 0; i < samples; i++) {
       let before = performance.now()
       await db.transaction(async (tx) => {
@@ -113,8 +118,49 @@ export async function benchmarkReferrals(users: number, samples: number) {
         await tx.rollback()
       })
       lifecycle.push(performance.now() - before)
+      before = performance.now()
+      await db.transaction(async (tx) => {
+        await tx.exec('SET LOCAL ROLE authenticated')
+        await tx.query("SELECT set_config('request.jwt.claim.sub',$1,true)", [
+          owner,
+        ])
+        const result = await tx.query<{
+          user_id: string
+          appearance: string
+          tour_status: string
+        }>('SELECT user_id,appearance,tour_status FROM profiles')
+        assert.equal(
+          result.rows.length,
+          1,
+          'Preference reads remain owner-scoped with 10,000 profiles',
+        )
+        assert.deepEqual(result.rows[0], {
+          user_id: owner,
+          appearance: 'system',
+          tour_status: 'pending',
+        })
+        await tx.query(
+          "UPDATE profiles SET appearance='dark',tour_status='completed'",
+        )
+        const saved = await tx.query<{
+          appearance: string
+          tour_status: string
+        }>('SELECT appearance,tour_status FROM profiles')
+        assert.deepEqual(saved.rows, [
+          { appearance: 'dark', tour_status: 'completed' },
+        ])
+        await tx.query("UPDATE profiles SET tour_status='pending'")
+        await tx.rollback()
+      })
+      preferences.push(performance.now() - before)
     }
-    return { summary, lifecycle, users, ledger_rows: users * 10 + 90 }
+    return {
+      summary,
+      lifecycle,
+      preferences,
+      users,
+      ledger_rows: users * 10 + 90,
+    }
   } finally {
     await db.close()
   }

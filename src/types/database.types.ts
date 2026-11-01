@@ -180,6 +180,7 @@ export interface Database {
       profiles: {
         Row: {
           appearance: 'light' | 'dark' | 'system'
+          tour_status: 'pending' | 'completed' | 'skipped'
           deletion_batch_id: string | null
           id: string
           user_id: string

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,12 +12,17 @@ import {
   isIOS,
 } from '@/lib/pwa-install'
 
-export function PwaInstallCard() {
+export function PwaInstallCard({
+  onResolved,
+}: { onResolved?: (resolved: boolean) => void } = {}) {
   const t = useTranslations('PWA')
   const [visible, setVisible] = useState(false)
   const [ios, setIOS] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(false)
+  const [installing, setInstalling] = useState(false)
+  const awaitingInstall = useRef(false)
+  const confirmedInstall = useRef(false)
 
   useEffect(() => {
     const refresh = () => {
@@ -28,20 +33,30 @@ export function PwaInstallCard() {
         console.error('Cannot read install preference', error)
       }
       setIOS(isIOS())
-      setVisible(
+      const visible =
+        !confirmedInstall.current &&
         !isInstalled() &&
-          Date.now() >= dismissedUntil &&
-          (isIOS() || getInstallPrompt() !== null),
+        Date.now() >= dismissedUntil &&
+        (awaitingInstall.current || isIOS() || getInstallPrompt() !== null)
+      setVisible(visible)
+      onResolved?.(
+        confirmedInstall.current || (!visible && !awaitingInstall.current),
       )
     }
     refresh()
     window.addEventListener(INSTALL_EVENT, refresh)
-    window.addEventListener('appinstalled', refresh)
+    const installed = () => {
+      awaitingInstall.current = false
+      confirmedInstall.current = true
+      setInstalling(false)
+      refresh()
+    }
+    window.addEventListener('appinstalled', installed)
     return () => {
       window.removeEventListener(INSTALL_EVENT, refresh)
-      window.removeEventListener('appinstalled', refresh)
+      window.removeEventListener('appinstalled', installed)
     }
-  }, [])
+  }, [onResolved])
 
   const dismiss = () => {
     try {
@@ -50,6 +65,9 @@ export function PwaInstallCard() {
         String(Date.now() + 7 * 86400000),
       )
       setVisible(false)
+      awaitingInstall.current = false
+      setInstalling(false)
+      onResolved?.(true)
     } catch (error) {
       console.error('Cannot save install preference', error)
       setError(true)
@@ -63,9 +81,10 @@ export function PwaInstallCard() {
     try {
       await prompt.prompt()
       const { outcome } = await prompt.userChoice
+      awaitingInstall.current = outcome === 'accepted'
+      setInstalling(awaitingInstall.current && !confirmedInstall.current)
       clearInstallPrompt()
       if (outcome === 'dismissed') dismiss()
-      else setVisible(false)
     } catch (error) {
       console.error('App installation failed', error)
       setError(true)
@@ -82,10 +101,11 @@ export function PwaInstallCard() {
     >
       <h2 className="font-semibold">{t('title')}</h2>
       <p className="text-sm">{ios ? t('iosInstructions') : t('description')}</p>
+      {installing && <p role="status">{t('waiting')}</p>}
       {error && <p role="alert">{t('error')}</p>}
       <div className="flex gap-2">
         {!ios && (
-          <Button onClick={install} disabled={busy}>
+          <Button onClick={install} disabled={busy || installing}>
             {t('install')}
           </Button>
         )}

@@ -31,3 +31,16 @@ never marks the email linked on send. Auth's unique identity rules reject claime
 emails without merging accounts. Configure verified email change and the existing
 PKCE `/auth/callback?next=/profile` allow-list in hosted Auth before deployment.
 No production Auth configuration or provider credentials are changed by this work.
+
+Apply `20261105020000_first_run_tour.sql`: existing users are opted out, new profiles
+default to pending. The dashboard offers five keyboard-accessible spotlight steps
+after the latest announcement is acknowledged and installation is confirmed,
+explicitly dismissed, or unavailable. Acceptance alone is not installation proof.
+Skip/Finish persist to profile; failed saves keep the dialog open for retry.
+Replay in Settings re-enables the tour across devices. Background controls remain
+inert, so the tour never creates records or bypasses quotas/premium checks.
+
+`npm run test:scaling` includes owner-scoped appearance reads, tour completion,
+and replay on the existing 10,000-profile fixture, with the same 1,000ms p95
+budget. This is a local single-connection SQL regression check, not proof of
+production browser or multi-connection capacity.
