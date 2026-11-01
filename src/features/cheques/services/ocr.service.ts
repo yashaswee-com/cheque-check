@@ -4,14 +4,19 @@ import { getOpenAiEnv } from '@/lib/env/server'
 import { ChequeDetailsSchema } from '@/validators/ocr'
 import type { ChequeDetails, IOcrProvider } from '@/types/ocr'
 
-export class OpenAiOcrProvider implements IOcrProvider {
-  constructor(private readonly modelName = 'gpt-4o-mini') {}
+export const DEFAULT_OCR_MODEL = 'gpt-4o-mini'
 
-  async processImage(imageUrl: string): Promise<ChequeDetails> {
+export class OpenAiOcrProvider implements IOcrProvider {
+  constructor(private readonly modelName = DEFAULT_OCR_MODEL) {}
+
+  async processImage(
+    imageUrl: string,
+    modelName = this.modelName,
+  ): Promise<ChequeDetails> {
     getOpenAiEnv()
 
     const { object } = await generateObject({
-      model: openai(this.modelName),
+      model: openai(modelName),
       schema: ChequeDetailsSchema,
       messages: [
         {

@@ -1071,6 +1071,10 @@ export interface Database {
         }
         Returns: boolean
       }
+      resolve_ai_scan_model: {
+        Args: Record<PropertyKey, never>
+        Returns: { plan: string; model: string }[]
+      }
       claim_notification_jobs: {
         Args: {
           p_batch_size?: number

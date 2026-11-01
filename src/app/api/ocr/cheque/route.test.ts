@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   processImage: vi.fn(),
   getOpenAiEnv: vi.fn(),
   error: vi.fn(),
+  warn: vi.fn(),
 }))
 vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({
@@ -21,13 +22,14 @@ vi.mock('@/lib/supabase/server', () => ({
   }),
 }))
 vi.mock('@/features/cheques/services/ocr.service', () => ({
+  DEFAULT_OCR_MODEL: 'gpt-4o-mini',
   OpenAiOcrProvider: class {
     processImage = mocks.processImage
   },
 }))
 vi.mock('@/lib/env/server', () => ({ getOpenAiEnv: mocks.getOpenAiEnv }))
 vi.mock('@/lib/logger', () => ({
-  logger: { info: vi.fn(), error: mocks.error },
+  logger: { info: vi.fn(), error: mocks.error, warn: mocks.warn },
 }))
 vi.mock('@/lib/monitoring/server', () => ({
   setRequestUser: vi.fn(),
@@ -57,7 +59,11 @@ const request = (body: unknown) =>
 beforeEach(() => {
   vi.resetAllMocks()
   mocks.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
-  mocks.rpc.mockResolvedValue({ data: true, error: null })
+  mocks.rpc.mockImplementation(async (name: string) =>
+    name === 'resolve_ai_scan_model'
+      ? { data: [{ plan: 'free', model: 'gpt-4o-mini' }], error: null }
+      : { data: true, error: null },
+  )
   mocks.processImage.mockResolvedValue(details)
   mocks.createSignedUrl.mockResolvedValue({
     data: { signedUrl: 'https://app.test/signed' },
@@ -163,10 +169,58 @@ describe('OCR shared contracts and client', () => {
         },
       ],
       ['consume_user_quota', { requested_feature: 'ai_scan' }],
+      ['resolve_ai_scan_model'],
     ])
     expect(mocks.processImage).toHaveBeenCalledWith(
       'https://app.test/image.png',
+      'gpt-4o-mini',
     )
+  })
+
+  it.each([
+    ['ai_scanner', 'gpt-4o'],
+    ['lifetime', 'gpt-4o'],
+    ['free', 'gpt-4o-mini'],
+  ])('scans with the %s plan model %s', async (plan, model) => {
+    mocks.rpc.mockImplementation(async (name: string) =>
+      name === 'resolve_ai_scan_model'
+        ? { data: [{ plan, model }], error: null }
+        : { data: true, error: null },
+    )
+    expect(
+      (await POST(request({ imageUrl: 'https://app.test/image.png' }))).status,
+    ).toBe(200)
+    expect(mocks.processImage).toHaveBeenCalledWith(
+      'https://app.test/image.png',
+      model,
+    )
+  })
+
+  it.each([
+    { data: null, error: new Error('policy lookup failed') },
+    { data: [], error: null },
+  ])(
+    'falls back to the default model when the plan lookup fails: %j',
+    async (lookup) => {
+      mocks.rpc.mockImplementation(async (name: string) =>
+        name === 'resolve_ai_scan_model' ? lookup : { data: true, error: null },
+      )
+      expect(
+        (await POST(request({ imageUrl: 'https://app.test/image.png' })))
+          .status,
+      ).toBe(200)
+      expect(mocks.processImage).toHaveBeenCalledWith(
+        'https://app.test/image.png',
+        'gpt-4o-mini',
+      )
+      expect(mocks.warn).toHaveBeenCalledOnce()
+    },
+  )
+
+  it('does not resolve a model when rate-limited or out of quota', async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: false, error: null })
+    await POST(request({ imageUrl: 'https://app.test/image.png' }))
+    expect(mocks.rpc).not.toHaveBeenCalledWith('resolve_ai_scan_model')
   })
 
   it.each([{}, { imageUrl: 'invalid' }, { imageUrl: 123 }])(
@@ -215,7 +269,10 @@ describe('OCR shared contracts and client', () => {
     )
     expect((await POST(request({ imageUrl }))).status).toBe(200)
     expect(mocks.createSignedUrl).toHaveBeenCalledWith('u1/cheque.png', 300)
-    expect(mocks.processImage).toHaveBeenCalledWith('https://app.test/signed')
+    expect(mocks.processImage).toHaveBeenCalledWith(
+      'https://app.test/signed',
+      'gpt-4o-mini',
+    )
   })
 
   it('retains rejection of another user private media', async () => {

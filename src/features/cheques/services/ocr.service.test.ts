@@ -42,6 +42,15 @@ describe('canonical OCR provider', () => {
     })
   })
 
+  it('uses a per-request model when the route resolves one from the plan', async () => {
+    mocks.generateObject.mockResolvedValue({ object: {} })
+    await new OpenAiOcrProvider().processImage(
+      'https://app.test/image.png',
+      'gpt-4o',
+    )
+    expect(mocks.openai).toHaveBeenCalledWith('gpt-4o')
+  })
+
   it('does not invoke AI when configuration is invalid', async () => {
     mocks.getOpenAiEnv.mockImplementation(() => {
       throw new Error('Missing API configuration')
