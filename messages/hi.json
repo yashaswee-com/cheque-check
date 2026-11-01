@@ -859,6 +859,10 @@
     "sortByAccountName": "खाता नाम",
     "sortByBankName": "बैंक का नाम",
     "openingBalance": "शुरुआती बैलेंस",
+    "setAsDefault": "नए चेक के लिए डिफ़ॉल्ट खाता बनाएँ",
+    "defaultAccount": "डिफ़ॉल्ट खाता",
+    "defaultAccountHelp": "हर बिज़नेस में केवल एक डिफ़ॉल्ट खाता। खाता सहेजने पर बदलाव लागू होगा।",
+    "replaceDefaultNotice": "सहेजने पर इस बिज़नेस का डिफ़ॉल्ट खाता {account} की जगह यह खाता होगा।",
     "successTitle": "खाता जोड़ा गया!",
     "successDescription": "खाते को आपके बिज़नेस में जोड़ दिया गया है।",
     "successCta": "जारी रखें"

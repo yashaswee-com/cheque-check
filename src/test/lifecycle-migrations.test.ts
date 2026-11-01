@@ -62,6 +62,12 @@ beforeAll(async () => {
       throw new Error(`Migration ${file} failed`, { cause: error })
     }
   }
+  await db.exec(
+    readFileSync(
+      join(directory, '20261101060000_published_default_accounts.sql'),
+      'utf8',
+    ),
+  )
   await db.exec(`
     GRANT SELECT,INSERT,UPDATE ON ALL TABLES IN SCHEMA public TO authenticated;
     GRANT SELECT,INSERT ON storage.objects TO authenticated;
@@ -79,6 +85,83 @@ afterAll(async () => {
 })
 
 describe('PostgreSQL lifecycle migrations', () => {
+  it('replaces only published defaults and leaves draft selections inert until publication', async () => {
+    const defaultBusiness = '20000000-0000-0000-0000-000000000010'
+    const first = '40000000-0000-0000-0000-000000000010'
+    const second = '40000000-0000-0000-0000-000000000011'
+    const draftAccount = '40000000-0000-0000-0000-000000000012'
+    await db.exec(
+      `INSERT INTO businesses(id,user_id,name) VALUES('${defaultBusiness}','${owner}','Defaults')`,
+    )
+    await asUser(
+      owner,
+      `INSERT INTO accounts(id,business_id,account_name,account_number,is_default)
+      VALUES('${first}','${defaultBusiness}','First','1234',true)`,
+    )
+    await asUser(
+      owner,
+      `INSERT INTO accounts(id,business_id,account_name,account_number,is_default)
+      VALUES('${second}','${defaultBusiness}','Second','5678',true)`,
+    )
+    const defaults = async () =>
+      (
+        await db.query<{ id: string }>(
+          `SELECT id FROM accounts WHERE business_id = '${defaultBusiness}' AND is_default AND NOT is_draft AND deleted_at IS NULL`,
+        )
+      ).rows
+    expect(await defaults()).toEqual([{ id: second }])
+    await asUser(
+      owner,
+      `UPDATE accounts SET is_default = true WHERE id = '${first}'`,
+    )
+    expect(await defaults()).toEqual([{ id: first }])
+    await asUser(
+      owner,
+      `INSERT INTO accounts(id,business_id,is_draft,is_default)
+      VALUES('${draftAccount}','${defaultBusiness}',true,true)`,
+    )
+    await asUser(
+      owner,
+      `INSERT INTO accounts(business_id,is_draft,is_default)
+      VALUES('${defaultBusiness}',true,true)`,
+    )
+    await asUser(
+      owner,
+      `UPDATE accounts SET is_default = true WHERE id = '${draftAccount}'`,
+    )
+    expect(await defaults()).toEqual([{ id: first }])
+    await expect(
+      asUser(
+        owner,
+        `UPDATE accounts SET is_draft = false WHERE id = '${draftAccount}'`,
+      ),
+    ).rejects.toThrow()
+    expect(await defaults()).toEqual([{ id: first }])
+    await asUser(
+      owner,
+      `UPDATE accounts SET account_name = 'Published', account_number = '9012', is_draft = false
+      WHERE id = '${draftAccount}'`,
+    )
+    expect(await defaults()).toEqual([{ id: draftAccount }])
+    await asUser(
+      owner,
+      `UPDATE accounts SET is_default = false WHERE id = '${draftAccount}'`,
+    )
+    expect(await defaults()).toEqual([])
+    await asUser(
+      owner,
+      `UPDATE accounts SET is_default = true WHERE id = '${second}'`,
+    )
+    await asUser(owner, `SELECT lifecycle_delete('accounts','${second}')`)
+    expect(await defaults()).toEqual([])
+    await asUser(
+      owner,
+      `UPDATE accounts SET is_default = true WHERE id = '${first}'`,
+    )
+    expect(await defaults()).toEqual([{ id: first }])
+    await db.exec(`SELECT lifecycle_restore('accounts','${second}')`)
+    expect(await defaults()).toEqual([{ id: second }])
+  })
   it('creates only private media buckets without legacy public policies on a clean database', async () => {
     expect(
       (await db.query('SELECT id, public FROM storage.buckets ORDER BY id'))

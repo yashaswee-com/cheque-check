@@ -24,7 +24,7 @@ import { useTranslations } from 'next-intl'
 import { toast } from '@/components/ui/toast'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useEntityTagsDraft } from '@/features/tags/hooks/use-entity-tags'
-import { Checkbox } from '@/components/ui/checkbox'
+import { DefaultAccountField } from '@/features/accounts/components/default-account-field'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -220,15 +220,14 @@ export default function EditAccountPage() {
             )}
           </div>
 
-          <label className="flex items-center gap-3 rounded-sm border border-primary/10 bg-primary/5 p-4">
-            <Checkbox
-              checked={watch('is_default')}
-              onCheckedChange={(checked) =>
-                setValue('is_default', checked === true, { shouldDirty: true })
-              }
-            />
-            <span className="text-sm font-semibold">{t('setAsDefault')}</span>
-          </label>
+          <DefaultAccountField
+            businessId={account?.business_id ?? activeBusiness?.id}
+            accountId={id}
+            checked={watch('is_default')}
+            onCheckedChange={(checked) =>
+              setValue('is_default', checked, { shouldDirty: true })
+            }
+          />
         </FormSection>
 
         <FormSection title={t('moreDetails')} icon={Hash}>

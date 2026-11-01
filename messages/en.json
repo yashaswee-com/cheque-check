@@ -735,6 +735,9 @@
     "moreDetails": "More Details",
     "openingBalance": "Opening Balance",
     "setAsDefault": "Use as default account for new cheques",
+    "defaultAccount": "Default account",
+    "defaultAccountHelp": "Only one default account per business. Changes apply when you save the account.",
+    "replaceDefaultNotice": "Saving will replace {account} as the default account for this business.",
     "successTitle": "Account Added!",
     "successDescription": "The account has been added to your business.",
     "successCta": "Continue"

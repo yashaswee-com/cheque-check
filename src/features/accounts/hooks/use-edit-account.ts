@@ -8,9 +8,12 @@ import { useEntityEditor } from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import type { Account, AccountFormData } from '@/types'
 import { queryKeys } from '@/lib/query-keys'
+import { useQueryClient } from '@tanstack/react-query'
+import { selectDefaultAccount } from '../lib/default-account'
 
 export function useEditAccount(id: string, businessId: string | undefined) {
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const {
     entity: account,
@@ -52,10 +55,14 @@ export function useEditAccount(id: string, businessId: string | undefined) {
     detailQueryKey: queryKeys.accounts.detail(id),
     update: {
       mutationFn: (data) => accountService.update(id, data),
-      updateList: (current, newAccount) =>
-        current?.map((account) =>
+      updateList: (current, newAccount) => {
+        const updated = current?.map((account) =>
           account.id === id ? { ...account, ...newAccount } : account,
-        ),
+        )
+        return newAccount.is_default
+          ? selectDefaultAccount(updated, id)
+          : updated
+      },
     },
     remove: {
       mutationFn: () => accountService.delete(id),
@@ -72,6 +79,11 @@ export function useEditAccount(id: string, businessId: string | undefined) {
     isDeleting: deleteMutation.isPending,
     onSubmit: form.handleSubmit(async (data) => {
       await updateMutation.mutateAsync(data)
+      if (data.is_default) {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.accounts.allDetails(),
+        })
+      }
       router.back()
     }),
     onDelete: () => {

@@ -754,6 +754,9 @@
     "moreDetails": "Aur Details",
     "openingBalance": "Opening Balance",
     "setAsDefault": "Naye cheques ke liye default account banayein",
+    "defaultAccount": "Default account",
+    "defaultAccountHelp": "Har business mein sirf ek default account. Account save karne par change apply hoga.",
+    "replaceDefaultNotice": "Save karne par is business ka default account {account} ki jagah yeh account hoga.",
     "successTitle": "Account Add ho gaya!",
     "successDescription": "Account aapke business mein add kar diya gaya hai.",
     "successCta": "Continue"

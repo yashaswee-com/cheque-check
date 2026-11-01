@@ -4,6 +4,14 @@ import { useState, useMemo } from 'react'
 import type { Account } from '@/types'
 import { queryKeys } from '@/lib/query-keys'
 
+export function useAccountOptions(businessId: string | undefined) {
+  return useQuery<Account[]>({
+    queryKey: queryKeys.accounts.list(businessId),
+    queryFn: () => accountService.getAll(businessId!),
+    enabled: !!businessId,
+  })
+}
+
 export function useAccounts(businessId: string | undefined) {
   const [search, setSearch] = useState('')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
@@ -12,15 +20,7 @@ export function useAccounts(businessId: string | undefined) {
   )
   const [bankFilter, setBankFilter] = useState<string | 'All'>('All')
 
-  const {
-    data: accounts,
-    isLoading,
-    error,
-  } = useQuery<Account[]>({
-    queryKey: queryKeys.accounts.list(businessId),
-    queryFn: () => accountService.getAll(businessId!),
-    enabled: !!businessId,
-  })
+  const { data: accounts, isLoading, error } = useAccountOptions(businessId)
 
   const filteredAccounts = useMemo(() => {
     if (!accounts) return []

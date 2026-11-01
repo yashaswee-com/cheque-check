@@ -92,6 +92,26 @@ remain unsaved, including edits made during an in-flight autosave. After saving,
 only Discard (with its trash icon) and Keep Editing remain. Required entity
 fields in create/edit forms use a small red asterisk; optional fields are unmarked.
 
+## Default accounts
+
+Each business can have at most one active, published default account. Selecting
+another default replaces the previous selection atomically when the account is
+saved or published. Autosaving a draft keeps its preference but does not change
+the published default; failed saves roll back the replacement.
+Restoring a deleted account that was default replaces the current default in
+the same transaction.
+
+Create/edit forms show an inline replacement notice naming the current bank
+and only the last four account-number digits. Unchecking cancels the replacement.
+The notice is scoped to the business, and existing defaults show a small badge
+on account list and detail cards. Optimistic caches clear the old selection and
+restore it on failure; successful replacement invalidates account detail caches.
+
+Apply the forward migration
+`supabase/migrations/20261101060000_published_default_accounts.sql` before deploying
+the UI. It excludes draft/deleted rows from the unique default index and handles
+publication and restoration transitions without rewriting older migrations.
+
 ## Atomic tagged duplication
 
 `duplicate_cheque_draft(requested_cheque)` freshly checks Premium entitlement,

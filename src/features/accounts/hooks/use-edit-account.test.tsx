@@ -47,7 +47,10 @@ function setup() {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   )
-  return renderHook(() => useEditAccount(account.id, 'business-1'), { wrapper })
+  return {
+    ...renderHook(() => useEditAccount(account.id, 'business-1'), { wrapper }),
+    client,
+  }
 }
 
 beforeEach(() => {
@@ -59,6 +62,63 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('useEditAccount', () => {
+  it('clears the previous default optimistically and refreshes account detail caches', async () => {
+    const { result, client } = setup()
+    client.setQueryData(queryKeys.accounts.list('business-1'), [
+      account,
+      { ...other, is_default: true },
+    ])
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
+    await waitFor(() => expect(result.current.account?.id).toBe(account.id))
+    let resolve!: (value: Account) => void
+    mocks.update.mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done
+        }),
+    )
+    act(() => {
+      result.current.form.setValue('bank_id', 'bank-1')
+      result.current.form.setValue('is_default', true)
+    })
+    let pending!: Promise<void>
+    act(() => {
+      pending = result.current.onSubmit()
+    })
+    await waitFor(() => {
+      const cached = client.getQueryData<Account[]>(
+        queryKeys.accounts.list('business-1'),
+      )!
+      expect(
+        cached.filter((row) => row.is_default).map((row) => row.id),
+      ).toEqual([account.id])
+    })
+    await act(async () => {
+      resolve({ ...account, is_default: true })
+      await pending
+    })
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: queryKeys.accounts.allDetails(),
+    })
+  })
+  it('restores the previous default when saving fails', async () => {
+    const { result, client } = setup()
+    const previous = [account, { ...other, is_default: true }]
+    client.setQueryData(queryKeys.accounts.list('business-1'), previous)
+    await waitFor(() => expect(result.current.account?.id).toBe(account.id))
+    mocks.update.mockRejectedValueOnce(new Error('offline'))
+    act(() => {
+      result.current.form.setValue('bank_id', 'bank-1')
+      result.current.form.setValue('is_default', true)
+    })
+    await act(async () => {
+      await expect(result.current.onSubmit()).rejects.toThrow('offline')
+    })
+    expect(client.getQueryData(queryKeys.accounts.list('business-1'))).toEqual(
+      previous,
+    )
+    expect(mocks.back).not.toHaveBeenCalled()
+  })
   it('normalizes a missing bank id and saves account changes', async () => {
     const { result } = setup()
     await waitFor(() => expect(result.current.account?.id).toBe(account.id))

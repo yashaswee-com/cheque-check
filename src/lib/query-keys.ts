@@ -5,6 +5,7 @@ export const queryKeys = {
       ['report-exports', businessId] as const,
   },
   accounts: {
+    allDetails: () => ['account'] as const,
     list: (businessId: string | undefined) => ['accounts', businessId] as const,
     detail: (id: string | undefined) => ['account', id] as const,
   },

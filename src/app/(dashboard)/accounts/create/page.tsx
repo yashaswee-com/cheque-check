@@ -34,7 +34,7 @@ import {
 import { useEffect, useState } from 'react'
 import { getSafeChequeReturnTo } from '@/lib/cheque-draft'
 import { DraftLeaveDialog, DraftSaveFab } from '@/features/drafts'
-import { Checkbox } from '@/components/ui/checkbox'
+import { DefaultAccountField } from '@/features/accounts/components/default-account-field'
 import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { tagService } from '@/features/tags/services/tag.service'
@@ -353,16 +353,12 @@ export default function CreateAccountPage() {
                 </p>
               )}
             </div>
-            <label className="flex items-center gap-3 rounded-sm border border-primary/10 bg-primary/5 p-4">
-              <Checkbox
-                data-testid="account-default-checkbox"
-                checked={watch('is_default')}
-                onCheckedChange={(checked) =>
-                  setUserValue('is_default', checked === true)
-                }
-              />
-              <span className="text-sm font-semibold">{t('setAsDefault')}</span>
-            </label>
+            <DefaultAccountField
+              businessId={activeBusiness?.id}
+              accountId={draft.draftId}
+              checked={watch('is_default') ?? false}
+              onCheckedChange={(checked) => setUserValue('is_default', checked)}
+            />
 
             <Button
               type="button"

@@ -25,6 +25,7 @@ import {
   useDraftController,
 } from '@/features/drafts'
 import { queryKeys } from '@/lib/query-keys'
+import { selectDefaultAccount } from '../lib/default-account'
 
 export function useCreateAccount(
   businessId: string | undefined,
@@ -82,17 +83,29 @@ export function useCreateAccount(
         ifsc_code: data.ifsc_code || null,
         opening_balance: data.opening_balance,
       }),
-    addToList: (current, newAccount) => [
-      ...(current || []),
-      {
-        ...newAccount,
-        ifsc_code: newAccount.ifsc_code || null,
-        id: 'temp-' + Date.now(),
-        business_id: businessId!,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ],
+    addToList: (current, newAccount) => {
+      const id = 'temp-' + Date.now()
+      return [
+        ...((newAccount.is_default
+          ? selectDefaultAccount(current, id)
+          : current) || []),
+        {
+          ...newAccount,
+          ifsc_code: newAccount.ifsc_code || null,
+          id,
+          business_id: businessId!,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ]
+    },
+    onSuccess: async (_account, data) => {
+      if (data.is_default) {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.accounts.allDetails(),
+        })
+      }
+    },
   })
 
   const nextStep = async () => {
@@ -144,6 +157,11 @@ export function useCreateAccount(
           queryClient.invalidateQueries({
             queryKey: draftKeys.list('account', businessId),
           })
+          if (data.is_default) {
+            await queryClient.invalidateQueries({
+              queryKey: queryKeys.accounts.allDetails(),
+            })
+          }
         }
 
         if (!returnTo) {

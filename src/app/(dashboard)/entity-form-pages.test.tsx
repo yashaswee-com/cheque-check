@@ -17,6 +17,7 @@ import EditAccountPage from './accounts/[id]/edit/page'
 import CreatePartyPage from './parties/create/page'
 import EditPartyPage from './parties/[id]/edit/page'
 import type { DraftSaveStatus } from '@/features/drafts/hooks/use-draft-autosave'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const mocks = vi.hoisted(() => ({
   submit: vi.fn(),
@@ -146,6 +147,9 @@ vi.mock('@/features/accounts/hooks/use-create-account', () => ({
 }))
 vi.mock('@/features/accounts/hooks/use-edit-account', () => ({
   useEditAccount: () => useEntityForm(),
+}))
+vi.mock('@/features/accounts/services/account.service', () => ({
+  accountService: { getAll: async () => [] },
 }))
 vi.mock('@/features/parties/hooks/use-create-party', () => ({
   useCreateParty: (_id: string, options: Parameters<typeof useEntityForm>[0]) =>
@@ -278,14 +282,20 @@ vi.mock('@/features/drafts', async () => {
 
 function renderPage(page: ReactNode) {
   return render(
-    <NextIntlClientProvider
-      locale="en"
-      messages={messages}
-      timeZone="UTC"
-      onError={() => {}}
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
     >
-      {page}
-    </NextIntlClientProvider>,
+      <NextIntlClientProvider
+        locale="en"
+        messages={messages}
+        timeZone="UTC"
+        onError={() => {}}
+      >
+        {page}
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   )
 }
 function change(id: string, value: string) {
@@ -498,6 +508,12 @@ describe('account creation page', () => {
     change('account_name', 'Operating')
     change('account_number', '12345678')
     change('opening_balance', '1250.50')
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox')).not.toHaveAttribute(
+        'aria-disabled',
+        'true',
+      ),
+    )
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByTestId('account-step2-continue'))
     change('ifsc_code', 'TEST0000001')

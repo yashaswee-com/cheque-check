@@ -176,6 +176,12 @@ export default function AccountDetailPage() {
                 maxLength={40}
                 className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider block"
               />
+              {account.is_default && (
+                <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary">
+                  <HugeiconsIcon icon={Check} className="size-3" />
+                  {t('defaultAccount')}
+                </span>
+              )}
             </div>
           </div>
         </div>

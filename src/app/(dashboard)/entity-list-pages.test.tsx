@@ -13,6 +13,7 @@ let loading = false
 let empty = false
 let noResults = false
 let missingAccountDetails = false
+let isDefault = false
 let profile: { currency: string } | null = null
 let error: Error | null = null
 const account = {
@@ -34,9 +35,10 @@ function useList() {
   const listedAccount = missingAccountDetails
     ? { ...account, bank: undefined, ifsc_code: null }
     : account
+  const accountWithDefault = { ...listedAccount, is_default: isDefault }
   return {
-    accounts: empty ? [] : [listedAccount],
-    filteredAccounts: empty || noResults ? [] : [listedAccount],
+    accounts: empty ? [] : [accountWithDefault],
+    filteredAccounts: empty || noResults ? [] : [accountWithDefault],
     parties: empty ? [] : [party],
     filteredParties: empty || noResults ? [] : [party],
     tags: empty ? [] : [tag],
@@ -113,12 +115,28 @@ function renderPage(page: ReactNode) {
   )
 }
 beforeEach(() => {
+  isDefault = false
   loading = empty = noResults = false
   missingAccountDetails = false
   profile = { currency: '$' }
   error = null
 })
 afterEach(cleanup)
+
+it('shows a default badge only on the selected default account card', () => {
+  isDefault = true
+  const { rerender } = renderPage(<AccountsPage />)
+  expect(screen.getByText(messages.Accounts.defaultAccount)).toBeVisible()
+  isDefault = false
+  rerender(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <AccountsPage />
+    </NextIntlClientProvider>,
+  )
+  expect(
+    screen.queryByText(messages.Accounts.defaultAccount),
+  ).not.toBeInTheDocument()
+})
 
 describe.each([
   {

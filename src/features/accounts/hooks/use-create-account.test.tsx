@@ -106,6 +106,51 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('useCreateAccount', () => {
+  it('replaces the cached default when creating a new default account', async () => {
+    const { result, client } = setup()
+    const previous = { ...account, id: 'previous', is_default: true }
+    client.setQueryData(queryKeys.accounts.list('business-1'), [previous])
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
+    let resolve!: (value: Account) => void
+    mocks.create.mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done
+        }),
+    )
+    setValidAccount(result)
+    act(() => result.current.form.setValue('is_default', true))
+    let pending!: Promise<void>
+    act(() => {
+      pending = result.current.onSubmit()
+    })
+    await waitFor(() => {
+      const cached = client.getQueryData<Account[]>(
+        queryKeys.accounts.list('business-1'),
+      )!
+      expect(cached).toHaveLength(2)
+      expect(cached[0].is_default).toBe(false)
+      expect(cached[1].is_default).toBe(true)
+    })
+    await act(async () => {
+      resolve({ ...account, is_default: true })
+      await pending
+    })
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: queryKeys.accounts.allDetails(),
+    })
+  })
+  it('refreshes previous default detail caches when publishing a selected draft', async () => {
+    const { result, client } = setup()
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
+    mocks.draft.beginPublish.mockResolvedValue('account-draft')
+    setValidAccount(result)
+    act(() => result.current.form.setValue('is_default', true))
+    await act(async () => result.current.onSubmit())
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: queryKeys.accounts.allDetails(),
+    })
+  })
   it('validates each wizard step and prevents moving outside the first/last step', async () => {
     const { result } = setup()
 

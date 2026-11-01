@@ -260,6 +260,12 @@ export default function AccountsPage() {
                       max={2}
                       className="mt-1"
                     />
+                    {account.is_default && (
+                      <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary">
+                        <HugeiconsIcon icon={Check} className="size-3" />
+                        {t('defaultAccount')}
+                      </span>
+                    )}
 
                     <div className="mt-4 flex items-center justify-between border-t border-dashed border-zinc-100 dark:border-zinc-800 pt-4">
                       <p className="text-xs font-mono text-muted-foreground tracking-tighter">
