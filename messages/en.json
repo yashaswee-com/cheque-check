@@ -703,6 +703,13 @@
     "successCta": "View Cheques"
   },
   "Parties": {
+    "partyType": "Party type",
+    "partyTypeOptional": "Party type (optional)",
+    "partyTypeAll": "All types",
+    "partyTypeUnset": "Not set",
+    "partyTypeCustomer": "Customer",
+    "partyTypeSupplier": "Supplier",
+    "partyTypeVendor": "Vendor",
     "title": "Parties",
     "newParty": "New Party",
     "editParty": "Edit Party",

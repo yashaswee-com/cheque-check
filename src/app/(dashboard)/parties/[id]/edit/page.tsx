@@ -29,6 +29,7 @@ import { useValidationMessage } from '@/hooks/use-validation-message'
 import { toast } from '@/components/ui/toast'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useEntityTagsDraft } from '@/features/tags/hooks/use-entity-tags'
+import { PartyTypePicker } from '@/features/parties/components/party-type-picker'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -171,6 +172,12 @@ export default function EditPartyPage() {
               ))}
             </div>
           </div>
+          <PartyTypePicker
+            value={watch('party_type')}
+            onChange={(value) =>
+              setValue('party_type', value, { shouldDirty: true })
+            }
+          />
         </FormSection>
 
         <FormSection title={t('contactInfo')} icon={Phone}>

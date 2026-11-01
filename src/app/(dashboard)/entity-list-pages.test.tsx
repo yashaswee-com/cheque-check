@@ -23,7 +23,12 @@ const account = {
   ifsc_code: 'TEST0000001',
   bank: { id: 'bank', name: 'Example Bank' },
 }
-const party = { id: 'party', name: 'Customer', contact: '+919876543210' }
+const party = {
+  id: 'party',
+  name: 'Acme Traders',
+  contact: '+919876543210',
+  party_type: 'supplier',
+}
 const tag = { id: 'tag', name: 'Urgent', color: '#007AFF', usage_count: 3 }
 function useList() {
   const [search, setSearch] = useState('')
@@ -32,6 +37,7 @@ function useList() {
   const [bankFilter, setBankFilter] = useState('All')
   const [color, setColor] = useState<string | null>(null)
   const [usage, setUsage] = useState('all')
+  const [partyType, setPartyType] = useState('all')
   const listedAccount = missingAccountDetails
     ? { ...account, bank: undefined, ifsc_code: null }
     : account
@@ -58,6 +64,8 @@ function useList() {
     setColor,
     usage,
     setUsage,
+    partyType,
+    setPartyType,
     getBalance: () => 1500,
     clearFilters: () => {
       setSearch('')
@@ -154,10 +162,14 @@ describe.each([
   {
     kind: 'parties',
     Component: PartiesPage,
-    title: 'Customer',
+    title: 'Acme Traders',
     search: messages.Parties.searchPlaceholder,
     sort: messages.Parties.sortByBalance,
-    sections: [messages.Common.sortBy, messages.Common.order],
+    sections: [
+      messages.Common.sortBy,
+      messages.Common.order,
+      messages.Parties.partyType,
+    ],
   },
   {
     kind: 'tags',
@@ -191,7 +203,11 @@ describe.each([
       expect(screen.queryByText('12345678')).not.toBeInTheDocument()
     } else if (kind === 'parties') {
       expect(screen.getByText('$1,500')).toBeVisible()
-      expect(screen.getByText(party.contact)).toBeVisible()
+      expect(
+        screen.getByText(
+          `${messages.Parties.partyTypeSupplier} · ${party.contact}`,
+        ),
+      ).toBeVisible()
     } else expect(screen.getByText('Used 3 times')).toBeVisible()
   })
   it('connects sort, order and search controls and clears a failed search', () => {
@@ -274,5 +290,23 @@ describe('list-specific filters', () => {
     })
     fireEvent.click(allOptions[1])
     expect(allOptions[1]).toHaveClass('border-primary')
+  })
+  it('selects a party type filter and resets it with clear filters', () => {
+    noResults = true
+    renderPage(<PartiesPage />)
+    const all = screen.getByRole('button', {
+      name: messages.Parties.partyTypeAll,
+    })
+    const vendor = screen.getByRole('button', {
+      name: messages.Parties.partyTypeVendor,
+    })
+    expect(all).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(vendor)
+    expect(vendor).toHaveAttribute('aria-pressed', 'true')
+    expect(all).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Common.clearAllFilters }),
+    )
+    expect(all).toHaveAttribute('aria-pressed', 'true')
   })
 })

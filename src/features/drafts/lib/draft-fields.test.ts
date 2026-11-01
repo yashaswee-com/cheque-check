@@ -66,6 +66,7 @@ describe('party and account draft fields', () => {
       notes: '',
       color: '#34C759',
       avatar_url: null,
+      party_type: null,
     })
     const populated = {
       name: 'Acme',
@@ -75,9 +76,17 @@ describe('party and account draft fields', () => {
       notes: 'Customer',
       color: '#123456',
       avatar_url: 'media:a',
+      party_type: 'supplier',
     }
     expect(partyDraftToFormValues(toPartyDraftFields(populated))).toEqual(
       populated,
+    )
+  })
+
+  it('drops unknown party types from drafts instead of storing them', () => {
+    expect(toPartyDraftFields({ party_type: 'landlord' }).party_type).toBe(null)
+    expect(toPartyDraftFields({ party_type: 'vendor' }).party_type).toBe(
+      'vendor',
     )
   })
 

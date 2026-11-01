@@ -3,6 +3,7 @@ import type {
   ChequeDraftFields,
   ChequeType,
   PartyDraftFields,
+  PartyType,
 } from '@/types'
 import { chequeSchema, partySchema } from '@/validators'
 
@@ -34,6 +35,11 @@ const chequeType = (value: unknown): ChequeType | null => {
   return result.success ? result.data : null
 }
 
+const partyType = (value: unknown): PartyType | null => {
+  const result = partySchema.shape.party_type.safeParse(value)
+  return result.success ? (result.data ?? null) : null
+}
+
 export function toChequeDraftFields(
   values: Record<string, unknown>,
 ): ChequeDraftFields {
@@ -61,6 +67,7 @@ export function toPartyDraftFields(
     notes: text(values.notes),
     color: text(values.color),
     avatar_url: text(values.avatar_url),
+    party_type: partyType(values.party_type),
   }
 }
 
@@ -109,6 +116,7 @@ export function partyDraftToFormValues(draft: PartyDraftFields) {
     notes: draft.notes ?? '',
     color: draft.color ?? '#34C759',
     avatar_url: draft.avatar_url,
+    party_type: draft.party_type ?? null,
   }
 }
 

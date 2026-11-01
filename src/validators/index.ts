@@ -22,6 +22,8 @@ export const businessSchema = z.object({
   logo_url: z.string().nullable().optional(),
 })
 
+export const PARTY_TYPES = ['customer', 'supplier', 'vendor'] as const
+
 export const partySchema = z.object({
   name: z.string().min(1, 'Party name is required'),
   contact: z
@@ -34,6 +36,7 @@ export const partySchema = z.object({
   color: z.string().optional(),
   icon: z.string().optional(),
   avatar_url: z.string().nullable().optional(),
+  party_type: z.enum(PARTY_TYPES).nullable().optional(),
 })
 
 export const accountSchema = z.object({

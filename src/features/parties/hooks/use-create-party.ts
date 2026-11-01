@@ -52,6 +52,7 @@ export function useCreateParty(
       address: '',
       notes: '',
       color: '#34C759',
+      party_type: null,
     },
   })
 
@@ -78,6 +79,7 @@ export function useCreateParty(
         address: data.address || null,
         notes: data.notes || null,
         avatar_url: data.avatar_url || null,
+        party_type: data.party_type ?? null,
       }),
     addToList: (current, newParty) => [
       ...(current || []),
@@ -87,6 +89,7 @@ export function useCreateParty(
         address: newParty.address || null,
         notes: newParty.notes || null,
         avatar_url: newParty.avatar_url || null,
+        party_type: newParty.party_type ?? null,
         id: 'temp-' + Date.now(),
         business_id: businessId!,
         created_at: new Date().toISOString(),

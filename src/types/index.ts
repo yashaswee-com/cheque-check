@@ -64,11 +64,14 @@ export interface Party {
   color?: string
   icon?: string
   avatar_url?: string | null
+  party_type?: PartyType | null
   is_draft?: boolean
   created_at: string
   updated_at: string
   deleted_at?: string | null
 }
+
+export type PartyType = ClosedChoice['party_type']
 
 export interface Bank {
   id: string
@@ -229,6 +232,7 @@ export type PartyDraftFields = {
   notes: string | null
   color: string | null
   avatar_url: string | null
+  party_type?: PartyType | null
 }
 
 export type PartyDraft = DraftBase & PartyDraftFields

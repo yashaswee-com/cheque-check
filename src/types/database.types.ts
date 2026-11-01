@@ -297,6 +297,7 @@ export interface Database {
           color: string | null
           icon: string | null
           avatar_url: string | null
+          party_type: Database['public']['Enums']['party_type'] | null
           is_draft: boolean
           deleted_at: string | null
           created_at: string | null
@@ -1098,6 +1099,7 @@ export interface Database {
       profile_time_format: '12h' | '24h'
       profile_language: 'en' | 'hi' | 'hi-en'
       tag_entity_type: 'cheque' | 'account' | 'party' | 'business'
+      party_type: 'customer' | 'supplier' | 'vendor'
       notification_channel: 'voice' | 'whatsapp' | 'email' | 'push' | 'sms'
       notification_job_status:
         'pending' | 'processing' | 'sent' | 'failed' | 'skipped' | 'cancelled'

@@ -36,6 +36,7 @@ import { PremiumButton } from '@/features/monetization/components/premium-contro
 import { useParties } from '@/features/parties/hooks/use-parties'
 import { findPossiblePartyDuplicates } from '@/features/parties/lib/party-duplicates'
 import { usePartyDraftTags } from '@/features/parties/hooks/use-party-draft-tags'
+import { PartyTypePicker } from '@/features/parties/components/party-type-picker'
 import {
   Stepper,
   StepperIndicator,
@@ -406,6 +407,11 @@ export default function CreatePartyPage() {
                 })}
               </p>
             )}
+
+            <PartyTypePicker
+              value={watch('party_type')}
+              onChange={(value) => setUserValue('party_type', value)}
+            />
 
             <Button
               type="button"

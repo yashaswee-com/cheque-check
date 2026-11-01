@@ -128,6 +128,33 @@ describe('useParties', () => {
     ])
   })
 
+  it('filters by party type, combines it with search and resets to all', async () => {
+    mocks.getParties.mockResolvedValue([
+      { ...parties[0], party_type: 'customer' },
+      { ...parties[1], party_type: 'supplier' },
+      { ...parties[2], party_type: null },
+    ])
+    const { result } = setup('business-1')
+    await waitFor(() => expect(result.current.parties).toHaveLength(3))
+    expect(result.current.partyType).toBe('all')
+
+    act(() => result.current.setPartyType('supplier'))
+    expect(result.current.filteredParties.map((party) => party.id)).toEqual([
+      'p2',
+    ])
+
+    act(() => {
+      result.current.setPartyType('customer')
+      result.current.setSearch('beta')
+    })
+    expect(result.current.filteredParties).toEqual([])
+
+    act(() => result.current.setPartyType('all'))
+    expect(result.current.filteredParties.map((party) => party.id)).toEqual([
+      'p2',
+    ])
+  })
+
   it('does not fetch data until a business is selected', () => {
     const { result } = setup(undefined)
 

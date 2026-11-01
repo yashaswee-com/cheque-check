@@ -1026,6 +1026,13 @@
     "searchEverything": "सब कुछ खोजें..."
   },
   "Parties": {
+    "partyType": "Party type",
+    "partyTypeOptional": "Party type (optional)",
+    "partyTypeAll": "All types",
+    "partyTypeUnset": "Not set",
+    "partyTypeCustomer": "Customer",
+    "partyTypeSupplier": "Supplier",
+    "partyTypeVendor": "Vendor",
     "title": "पार्टियाँ",
     "newParty": "नई पार्टी",
     "editParty": "पार्टी संपादित करें",

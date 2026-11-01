@@ -2,13 +2,16 @@ import { useQuery } from '@tanstack/react-query'
 import { partyService } from '@/features/parties/services/party.service'
 import { chequeService } from '@/features/cheques/services/cheque.service'
 import { useState, useMemo, useCallback } from 'react'
-import type { Party } from '@/types'
+import type { Party, PartyType } from '@/types'
 import { queryKeys } from '@/lib/query-keys'
+
+export type PartyTypeFilter = PartyType | 'all'
 
 export function useParties(businessId: string | undefined) {
   const [search, setSearch] = useState('')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [sortBy, setSortBy] = useState<'name' | 'balance'>('name')
+  const [partyType, setPartyType] = useState<PartyTypeFilter>('all')
 
   const {
     data: parties,
@@ -45,8 +48,9 @@ export function useParties(businessId: string | undefined) {
     if (!parties) return []
     const result = parties.filter(
       (p: Party) =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.contact.includes(search),
+        (partyType === 'all' || p.party_type === partyType) &&
+        (p.name.toLowerCase().includes(search.toLowerCase()) ||
+          p.contact.includes(search)),
     )
 
     result.sort((a: Party, b: Party) => {
@@ -62,7 +66,7 @@ export function useParties(businessId: string | undefined) {
     })
 
     return result
-  }, [parties, search, sortOrder, sortBy, getBalance])
+  }, [parties, search, sortOrder, sortBy, getBalance, partyType])
 
   return {
     parties,
@@ -75,6 +79,8 @@ export function useParties(businessId: string | undefined) {
     setSortOrder,
     sortBy,
     setSortBy,
+    partyType,
+    setPartyType,
     getBalance,
   }
 }

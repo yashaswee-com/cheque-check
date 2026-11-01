@@ -38,6 +38,8 @@ import {
   filterPillClassName,
 } from '@/components/ui/pill-scroller'
 import type { Party } from '@/types'
+import { PARTY_TYPES } from '@/validators'
+import { usePartyTypeLabel } from '@/features/parties/components/party-type-picker'
 import { TagChips } from '@/features/tags/components/tag-chips'
 import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { NativeTools } from '@/features/premium-workspace/components/native-tools'
@@ -63,12 +65,16 @@ export default function PartiesPage() {
     setSortOrder,
     sortBy,
     setSortBy,
+    partyType,
+    setPartyType,
     getBalance,
   } = useParties(businessId)
   const tagMap = useEntityTagMap(businessId, 'party')
+  const partyTypeLabel = usePartyTypeLabel()
 
   const clearFilters = () => {
     setSearch('')
+    setPartyType('all')
   }
 
   const sortOptions = [
@@ -154,6 +160,24 @@ export default function PartiesPage() {
                   </button>
                 ))}
               </FilterPillSection>
+
+              <FilterPillSection title={t('partyType')}>
+                {(['all', ...PARTY_TYPES] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={partyType === value}
+                    onClick={() => setPartyType(value)}
+                    className={filterPillClassName(partyType === value)}
+                  >
+                    <span className="font-bold text-sm">
+                      {value === 'all'
+                        ? t('partyTypeAll')
+                        : partyTypeLabel(value)}
+                    </span>
+                  </button>
+                ))}
+              </FilterPillSection>
             </div>
           </SheetContent>
         </Sheet>
@@ -209,7 +233,9 @@ export default function PartiesPage() {
                     className="font-bold text-base"
                   />
                   <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider truncate">
-                    {party.contact}
+                    {party.party_type
+                      ? `${partyTypeLabel(party.party_type)} · ${party.contact}`
+                      : party.contact}
                   </p>
                   <TagChips tags={tagMap[party.id]} max={2} className="mt-1" />
                 </div>

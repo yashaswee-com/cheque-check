@@ -29,6 +29,7 @@ export function useEditParty(id: string, businessId: string | undefined) {
       notes: '',
       color: '#007AFF',
       avatar_url: null,
+      party_type: null,
     },
     toFormValues: (party) => ({
       name: party.name,
@@ -38,6 +39,7 @@ export function useEditParty(id: string, businessId: string | undefined) {
       notes: party.notes || '',
       color: party.color,
       avatar_url: party.avatar_url || null,
+      party_type: party.party_type ?? null,
     }),
   })
 
