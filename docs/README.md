@@ -15,6 +15,7 @@ Documentation filenames use descriptive lowercase kebab-case:
 
 | Document                                                          | What it covers                                                                                                                                                        |
 | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Application setup](application-setup.md)                         | From-scratch provider provisioning, unified resource naming, credential destinations, deployment, and acceptance checks.                                              |
 | [Bank catalog](bank-catalog.md)                                   | RBI reference snapshot, generated seed, private bank additions, and validation.                                                                                       |
 | [Cheque statistics](cheque-statistics.md)                         | Dashboard/report status partitions and date/amount semantics.                                                                                                         |
 | [Data lifecycle](data-lifecycle.md)                               | Soft deletion, recovery, ownership, private media, and retained records.                                                                                              |

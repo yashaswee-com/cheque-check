@@ -27,6 +27,10 @@ if a newer Node version is installed globally.
 
 ## Local Setup
 
+For provider accounts, dashboard settings, credential destinations, unified
+resource naming, and deployment checks, follow the
+[Application setup guide](docs/application-setup.md).
+
 1. Install dependencies from the committed lockfile:
 
    ```bash

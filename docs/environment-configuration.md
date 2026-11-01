@@ -1,5 +1,9 @@
 # Environment configuration
 
+For the complete from-scratch provisioning process, provider dashboard settings,
+key sources, naming standard, and verification checklist, see
+[Application setup](application-setup.md).
+
 | Variable                                                              | Scope                     | Notes                                                                                                    |
 | --------------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`           | all                       | Required. Must not be local in qa/production/preview.                                                    |
@@ -16,11 +20,21 @@ previews.
 
 ## Deployment sequence
 
-1. Apply migrations (`supabase db push`), regenerate types.
-2. `npm run ops -- dev setup` (dev projects) provisions Vault cron credentials via
-   `configure_cron_credentials`; storage buckets/policies come from migrations,
-   so no SQL editor step remains.
-3. Push Auth config (`supabase config push`) and set Vercel variables per environment.
-4. Add callback URLs for each origin to Supabase Auth redirect allow-list.
-5. Rotate secrets by re-running the relevant push/set; rotate the service-role key
-   then re-run `configure_cron_credentials`.
+1. Verify the target project, apply migrations (`supabase db push`), include
+   reference seed data for a fresh project, and regenerate types.
+2. Deploy Edge Functions and set their provider secrets. Razorpay's external
+   webhook needs gateway JWT verification disabled; internal workers remain
+   protected. See [function deployment](application-setup.md#91-set-custom-secrets-and-deploy).
+3. Provision Vault cron credentials through `configure_cron_credentials`.
+   `npm run ops -- dev setup` does this only for disposable dev projects when
+   function deployment is selected and a service-role key is supplied.
+   Use the [manual RPC procedure](application-setup.md#92-provision-vault-safely)
+   for QA/production. Storage buckets/policies come from migrations.
+4. Configure hosted Auth and callback URLs in the dashboard, or review
+   `supabase config diff` before pushing environment-specific config.
+   The checked-in local defaults must not be blindly pushed to production.
+   Test email flows too when enabling project-wide CAPTCHA.
+5. Set Vercel variables per environment and rebuild. Verify workers and private
+   downloads before enabling the initially paused export cron job.
+6. Rotate secrets in every matching destination; after rotating the service-role
+   key, re-run `configure_cron_credentials` and verify cron authentication.
