@@ -54,6 +54,21 @@
     "ai_scan_250": "AI Scanner - Top-Up (250 scans)",
     "voice_reminder_100": "Voice Reminders - Top-Up (100 calls)"
   },
+  "Analytics": {
+    "title": "Cheques over time",
+    "summary": "Summary",
+    "byBank": "By account bank",
+    "unknownBank": "Unknown bank",
+    "pending": "Pending value",
+    "cleared": "Cleared value",
+    "overdue": "Overdue",
+    "dueToday": "Due today",
+    "count": "{count} cheques",
+    "date": "Cheque date",
+    "noCheques": "No published cheques in this range.",
+    "loadError": "Analytics could not be loaded. Use a valid date range no longer than 10 years, or try again.",
+    "grouping": { "day": "Daily", "week": "Weekly", "month": "Monthly" }
+  },
   "ChartStats": {
     "clearanceRate": "Clearance rate",
     "noClearanceData": "No cheques",
@@ -575,6 +590,7 @@
     "receivable": "Receivable",
     "payable": "Payable",
     "dateRange": {
+      "last30Days": "Last 30 days",
       "label": "Date range",
       "all": "All time",
       "thisWeek": "This week",

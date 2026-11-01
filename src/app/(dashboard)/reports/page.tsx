@@ -28,6 +28,14 @@ import {
 } from '@/features/monetization/components/premium-gate'
 import { useRef, useState } from 'react'
 import Link from 'next/link'
+import type { DateRange } from 'react-day-picker'
+import { StatsDateFilter } from '@/features/cheques/components/stats-date-filter'
+import { ChequeAnalytics } from '@/features/cheques/components/cheque-analytics'
+import {
+  resolveDateRange,
+  type DateRangePreset,
+} from '@/features/cheques/lib/date-range'
+import { useChequeSummary } from '@/features/cheques/hooks/use-dashboard-cheques'
 import { logger } from '@/lib/logger'
 import { toast } from '@/components/ui/toast'
 import {
@@ -67,13 +75,21 @@ function ReportsContent() {
 
   const { activeBusiness } = useBusiness()
   const { profile } = useProfile()
+  const [statsPreset, setStatsPreset] = useState<DateRangePreset>('last30Days')
+  const [customRange, setCustomRange] = useState<DateRange>()
+  const statsRange = resolveDateRange(
+    statsPreset,
+    new Date(),
+    customRange,
+    profile?.time_zone,
+  )
+  const statsSummary = useChequeSummary(activeBusiness?.id, statsRange)
   const premium = usePremiumAction()
   const jobs = useExportJobs(activeBusiness?.id)
 
   const {
     cheques,
     isLoading: chequesLoading,
-    summary,
     totalCount,
     outstanding,
     error,
@@ -356,7 +372,22 @@ function ReportsContent() {
                 {tr('distribution')}
               </h2>
             </div>
-            <ChequeStatsChart summary={summary} currency={currency} />
+            <StatsDateFilter
+              preset={statsPreset}
+              onPresetChange={setStatsPreset}
+              customRange={customRange}
+              onCustomRangeChange={setCustomRange}
+            />
+            <ChequeStatsChart
+              summary={statsSummary.data}
+              currency={currency}
+              isLoading={statsSummary.isFetching}
+              error={statsSummary.isError ? tc('loadDataError') : undefined}
+            />
+            <ChequeAnalytics
+              businessId={activeBusiness?.id}
+              range={statsRange}
+            />
           </div>
 
           {/* List Preview */}

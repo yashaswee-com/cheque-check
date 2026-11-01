@@ -62,9 +62,9 @@ describe('bank hooks', () => {
 
     await act(async () => result.current.remove.mutateAsync('bank-2'))
     expect(mocks.delete).toHaveBeenCalledWith('bank-2')
-    expect(invalidate).toHaveBeenCalledTimes(2)
+    expect(invalidate).toHaveBeenCalledTimes(4)
     expect(invalidate).toHaveBeenLastCalledWith({
-      queryKey: queryKeys.banks.list(),
+      queryKey: queryKeys.cheques.analyticsAll(),
     })
   })
 

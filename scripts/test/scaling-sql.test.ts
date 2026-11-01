@@ -13,7 +13,7 @@ beforeAll(async () => {
 }, 30_000)
 beforeEach(async () => {
   await db.exec(`RESET ROLE; TRUNCATE notification_attempts, notification_jobs, notification_logs,
-    notification_scheduler_runs, user_quotas, cheques, accounts, parties, businesses, profiles CASCADE;
+    notification_scheduler_runs, user_quotas, cheques, accounts, banks, parties, businesses, profiles CASCADE;
     SELECT set_config('request.jwt.claim.sub','${user}',false);
     SELECT set_config('request.jwt.claim.role','service_role',false);
     INSERT INTO profiles(user_id) VALUES('${user}');
@@ -58,6 +58,66 @@ async function enqueue() {
 }
 
 describe('bounded cheque reads', () => {
+  it('pages bank aggregates without truncating the summary, excludes drafts/deleted/inward, and uses due dates', async () => {
+    await db.exec(`
+      INSERT INTO banks(id,name) SELECT md5('bank'||i)::uuid,'Bank '||i FROM generate_series(1,51) i;
+      INSERT INTO accounts(id,business_id,bank_id)
+        SELECT md5('account'||i)::uuid,'${business}',md5('bank'||i)::uuid FROM generate_series(1,51) i;
+      INSERT INTO cheques(id,business_id,account_id,amount,deposit_date)
+        SELECT md5('cheque'||i)::uuid,'${business}',md5('account'||i)::uuid,i,'2026-10-30' FROM generate_series(1,51) i;
+      INSERT INTO cheques(id,business_id,amount,is_draft) VALUES(gen_random_uuid(),'${business}',999,true);
+      INSERT INTO cheques(id,business_id,amount,deleted_at) VALUES(gen_random_uuid(),'${business}',999,now());
+      INSERT INTO cheques(id,business_id,amount,type,status,deposit_date)
+        VALUES(gen_random_uuid(),'${business}',5,'Inward','Received','2026-10-31');
+      SET ROLE authenticated;`)
+    type Analytics = {
+      matching_banks: number
+      banks: { name: string; metrics: { total_amount: number }[] }[]
+      summary: {
+        cheque_count: number
+        total_amount: number
+        overdue_count: number
+        overdue_amount: number
+        today_count: number
+      }[]
+    }
+    const result = await db.query<{ data: Analytics }>(
+      `SELECT cheque_analytics($1,'2026-10-31',false,'2026-10-31','2026-10-31','All',0,50) AS data`,
+      [business],
+    )
+    const data = result.rows[0].data
+    expect(data.matching_banks).toBe(51)
+    expect(data.banks).toHaveLength(50)
+    expect(data.banks[0].name).toBe('Bank 51')
+    expect(data.summary).toEqual([
+      {
+        status: 'Issued',
+        type: 'Outward',
+        cheque_count: 51,
+        total_amount: 1326,
+        today_count: 0,
+        today_amount: 0,
+        overdue_count: 51,
+        overdue_amount: 1326,
+      },
+    ])
+    const next = await db.query<{ data: Analytics }>(
+      `SELECT cheque_analytics($1,'2026-10-31',false,'2026-10-31','2026-10-31','All',50,50) AS data`,
+      [business],
+    )
+    expect(next.rows[0].data.banks).toHaveLength(1)
+    expect(next.rows[0].data.banks[0].name).toBe('Bank 1')
+    const inward = await db.query<{ data: Analytics }>(
+      `SELECT cheque_analytics($1,'2026-10-31',true,'2026-10-31','2026-10-31','Inward') AS data`,
+      [business],
+    )
+    expect(inward.rows[0].data.summary[0]).toMatchObject({
+      cheque_count: 1,
+      total_amount: 5,
+      today_count: 1,
+      overdue_count: 0,
+    })
+  })
   it('rejects an unbounded/null page limit instead of returning every record', async () => {
     await db.exec('SET ROLE authenticated')
     await expect(

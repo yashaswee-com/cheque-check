@@ -105,9 +105,10 @@ describe('useOptimisticMutation', () => {
     )
 
     await act(async () => result.current.mutateAsync('account-1'))
-    expect(invalidate).toHaveBeenCalledExactlyOnceWith({
+    expect(invalidate).toHaveBeenCalledWith({
       queryKey: ['accounts', 'business-1'],
     })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['cheque-analytics'] })
   })
 
   it('supports cheque invalidation keys without a business identifier', async () => {

@@ -208,6 +208,9 @@ export function useCreateCheque(
         queryKey: queryKeys.cheques.summaries(businessId),
       })
       queryClient.invalidateQueries({
+        queryKey: queryKeys.cheques.analyticsAll(),
+      })
+      queryClient.invalidateQueries({
         queryKey: queryKeys.businesses.summaries(),
       })
       queryClient.invalidateQueries({

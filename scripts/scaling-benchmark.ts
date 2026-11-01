@@ -176,6 +176,53 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
       { name: 'first_page', run: () => page(0) },
       { name: 'last_page', run: () => page(lastOffset) },
       {
+        name: 'extended_filters',
+        async run() {
+          const { rows } = await db.query<PageRow>(
+            `SELECT * FROM cheque_list_page($1, requested_from := '2026-10-31',
+              requested_to := '2026-10-31', requested_statuses := ARRAY['Issued','Cleared'],
+              requested_min_amount := $2, requested_max_amount := $2, requested_limit := 50)`,
+            [hotBusiness, options.hotBusinessCheques],
+          )
+          assert.equal(Number(rows[0].matching_count), 1)
+          assert.equal(
+            rows[0].cheque_id,
+            uuid(`${hotBusiness}:${options.hotBusinessCheques}`),
+          )
+        },
+      },
+      {
+        name: 'analytics',
+        async run() {
+          const { rows } = await db.query<{
+            data: {
+              series: { outward_count: number; outward_amount: number }[]
+              summary: { cheque_count: number }[]
+              banks: { id: string | null }[]
+            }
+          }>(
+            `SELECT cheque_analytics($1,'2026-10-31',true,'2026-10-02','2026-10-31') AS data`,
+            [hotBusiness],
+          )
+          const data = rows[0].data
+          assert.equal(data.series.length, 30)
+          assert.equal(
+            data.series.reduce((sum, point) => sum + point.outward_count, 0),
+            options.hotBusinessCheques,
+          )
+          assert.equal(
+            data.series.reduce((sum, point) => sum + point.outward_amount, 0),
+            (options.hotBusinessCheques * (options.hotBusinessCheques + 1)) / 2,
+          )
+          assert.equal(
+            data.summary.reduce((sum, row) => sum + row.cheque_count, 0),
+            options.hotBusinessCheques,
+          )
+          assert.equal(data.banks.length, 1)
+          assert.equal(data.banks[0].id, null)
+        },
+      },
+      {
         name: 'search',
         async run() {
           const { rows } = await db.query<PageRow>(

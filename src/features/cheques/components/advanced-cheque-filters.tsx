@@ -34,11 +34,33 @@ export function AdvancedChequeFilters({
   const t = useTranslations('Cheques')
   const common = useTranslations('Common')
   const party = useTranslations('Parties')
+  const stats = useTranslations('ChartStats')
   const banks = useBanks()
   const selectedBanks = params.get('bank_ids')?.split(',') ?? []
   const statuses = params.get('statuses')?.split(',') ?? []
   return (
     <>
+      <FilterPillSection title={stats('direction')}>
+        {(['All', 'Outward', 'Inward'] as const).map((type) => (
+          <button
+            key={type}
+            type="button"
+            className={filterPillClassName(
+              (params.get('type') ?? 'All') === type,
+            )}
+            aria-pressed={(params.get('type') ?? 'All') === type}
+            onClick={() => onChange('type', type === 'All' ? '' : type)}
+          >
+            {stats(
+              type === 'All'
+                ? 'all'
+                : type === 'Outward'
+                  ? 'outward'
+                  : 'inward',
+            )}
+          </button>
+        ))}
+      </FilterPillSection>
       <FilterPillSection title={t('filterStatus')}>
         <button
           type="button"

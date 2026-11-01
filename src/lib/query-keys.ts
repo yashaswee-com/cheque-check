@@ -26,6 +26,10 @@ export const queryKeys = {
         : (['business-cheque-summaries'] as const),
   },
   cheques: {
+    analyticsAll: () => ['cheque-analytics'] as const,
+    analytics: (
+      request: import('@/features/cheques/repositories/analytics.repository').AnalyticsRequest,
+    ) => ['cheque-analytics', request.businessId, request] as const,
     summaries: (businessId?: string) =>
       ['cheque-summaries', businessId] as const,
     summary: (

@@ -814,6 +814,19 @@ export interface Database {
         Args: { requested_today: string }
         Returns: { business_id: string; upcoming_total: number }[]
       }
+      cheque_analytics: {
+        Args: {
+          requested_business: string
+          requested_today: string
+          requested_include_inward?: boolean
+          requested_from?: string
+          requested_to?: string
+          requested_direction?: string
+          requested_offset?: number
+          requested_limit?: number
+        }
+        Returns: Json
+      }
       schedule_notification_batch: {
         Args: { requested_now?: string; requested_force?: boolean }
         Returns: {

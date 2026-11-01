@@ -12,6 +12,7 @@ import { localDay } from '@/lib/preference-format'
 
 export const DATE_RANGE_PRESETS = [
   'all',
+  'last30Days',
   'thisWeek',
   'thisMonth',
   'lastMonth',
@@ -39,6 +40,12 @@ export function resolveDateRange(
     ? new Date(`${localDay(now, timeZone)}T12:00:00`)
     : now
   switch (preset) {
+    case 'last30Days': {
+      const end = toDay(calendarNow)
+      const start = new Date(calendarNow)
+      start.setDate(start.getDate() - 29)
+      return { from: toDay(start), to: end }
+    }
     case 'thisWeek':
       return {
         from: toDay(startOfWeek(calendarNow, { weekStartsOn: 1 })),

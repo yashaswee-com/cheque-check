@@ -89,9 +89,14 @@ describe('local benchmark input and measurements', () => {
       settled: 3,
       accounting_verified: true,
     })
-    expect(report.reads).toHaveLength(7)
+    expect(report.reads).toHaveLength(9)
     expect(report.reads.map((read) => read.name)).toEqual(
-      expect.arrayContaining(['free_plan_usage', 'free_cap_check']),
+      expect.arrayContaining([
+        'free_plan_usage',
+        'free_cap_check',
+        'extended_filters',
+        'analytics',
+      ]),
     )
     expect(report.reads.every((read) => read.samples === 2)).toBe(true)
     expect(report.scope).toContain('no HTTP')

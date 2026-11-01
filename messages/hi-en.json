@@ -54,6 +54,21 @@
     "ai_scan_250": "AI Scanner - Top-Up (250 scans)",
     "voice_reminder_100": "Voice Reminders - Top-Up (100 calls)"
   },
+  "Analytics": {
+    "title": "Samay ke hisaab se cheques",
+    "summary": "Summary",
+    "byBank": "Account bank ke hisaab se",
+    "unknownBank": "Unknown bank",
+    "pending": "Pending value",
+    "cleared": "Cleared value",
+    "overdue": "Overdue",
+    "dueToday": "Aaj due",
+    "count": "{count} cheques",
+    "date": "Cheque date",
+    "noCheques": "Is range mein koi published cheque nahi hai.",
+    "loadError": "Analytics load nahi hua. 10 saal tak ki sahi date range chunein ya dobara koshish karein.",
+    "grouping": { "day": "Daily", "week": "Weekly", "month": "Monthly" }
+  },
   "ChartStats": {
     "clearanceRate": "Clearance rate",
     "noClearanceData": "Koi cheque nahi",
@@ -575,6 +590,7 @@
     "receivable": "Milne wala",
     "payable": "Dene wala",
     "dateRange": {
+      "last30Days": "Pichhle 30 din",
       "label": "Date range",
       "all": "Sab time",
       "thisWeek": "Is hafte",

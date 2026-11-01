@@ -2,6 +2,7 @@
 import type { PGlite } from '@electric-sql/pglite'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { asUser, createMigratedDb } from '@/test/migrated-db'
+import { chequeAnalyticsSchema } from '@/validators/cheque-analytics'
 
 const owner = '10000000-0000-4000-8000-000000000001'
 const other = '10000000-0000-4000-8000-000000000002'
@@ -19,6 +20,7 @@ beforeAll(async () => {
     '20261101070000_party_type.sql',
     '20261101080000_six_digit_cheque_numbers.sql',
     '20261102070000_extended_cheque_filters.sql',
+    '20261102090000_cheque_analytics.sql',
   ])
   await db.exec(`
     INSERT INTO auth.users(id,email) VALUES('${owner}','filter@x.test'),('${other}','other@x.test');
@@ -67,6 +69,106 @@ describe('extended server filters', () => {
     expect(next.rows[0].cheque_id).not.toBe(result.rows[0].cheque_id)
   })
 
+  async function analytics(
+    from: string,
+    to: string,
+    user = owner,
+    direction = 'All',
+  ) {
+    const result = await asUser<{ data: unknown }>(
+      db,
+      user,
+      `SELECT cheque_analytics('${business}','2026-02-02',true,'${from}','${to}','${direction}') AS data`,
+    )
+    return chequeAnalyticsSchema.parse(result.rows[0].data)
+  }
+
+  describe('full-schema cheque analytics', () => {
+    it('zero-fills daily buckets and totals counts/amounts without fetching cheque rows', async () => {
+      const result = await analytics('2026-01-01', '2026-01-31')
+      expect(result.granularity).toBe('day')
+      expect(result.series).toHaveLength(31)
+      expect(result.series[0]).toMatchObject({
+        day: '2026-01-01',
+        outward_count: 1,
+        outward_amount: 100.25,
+      })
+      expect(result.series[1]).toMatchObject({
+        outward_count: 0,
+        outward_amount: 0,
+      })
+      expect(
+        result.series.reduce((sum, row) => sum + row.outward_amount, 0),
+      ).toBe(300.25)
+      expect(
+        result.summary.find((row) => row.status === 'Issued'),
+      ).toMatchObject({
+        cheque_count: 1,
+        total_amount: 100.25,
+        overdue_count: 1,
+        overdue_amount: 100.25,
+        today_count: 0,
+      })
+      expect(
+        result.summary.find((row) => row.status === 'Cleared'),
+      ).toMatchObject({ overdue_count: 0 })
+      expect(result.matching_banks).toBe(1)
+      expect(result.banks[0].id).toBe(bank)
+    })
+    it.each([
+      ['2026-01-01', '2026-01-31', 'day'],
+      ['2026-01-01', '2026-02-01', 'week'],
+      ['2026-01-01', '2026-03-31', 'week'],
+      ['2026-01-01', '2026-04-01', 'month'],
+    ])(
+      'switches grouping at exact inclusive thresholds %s to %s',
+      async (from, to, grouping) => {
+        expect((await analytics(from, to)).granularity).toBe(grouping)
+      },
+    )
+    it('allows the 10-year boundary, rejects longer/reversed ranges, and keeps tenant isolation', async () => {
+      expect((await analytics('2016-01-01', '2026-01-01')).series).toHaveLength(
+        121,
+      )
+      await expect(analytics('2016-01-01', '2026-01-02')).rejects.toThrow(
+        'cannot exceed 10 years',
+      )
+      await expect(analytics('2026-01-02', '2026-01-01')).rejects.toThrow(
+        'Invalid analytics request',
+      )
+      const foreign = await analytics('2026-01-01', '2026-01-31', other)
+      expect(foreign.summary).toEqual([])
+      expect(foreign.banks).toEqual([])
+      expect(
+        foreign.series.every(
+          (point) => point.outward_count === 0 && point.inward_count === 0,
+        ),
+      ).toBe(true)
+      const inward = await analytics(
+        '2026-01-01',
+        '2026-01-31',
+        owner,
+        'Inward',
+      )
+      expect(inward.summary).toEqual([])
+    })
+    it('supports the Unknown bank drilldown rather than opening unfiltered cheques', async () => {
+      await db.exec(
+        `UPDATE accounts SET bank_id = NULL WHERE id = '${account}'`,
+      )
+      expect((await page('requested_unknown_bank := true')).rows).toHaveLength(
+        3,
+      )
+      expect(
+        Number(
+          (await page(`requested_banks := ARRAY['${bank}']::uuid[]`)).rows[0]
+            .matching_count,
+        ),
+      ).toBe(0)
+      const result = await analytics('2026-01-01', '2026-01-31')
+      expect(result.banks[0].id).toBeNull()
+    })
+  })
   it('supports unclassified parties, zero amounts, open bounds and no-match metadata', async () => {
     const zero = await page(
       `requested_party_type := 'unclassified', requested_max_amount := 0`,

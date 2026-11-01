@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
+import { ChequeAnalytics } from '@/features/cheques/components/cheque-analytics'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -113,17 +114,15 @@ export default function HomePage() {
     })
   }
 
-  const [statsPreset, setStatsPreset] = useState<DateRangePreset>('all')
+  const [statsPreset, setStatsPreset] = useState<DateRangePreset>('last30Days')
   const [customRange, setCustomRange] = useState<DateRange>()
-  const statsSummary = useChequeSummary(
-    activeBusiness?.id,
-    resolveDateRange(
-      statsPreset,
-      new Date(),
-      customRange,
-      profile?.time_zone || 'Asia/Kolkata',
-    ),
+  const statsRange = resolveDateRange(
+    statsPreset,
+    new Date(),
+    customRange,
+    profile?.time_zone || 'Asia/Kolkata',
   )
+  const statsSummary = useChequeSummary(activeBusiness?.id, statsRange)
 
   const currency = profile?.currency || '₹'
   const display = useDisplayFormat(profile)
@@ -386,6 +385,11 @@ export default function HomePage() {
               error={
                 statsSummary.isError ? tCommon('loadDataError') : undefined
               }
+            />
+            <ChequeAnalytics
+              businessId={activeBusiness?.id}
+              range={statsRange}
+              showBankAnalysis
             />
           </div>
         </>

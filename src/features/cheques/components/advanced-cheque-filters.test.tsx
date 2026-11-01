@@ -71,6 +71,9 @@ it('combines live status, single party type, decimal bounds and removable bank s
   )
   fireEvent.click(screen.getByRole('button', { name: 'Pending' }))
   fireEvent.click(screen.getByRole('button', { name: 'Cleared' }))
+  fireEvent.click(
+    screen.getByRole('button', { name: messages.ChartStats.outward }),
+  )
   fireEvent.click(screen.getByRole('button', { name: 'Customer' }))
   fireEvent.click(screen.getByRole('button', { name: 'Supplier' }))
   expect(screen.getByRole('button', { name: 'Customer' })).toHaveAttribute(
@@ -85,6 +88,7 @@ it('combines live status, single party type, decimal bounds and removable bank s
   expect(parseChequeListUrl(params)).toMatchObject({
     success: true,
     filters: {
+      type: 'Outward',
       statuses: ['Issued', 'Received', 'Cleared'],
       party_type: 'supplier',
       min_amount: 100.25,

@@ -18,6 +18,13 @@ import ReportsPage from './reports/page'
 import ProfilePage from './profile/page'
 import BusinessesPage from './businesses/page'
 import type { ExportJob } from '@/features/reports/repositories/export-job.repository'
+vi.mock('@/features/cheques/hooks/use-cheque-analytics', () => ({
+  useChequeAnalytics: () => ({
+    data: undefined,
+    isFetching: false,
+    error: null,
+  }),
+}))
 
 const mocks = vi.hoisted(() => ({
   update: vi.fn(),

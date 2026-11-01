@@ -5,6 +5,16 @@ import { filterByChequeDate, resolveDateRange } from './date-range'
 const now = new Date(2026, 8, 16, 12)
 
 describe('resolveDateRange', () => {
+  it('defaults analytics to exactly 30 inclusive profile-calendar days across year boundaries', () => {
+    expect(
+      resolveDateRange(
+        'last30Days',
+        new Date('2026-12-31T23:30:00Z'),
+        {},
+        'Asia/Kolkata',
+      ),
+    ).toEqual({ from: '2026-12-03', to: '2027-01-01' })
+  })
   it('uses the preferred local month and year at UTC calendar boundaries', () => {
     const instant = new Date('2026-12-31T22:45:00Z')
     expect(resolveDateRange('thisYear', instant, {}, 'Asia/Kolkata')).toEqual({

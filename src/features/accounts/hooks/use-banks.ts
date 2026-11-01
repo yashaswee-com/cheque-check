@@ -15,7 +15,10 @@ export function useBanks() {
 export function useBankMutations() {
   const client = useQueryClient()
   const refresh = () =>
-    client.invalidateQueries({ queryKey: queryKeys.banks.list() })
+    Promise.all([
+      client.invalidateQueries({ queryKey: queryKeys.banks.list() }),
+      client.invalidateQueries({ queryKey: queryKeys.cheques.analyticsAll() }),
+    ])
   const create = useMutation({
     mutationFn: (input: CustomBankInput) => bankService.create(input),
     onSuccess: refresh,
