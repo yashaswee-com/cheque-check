@@ -1,5 +1,7 @@
 'use client'
 
+import { PremiumLink } from '@/features/monetization/components/premium-controls'
+
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   File02Icon as FileText,
@@ -306,9 +308,10 @@ export default function HomePage() {
                   </span>
                 </div>
               </Link>
-              <Link
+              <PremiumLink
+                feature="reports"
                 href="/reports"
-                className="w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
+                className="relative w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary [&>[data-slot=premium-mark]]:absolute [&>[data-slot=premium-mark]]:right-2 [&>[data-slot=premium-mark]]:top-2"
               >
                 <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-4 transition-transform active:scale-95 border border-primary/5">
                   <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary/10 text-primary">
@@ -318,7 +321,7 @@ export default function HomePage() {
                     {tReports('title')}
                   </span>
                 </div>
-              </Link>
+              </PremiumLink>
             </div>
           </div>
 

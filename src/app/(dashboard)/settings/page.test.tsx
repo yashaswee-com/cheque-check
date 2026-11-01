@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
 import SettingsPage from './page'
+import { PremiumPromptProvider } from '@/features/monetization/components/premium-prompt'
 
 const mocks = vi.hoisted(() => ({ logout: vi.fn() }))
 let profileLoading = false
@@ -22,6 +23,14 @@ vi.mock('@/features/settings/hooks/use-settings', () => ({
 vi.mock('@/features/monetization/hooks/use-monetization', () => ({
   useMonetization: () => ({ isLoading: monetizationLoading }),
 }))
+vi.mock('@/features/monetization/hooks/use-premium-access', () => ({
+  usePremiumAccess: () => ({
+    state: 'free',
+    canUse: () => false,
+    isLoading: false,
+  }),
+}))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/components/monitoring-preferences', () => ({
   MonitoringPreferences: () => <div>Monitoring preferences</div>,
 }))
@@ -29,7 +38,9 @@ vi.mock('@/components/monitoring-preferences', () => ({
 function renderPage() {
   return render(
     <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
-      <SettingsPage />
+      <PremiumPromptProvider>
+        <SettingsPage />
+      </PremiumPromptProvider>
     </NextIntlClientProvider>,
   )
 }

@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { useTranslations } from 'next-intl'
 import {
@@ -23,6 +22,10 @@ import {
   PremiumGate,
   usePremiumAction,
 } from '@/features/monetization/components/premium-gate'
+import {
+  PremiumButton,
+  PremiumField,
+} from '@/features/monetization/components/premium-controls'
 import { savePrintLayout } from '@/features/premium-workspace/services/workspace.service'
 import { toast } from '@/components/ui/toast'
 
@@ -60,6 +63,7 @@ export function PrintLayoutEditor({
   onOpenChange?: (open: boolean) => void
 }) {
   const t = useTranslations('Cheques')
+  const premium = usePremiumAction()
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : uncontrolledOpen
@@ -69,13 +73,22 @@ export function PrintLayoutEditor({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen && !premium.requireAccess('cheque-printing')) return
+        setOpen(nextOpen)
+      }}
+    >
       {!isControlled && (
-        <DialogTrigger
-          render={<Button variant="ghost" className="rounded-full" />}
+        <PremiumButton
+          feature="cheque-printing"
+          variant="ghost"
+          className="rounded-full"
+          onClick={() => setOpen(true)}
         >
           {t('configurePrint')}
-        </DialogTrigger>
+        </PremiumButton>
       )}
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -181,27 +194,29 @@ function PrintLayoutForm({
       <p className="text-xs text-muted-foreground">
         {t('printCoordinatesHelp')}
       </p>
-      <div className="grid grid-cols-2 gap-3">
-        {fields.map((key) => (
-          <label key={key} className="space-y-1 text-xs font-semibold">
-            {t(`printFields.${key}`)} (mm)
-            <Input
-              type="number"
-              min="0"
-              max={key.endsWith('X') ? 210 : 297}
-              step="1"
-              value={layout[key]}
-              onChange={(event) =>
-                setLayout((current) => ({
-                  ...current,
-                  [key]: event.target.value,
-                }))
-              }
-              disabled={isSaving}
-            />
-          </label>
-        ))}
-      </div>
+      <PremiumField feature="cheque-printing" label={t('configurePrint')}>
+        <div className="grid grid-cols-2 gap-3">
+          {fields.map((key) => (
+            <label key={key} className="space-y-1 text-xs font-semibold">
+              {t(`printFields.${key}`)} (mm)
+              <Input
+                type="number"
+                min="0"
+                max={key.endsWith('X') ? 210 : 297}
+                step="1"
+                value={layout[key]}
+                onChange={(event) =>
+                  setLayout((current) => ({
+                    ...current,
+                    [key]: event.target.value,
+                  }))
+                }
+                disabled={isSaving}
+              />
+            </label>
+          ))}
+        </div>
+      </PremiumField>
       <div className="flex justify-between gap-2">
         <Button
           type="button"

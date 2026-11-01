@@ -13,8 +13,11 @@ const heading = (page: Page) =>
 const destinations: Destination[] = [
   {
     href: '/cheques#bulk-import',
-    url: /\/cheques#bulk-import$/,
-    ready: (page) => expect(page.locator('details#bulk-import')).toBeVisible(),
+    url: '/settings',
+    ready: (page) =>
+      expect(
+        page.getByRole('dialog', { name: 'Bulk CSV & Excel imports' }),
+      ).toBeVisible(),
   },
   {
     href: '/settings/preferences',
@@ -49,9 +52,11 @@ const destinations: Destination[] = [
   },
   {
     href: '/reports',
-    url: '/reports',
+    url: '/settings',
     ready: (page) =>
-      expect(page.getByTestId('reports-premium-gate')).toBeVisible(),
+      expect(
+        page.getByRole('dialog', { name: 'Advanced reports & exports' }),
+      ).toBeVisible(),
   },
   { href: '/tags', url: '/tags', ready: heading },
   { href: '/settings/whats-new', url: '/settings/whats-new', ready: heading },

@@ -6,7 +6,7 @@ import { Combobox } from '@/components/ui/combobox'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { useProfile } from '@/features/profile/hooks/use-profile'
-import { usePremiumAction } from '@/features/monetization/components/premium-gate'
+import { PremiumSwitch } from '@/features/monetization/components/premium-controls'
 import { toast } from '@/components/ui/toast'
 import type { Profile } from '@/types'
 
@@ -14,7 +14,6 @@ export default function NotificationsPage() {
   const t = useTranslations('Settings')
   const tc = useTranslations('Common')
   const { profile, updateProfile, isLoading } = useProfile()
-  const premium = usePremiumAction()
   const [isSaving, setIsSaving] = useState(false)
   const savePreferences = async (changes: Partial<Profile>) => {
     setIsSaving(true)
@@ -88,21 +87,28 @@ export default function NotificationsPage() {
                 {channel.description}
               </p>
             </div>
-            <Switch
-              checked={profile[channel.key]}
-              onCheckedChange={(checked) => {
-                if (
-                  channel.key === 'party_sms_enabled' &&
-                  checked &&
-                  !premium.requireAccess('notify-party')
-                )
-                  return
-                void savePreferences({ [channel.key]: checked })
-              }}
-              disabled={isSaving}
-              aria-label={channel.label}
-              data-testid={`notifications-toggle-${channel.key}`}
-            />
+            {channel.key === 'party_sms_enabled' ? (
+              <PremiumSwitch
+                feature="notify-party"
+                checked={profile[channel.key]}
+                onCheckedChange={(checked) =>
+                  void savePreferences({ [channel.key]: checked })
+                }
+                disabled={isSaving}
+                aria-label={channel.label}
+                data-testid={`notifications-toggle-${channel.key}`}
+              />
+            ) : (
+              <Switch
+                checked={profile[channel.key]}
+                onCheckedChange={(checked) =>
+                  void savePreferences({ [channel.key]: checked })
+                }
+                disabled={isSaving}
+                aria-label={channel.label}
+                data-testid={`notifications-toggle-${channel.key}`}
+              />
+            )}
           </div>
         ))}
       </div>

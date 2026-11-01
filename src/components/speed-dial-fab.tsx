@@ -11,6 +11,8 @@ import {
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { PremiumMark } from '@/features/monetization/components/premium-mark'
+import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
 
 export interface SpeedDialAction {
   label: string
@@ -20,6 +22,7 @@ export interface SpeedDialAction {
   disabled?: boolean
   loading?: boolean
   testId?: string
+  premiumFeature?: PremiumFeature
 }
 
 interface SpeedDialFabProps {
@@ -35,6 +38,7 @@ export function SpeedDialFab({
   actions = [],
 }: SpeedDialFabProps) {
   const t = useTranslations('Common')
+  const tp = useTranslations('Premium')
   const [open, setOpen] = useState(false)
   const [isPending, setIsPending] = useState(false)
   const isPendingRef = useRef(false)
@@ -100,6 +104,8 @@ export function SpeedDialFab({
                   disabled={action.disabled || isLoading}
                   loading={action.loading}
                   data-testid={action.testId}
+                  data-premium-feature={action.premiumFeature}
+                  title={action.premiumFeature ? tp('marker') : undefined}
                   onClick={() => runAction(action)}
                   className={cn(
                     'flex h-auto items-center gap-3 rounded-full border-0 bg-background py-1.5 pl-4 pr-1.5 text-sm font-semibold shadow-lg ring-1 ring-border transition-transform hover:bg-background active:scale-95 disabled:opacity-50',
@@ -107,6 +113,7 @@ export function SpeedDialFab({
                   )}
                 >
                   {action.label}
+                  {action.premiumFeature && <PremiumMark />}
                   <span
                     className={cn(
                       'flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary',

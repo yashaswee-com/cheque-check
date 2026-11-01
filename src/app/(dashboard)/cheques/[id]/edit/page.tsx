@@ -2,6 +2,10 @@
 
 import { useRef, useState } from 'react'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
+import {
+  PremiumTab,
+  PremiumTabs,
+} from '@/features/monetization/components/premium-controls'
 
 import { useEditCheque } from '@/features/cheques/hooks/use-edit-cheque'
 import { useParties } from '@/features/parties/hooks/use-parties'
@@ -32,7 +36,7 @@ import { Combobox } from '@/components/ui/combobox'
 import { FormSection } from '@/components/ui/form-section'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import dynamic from 'next/dynamic'
 import { Party, AccountWithRelations } from '@/types'
 import { useLocale, useTranslations } from 'next-intl'
@@ -230,15 +234,11 @@ export default function EditChequePage() {
             >
               {t('type')}
             </Label>
-            <Tabs
+            <PremiumTabs
+              featureByValue={{ Inward: 'inward-tracking' }}
+              exemptValues={cheque?.type === 'Inward' ? ['Inward'] : []}
               value={watch('type')}
               onValueChange={(value) => {
-                if (
-                  value === 'Inward' &&
-                  cheque?.type !== 'Inward' &&
-                  !premium.requireAccess('inward-tracking')
-                )
-                  return
                 setField('type', value as string)
               }}
             >
@@ -250,15 +250,16 @@ export default function EditChequePage() {
                   <HugeiconsIcon icon={ArrowUpRight} className="h-4 w-4" />
                   {t('issued')}
                 </TabsTrigger>
-                <TabsTrigger
+                <PremiumTab
+                  feature="inward-tracking"
                   value="Inward"
                   className="h-full flex-1 gap-2 rounded-md text-xs font-semibold uppercase tracking-wider data-active:bg-green-500 data-active:text-white"
                 >
                   <HugeiconsIcon icon={ArrowDownLeft} className="h-4 w-4" />
                   {t('received')}
-                </TabsTrigger>
+                </PremiumTab>
               </TabsList>
-            </Tabs>
+            </PremiumTabs>
           </div>
 
           <div className="space-y-2">

@@ -763,6 +763,12 @@ describe('party creation page', () => {
     expect(importButton.parentElement).toBe(nameField)
     expect(input.parentElement?.nextElementSibling).toBe(importButton)
     expect(importButton).not.toHaveClass('absolute')
+    expect(
+      importButton.querySelector('[data-slot="premium-mark"]'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(messages.Parties.contactImportHelp),
+    ).not.toBeInTheDocument()
     expect(document.getElementById('contact')).toBeVisible()
     expect(document.getElementById('email')).toBeNull()
     expect(document.getElementById('notes')).toBeNull()

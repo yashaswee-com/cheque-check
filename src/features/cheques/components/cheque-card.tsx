@@ -26,6 +26,7 @@ import {
   preparePartySms,
 } from '@/features/cheques/lib/notify-party'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
+import { PremiumMark } from '@/features/monetization/components/premium-mark'
 
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 
@@ -226,6 +227,7 @@ export function ChequeCard({ cheque, onStatusUpdate, tags }: ChequeCardProps) {
           >
             <HugeiconsIcon icon={Message} className="h-3.5 w-3.5" />
             {t('notifyParty')}
+            <PremiumMark />
           </button>
         )}
       </motion.div>

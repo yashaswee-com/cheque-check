@@ -29,7 +29,11 @@ vi.mock('@/features/premium-workspace/services/workspace.service', () => ({
 }))
 vi.mock('@/features/monetization/components/premium-gate', () => ({
   PremiumGate: ({ children }: { children: ReactNode }) => children,
-  usePremiumAction: () => ({ verifyAccess: mocks.verify }),
+  usePremiumAction: () => ({
+    verifyAccess: mocks.verify,
+    requireAccess: () => true,
+    canUse: () => true,
+  }),
 }))
 vi.mock('@/components/ui/toast', () => ({ toast: { add: mocks.toast } }))
 

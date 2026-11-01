@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { PremiumGate } from '@/features/monetization/components/premium-gate'
+import { PremiumMark } from '@/features/monetization/components/premium-mark'
 import { useWorkspaceContext, useWorkspaceTools } from '../hooks/use-workspace'
 import { useWorkspaceAction } from '../hooks/use-workspace-action'
 import { ImportPanel } from './import-panel'
@@ -88,13 +89,14 @@ function BusinessWorkspace({
         aria-label={t('sections')}
         className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4"
       >
-        {tabs.map(([id]) => (
+        {tabs.map(([id, feature]) => (
           <Button
             key={id}
             className="h-auto min-h-11 whitespace-normal px-2 py-2 text-center leading-snug"
             variant={tab === id ? 'default' : 'outline'}
             disabled={busy}
             aria-pressed={tab === id}
+            data-premium-feature={feature}
             onClick={() => {
               setTab(id)
               setNotice(null)
@@ -102,6 +104,7 @@ function BusinessWorkspace({
             }}
           >
             {t(`tabs.${id}`)}
+            <PremiumMark />
           </Button>
         ))}
       </nav>

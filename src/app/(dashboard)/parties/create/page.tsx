@@ -32,6 +32,7 @@ import { storageService } from '@/services/storage.service'
 import { validateImageFile } from '@/lib/storage'
 import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
+import { PremiumButton } from '@/features/monetization/components/premium-controls'
 import { useParties } from '@/features/parties/hooks/use-parties'
 import { findPossiblePartyDuplicates } from '@/features/parties/lib/party-duplicates'
 import { usePartyDraftTags } from '@/features/parties/hooks/use-party-draft-tags'
@@ -347,25 +348,23 @@ export default function CreatePartyPage() {
                   placeholder={t('enterFullName')}
                   className="min-w-0 flex-1 h-14 bg-canvas-parchment border-none text-lg font-semibold rounded-sm"
                 />
-                <Button
+                <PremiumButton
+                  feature="contact-import"
                   type="button"
                   variant="outline"
                   size="icon"
                   onClick={importContact}
                   aria-label={t('importFromContacts')}
-                  className="h-14 w-14 shrink-0 rounded-sm text-primary"
+                  className="h-14 w-14 shrink-0 rounded-sm text-primary [&_[data-slot=premium-mark]]:absolute [&_[data-slot=premium-mark]]:right-0 [&_[data-slot=premium-mark]]:top-0"
                 >
                   <HugeiconsIcon icon={User} className="h-5 w-5" />
-                </Button>
+                </PremiumButton>
               </div>
               {errors.name && (
                 <p className="text-xs text-destructive ml-1">
                   {validationMessage(errors.name.message)}
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">
-                {t('contactImportHelp')}
-              </p>
             </div>
 
             <div className="space-y-2">

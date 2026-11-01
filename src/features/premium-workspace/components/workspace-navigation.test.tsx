@@ -58,6 +58,7 @@ vi.mock('../hooks/use-workspace-action', () => ({
   useWorkspaceAction: () => state.action,
 }))
 vi.mock('@/features/monetization/components/premium-gate', () => ({
+  usePremiumAction: () => ({ requireAccess: () => true }),
   PremiumGate: ({
     feature,
     children,

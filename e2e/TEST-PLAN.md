@@ -197,7 +197,7 @@ checkout is exercised only up to a stubbed Razorpay modal.
   user, signs in, completes onboarding, and waits on `/dashboard` (optionally after granting
   Premium). Journeys that need their own account or Premium use it instead of the shared session.
 - `e2e/pages/app-shell.page.ts`, `profile.page.ts`: shell navigation (tabs, create button, back,
-  "More actions" menu, upgrade toasts) and profile actions. `AccountsPage` covers catalog
+  "More actions" menu, contextual Premium sheets) and profile actions. `AccountsPage` covers catalog
   search, private banks, opening balance, IFSC, and the default-account checkbox.
 - New `data-testid`s where only styled text existed: `report-export-job` (with `data-format` and
   `data-status`), `account-detail-ifsc`, `account-detail-opening-balance`,

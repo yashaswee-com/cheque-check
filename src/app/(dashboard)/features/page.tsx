@@ -1,5 +1,10 @@
 'use client'
 
+import {
+  PremiumLink,
+  PremiumSwitch,
+} from '@/features/monetization/components/premium-controls'
+
 import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -314,7 +319,8 @@ export default function FeaturesPage() {
                 </div>
                 {isLifetimePremium && (
                   <div className="flex min-h-11 shrink-0 items-center">
-                    <Switch
+                    <PremiumSwitch
+                      feature="inward-tracking"
                       checked={!!profile.received_cheques_enabled}
                       disabled={saving !== null}
                       onCheckedChange={(value) =>
@@ -337,13 +343,14 @@ export default function FeaturesPage() {
                   </p>
                 </div>
                 {isLifetimePremium ? (
-                  <Link
+                  <PremiumLink
+                    feature="reports"
                     href="/reports"
                     className="inline-flex min-h-11 shrink-0 items-center gap-1 text-sm text-primary hover:underline"
                   >
                     {t('openReports')}{' '}
                     <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-                  </Link>
+                  </PremiumLink>
                 ) : (
                   <span className="text-xs text-muted-foreground">
                     {t('includedPremium')}
@@ -369,13 +376,14 @@ export default function FeaturesPage() {
                   </li>
                 ))}
               </ul>
-              <Link
+              <PremiumLink
+                feature="bulk-import"
                 href="/premium"
                 className="inline-flex min-h-11 items-center gap-1 text-sm text-primary hover:underline"
               >
                 {tp('openTools')}{' '}
                 <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-              </Link>
+              </PremiumLink>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 {tp('coreUnaffected')}
               </p>

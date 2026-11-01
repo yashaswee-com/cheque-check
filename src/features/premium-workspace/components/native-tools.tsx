@@ -16,7 +16,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { PrintLayoutEditor } from '@/features/cheques/components/print-layout-editor'
-import { PremiumGate } from '@/features/monetization/components/premium-gate'
+import {
+  PremiumGate,
+  usePremiumAction,
+} from '@/features/monetization/components/premium-gate'
+import { PremiumMark } from '@/features/monetization/components/premium-mark'
 import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useProfile } from '@/features/profile/hooks/use-profile'
@@ -33,6 +37,7 @@ type Destination =
   'cheques' | 'parties' | 'party' | 'business' | 'account' | 'businesses'
 
 type BusinessOption = { id: string; name: string }
+type ToolId = PremiumFeature | 'print-layout'
 const InitialToolContext = createContext<string | null>(null)
 const toolIcons: Record<string, IconSvgElement> = {
   'bulk-import': File,
@@ -46,7 +51,7 @@ const toolIcons: Record<string, IconSvgElement> = {
 }
 const toolSections: Record<
   Destination,
-  readonly (readonly [string, string])[]
+  readonly (readonly [ToolId, string])[]
 > = {
   cheques: [
     ['bulk-import', 'import'],
@@ -71,12 +76,15 @@ function ToolSection({
   children,
   onActivate,
 }: {
-  id: string
+  id: ToolId
   title: string
   icon: IconSvgElement
   children: React.ReactNode
   onActivate?: () => void
 }) {
+  const premium = usePremiumAction()
+  const tp = useTranslations('Premium')
+  const feature = id === 'print-layout' ? 'cheque-printing' : id
   const initialTool = useContext(InitialToolContext)
   const [open, setOpen] = useState(
     () =>
@@ -101,9 +109,19 @@ function ToolSection({
       }}
       className="scroll-mt-24 rounded-lg border bg-card"
     >
-      <summary className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-semibold">
+      <summary
+        className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-semibold"
+        data-premium-feature={feature}
+        aria-description={tp('marker')}
+        onClick={(event) => {
+          if (!open && !premium.requireAccess(feature)) {
+            event.preventDefault()
+          }
+        }}
+      >
         <HugeiconsIcon icon={icon} className="size-4 shrink-0 text-primary" />
         <span>{title}</span>
+        <PremiumMark />
       </summary>
       <div className="border-t p-4 sm:p-5">{children}</div>
     </details>
@@ -186,6 +204,7 @@ export function NativeTools(props: NativeToolsProps) {
             className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-24 z-40 size-12 rounded-full shadow-lg ring-1 ring-border"
           >
             <HugeiconsIcon icon={More} className="size-5" />
+            <PremiumMark className="absolute right-0 top-0" />
           </Button>
         }
       />

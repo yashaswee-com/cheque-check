@@ -94,6 +94,38 @@ grant; it is not true during a trial or a finite active grant. Use
 before client-side paid execution. Native contact selection uses the
 synchronous guard to preserve the browser's required user activation.
 
+### Premium-marked controls
+
+`PremiumPromptProvider` in the app providers hosts one shared Premium bottom
+sheet. Blocked `usePremiumAction` calls open that sheet with the feature's
+localized name, description, and current access state instead of an upgrade
+toast. Loading and verification errors show checking/retry rather than purchase
+actions; paused access directs users to support. Retrying never executes the
+original action automatically.
+
+Use the components exported from `features/monetization`:
+
+- `PremiumMark` marks a paid label, menu action, or section without adding an
+  interactive element. Markers remain visible for active and trial users.
+- `PremiumButton` and `PremiumLink` intercept locked activation and preserve
+  existing handlers for authorized users. Button handlers remain synchronous
+  so native contact selection retains user activation.
+- `PremiumSwitch` guards enabling a paid preference but always allows disabling
+  it. Other notification channels remain independent.
+- `PremiumTab` marks an option; couple it with `PremiumTabs` and a
+  `featureByValue` mapping to guard mouse and keyboard selection. `exemptValues`
+  preserves existing inward-record editing without granting new inward access.
+- `PremiumField` labels a paid field group and replaces unavailable controls
+  with an accessible upgrade trigger. It is for paid settings, not ordinary
+  saved records or free CRUD.
+
+Keep `verifyAccess(feature)` before paid execution and server authorization on
+server-backed operations; markers and sheets do not replace those checks.
+Native tool menus, inward options, contact import, party SMS, duplication,
+printing/layouts, reports, and paid navigation entries use the same feature
+identifiers. Contact-browser availability guidance lives in the contact-import
+sheet and runtime error, not as persistent form helper text.
+
 Finite active grants remain usable until their end date. Unlike explicit
 trials, they cannot start another Lifetime checkout while the existing payment
 RPC considers them active; Features directs those users to support.

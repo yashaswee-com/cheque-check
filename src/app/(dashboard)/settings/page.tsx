@@ -27,6 +27,8 @@ import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { useTranslations } from 'next-intl'
 import { IconType } from '@/types'
 import { useMonetization } from '@/features/monetization/hooks/use-monetization'
+import { PremiumLink } from '@/features/monetization/components/premium-controls'
+import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
 
 interface SettingsItem {
   name: string
@@ -34,6 +36,7 @@ interface SettingsItem {
   icon: IconType
   href: string
   action?: () => void
+  premiumFeature?: PremiumFeature
 }
 
 interface SettingsSection {
@@ -77,6 +80,7 @@ export default function SettingsPage() {
           description: tp('benefitsTitle'),
           icon: Zap,
           href: '/cheques#bulk-import',
+          premiumFeature: 'bulk-import',
         },
         {
           name: t('preferences'),
@@ -119,6 +123,7 @@ export default function SettingsPage() {
           description: t('reportsDesc'),
           icon: FileSpreadsheet,
           href: '/reports',
+          premiumFeature: 'reports',
         },
         {
           name: t('manageTags'),
@@ -252,7 +257,16 @@ export default function SettingsPage() {
                   </div>
                 )
 
-                return (
+                return item.premiumFeature ? (
+                  <PremiumLink
+                    href={item.href}
+                    feature={item.premiumFeature}
+                    key={item.name}
+                    className="relative block [&>[data-slot=premium-mark]]:absolute [&>[data-slot=premium-mark]]:right-10 [&>[data-slot=premium-mark]]:top-1/2 [&>[data-slot=premium-mark]]:-translate-y-1/2"
+                  >
+                    {content}
+                  </PremiumLink>
+                ) : (
                   <Link href={item.href} key={item.name}>
                     {content}
                   </Link>

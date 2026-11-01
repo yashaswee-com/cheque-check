@@ -21,6 +21,7 @@ import hindi from '../../../../messages/hi.json'
 import hinglish from '../../../../messages/hi-en.json'
 import FeaturesPage from './page'
 import type { PremiumState } from '@/features/monetization/lib/premium-access'
+import { PremiumPromptProvider } from '@/features/monetization/components/premium-prompt'
 
 const mocks = vi.hoisted(() => ({
   update: vi.fn(),
@@ -132,7 +133,7 @@ function renderPage(
           messages={translations}
           timeZone="UTC"
         >
-          {children}
+          <PremiumPromptProvider>{children}</PremiumPromptProvider>
         </NextIntlClientProvider>
       </QueryClientProvider>
     ),

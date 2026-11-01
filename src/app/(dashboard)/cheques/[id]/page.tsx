@@ -170,6 +170,7 @@ export default function ChequeDetailPage() {
       ? [
           {
             label: t('notifyParty'),
+            premiumFeature: 'notify-party' as const,
             icon: Message,
             onClick: () => {
               if (!premium.requireAccess('notify-party')) return
@@ -188,6 +189,7 @@ export default function ChequeDetailPage() {
       : []),
     {
       label: t('printCheque'),
+      premiumFeature: 'cheque-printing',
       icon: Download,
       testId: 'cheque-detail-print',
       onClick: async () => {
@@ -211,6 +213,7 @@ export default function ChequeDetailPage() {
     },
     {
       label: t('configurePrint'),
+      premiumFeature: 'cheque-printing',
       icon: PrintSettings,
       onClick: () => {
         if (premium.requireAccess('cheque-printing')) setPrintLayoutOpen(true)
@@ -218,6 +221,7 @@ export default function ChequeDetailPage() {
     },
     {
       label: t('duplicate'),
+      premiumFeature: 'duplicate-cheque',
       icon: Copy,
       testId: 'cheque-detail-duplicate',
       onClick: () => duplicateCheque(),

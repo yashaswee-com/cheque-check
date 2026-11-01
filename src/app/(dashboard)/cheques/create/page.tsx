@@ -41,7 +41,7 @@ import {
   StepperSeparator,
   StepperTrigger,
 } from '@/components/reui/stepper'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
 import { useLocale, useTranslations } from 'next-intl'
 import { useValidationMessage } from '@/hooks/use-validation-message'
@@ -61,8 +61,11 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { BankSelector } from '@/components/bank-selector'
 import { ScanStore } from '@/lib/scan-store'
 import { useProfile } from '@/features/profile/hooks/use-profile'
-import { usePremiumAction } from '@/features/monetization/components/premium-gate'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
+import {
+  PremiumTab,
+  PremiumTabs,
+} from '@/features/monetization/components/premium-controls'
 import { buildChequeReturnTo } from '@/lib/cheque-draft'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useDraftTags } from '@/features/tags/hooks/use-draft-tags'
@@ -75,7 +78,6 @@ export default function CreateChequePage() {
   const locale = useLocale()
   const tCommon = useTranslations('Common')
   const tDrafts = useTranslations('Drafts')
-  const premium = usePremiumAction()
   const searchParams = useSearchParams()
   const typeParam = searchParams.get('type')
   const imageUrlParam = searchParams.get('imageUrl')
@@ -387,14 +389,10 @@ export default function CreateChequePage() {
               >
                 {t('type')}
               </Label>
-              <Tabs
+              <PremiumTabs
+                featureByValue={{ Inward: 'inward-tracking' }}
                 value={watch('type')}
                 onValueChange={(value) => {
-                  if (
-                    value === 'Inward' &&
-                    !premium.requireAccess('inward-tracking')
-                  )
-                    return
                   setUserValue('type', value as 'Outward' | 'Inward')
                 }}
               >
@@ -410,7 +408,8 @@ export default function CreateChequePage() {
                     <HugeiconsIcon icon={ArrowUpRight} className="h-4 w-4" />
                     {t('issued')}
                   </TabsTrigger>
-                  <TabsTrigger
+                  <PremiumTab
+                    feature="inward-tracking"
                     value="Inward"
                     data-testid="cheque-type-inward"
                     className={cn(
@@ -420,9 +419,9 @@ export default function CreateChequePage() {
                   >
                     <HugeiconsIcon icon={ArrowDownLeft} className="h-4 w-4" />
                     {t('received')}
-                  </TabsTrigger>
+                  </PremiumTab>
                 </TabsList>
-              </Tabs>
+              </PremiumTabs>
             </div>
 
             <div className="space-y-2">
