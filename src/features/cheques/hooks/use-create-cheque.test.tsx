@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   firstIncompleteChequeStep: vi.fn(),
   profile: { default_reminder_days: 5 } as {
     default_reminder_days: number
+    time_zone?: string
   } | null,
   draft: {
     draftId: null as string | null,
@@ -147,9 +148,20 @@ beforeEach(() => {
   mocks.premium.requireAccess.mockReturnValue(true)
 })
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 describe('useCreateCheque', () => {
+  it('defaults both dates to today in the profile time zone rather than UTC', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-31T20:00:00Z'))
+    mocks.profile = { default_reminder_days: 5, time_zone: 'Asia/Kolkata' }
+    const { result } = setup()
+    expect(result.current.form.getValues('deposit_date')).toBe('2026-11-01')
+    expect(result.current.form.getValues('cheque_date')).toBe('2026-11-01')
+  })
   it('updates the selected cheque type and validates the three-step wizard', async () => {
     const { result, rerender } = setup('unexpected')
     expect(result.current.form.getValues('type')).toBe('Outward')

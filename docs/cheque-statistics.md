@@ -15,6 +15,9 @@ Dashboard and Reports share the same status distribution component and helpers.
   shows a loading state (or an explicit fetch error), preserving both selections.
 - Today, Upcoming and Overdue counts are centered immediately below the balance
   card, followed by quick-action buttons with overflow arrows.
+- New cheques default both cheque and expected deposit dates to today in the
+  profile time zone (browser-local when unavailable). Resumed drafts retain
+  their stored dates, including incomplete values.
 - Fully cleared nonempty data shows 100% Cleared. Empty data is neutral;
   bounced-only data says No pending cheques, not All cleared.
 - Issued and Received are pending. Bounced and Cleared do not contribute to

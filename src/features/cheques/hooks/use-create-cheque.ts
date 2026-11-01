@@ -25,6 +25,7 @@ import {
 import { buildNotifyPartyAction } from '@/features/cheques/lib/notify-party'
 import { queryKeys } from '@/lib/query-keys'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
+import { localDay } from '../lib/statistics'
 
 import type { ChequeFormValues } from '@/types'
 
@@ -59,13 +60,13 @@ export function useCreateCheque(
     defaultValues: {
       amount: 0,
       cheque_number: '',
-      cheque_date: new Date().toISOString().split('T')[0],
+      cheque_date: localDay(new Date(), profile?.time_zone),
       party_id: '',
       account_id: '',
       type: initialType === 'Inward' ? 'Inward' : 'Outward',
       notes: '',
       image_url: null,
-      deposit_date: '',
+      deposit_date: localDay(new Date(), profile?.time_zone),
     },
   })
 
