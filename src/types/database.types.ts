@@ -864,6 +864,18 @@ export interface Database {
         Args: { requested_business?: string }
         Returns: number
       }
+      free_plan_usage: {
+        Args: Record<string, never>
+        Returns: {
+          unlimited: boolean
+          cheques_used: number
+          cheques_limit: number
+          ai_scans_used: number
+          ai_scans_limit: number
+          voice_used: number
+          voice_limit: number
+        }[]
+      }
       mark_notifications_read: {
         Args: {
           requested_id?: string

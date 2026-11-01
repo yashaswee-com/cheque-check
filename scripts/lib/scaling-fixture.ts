@@ -74,6 +74,7 @@ export async function createScalingFixture(): Promise<PGlite> {
       '20261102070000_extended_cheque_filters.sql',
       '20261102090000_cheque_analytics.sql',
       '20261103000000_notification_inbox.sql',
+      '20261104000000_free_usage_lifecycle.sql',
     ]) {
       await db.exec(
         readFileSync(

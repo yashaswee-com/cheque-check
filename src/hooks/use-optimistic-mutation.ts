@@ -107,6 +107,9 @@ export function useOptimisticMutation<TData, TVariables, TResult>({
         new Map(
           [
             queryKey,
+            ...(['cheques', 'businesses'].includes(String(queryKey[0]))
+              ? [queryKeys.monetization.freeUsageAll()]
+              : []),
             ...(['cheques', 'accounts', 'businesses', 'master-banks'].includes(
               String(queryKey[0]),
             )

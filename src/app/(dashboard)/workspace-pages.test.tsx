@@ -1024,3 +1024,6 @@ describe('business list page', () => {
 vi.mock('@/features/monetization/components/premium-mark', () => ({
   PremiumMark: () => <span data-slot="premium-mark" />,
 }))
+vi.mock('@/features/monetization/components/free-usage-banner', () => ({
+  FreeUsageBanner: () => null,
+}))

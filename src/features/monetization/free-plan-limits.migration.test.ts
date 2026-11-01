@@ -51,6 +51,7 @@ beforeAll(async () => {
     '20261101060000_published_default_accounts.sql',
     '20261101080000_six_digit_cheque_numbers.sql',
     '20261101110000_free_plan_limits.sql',
+    '20261104000000_free_usage_lifecycle.sql',
   ])
   await db.exec(`
     INSERT INTO auth.users(id,email) VALUES('${free}','f@x.test'),('${premium}','p@x.test'),('${trial}','t@x.test');
@@ -161,8 +162,13 @@ describe('free plan quotas', () => {
     })
   })
 
-  it('returns no usage row without an authenticated caller', async () => {
-    const { rows } = await db.query('SELECT * FROM free_plan_usage()')
-    expect(rows).toEqual([])
+  it('rejects unauthenticated and deactivated usage callers', async () => {
+    await expect(db.query('SELECT * FROM free_plan_usage()')).rejects.toThrow(
+      'Authentication required',
+    )
+    await db.exec(
+      `UPDATE profiles SET deleted_at=now() WHERE user_id='${newcomer}'`,
+    )
+    await expect(usage(newcomer)).rejects.toThrow('Authentication required')
   })
 })

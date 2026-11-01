@@ -1,4 +1,18 @@
 {
+  "FreeUsage": {
+    "title": "Aapke free plan ka usage",
+    "cheques": "Active cheques",
+    "scans": "AI scans",
+    "voice": "Voice reminders",
+    "used": "{used} / {limit} use hue",
+    "remaining": "{count} bache hain",
+    "warning": "Lagbhag use ho gaya",
+    "exhausted": "Limit poori hui",
+    "upgrade": "Plans aur top-ups dekhein",
+    "loading": "Usage load ho raha hai",
+    "error": "Usage load nahi hua.",
+    "retry": "Dobara try karein"
+  },
   "Push": {
     "retry": "Push status dobara load karein",
     "title": "Is device par push",

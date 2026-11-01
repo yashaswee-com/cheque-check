@@ -1,4 +1,18 @@
 {
+  "FreeUsage": {
+    "title": "Your free plan usage",
+    "cheques": "Active cheques",
+    "scans": "AI scans",
+    "voice": "Voice reminders",
+    "used": "{used} / {limit} used",
+    "remaining": "{count} remaining",
+    "warning": "Almost used up",
+    "exhausted": "Limit reached",
+    "upgrade": "View plans and top-ups",
+    "loading": "Loading usage",
+    "error": "Usage could not be loaded.",
+    "retry": "Retry"
+  },
   "Push": {
     "retry": "Retry loading push status",
     "title": "Push on this device",

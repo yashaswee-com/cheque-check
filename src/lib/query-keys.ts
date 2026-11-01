@@ -68,6 +68,8 @@ export const queryKeys = {
     detail: () => ['profile'] as const,
   },
   monetization: {
+    freeUsageAll: () => ['free-usage'] as const,
+    freeUsage: (userId?: string) => ['free-usage', userId] as const,
     transactions: () => ['transactions'] as const,
     entitlements: () => ['entitlements'] as const,
     quotas: () => ['quotas'] as const,
