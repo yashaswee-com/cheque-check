@@ -1021,3 +1021,6 @@ describe('business list page', () => {
     },
   )
 })
+vi.mock('@/features/monetization/components/premium-mark', () => ({
+  PremiumMark: () => <span data-slot="premium-mark" />,
+}))
