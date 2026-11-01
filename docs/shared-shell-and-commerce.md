@@ -53,6 +53,42 @@ Global search does not display loading text while fetching results. Existing
 results remain usable, no-results feedback waits for loading to finish, and
 fetch failures still show the error message.
 
+## Display preferences
+
+`ProfileProvider` publishes saved preferences through `FormattingContext`.
+Use `useDisplayFormat` for displayed dates, timestamps, numbers and amounts,
+and `createPreferenceFormatter` for non-React output. Successful saves update
+the profile cache before refetching. Saved language synchronizes the locale
+cookie and refreshes translated routes, including on a new browser and after
+onboarding; failed saves do not switch language.
+
+Calendar dates (`YYYY-MM-DD`) never shift with the time zone. Timestamps use
+the selected zone and 12/24-hour clock; named zones account for daylight
+saving. Today/overdue badges, business summaries and dashboard period presets
+use that same local day. Month-only policy dates retain month/year precision.
+`DateInput` accepts and displays the preferred pattern, uses the localized
+calendar picker and keeps ISO form values. Invalid dates and out-of-range
+values show a translated error. Malformed dates clear the canonical form value
+rather than submitting a previous valid date; out-of-range calendar dates
+retain their ISO value for interval validation. Invalid optional dates block
+report, saved-view and template actions instead of becoming unbounded filters.
+ISO entry remains accepted for imports and
+automated entry. Min/max constraints apply to both typing and calendar selection.
+Calendar month/week labels and application strings use English, Hindi or
+Hinglish; Hinglish maps to `en-IN` for Intl number/time formatting. Entity form
+validation messages are translated at presentation time, preserving the
+validator/API contract.
+
+Search, drafts, cards, totals, charts, tables, message previews and SMS use the
+display currency without exchange conversion. PDF statements, report PDFs,
+print layouts and Excel exports use preferred dates and translated labels;
+browser-font PDF rendering preserves Hindi and currency symbols. Excel amounts
+remain numeric with the selected currency cell format. CSV/JSON exports,
+imports, API/database dates and filename dates remain machine-readable.
+Actual product prices and payment-history currencies are never relabeled as
+the user's display currency. Brands, language names, currency codes, time-zone
+identifiers and user-authored text are not automatically translated.
+
 Cheque cards no longer expose deletion; confirmed detail deletion remains.
 Tag Selector alone opts into a modal dim/blur backdrop. Other popovers do not
 receive it. The selector retains multi-select, outside dismissal, Escape,

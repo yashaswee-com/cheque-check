@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Button } from '@/components/ui/button'
 import { summarizeCheques } from '../logic'
 import { premiumWorkspaceService } from '../service'
@@ -19,7 +20,7 @@ function Summary({
   currency: string
 }) {
   const t = useTranslations('PremiumWorkspace')
-  const locale = useLocale()
+  const display = useDisplayFormat()
   const totals = summarizeCheques(snapshot.cheques)
   return (
     <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -41,7 +42,10 @@ function Summary({
           <dd className="break-words text-lg font-semibold">
             {key === 'count'
               ? totals[key]
-              : `${currency}${totals[key].toLocaleString(locale, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`}
+              : display.currency(totals[key], currency, {
+                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 2,
+                })}
           </dd>
         </div>
       ))}
@@ -73,7 +77,7 @@ export function ReportsPanel({
   onlyPartyId?: string
 }) {
   const t = useTranslations('PremiumWorkspace')
-  const locale = useLocale()
+  const display = useDisplayFormat()
   const [partyId, setPartyId] = useState(() => {
     const selected = onlyPartyId ?? initialPartyId
     return context.parties.some((party) => party.id === selected)
@@ -82,9 +86,12 @@ export function ReportsPanel({
   })
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
+  const [fromValid, setFromValid] = useState(true)
+  const [toValid, setToValid] = useState(true)
   const [scope, setScope] = useState(businesses.map((b) => b.id))
   const [snapshot, setSnapshot] = useState<WorkspaceSnapshot | null>(null)
-  const invalid = !!from && !!to && from > to
+  const rangeInvalid = !!from && !!to && from > to
+  const invalid = rangeInvalid || !fromValid || !toValid
   const disabled =
     busy || invalid || (mode === 'statement' ? !partyId : !scope.length)
   const fetchSnapshot = () =>
@@ -152,6 +159,7 @@ export function ReportsPanel({
           label={t('from')}
           type="date"
           value={from}
+          onValidityChange={setFromValid}
           onChange={(e) => {
             setFrom(e.target.value)
             setSnapshot(null)
@@ -162,6 +170,7 @@ export function ReportsPanel({
           label={t('to')}
           type="date"
           value={to}
+          onValidityChange={setToValid}
           min={from}
           onChange={(e) => {
             setTo(e.target.value)
@@ -169,7 +178,7 @@ export function ReportsPanel({
           }}
         />
       </div>
-      {invalid && (
+      {rangeInvalid && fromValid && toValid && (
         <p role="alert" className="text-destructive">
           {t('dateRangeError')}
         </p>
@@ -198,10 +207,11 @@ export function ReportsPanel({
                   business: businessName,
                   party:
                     context.parties.find((p) => p.id === partyId)?.name ?? '',
-                  period: `${from || t('all')} — ${to || t('all')}`,
+                  period: `${from ? display.date(from) : t('all')} — ${to ? display.date(to) : t('all')}`,
                   cheques: fresh.cheques,
                   currency,
-                  locale,
+                  locale: display.locale,
+                  dateFormat: display.dateFormat,
                   labels: {
                     title: t('tabs.statements'),
                     business: t('business'),

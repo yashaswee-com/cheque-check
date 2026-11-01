@@ -1,12 +1,23 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Calendar } from './calendar'
+import { NextIntlClientProvider } from 'next-intl'
+import messages from '../../../messages/en.json'
+import { calendarDay } from '@/lib/preference-format'
+
+function renderCalendar(children: React.ReactNode) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {children}
+    </NextIntlClientProvider>,
+  )
+}
 afterEach(cleanup)
 
 describe('Calendar', () => {
   it('selects a date and navigates months', () => {
     const onSelect = vi.fn()
-    render(
+    renderCalendar(
       <Calendar
         mode="single"
         defaultMonth={new Date(2026, 9, 1)}
@@ -14,16 +25,11 @@ describe('Calendar', () => {
       />,
     )
     const day = document.querySelector<HTMLButtonElement>(
-      'button[data-day="10/15/2026"]',
+      'button[data-day="2026-10-15"]',
     )
     if (!day) throw new Error('October 15 day button missing')
     fireEvent.click(day)
-    expect(onSelect).toHaveBeenCalledWith(
-      new Date(2026, 9, 15),
-      expect.any(Date),
-      expect.any(Object),
-      expect.any(Object),
-    )
+    expect(calendarDay(onSelect.mock.calls[0][0])).toBe('2026-10-15')
     fireEvent.click(screen.getByRole('button', { name: /next month/i }))
     expect(screen.getByText('November 2026')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /previous month/i }))
@@ -31,7 +37,7 @@ describe('Calendar', () => {
   })
 
   it('renders range markers and blocks disabled dates', () => {
-    render(
+    renderCalendar(
       <Calendar
         mode="range"
         defaultMonth={new Date(2026, 9, 1)}
@@ -41,21 +47,21 @@ describe('Calendar', () => {
       />,
     )
     expect(
-      document.querySelector('button[data-day="10/10/2026"]'),
+      document.querySelector('button[data-day="2026-10-10"]'),
     ).toHaveAttribute('data-range-start', 'true')
     expect(
-      document.querySelector('button[data-day="10/11/2026"]'),
+      document.querySelector('button[data-day="2026-10-11"]'),
     ).toHaveAttribute('data-range-middle', 'true')
     expect(
-      document.querySelector('button[data-day="10/12/2026"]'),
+      document.querySelector('button[data-day="2026-10-12"]'),
     ).toHaveAttribute('data-range-end', 'true')
     expect(
-      document.querySelector('button[data-day="10/15/2026"]'),
+      document.querySelector('button[data-day="2026-10-15"]'),
     ).toBeDisabled()
   })
 
   it('supports month dropdown captions and selected single-date styling', () => {
-    render(
+    renderCalendar(
       <Calendar
         mode="single"
         defaultMonth={new Date(2026, 9, 1)}
@@ -65,7 +71,7 @@ describe('Calendar', () => {
     )
     expect(screen.getAllByRole('combobox')).toHaveLength(2)
     expect(
-      document.querySelector('button[data-day="10/15/2026"]'),
+      document.querySelector('button[data-day="2026-10-15"]'),
     ).toHaveAttribute('data-selected-single', 'true')
   })
 })

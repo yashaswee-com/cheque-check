@@ -35,12 +35,14 @@ import {
   StepperTrigger,
 } from '@/components/reui/stepper'
 import { useTranslations } from 'next-intl'
+import { useValidationMessage } from '@/hooks/use-validation-message'
 import { EditableAvatar } from '@/components/ui/editable-avatar'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { Controller } from 'react-hook-form'
 import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
 
 export default function CreateBusinessPage() {
+  const validationMessage = useValidationMessage()
   const t = useTranslations('Businesses')
   const tc = useTranslations('Common')
   const router = useRouter()
@@ -194,7 +196,7 @@ export default function CreateBusinessPage() {
                 </div>
                 {errors.name && (
                   <p className="text-xs text-destructive ml-1">
-                    {errors.name.message as string}
+                    {validationMessage(errors.name.message)}
                   </p>
                 )}
               </div>
@@ -263,7 +265,7 @@ export default function CreateBusinessPage() {
               </div>
               {errors.email && (
                 <p className="text-xs text-destructive ml-1">
-                  {errors.email.message as string}
+                  {validationMessage(errors.email.message)}
                 </p>
               )}
             </div>
@@ -291,7 +293,7 @@ export default function CreateBusinessPage() {
               />
               {errors.phone && (
                 <p className="text-xs text-destructive ml-1">
-                  {errors.phone.message as string}
+                  {validationMessage(errors.phone.message)}
                 </p>
               )}
             </div>

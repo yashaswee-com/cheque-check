@@ -1132,6 +1132,7 @@ describe('cheque detail page', () => {
         expect.objectContaining({ id: 'cheque' }),
         '$',
         { remote: true },
+        expect.objectContaining({ currency: '$' }),
       ),
     )
     mocks.layout.mockResolvedValueOnce(null)
@@ -1141,6 +1142,7 @@ describe('cheque detail page', () => {
         expect.objectContaining({ id: 'cheque' }),
         '$',
         { local: true },
+        expect.objectContaining({ currency: '$' }),
       ),
     )
   })
@@ -1189,6 +1191,7 @@ describe('cheque detail page', () => {
       party,
       '$',
       'Premium required',
+      expect.objectContaining({ currency: '$' }),
     )
     fireEvent.click(
       screen.getByRole('button', { name: messages.Cheques.deleteAction }),

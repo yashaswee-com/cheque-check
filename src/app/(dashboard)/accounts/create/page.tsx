@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
+import { useValidationMessage } from '@/hooks/use-validation-message'
 import {
   Stepper,
   StepperIndicator,
@@ -48,6 +49,7 @@ const BankSelector = dynamic(
 )
 
 export default function CreateAccountPage() {
+  const validationMessage = useValidationMessage()
   const t = useTranslations('Accounts')
   const tc = useTranslations('Common')
   const router = useRouter()
@@ -230,7 +232,7 @@ export default function CreateAccountPage() {
                 />
                 {errors.bank_id && (
                   <p className="text-xs text-destructive ml-1">
-                    {errors.bank_id.message as string}
+                    {validationMessage(errors.bank_id.message)}
                   </p>
                 )}
               </div>
@@ -296,7 +298,7 @@ export default function CreateAccountPage() {
               </div>
               {errors.account_name && (
                 <p className="text-xs text-destructive ml-1">
-                  {errors.account_name.message as string}
+                  {validationMessage(errors.account_name.message)}
                 </p>
               )}
             </div>
@@ -324,7 +326,7 @@ export default function CreateAccountPage() {
               </div>
               {errors.account_number && (
                 <p className="text-xs text-destructive ml-1">
-                  {errors.account_number.message as string}
+                  {validationMessage(errors.account_number.message)}
                 </p>
               )}
             </div>
@@ -349,7 +351,7 @@ export default function CreateAccountPage() {
               />
               {errors.opening_balance && (
                 <p className="text-xs text-destructive ml-1">
-                  {errors.opening_balance.message as string}
+                  {validationMessage(errors.opening_balance.message)}
                 </p>
               )}
             </div>
@@ -397,7 +399,7 @@ export default function CreateAccountPage() {
               </div>
               {errors.ifsc_code && (
                 <p className="text-xs text-destructive ml-1">
-                  {errors.ifsc_code.message as string}
+                  {validationMessage(errors.ifsc_code.message)}
                 </p>
               )}
             </div>

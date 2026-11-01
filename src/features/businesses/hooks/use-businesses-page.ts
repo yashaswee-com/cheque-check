@@ -4,8 +4,11 @@ import { chequeService } from '@/features/cheques/services/cheque.service'
 import { businessService } from '@/features/businesses/services/business.service'
 import { useState, useMemo, useCallback } from 'react'
 import { queryKeys } from '@/lib/query-keys'
+import { useFormattingPreferences } from '@/features/profile/hooks/use-display-format'
+import { localDay } from '@/lib/preference-format'
 
 export function useBusinesses() {
+  const preferences = useFormattingPreferences()
   const [search, setSearch] = useState('')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [sortBy, setSortBy] = useState<'name' | 'upcoming'>('name')
@@ -24,7 +27,7 @@ export function useBusinesses() {
     },
   })
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDay(new Date(), preferences?.time_zone || 'Asia/Kolkata')
   const {
     data: summaries,
     isLoading: chequesLoading,

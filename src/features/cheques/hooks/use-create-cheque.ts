@@ -84,7 +84,11 @@ export function useCreateCheque(
         ? { remind_before_days: profile?.default_reminder_days ?? null }
         : {}),
     }),
-    toFormValues: chequeDraftToFormValues,
+    toFormValues: (draft) =>
+      chequeDraftToFormValues(
+        draft,
+        localDay(new Date(), profile?.time_zone || 'Asia/Kolkata'),
+      ),
     onHydrated: (loaded) => setStep(firstIncompleteChequeStep(loaded)),
     draftsHref: '/cheques/drafts',
   })

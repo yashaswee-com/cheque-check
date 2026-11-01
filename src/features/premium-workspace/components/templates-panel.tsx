@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Button } from '@/components/ui/button'
 import { safeChequePrefill, validateImport } from '../logic'
 import { premiumWorkspaceService } from '../service'
@@ -16,14 +17,14 @@ import {
 } from './controls'
 import type { RunAction } from './workspace'
 
-const empty = () => ({
+const empty = (today: string) => ({
   party_id: '',
   account_id: '',
   amount: '',
   type: 'Outward',
   notes: '',
   cheque_number: '',
-  cheque_date: new Date().toISOString().slice(0, 10),
+  cheque_date: today,
   deposit_date: '',
 })
 
@@ -41,7 +42,11 @@ export function TemplatesPanel({
   busy: boolean
 }) {
   const t = useTranslations('PremiumWorkspace')
-  const [form, setForm] = useState(empty)
+  const display = useDisplayFormat()
+  const [form, setForm] = useState(() => empty(display.today()))
+  const [chequeDateValid, setChequeDateValid] = useState(true)
+  const [depositDateValid, setDepositDateValid] = useState(true)
+  const [dateReset, setDateReset] = useState(0)
   const [confirming, setConfirming] = useState(false)
   const prefill = safeChequePrefill(form)
   const validation = validateImport('cheques', [form], context)[0]
@@ -52,11 +57,14 @@ export function TemplatesPanel({
   const apply = (value: Record<string, unknown>) => {
     const safe = safeChequePrefill(value)
     setForm({
-      ...empty(),
+      ...empty(display.today()),
       ...safe,
       amount: safe.amount ? String(safe.amount) : '',
     })
     setConfirming(false)
+    setDateReset((current) => current + 1)
+    setChequeDateValid(true)
+    setDepositDateValid(true)
   }
   return (
     <section className="space-y-4">
@@ -74,7 +82,7 @@ export function TemplatesPanel({
         <option value="">{t('choose')}</option>
         {context.cheques.map((c) => (
           <option value={c.id} key={c.id}>
-            {c.cheque_number} · {c.amount}
+            {c.cheque_number} · {display.currency(c.amount ?? 0)}
           </option>
         ))}
       </SelectField>
@@ -86,6 +94,7 @@ export function TemplatesPanel({
         onApply={(value) => apply(value as Record<string, unknown>)}
         run={run}
         busy={busy}
+        disabled={!chequeDateValid || !depositDateValid}
       />
       <div className="grid gap-3 sm:grid-cols-2">
         <SelectField
@@ -134,15 +143,19 @@ export function TemplatesPanel({
           onChange={(e) => set('cheque_number', e.target.value)}
         />
         <TextField
+          key={`cheque-${dateReset}`}
           label={t('fields.cheque_date')}
           type="date"
           value={form.cheque_date}
+          onValidityChange={setChequeDateValid}
           onChange={(e) => set('cheque_date', e.target.value)}
         />
         <TextField
+          key={`deposit-${dateReset}`}
           label={t('fields.deposit_date')}
           type="date"
           value={form.deposit_date}
+          onValidityChange={setDepositDateValid}
           min={form.cheque_date}
           onChange={(e) => set('deposit_date', e.target.value)}
         />
@@ -170,7 +183,12 @@ export function TemplatesPanel({
       )}
       {!confirming ? (
         <Button
-          disabled={busy || validation.issues.length > 0}
+          disabled={
+            busy ||
+            !chequeDateValid ||
+            !depositDateValid ||
+            validation.issues.length > 0
+          }
           onClick={() => setConfirming(true)}
         >
           {t('createCheque')}
@@ -181,13 +199,19 @@ export function TemplatesPanel({
           confirm={t('confirm')}
           cancel={t('cancel')}
           busy={busy}
+          disabled={
+            !chequeDateValid ||
+            !depositDateValid ||
+            validation.issues.length > 0
+          }
           onCancel={() => setConfirming(false)}
           onConfirm={() =>
             void run(async () => {
               await premiumWorkspaceService.importRows(businessId, 'cheques', [
                 form,
               ])
-              setForm(empty())
+              setForm(empty(display.today()))
+              setDateReset((current) => current + 1)
               setConfirming(false)
             })
           }

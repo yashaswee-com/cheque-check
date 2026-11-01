@@ -1,21 +1,19 @@
+'use client'
+
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ZapIcon as Zap,
   StarIcon as Star,
   Shield01Icon as Shield,
 } from '@hugeicons/core-free-icons'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { APP_VERSION } from '@/lib/app-version'
 
 export default function WhatsNewPage() {
   const t = useTranslations('Settings')
-  const format = useFormatter()
-  const updatedDate = format.dateTime(new Date('2026-10-31T00:00:00Z'), {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC',
-  })
+  const display = useDisplayFormat()
+  const updatedDate = display.date('2026-10-31')
   const features = [
     { key: 'releasePhone', icon: Shield },
     { key: 'releaseBanks', icon: Shield },

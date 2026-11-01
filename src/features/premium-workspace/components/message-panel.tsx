@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import {
   isValidMessageTemplate,
   placeholders,
@@ -30,6 +31,7 @@ export function MessagePanel({
   currency: string
 }) {
   const t = useTranslations('PremiumWorkspace')
+  const display = useDisplayFormat()
   const [body, setBody] = useState(() => {
     const latest = tools[0]?.payload
     return latest &&
@@ -50,8 +52,8 @@ export function MessagePanel({
     ? renderMessageTemplate(body, {
         party: party?.name || t('sampleParty'),
         cheque_number: cheque?.cheque_number || '000001',
-        amount: `${currency}${cheque?.amount ?? '1000'}`,
-        date: cheque?.cheque_date || new Date().toISOString().slice(0, 10),
+        amount: display.currency(cheque?.amount ?? 1000, currency),
+        date: display.date(cheque?.cheque_date || new Date()),
         status: t(`statuses.${cheque?.status ?? 'Issued'}`),
         business: businessName,
       })

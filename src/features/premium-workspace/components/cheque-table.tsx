@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useTranslations, useLocale } from 'next-intl'
+import { useTranslations } from 'next-intl'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import type { ChequeRow } from '../types'
 
 export function ChequeTable({
@@ -16,7 +17,7 @@ export function ChequeTable({
   currency: string
 }) {
   const t = useTranslations('PremiumWorkspace')
-  const locale = useLocale()
+  const display = useDisplayFormat()
   if (!cheques.length)
     return <p className="py-4 text-muted-foreground">{t('empty')}</p>
   return (
@@ -59,10 +60,11 @@ export function ChequeTable({
                   {c.cheque_number}
                 </Link>
               </td>
-              <td className="whitespace-nowrap p-3">{c.cheque_date}</td>
               <td className="whitespace-nowrap p-3">
-                {currency}
-                {(c.amount ?? 0).toLocaleString(locale, {
+                {c.cheque_date ? display.date(c.cheque_date) : ''}
+              </td>
+              <td className="whitespace-nowrap p-3">
+                {display.currency(c.amount ?? 0, currency, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}

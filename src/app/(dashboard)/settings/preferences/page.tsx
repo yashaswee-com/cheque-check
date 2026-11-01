@@ -10,16 +10,31 @@ import { MonitoringPreferences } from '@/components/monitoring-preferences'
 import {
   CURRENCY_OPTIONS,
   DATE_FORMAT_OPTIONS,
-  TIME_FORMAT_OPTIONS,
   LANGUAGE_OPTIONS,
   TIMEZONE_OPTIONS,
 } from '@/features/profile/lib/preference-options'
 import { useReminderOptions } from '@/features/profile/hooks/use-reminder-options'
+import { toast } from '@/components/ui/toast'
+import type { Profile } from '@/types'
+import { useTimeFormatOptions } from '@/features/profile/hooks/use-time-format-options'
 
 export default function PreferencesPage() {
   const t = useTranslations('Onboarding')
   const ts = useTranslations('Settings')
+  const tc = useTranslations('Common')
   const { profile, updateProfile, isLoading } = useProfile()
+  const timeFormatOptions = useTimeFormatOptions()
+  const savePreference = async (changes: Partial<Profile>) => {
+    try {
+      await updateProfile(changes)
+    } catch (error) {
+      toast.add({
+        title: tc('error'),
+        description: error instanceof Error ? error.message : tc('error'),
+        type: 'error',
+      })
+    }
+  }
 
   const { REMINDERS_PER_DAY_OPTIONS, REMINDER_FREQUENCY_OPTIONS } =
     useReminderOptions()
@@ -42,7 +57,7 @@ export default function PreferencesPage() {
               options={CURRENCY_OPTIONS}
               value={profile.currency}
               testId="preferences-currency"
-              onValueChange={(v) => updateProfile({ currency: v })}
+              onValueChange={(v) => savePreference({ currency: v })}
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
           </div>
@@ -54,11 +69,7 @@ export default function PreferencesPage() {
               options={LANGUAGE_OPTIONS}
               value={profile.language}
               testId="preferences-language"
-              onValueChange={(v) => {
-                updateProfile({ language: v })
-                document.cookie = `NEXT_LOCALE=${v}; path=/; max-age=31536000`
-                window.location.reload()
-              }}
+              onValueChange={(v) => savePreference({ language: v })}
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
           </div>
@@ -72,7 +83,7 @@ export default function PreferencesPage() {
             options={DATE_FORMAT_OPTIONS}
             value={profile.date_format}
             testId="preferences-date-format"
-            onValueChange={(v) => updateProfile({ date_format: v })}
+            onValueChange={(v) => savePreference({ date_format: v })}
             className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
           />
         </div>
@@ -83,10 +94,10 @@ export default function PreferencesPage() {
               {t('timeFormat')}
             </Label>
             <Combobox
-              options={TIME_FORMAT_OPTIONS}
+              options={timeFormatOptions}
               value={profile.time_format || '12h'}
               testId="preferences-time-format"
-              onValueChange={(v) => updateProfile({ time_format: v })}
+              onValueChange={(v) => savePreference({ time_format: v })}
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
           </div>
@@ -98,7 +109,7 @@ export default function PreferencesPage() {
               options={TIMEZONE_OPTIONS}
               value={profile.time_zone}
               testId="preferences-time-zone"
-              onValueChange={(v) => updateProfile({ time_zone: v })}
+              onValueChange={(v) => savePreference({ time_zone: v })}
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
           </div>
@@ -116,7 +127,7 @@ export default function PreferencesPage() {
               options={REMINDERS_PER_DAY_OPTIONS}
               value={profile.reminders_per_day.toString()}
               onValueChange={(v) =>
-                updateProfile({ reminders_per_day: parseInt(v) })
+                savePreference({ reminders_per_day: parseInt(v) })
               }
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
@@ -133,7 +144,7 @@ export default function PreferencesPage() {
               options={REMINDER_FREQUENCY_OPTIONS}
               value={profile.default_reminder_days.toString()}
               onValueChange={(v) =>
-                updateProfile({ default_reminder_days: parseInt(v) })
+                savePreference({ default_reminder_days: parseInt(v) })
               }
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
@@ -156,7 +167,7 @@ export default function PreferencesPage() {
         <Switch
           checked={profile.reduce_motion}
           onCheckedChange={(checked) =>
-            updateProfile({ reduce_motion: checked })
+            savePreference({ reduce_motion: checked })
           }
           aria-label={ts('reduceMotion')}
         />

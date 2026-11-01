@@ -1,4 +1,24 @@
 {
+  "Validation": {
+    "phone": "Sahi phone number daalein",
+    "businessName": "Business ka naam zaroori hai",
+    "email": "Sahi email address daalein",
+    "partyName": "Party ka naam zaroori hai",
+    "contact": "Contact number zaroori hai",
+    "bank": "Bank chunna zaroori hai",
+    "accountName": "Account holder ka naam zaroori hai",
+    "accountNumber": "Account number zaroori hai",
+    "ifsc": "11 characters ka sahi IFSC code daalein",
+    "openingBalance": "Sahi opening balance daalein",
+    "chequeNumber": "Cheque number zaroori hai",
+    "chequeDigits": "Cheque number mein theek 6 digits hone chahiye",
+    "amount": "Amount zero se zyada hona chahiye",
+    "chequeDate": "Cheque ki date zaroori hai",
+    "depositDate": "Expected deposit date zaroori hai",
+    "party": "Party chunna zaroori hai",
+    "account": "Account chunna zaroori hai",
+    "invalidValue": "Sahi value daalein"
+  },
   "SharedUI": {
     "previousPage": "Pichhla page",
     "nextPage": "Agla page",
@@ -8,6 +28,10 @@
     "back": "Wapas jaayein",
     "search": "Search karein",
     "calculator": "Calculator",
+    "closeCalculator": "Calculator band karein",
+    "calculatorDelete": "DEL",
+    "calculatorReset": "RESET",
+    "calculatorError": "Galti",
     "help": "Help aur support",
     "reload": "Dobara load karein",
     "addTags": "Tags jodein",
@@ -134,7 +158,10 @@
       "deposit_date": "Deposit date",
       "status": "Status"
     },
-    "types": { "Inward": "Aane wala", "Outward": "Jaane wala" },
+    "types": {
+      "Inward": "Aane wala",
+      "Outward": "Jaane wala"
+    },
     "statuses": {
       "Issued": "Diya gaya",
       "Received": "Mila",
@@ -353,6 +380,8 @@
     "searchCountry": "Country ya code search karein...",
     "noCountryFound": "Koi country nahi mili.",
     "invalidPhone": "Sahi phone number daalein",
+    "invalidDateFormat": "Allowed range mein {format} format ki sahi date daalein.",
+    "chooseDate": "Date chunein",
     "total": "Total",
     "notAuthorized": "Permission nahi hai",
     "notAuthorizedDesc": "Aapko yeh content dekhne ki permission nahi hai. Administrator se contact karein.",
@@ -477,6 +506,8 @@
     "language": "Bhasha",
     "dateFormat": "Date Format",
     "timeFormat": "Time Format",
+    "time12h": "12-ghante (AM/PM)",
+    "time24h": "24-ghante",
     "timeZone": "Time Zone",
     "looksGood": "Sab theek hai",
     "notifications": "Notifications",

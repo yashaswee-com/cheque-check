@@ -82,6 +82,7 @@ vi.mock('../hooks/use-workspace-action', () => ({
   }),
 }))
 vi.mock('@/features/monetization/components/premium-gate', () => ({
+  usePremiumAction: () => ({ requireAccess: () => true }),
   PremiumGate: ({ children }: { children: React.ReactNode }) => children,
 }))
 vi.mock('../service', () => ({
@@ -174,6 +175,96 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('workspace workflows', () => {
+  it('does not turn malformed optional dates into unbounded report requests', () => {
+    wrap(
+      <ReportsPanel
+        {...common}
+        businessName="Acme"
+        businesses={[{ id: 'b1', name: 'Acme' }]}
+        currency="$"
+        mode="statement"
+        initialPartyId="p1"
+      />,
+    )
+    expect(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.generate }),
+    ).toBeEnabled()
+    fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.from), {
+      target: { value: '31/02/2028' },
+    })
+    expect(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.generate }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.exportPdf }),
+    ).toBeDisabled()
+    expect(snapshot).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.from), {
+      target: { value: '' },
+    })
+    expect(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.generate }),
+    ).toBeEnabled()
+  })
+
+  it('blocks bulk actions and preserves applied filters until malformed dates are reset', () => {
+    const changed = vi.fn()
+    wrap(
+      <FiltersPanel
+        {...common}
+        currency="$"
+        mode="bulk"
+        onFiltersChange={changed}
+      />,
+    )
+    fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.from), {
+      target: { value: '2026-10-01' },
+    })
+    const calls = changed.mock.calls.length
+    fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.from), {
+      target: { value: 'invalid' },
+    })
+    expect(changed).toHaveBeenCalledTimes(calls)
+    expect(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.selectAll }),
+    ).toBeDisabled()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.reset }),
+    )
+    expect(screen.getByLabelText(messages.PremiumWorkspace.from)).toHaveValue(
+      '',
+    )
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(changed).toHaveBeenLastCalledWith({})
+  })
+
+  it('blocks a pending template confirmation when an optional deposit date becomes malformed', () => {
+    wrap(<TemplatesPanel {...common} tools={[]} />)
+    for (const [label, value] of [
+      ['Party', 'p1'],
+      ['Account', 'a1'],
+      ['Amount', '250'],
+      ['Cheque number', '000003'],
+      ['Cheque date', '2026-10-31'],
+    ])
+      fireEvent.change(screen.getByLabelText(label), { target: { value } })
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: messages.PremiumWorkspace.createCheque,
+      }),
+    )
+    expect(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.confirm }),
+    ).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('Deposit date'), {
+      target: { value: 'invalid' },
+    })
+    expect(
+      screen.getByRole('button', { name: messages.PremiumWorkspace.confirm }),
+    ).toBeDisabled()
+    expect(importRows).not.toHaveBeenCalled()
+  })
+
   it('distinguishes workspace loading and missing-business states', () => {
     hookState.isLoading = true
     const { rerender } = wrap(<PremiumWorkspace />)
@@ -371,8 +462,8 @@ describe('workspace workflows', () => {
     ]) {
       fireEvent.change(screen.getByLabelText(label), { target: { value } })
     }
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      messages.PremiumWorkspace.dateRangeError,
+    expect(screen.getAllByRole('alert')[0]).toHaveTextContent(
+      messages.Common.invalidDateFormat.replace('{format}', 'DD/MM/YYYY'),
     )
     for (const label of [
       messages.PremiumWorkspace.search,
@@ -473,7 +564,7 @@ describe('workspace workflows', () => {
       screen.getByLabelText(messages.PremiumWorkspace.previewCheque),
       { target: { value: '' } },
     )
-    expect(screen.getByText(/₹1000/)).toBeInTheDocument()
+    expect(screen.getByText(/₹1,000/)).toBeInTheDocument()
     fireEvent.click(
       screen.getByRole('button', { name: messages.PremiumWorkspace.apply }),
     )
@@ -525,8 +616,8 @@ describe('workspace workflows', () => {
     fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.to), {
       target: { value: '2026-10-01' },
     })
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      messages.PremiumWorkspace.dateRangeError,
+    expect(screen.getAllByRole('alert')[0]).toHaveTextContent(
+      messages.Common.invalidDateFormat.replace('{format}', 'DD/MM/YYYY'),
     )
     expect(
       screen.getByRole('button', { name: messages.PremiumWorkspace.generate }),
@@ -637,8 +728,8 @@ describe('workspace workflows', () => {
     fireEvent.change(screen.getByLabelText(messages.PremiumWorkspace.to), {
       target: { value: '2026-10-01' },
     })
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      messages.PremiumWorkspace.dateRangeError,
+    expect(screen.getAllByRole('alert')[0]).toHaveTextContent(
+      messages.Common.invalidDateFormat.replace('{format}', 'DD/MM/YYYY'),
     )
     expect(
       screen.getByRole('button', { name: messages.PremiumWorkspace.generate }),
@@ -782,7 +873,9 @@ describe('workspace workflows', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
     await waitFor(() => expect(applyTool).toHaveBeenCalledWith('v1'))
-    expect(onFiltersChange).toHaveBeenCalledWith({ status: 'Cleared' })
+    await waitFor(() =>
+      expect(onFiltersChange).toHaveBeenCalledWith({ status: 'Cleared' }),
+    )
     expect(
       await screen.findByText('No cheques match this scope.'),
     ).toBeInTheDocument()

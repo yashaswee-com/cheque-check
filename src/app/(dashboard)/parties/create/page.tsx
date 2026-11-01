@@ -19,6 +19,7 @@ import {
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
+import { useValidationMessage } from '@/hooks/use-validation-message'
 import { getSafeChequeReturnTo } from '@/lib/cheque-draft'
 import { useEffect, useRef, useState } from 'react'
 import { DraftLeaveDialog, DraftSaveFab } from '@/features/drafts'
@@ -44,6 +45,7 @@ import {
 } from '@/components/reui/stepper'
 
 export default function CreatePartyPage() {
+  const validationMessage = useValidationMessage()
   const t = useTranslations('Parties')
   const tCommon = useTranslations('Common')
   const premium = usePremiumAction()
@@ -358,7 +360,7 @@ export default function CreatePartyPage() {
               </div>
               {errors.name && (
                 <p className="text-xs text-destructive ml-1">
-                  {errors.name.message as string}
+                  {validationMessage(errors.name.message)}
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
@@ -390,7 +392,7 @@ export default function CreatePartyPage() {
               />
               {errors.contact && (
                 <p className="text-xs text-destructive ml-1">
-                  {errors.contact.message as string}
+                  {validationMessage(errors.contact.message)}
                 </p>
               )}
             </div>
@@ -467,7 +469,7 @@ export default function CreatePartyPage() {
               />
               {errors.email && (
                 <p className="text-xs text-destructive ml-1">
-                  {errors.email.message}
+                  {validationMessage(errors.email.message)}
                 </p>
               )}
             </div>

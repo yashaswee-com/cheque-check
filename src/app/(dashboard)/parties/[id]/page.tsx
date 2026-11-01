@@ -33,6 +33,7 @@ import {
 } from '@hugeicons/core-free-icons'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useProfile } from '@/features/profile/hooks/use-profile'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -73,6 +74,7 @@ export default function PartyDetailPage() {
   const { profile } = useProfile()
   const businessId = activeBusiness?.id
   const currency = profile?.currency || '₹'
+  const display = useDisplayFormat(profile)
 
   const {
     party,
@@ -202,7 +204,7 @@ export default function PartyDetailPage() {
               data-testid="party-detail-outstanding"
             >
               {currency}
-              {outstanding.toLocaleString()}
+              {display.number(outstanding)}
             </p>
           </div>
           <div className="rounded-sm bg-canvas-parchment p-4 border border-border/50">

@@ -54,6 +54,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { TextTruncate } from '@/components/ui/text-truncate'
 import { useTranslations } from 'next-intl'
 import { useProfile } from '@/features/profile/hooks/use-profile'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { useRedirectIfDraft } from '@/features/drafts'
 import {
   Sheet,
@@ -75,6 +76,7 @@ export default function AccountDetailPage() {
   const { id } = useParams() as { id: string }
   const { activeBusiness } = useBusiness()
   const { profile } = useProfile()
+  const display = useDisplayFormat(profile)
   const businessId = activeBusiness?.id
 
   const {
@@ -220,7 +222,7 @@ export default function AccountDetailPage() {
             data-testid="account-detail-opening-balance"
           >
             {profile?.currency || '₹'}
-            {account.opening_balance.toLocaleString(undefined, {
+            {display.number(account.opening_balance, {
               minimumFractionDigits: 2,
             })}
           </p>

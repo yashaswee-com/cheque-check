@@ -23,6 +23,7 @@ import { EditableAvatar } from '@/components/ui/editable-avatar'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { Controller } from 'react-hook-form'
 import { useTranslations } from 'next-intl'
+import { useValidationMessage } from '@/hooks/use-validation-message'
 import { toast } from '@/components/ui/toast'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useEntityTagsDraft } from '@/features/tags/hooks/use-entity-tags'
@@ -39,6 +40,7 @@ const DeleteConfirmationDialog = dynamic(
 )
 
 export default function EditBusinessPage() {
+  const validationMessage = useValidationMessage()
   const t = useTranslations('Businesses')
   const tc = useTranslations('Common')
   const { id } = useParams() as { id: string }
@@ -120,7 +122,7 @@ export default function EditBusinessPage() {
             />
             {errors.name && (
               <p className="text-xs text-destructive ml-1">
-                {errors.name.message as string}
+                {validationMessage(errors.name.message)}
               </p>
             )}
           </div>
@@ -184,7 +186,7 @@ export default function EditBusinessPage() {
             />
             {errors.email && (
               <p className="text-xs text-destructive ml-1">
-                {errors.email.message as string}
+                {validationMessage(errors.email.message)}
               </p>
             )}
           </div>
@@ -212,7 +214,7 @@ export default function EditBusinessPage() {
             />
             {errors.phone && (
               <p className="text-xs text-destructive ml-1">
-                {errors.phone.message as string}
+                {validationMessage(errors.phone.message)}
               </p>
             )}
           </div>

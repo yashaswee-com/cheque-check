@@ -86,6 +86,7 @@ describe('shared cheque cards', () => {
       cheque.party,
       '₹',
       'Premium required',
+      expect.objectContaining({ currency: '₹' }),
     )
   })
   it('keeps detail navigation and status but exposes no delete trigger or dialog', () => {

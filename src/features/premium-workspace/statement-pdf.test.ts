@@ -86,6 +86,17 @@ afterEach(() => {
 })
 
 describe('statement PDF export', () => {
+  it('uses the preferred date pattern while retaining translated labels and currency', async () => {
+    await downloadStatementPdf({
+      ...input,
+      dateFormat: 'MM/dd/yyyy',
+      currency: '€',
+      locale: 'hi-en',
+    })
+    expect(ctx.fillText.mock.calls.map(([line]) => line)).toContain(
+      '10/31/2026 | 000001 | €125.50 | Inward | Cleared | €125.50',
+    )
+  })
   it('renders headings, decimal balances, and totals into a browser-font PDF', async () => {
     await downloadStatementPdf({
       ...input,
@@ -100,13 +111,13 @@ describe('statement PDF export', () => {
     expect(text).toContain('Party: Asha')
     expect(text).toContain('Period: October')
     expect(text).toContain(
-      '2026-10-31 | 000001 | $125.50 | Inward | Cleared | $125.50',
+      '31/10/2026 | 000001 | $125.50 | Inward | Cleared | $125.50',
     )
     expect(text).toContain(
-      '2026-10-31 | 000001 | $25.25 | Outward | Cleared | $100.25',
+      '31/10/2026 | 000001 | $25.25 | Outward | Cleared | $100.25',
     )
     expect(text).toContain(
-      '2026-10-31 | 000001 | $7.00 | Inward | Issued | $100.25',
+      '31/10/2026 | 000001 | $7.00 | Inward | Issued | $100.25',
     )
     expect(text).toContain('Total: 3')
     expect(text).toContain('Page 1 / 1')
@@ -118,7 +129,9 @@ describe('statement PDF export', () => {
       210,
       297,
     )
-    expect(pdf.save).toHaveBeenCalledWith('party-statement-2026-10-31.pdf')
+    expect(pdf.save).toHaveBeenCalledWith('party-statement-2026-10-31.pdf', {
+      returnPromise: true,
+    })
   })
 
   it('wraps long unbroken names and adds pages without losing text', async () => {
@@ -168,8 +181,8 @@ describe('statement PDF export', () => {
     })
     const text = ctx.fillText.mock.calls.map(([line]) => line)
     expect(text).toContain(' |  | $0.00 |  |  | $0.00')
-    expect(text).toContain('2026-10-31 | 000001 | $0.00 |  |  | $0.00')
-    expect(text).toContain('2026-10-31 | 000001 | $125.50 |  |  | $0.00')
+    expect(text).toContain('31/10/2026 | 000001 | $0.00 |  |  | $0.00')
+    expect(text).toContain('31/10/2026 | 000001 | $125.50 |  |  | $0.00')
   })
 
   it('flushes an exactly full final page without adding an empty page', async () => {

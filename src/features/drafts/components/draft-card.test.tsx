@@ -7,7 +7,10 @@ import {
 } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DraftCard } from './draft-card'
-vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))
+vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
+  useTranslations: () => (key: string) => key,
+}))
 afterEach(cleanup)
 
 const props = {

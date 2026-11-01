@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Chart01Icon, ArrowUpDownIcon } from '@hugeicons/core-free-icons'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -37,6 +38,7 @@ export function ChequeDistribution({
 }) {
   const t = useTranslations('ChartStats')
   const tc = useTranslations('Common')
+  const display = useDisplayFormat()
   const [metric, setMetric] = useState<DistributionMetric>('count')
   const [direction, setDirection] = useState<DistributionDirection>('All')
   const distribution = summary
@@ -44,8 +46,8 @@ export function ChequeDistribution({
     : chequeDistribution(cheques, metric, direction)
   const formatValue = (value: number) =>
     metric === 'amount'
-      ? `${currency}${value.toLocaleString()}`
-      : value.toLocaleString()
+      ? display.currency(value, currency)
+      : display.number(value)
 
   return (
     <div className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">

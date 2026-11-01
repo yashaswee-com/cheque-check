@@ -19,7 +19,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { TextTruncate } from '@/components/ui/text-truncate'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusPill } from '@/components/ui/status-pill'
-import { format } from 'date-fns'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import {
@@ -58,6 +58,8 @@ function ReportsContent() {
   const t = useTranslations('Dashboard')
   const tr = useTranslations('Reports')
   const tc = useTranslations('Common')
+  const tCheques = useTranslations('Cheques')
+  const tw = useTranslations('PremiumWorkspace')
   const [exportOpen, setExportOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
   const exportLock = useRef(false)
@@ -80,6 +82,7 @@ function ReportsContent() {
   const isLoading = chequesLoading
 
   const currency = profile?.currency || '₹'
+  const display = useDisplayFormat(profile)
 
   const handleExport = async (format: 'csv' | 'json' | 'pdf' | 'excel') => {
     if (exportLock.current) return
@@ -94,10 +97,43 @@ function ReportsContent() {
       }
       const exportCheques = await loadExportCheques()
       const baseName = `cheques_report_${activeBusiness?.name || 'export'}`
+      const presentation = {
+        preferences: profile,
+        language: display.locale,
+        title: tr('title'),
+        headers: [
+          tCheques('chequeNumber'),
+          tCheques('party'),
+          tCheques('account'),
+          tCheques('amount'),
+          tCheques('chequeDate'),
+          tCheques('type'),
+          tCheques('status'),
+          tCheques('notes'),
+        ],
+        sheet: tc('cheques'),
+        page: tw('page'),
+        unknownParty: tCheques('party'),
+        statuses: Object.fromEntries(
+          ['Issued', 'Received', 'Cleared', 'Bounced'].map((status) => [
+            status,
+            tw(`statuses.${status}`),
+          ]),
+        ),
+        types: { Inward: tw('types.Inward'), Outward: tw('types.Outward') },
+      }
       if (format === 'pdf') {
-        await reportService.exportToPDF(exportCheques, `${baseName}.pdf`)
+        await reportService.exportToPDF(
+          exportCheques,
+          `${baseName}.pdf`,
+          presentation,
+        )
       } else {
-        await reportService.exportToExcel(exportCheques, `${baseName}.xlsx`)
+        await reportService.exportToExcel(
+          exportCheques,
+          `${baseName}.xlsx`,
+          presentation,
+        )
       }
       setExportOpen(false)
     } catch (error) {
@@ -294,7 +330,7 @@ function ReportsContent() {
               </p>
               <p className="mt-1 text-2xl font-semibold">
                 {currency}
-                {outstanding.toLocaleString()}
+                {display.number(outstanding)}
               </p>
             </div>
             <div className="rounded-lg bg-canvas-parchment p-6 dark:bg-surface-tile-1">
@@ -354,14 +390,13 @@ function ReportsContent() {
                         className="font-semibold block"
                       />
                       <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider truncate">
-                        {format(new Date(c.cheque_date), 'MMM d, yyyy')} • #
-                        {c.cheque_number}
+                        {display.date(c.cheque_date)} • #{c.cheque_number}
                       </p>
                     </div>
                     <div className="text-right space-y-1">
                       <p className="font-bold">
                         {currency}
-                        {c.amount.toLocaleString()}
+                        {display.number(c.amount)}
                       </p>
                       <StatusPill
                         status={c.status}

@@ -21,7 +21,7 @@ describe('print-cheque', () => {
   }
 
   it('uses defaults and creates an A4 PDF', () => {
-    const document = createChequePrintPdf(cheque, '₹')
+    const document = createChequePrintPdf(cheque, '$')
     expect(document.internal.pageSize.getWidth()).toBeCloseTo(210)
     expect(document.internal.pageSize.getHeight()).toBeCloseTo(297)
   })
@@ -32,7 +32,7 @@ describe('print-cheque', () => {
   })
 
   it('prints an empty payee when the party relation is unavailable', () => {
-    const document = createChequePrintPdf({ ...cheque, party: undefined }, '₹')
+    const document = createChequePrintPdf({ ...cheque, party: undefined }, '$')
     expect(document.internal.pageSize.getWidth()).toBeCloseTo(210)
     expect(document.output()).not.toContain('Acme Ltd')
     expect(document.output()).toContain('123456')

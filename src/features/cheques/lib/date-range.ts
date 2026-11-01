@@ -8,6 +8,7 @@ import {
   startOfYear,
   subMonths,
 } from 'date-fns'
+import { localDay } from '@/lib/preference-format'
 
 export const DATE_RANGE_PRESETS = [
   'all',
@@ -32,24 +33,34 @@ export function resolveDateRange(
   preset: DateRangePreset,
   now: Date = new Date(),
   custom: { from?: Date; to?: Date } = {},
+  timeZone?: string,
 ): ChequeDateRange {
+  const calendarNow = timeZone
+    ? new Date(`${localDay(now, timeZone)}T12:00:00`)
+    : now
   switch (preset) {
     case 'thisWeek':
       return {
-        from: toDay(startOfWeek(now, { weekStartsOn: 1 })),
-        to: toDay(endOfWeek(now, { weekStartsOn: 1 })),
+        from: toDay(startOfWeek(calendarNow, { weekStartsOn: 1 })),
+        to: toDay(endOfWeek(calendarNow, { weekStartsOn: 1 })),
       }
     case 'thisMonth':
-      return { from: toDay(startOfMonth(now)), to: toDay(endOfMonth(now)) }
+      return {
+        from: toDay(startOfMonth(calendarNow)),
+        to: toDay(endOfMonth(calendarNow)),
+      }
     case 'lastMonth': {
-      const lastMonth = subMonths(now, 1)
+      const lastMonth = subMonths(calendarNow, 1)
       return {
         from: toDay(startOfMonth(lastMonth)),
         to: toDay(endOfMonth(lastMonth)),
       }
     }
     case 'thisYear':
-      return { from: toDay(startOfYear(now)), to: toDay(endOfYear(now)) }
+      return {
+        from: toDay(startOfYear(calendarNow)),
+        to: toDay(endOfYear(calendarNow)),
+      }
     case 'custom':
       return {
         from: custom.from ? toDay(custom.from) : undefined,

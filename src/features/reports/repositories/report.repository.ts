@@ -1,4 +1,21 @@
 import type { ChequeWithRelations } from '@/types'
+import {
+  createPreferenceFormatter,
+  type FormattingPreferences,
+} from '@/lib/preference-format'
+import { saveTextPdf } from '@/lib/pdf-text'
+
+export interface ReportPresentation {
+  preferences: FormattingPreferences | null
+  language: string
+  title: string
+  headers: string[]
+  sheet: string
+  page: string
+  unknownParty: string
+  statuses: Record<string, string>
+  types: Record<string, string>
+}
 
 export interface IReportRepository {
   exportToCSV(
@@ -12,10 +29,12 @@ export interface IReportRepository {
   exportToPDF(
     cheques: readonly ChequeWithRelations[],
     filename: string,
+    presentation?: ReportPresentation,
   ): Promise<void>
   exportToExcel(
     cheques: readonly ChequeWithRelations[],
     filename: string,
+    presentation?: ReportPresentation,
   ): Promise<void>
 }
 
@@ -30,15 +49,22 @@ const headers = [
   'Notes',
 ]
 
-function reportCells(cheque: ChequeWithRelations): (string | number)[] {
+function reportCells(
+  cheque: ChequeWithRelations,
+  presentation?: ReportPresentation,
+): (string | number)[] {
+  const display = createPreferenceFormatter(
+    presentation?.preferences,
+    presentation?.language,
+  )
   return [
     cheque.cheque_number,
     cheque.party?.name || '',
     cheque.account?.bank?.name || '',
     cheque.amount,
-    cheque.cheque_date,
-    cheque.type,
-    cheque.status,
+    presentation ? display.date(cheque.cheque_date) : cheque.cheque_date,
+    presentation ? presentation.types[cheque.type] : cheque.type,
+    presentation ? presentation.statuses[cheque.status] : cheque.status,
     cheque.notes || '',
   ]
 }
@@ -117,8 +143,34 @@ export class BrowserReportRepository implements IReportRepository {
   async exportToPDF(
     cheques: readonly ChequeWithRelations[],
     filename: string,
+    presentation?: ReportPresentation,
   ): Promise<void> {
     if (cheques.length === 0) return
+    if (presentation) {
+      const display = createPreferenceFormatter(
+        presentation.preferences,
+        presentation.language,
+      )
+      const lines = [presentation.title, presentation.headers.join(' | ')]
+      await eachBatch(cheques, (batch) => {
+        lines.push(
+          ...batch.map((cheque) =>
+            [
+              cheque.cheque_number,
+              cheque.party?.name || presentation.unknownParty,
+              cheque.account?.bank?.name || '',
+              display.currency(cheque.amount),
+              display.date(cheque.cheque_date),
+              presentation.types[cheque.type],
+              presentation.statuses[cheque.status],
+              cheque.notes || '',
+            ].join(' | '),
+          ),
+        )
+      })
+      await saveTextPdf(lines, filename, presentation.page)
+      return
+    }
     const { jsPDF } = await import('jspdf')
     const document = new jsPDF()
     document.setFontSize(16)
@@ -150,17 +202,34 @@ export class BrowserReportRepository implements IReportRepository {
   async exportToExcel(
     cheques: readonly ChequeWithRelations[],
     filename: string,
+    presentation?: ReportPresentation,
   ): Promise<void> {
     if (cheques.length === 0) return
     const XLSX = await import('xlsx')
     const workbook = XLSX.utils.book_new()
-    const worksheet = XLSX.utils.aoa_to_sheet([headers])
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      presentation?.headers ?? headers,
+    ])
     await eachBatch(cheques, (batch) => {
-      XLSX.utils.sheet_add_aoa(worksheet, batch.map(reportCells), {
-        origin: -1,
-      })
+      XLSX.utils.sheet_add_aoa(
+        worksheet,
+        batch.map((cheque) => reportCells(cheque, presentation)),
+        {
+          origin: -1,
+        },
+      )
     })
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Cheques')
+    if (presentation) {
+      for (let row = 1; row <= cheques.length; row++) {
+        worksheet[`D${row + 1}`].z =
+          `"${presentation.preferences?.currency || '₹'}"#,##0.00`
+      }
+    }
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      presentation?.sheet ?? 'Cheques',
+    )
     XLSX.writeFile(workbook, filename)
   }
 }

@@ -1,4 +1,24 @@
 {
+  "Validation": {
+    "phone": "Enter a valid phone number",
+    "businessName": "Business name is required",
+    "email": "Enter a valid email address",
+    "partyName": "Party name is required",
+    "contact": "Contact number is required",
+    "bank": "Bank is required",
+    "accountName": "Account holder name is required",
+    "accountNumber": "Account number is required",
+    "ifsc": "Enter a valid 11-character IFSC code",
+    "openingBalance": "Enter a valid opening balance",
+    "chequeNumber": "Cheque number is required",
+    "chequeDigits": "Cheque number must be exactly 6 digits",
+    "amount": "Amount must be positive",
+    "chequeDate": "Cheque date is required",
+    "depositDate": "Expected deposit date is required",
+    "party": "Party is required",
+    "account": "Account is required",
+    "invalidValue": "Enter a valid value"
+  },
   "SharedUI": {
     "previousPage": "Previous page",
     "nextPage": "Next page",
@@ -8,6 +28,10 @@
     "back": "Go back",
     "search": "Search",
     "calculator": "Calculator",
+    "closeCalculator": "Close calculator",
+    "calculatorDelete": "DEL",
+    "calculatorReset": "RESET",
+    "calculatorError": "Error",
     "help": "Help and support",
     "reload": "Reload",
     "addTags": "Add tags",
@@ -134,7 +158,10 @@
       "deposit_date": "Deposit date",
       "status": "Status"
     },
-    "types": { "Inward": "Inward", "Outward": "Outward" },
+    "types": {
+      "Inward": "Inward",
+      "Outward": "Outward"
+    },
     "statuses": {
       "Issued": "Issued",
       "Received": "Received",
@@ -353,6 +380,8 @@
     "searchCountry": "Search country or code...",
     "noCountryFound": "No country found.",
     "invalidPhone": "Enter a valid phone number",
+    "invalidDateFormat": "Enter a valid date in {format} format within the allowed range.",
+    "chooseDate": "Choose date",
     "total": "Total",
     "notAuthorized": "Not Authorized",
     "notAuthorizedDesc": "You don't have permission to view this content. Please contact your administrator.",
@@ -477,6 +506,8 @@
     "language": "Language",
     "dateFormat": "Date Format",
     "timeFormat": "Time Format",
+    "time12h": "12-hour (AM/PM)",
+    "time24h": "24-hour",
     "timeZone": "Time Zone",
     "looksGood": "Looks Good",
     "notifications": "Notifications",

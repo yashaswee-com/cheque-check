@@ -5,6 +5,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { File01Icon as DraftIcon } from '@hugeicons/core-free-icons'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useProfile } from '@/features/profile/hooks/use-profile'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from '@/components/ui/toast'
@@ -22,7 +23,7 @@ export function DraftList({ entity }: { entity: DraftEntity }) {
   const { activeBusiness } = useBusiness()
   const { profile } = useProfile()
   const businessId = activeBusiness?.id
-  const currency = profile?.currency || '₹'
+  const display = useDisplayFormat(profile)
   const { data: drafts, isLoading } = useDrafts(entity, businessId)
   const deleteDraft = useDeleteDraft(entity, businessId)
 
@@ -31,9 +32,8 @@ export function DraftList({ entity }: { entity: DraftEntity }) {
   ): Describe => {
     if (entity === 'cheque') {
       const cheque = draft as ChequeDraft
-      const amount = cheque.amount
-        ? `${currency}${cheque.amount.toLocaleString()}`
-        : null
+      const amount =
+        cheque.amount != null ? display.currency(cheque.amount) : null
       return {
         title: amount ?? cheque.party?.name ?? t('untitled'),
         subtitle: amount ? cheque.party?.name : null,

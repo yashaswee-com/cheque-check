@@ -2,6 +2,7 @@ import type { ComponentProps, ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GlobalSearch } from './global-search'
+import { FormattingContext } from '@/features/profile/hooks/use-display-format'
 
 type SearchCheque = {
   id: string
@@ -74,6 +75,7 @@ const state = vi.hoisted(() => ({
   },
 }))
 vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
   useTranslations: () => (key: string, values?: { query: string }) =>
     values ? `${key} ${values.query}` : key,
 }))
@@ -156,6 +158,30 @@ beforeEach(() => {
 })
 
 describe('GlobalSearch', () => {
+  it('uses the preferred currency for live and draft search results, including zero', () => {
+    state.cheques = [
+      {
+        id: 'c1',
+        cheque_number: '000001',
+        amount: 1234567.5,
+        party: { name: 'Asha' },
+      },
+    ]
+    state.drafts.cheque = [
+      { id: 'd1', cheque_number: null, amount: 0, party: { name: 'Asha' } },
+    ]
+    render(
+      <FormattingContext.Provider value={{ currency: '€' }}>
+        <GlobalSearch open onOpenChange={vi.fn()} />
+      </FormattingContext.Provider>,
+    )
+    fireEvent.change(screen.getByTestId('global-search-input'), {
+      target: { value: 'Asha' },
+    })
+    expect(screen.getByText('€12,34,567.5')).toBeInTheDocument()
+    expect(screen.getByText('€0')).toBeInTheDocument()
+    expect(screen.queryByText(/₹/)).not.toBeInTheDocument()
+  })
   it('hides loading text, preserves errors, and waits before showing no results', () => {
     state.loading = true
     state.active = false

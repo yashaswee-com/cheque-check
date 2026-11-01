@@ -8,6 +8,16 @@ import {
 } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Calculator } from './calculator'
+import { NextIntlClientProvider } from 'next-intl'
+import messages from '../../messages/en.json'
+
+function renderCalculator(onClose = vi.fn()) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <Calculator onClose={onClose} />
+    </NextIntlClientProvider>,
+  )
+}
 
 afterEach(() => {
   cleanup()
@@ -16,7 +26,7 @@ afterEach(() => {
 describe('Calculator', () => {
   it('persists an unchanged position when a primary pointer is released without movement', () => {
     localStorage.clear()
-    render(<Calculator onClose={vi.fn()} />)
+    renderCalculator()
     const header = screen.getByText('Calculator').parentElement!
     fireEvent.pointerDown(header, {
       pointerId: 1,
@@ -39,7 +49,7 @@ describe('Calculator', () => {
     })
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {})
     try {
-      const { unmount } = render(<Calculator onClose={vi.fn()} />)
+      const { unmount } = renderCalculator()
       const panel = screen.getByRole('dialog')
       const header = screen.getByText('Calculator').parentElement!
       fireEvent.pointerDown(header, { pointerId: 1, button: 1 })
@@ -86,7 +96,7 @@ describe('Calculator', () => {
     { keys: ['1', '+', 'DEL', '2', '='], expected: '3' },
     { keys: ['8', '/', '0', '=', '.'], expected: '0.' },
   ])('handles arithmetic and input sequence $keys', ({ keys, expected }) => {
-    render(<Calculator onClose={vi.fn()} />)
+    renderCalculator()
     for (const key of keys)
       fireEvent.click(screen.getByRole('button', { name: key }))
     expect(
@@ -97,7 +107,7 @@ describe('Calculator', () => {
   })
 
   it('does not propagate close-button pointer presses to the drag header', () => {
-    render(<Calculator onClose={vi.fn()} />)
+    renderCalculator()
     const close = screen.getByRole('button', { name: 'Close calculator' })
     fireEvent.pointerDown(close, {
       pointerId: 9,
@@ -113,7 +123,7 @@ describe('Calculator', () => {
     )
   })
   it('calculates a basic addition', () => {
-    render(<Calculator onClose={vi.fn()} />)
+    renderCalculator()
 
     fireEvent.click(screen.getByRole('button', { name: '7' }))
     fireEvent.click(screen.getByRole('button', { name: '+' }))
@@ -125,7 +135,7 @@ describe('Calculator', () => {
 
   it('resets and closes from the floating panel', () => {
     const onClose = vi.fn()
-    render(<Calculator onClose={onClose} />)
+    renderCalculator(onClose)
 
     fireEvent.click(screen.getByRole('button', { name: '9' }))
     fireEvent.click(screen.getByRole('button', { name: 'RESET' }))
@@ -139,7 +149,7 @@ describe('Calculator', () => {
 
   it('drags by the header and remembers the position', () => {
     localStorage.clear()
-    render(<Calculator onClose={vi.fn()} />)
+    renderCalculator()
     const header = screen.getByText('Calculator').parentElement!
 
     fireEvent.pointerDown(header, {

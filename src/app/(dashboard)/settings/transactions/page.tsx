@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { format } from 'date-fns'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import {
   Sheet,
   SheetContent,
@@ -41,6 +41,7 @@ import type { Transaction } from '@/features/monetization/repositories/monetizat
 
 export default function TransactionsPage() {
   const t = useTranslations('Transactions')
+  const display = useDisplayFormat()
   const tp = useTranslations('Premium')
   const tf = useTranslations('Features')
   const productNames = useTranslations('ProductNames')
@@ -348,7 +349,7 @@ export default function TransactionsPage() {
                           : (tx.product_id ?? typeLabels[tx.type])}
                       </h4>
                       <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">
-                        {format(new Date(tx.created_at), 'PPP at p')}
+                        {display.dateTime(tx.created_at)}
                       </p>
                     </div>
                   </div>
@@ -359,8 +360,9 @@ export default function TransactionsPage() {
                         : tx.currency === 'USD'
                           ? '$'
                           : tx.currency}{' '}
-                      {(tx.amount / 100).toLocaleString('en-IN', {
+                      {display.number(tx.amount / 100, {
                         minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
                       })}{' '}
                       <span className="text-xs font-normal">{tx.currency}</span>
                     </p>

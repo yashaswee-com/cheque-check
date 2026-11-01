@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EntityAvatar } from './entity-avatar'
 import { EmptyState } from './empty-state'
 import { StatusPill } from './status-pill'
+import { NextIntlClientProvider } from 'next-intl'
+import messages from '../../../messages/en.json'
 
 afterEach(() => {
   cleanup()
@@ -79,7 +81,11 @@ describe('presentation fallback contracts', () => {
     'Overdue',
     'Upcoming',
   ] as const)('maps every allowed status %s to a styled pill', (status) => {
-    render(<StatusPill status={status} className="custom" />)
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <StatusPill status={status} className="custom" />
+      </NextIntlClientProvider>,
+    )
     expect(screen.getByText(status)).toHaveClass('custom')
     expect(screen.getByText(status).className).toMatch(/bg-/)
   })

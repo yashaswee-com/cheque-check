@@ -6,6 +6,7 @@ import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
 import { Label } from '@/components/ui/label'
 import { useSearchParams } from 'next/navigation'
@@ -42,7 +43,8 @@ import {
 } from '@/components/reui/stepper'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { useValidationMessage } from '@/hooks/use-validation-message'
 import { useState, useEffect, useRef } from 'react'
 import { useBanks } from '@/features/accounts/hooks/use-banks'
 import { useChequeNumberConflict } from '@/features/cheques/hooks/use-cheque-number-conflict'
@@ -60,6 +62,7 @@ import { BankSelector } from '@/components/bank-selector'
 import { ScanStore } from '@/lib/scan-store'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { buildChequeReturnTo } from '@/lib/cheque-draft'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useDraftTags } from '@/features/tags/hooks/use-draft-tags'
@@ -67,7 +70,9 @@ import { useOcrExtraction } from '@/features/cheques/hooks/use-ocr-extraction'
 import { DraftLeaveDialog, DraftSaveFab } from '@/features/drafts'
 
 export default function CreateChequePage() {
+  const validationMessage = useValidationMessage()
   const t = useTranslations('Cheques')
+  const locale = useLocale()
   const tCommon = useTranslations('Common')
   const tDrafts = useTranslations('Drafts')
   const premium = usePremiumAction()
@@ -84,6 +89,7 @@ export default function CreateChequePage() {
   const businessId = activeBusiness?.id
   const { profile } = useProfile()
   const currency = profile?.currency || '₹'
+  const display = useDisplayFormat(profile)
   const { data: banks } = useBanks()
 
   const {
@@ -193,7 +199,11 @@ export default function CreateChequePage() {
     (a: Account) => a.id === watch('account_id'),
   )
 
-  const amountInWords = numberToIndianWords(watch('amount') || 0, currency)
+  const amountInWords = numberToIndianWords(
+    watch('amount') || 0,
+    currency,
+    locale,
+  )
 
   const photoWidget = (
     <div className="space-y-2">
@@ -447,7 +457,7 @@ export default function CreateChequePage() {
                   !errors.amount && 'invisible',
                 )}
               >
-                {(errors.amount?.message as string) || '\u00A0'}
+                {validationMessage(errors.amount?.message) || '\u00A0'}
               </p>
             </div>
 
@@ -475,7 +485,7 @@ export default function CreateChequePage() {
                   !errors.cheque_number && 'invisible',
                 )}
               >
-                {(errors.cheque_number?.message as string) || '\u00A0'}
+                {validationMessage(errors.cheque_number?.message) || '\u00A0'}
               </p>
               {numberConflictWarning}
             </div>
@@ -521,7 +531,7 @@ export default function CreateChequePage() {
                   !errors.party_id && 'invisible',
                 )}
               >
-                {(errors.party_id?.message as string) || '\u00A0'}
+                {validationMessage(errors.party_id?.message) || '\u00A0'}
               </p>
             </div>
 
@@ -555,7 +565,7 @@ export default function CreateChequePage() {
                   !errors.account_id && 'invisible',
                 )}
               >
-                {(errors.account_id?.message as string) || '\u00A0'}
+                {validationMessage(errors.account_id?.message) || '\u00A0'}
               </p>
               {numberConflictWarning}
             </div>
@@ -583,17 +593,18 @@ export default function CreateChequePage() {
               >
                 {t('chequeDate')}
               </Label>
-              <Input
+              <DateInput
                 leftIcon={Calendar}
                 id="cheque_date"
                 type="date"
                 data-testid="cheque-date-input"
                 {...register('cheque_date')}
+                value={watch('cheque_date') || ''}
                 className="h-12 rounded-sm"
               />
               {errors.cheque_date && (
                 <p className="text-xs text-destructive ml-1">
-                  {errors.cheque_date.message as string}
+                  {validationMessage(errors.cheque_date.message)}
                 </p>
               )}
             </div>
@@ -606,16 +617,17 @@ export default function CreateChequePage() {
               >
                 {t('depositDate')}
               </Label>
-              <Input
+              <DateInput
                 leftIcon={Calendar}
                 id="deposit_date"
                 type="date"
                 {...register('deposit_date')}
+                value={watch('deposit_date') || ''}
                 className="h-14 bg-canvas-parchment border-none rounded-sm"
               />
               {errors.deposit_date && (
                 <p className="text-xs text-destructive ml-1">
-                  {errors.deposit_date.message as string}
+                  {validationMessage(errors.deposit_date.message)}
                 </p>
               )}
             </div>
@@ -664,7 +676,7 @@ export default function CreateChequePage() {
                 </span>
                 <span className="text-xl font-semibold text-primary">
                   {currency}
-                  {Number(watch('amount') || 0).toLocaleString()}
+                  {display.number(Number(watch('amount') || 0))}
                 </span>
               </div>
               <div className="flex justify-between items-center text-sm">

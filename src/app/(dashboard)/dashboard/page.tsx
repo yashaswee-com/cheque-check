@@ -22,6 +22,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useProfile } from '@/features/profile/hooks/use-profile'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -114,12 +115,17 @@ export default function HomePage() {
   const [customRange, setCustomRange] = useState<DateRange>()
   const statsSummary = useChequeSummary(
     activeBusiness?.id,
-    resolveDateRange(statsPreset, new Date(), customRange),
+    resolveDateRange(
+      statsPreset,
+      new Date(),
+      customRange,
+      profile?.time_zone || 'Asia/Kolkata',
+    ),
   )
 
   const currency = profile?.currency || '₹'
-  const formatAmount = (value: number) =>
-    `${value < 0 ? '-' : ''}${currency}${Math.abs(value).toLocaleString()}`
+  const display = useDisplayFormat(profile)
+  const formatAmount = display.currency
 
   return (
     <div className="max-w-2xl space-y-8 pb-20 pt-2">

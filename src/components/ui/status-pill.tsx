@@ -2,6 +2,7 @@
 
 import { ChequeStatus } from '@/types'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 interface StatusPillProps {
   status: ChequeStatus | 'Today' | 'Overdue' | 'Upcoming'
@@ -9,6 +10,7 @@ interface StatusPillProps {
 }
 
 export function StatusPill({ status, className }: StatusPillProps) {
+  const t = useTranslations('Dashboard')
   const statusConfig: Record<
     StatusPillProps['status'],
     { bg: string; text: string }
@@ -51,7 +53,7 @@ export function StatusPill({ status, className }: StatusPillProps) {
         className,
       )}
     >
-      {status}
+      {t(status.toLowerCase())}
     </div>
   )
 }

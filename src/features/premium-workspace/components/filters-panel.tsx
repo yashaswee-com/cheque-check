@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { canBulkTransition, filterCheques } from '../logic'
@@ -37,13 +37,15 @@ export function FiltersPanel({
 }) {
   const t = useTranslations('PremiumWorkspace')
   const [filters, setFilters] = useState<ChequeFilters>({})
+  const [fromValid, setFromValid] = useState(true)
+  const [toValid, setToValid] = useState(true)
+  const [dateReset, setDateReset] = useState(0)
   const [selected, setSelected] = useState<string[]>([])
   const [status, setStatus] =
     useState<NonNullable<ChequeRow['status']>>('Cleared')
   const [confirming, setConfirming] = useState(false)
   const updateFilters = (next: ChequeFilters) => {
     setFilters(next)
-    onFiltersChange?.(next)
     setSelected([])
     setConfirming(false)
   }
@@ -57,6 +59,10 @@ export function FiltersPanel({
     })
   const rangeInvalid =
     !!filters.from && !!filters.to && filters.from > filters.to
+  const datesInvalid = rangeInvalid || !fromValid || !toValid
+  useEffect(() => {
+    if (!datesInvalid) onFiltersChange?.(filters)
+  }, [filters, datesInvalid, onFiltersChange])
   return (
     <section className="space-y-4">
       <p className="text-sm text-muted-foreground">
@@ -116,27 +122,39 @@ export function FiltersPanel({
           ))}
         </SelectField>
         <TextField
+          key={`from-${dateReset}`}
           label={t('from')}
           type="date"
           value={filters.from ?? ''}
+          onValidityChange={setFromValid}
           onChange={(e) =>
             updateFilters({ ...filters, from: e.target.value || undefined })
           }
         />
         <TextField
+          key={`to-${dateReset}`}
           label={t('to')}
           type="date"
           min={filters.from}
           value={filters.to ?? ''}
+          onValidityChange={setToValid}
           onChange={(e) =>
             updateFilters({ ...filters, to: e.target.value || undefined })
           }
         />
       </div>
-      <Button variant="outline" onClick={() => updateFilters({})}>
+      <Button
+        variant="outline"
+        onClick={() => {
+          setDateReset((value) => value + 1)
+          setFromValid(true)
+          setToValid(true)
+          updateFilters({})
+        }}
+      >
         {t('reset')}
       </Button>
-      {rangeInvalid && (
+      {rangeInvalid && fromValid && toValid && (
         <p role="alert" className="text-destructive">
           {t('dateRangeError')}
         </p>
@@ -151,10 +169,15 @@ export function FiltersPanel({
               ([, v]) => v !== undefined && v !== '',
             ),
           )}
-          onApply={(value) => updateFilters(value as ChequeFilters)}
+          onApply={(value) => {
+            setDateReset((current) => current + 1)
+            setFromValid(true)
+            setToValid(true)
+            updateFilters(value as ChequeFilters)
+          }}
           run={run}
           busy={busy}
-          disabled={rangeInvalid}
+          disabled={datesInvalid}
         />
       )}
       {mode === 'bulk' && (
@@ -162,7 +185,9 @@ export function FiltersPanel({
           <div className="flex flex-wrap items-end gap-3">
             <Button
               variant="outline"
-              disabled={busy || !visible.length || visible.length > 500}
+              disabled={
+                busy || datesInvalid || !visible.length || visible.length > 500
+              }
               onClick={() => {
                 setSelected(visible.map((c) => c.id))
                 setConfirming(false)
@@ -204,7 +229,7 @@ export function FiltersPanel({
           )}
           {!confirming ? (
             <Button
-              disabled={busy || !valid}
+              disabled={busy || datesInvalid || !valid}
               onClick={() => setConfirming(true)}
             >
               {t('updateSelected')}
@@ -218,6 +243,7 @@ export function FiltersPanel({
               confirm={t('confirm')}
               cancel={t('cancel')}
               busy={busy}
+              disabled={datesInvalid || !valid}
               onCancel={() => setConfirming(false)}
               onConfirm={() =>
                 void run(async () => {

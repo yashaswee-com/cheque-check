@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { useQueryClient } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowRight01Icon, RefreshIcon } from '@hugeicons/core-free-icons'
@@ -49,7 +50,7 @@ export default function FeaturesPage() {
   const productNames = useTranslations('ProductNames')
   const tp = useTranslations('Premium')
   const premium = usePremiumAccess()
-  const format = useFormatter()
+  const display = useDisplayFormat()
   const queryClient = useQueryClient()
   const { profile, updateProfile, isLoading: isLoadingProfile } = useProfile()
   const {
@@ -287,9 +288,7 @@ export default function FeaturesPage() {
                         ? 'trialUntil'
                         : 'accessUntil',
                       {
-                        date: format.dateTime(new Date(premium.validUntil), {
-                          dateStyle: 'medium',
-                        }),
+                        date: display.date(premium.validUntil),
                       },
                     )}
                   </p>
@@ -521,10 +520,7 @@ export default function FeaturesPage() {
                           {subscribed && entitlement?.valid_until && (
                             <p className="text-xs text-muted-foreground">
                               {t('accessUntil', {
-                                date: format.dateTime(
-                                  new Date(entitlement.valid_until),
-                                  { dateStyle: 'medium' },
-                                ),
+                                date: display.date(entitlement.valid_until),
                               })}
                             </p>
                           )}
@@ -532,10 +528,7 @@ export default function FeaturesPage() {
                             quota.reset_at !== entitlement?.valid_until && (
                               <p className="text-xs text-muted-foreground">
                                 {t('quotaReset', {
-                                  date: format.dateTime(
-                                    new Date(quota.reset_at),
-                                    { dateStyle: 'medium' },
-                                  ),
+                                  date: display.date(quota.reset_at),
                                 })}
                               </p>
                             )}
@@ -563,7 +556,8 @@ export default function FeaturesPage() {
                             })
                           }
                         >
-                          {productNames(addon.topUpProductId)} · ₹50
+                          {productNames(addon.topUpProductId)} ·{' '}
+                          {display.currency(50, '₹')}
                         </Button>
                       ) : (
                         <Button

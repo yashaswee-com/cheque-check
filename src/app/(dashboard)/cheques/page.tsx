@@ -20,9 +20,10 @@ import type { ChequeFilters } from '@/features/premium-workspace/types'
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { chequeDateFilterSchema } from '@/validators'
-import { parseISO } from 'date-fns'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 
 function ChequesContent() {
+  const display = useDisplayFormat()
   const t = useTranslations('Cheques')
   const tc = useTranslations('SharedUI')
   const searchParams = useSearchParams()
@@ -106,7 +107,7 @@ function ChequesContent() {
           >
             {date
               ? t('chequesOnDate', {
-                  date: parseISO(date).toLocaleDateString(),
+                  date: display.date(date),
                 })
               : t('invalidDateFilter')}
           </p>

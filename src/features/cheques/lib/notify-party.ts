@@ -8,6 +8,14 @@ import {
   type MessageValues,
 } from '@/features/premium-workspace/services/workspace.service'
 import { businessService } from '@/features/businesses/services/business.service'
+import {
+  createPreferenceFormatter,
+  type FormattingPreferences,
+} from '@/lib/preference-format'
+import { createTranslator } from 'next-intl'
+import englishMessages from '../../../../messages/en.json'
+import hindiMessages from '../../../../messages/hi.json'
+import hinglishMessages from '../../../../messages/hi-en.json'
 
 type MessageCheque = Pick<
   Cheque,
@@ -22,23 +30,31 @@ export function buildChequeUpdateMessage(
   status: ChequeStatus = cheque.status,
   template?: string | null,
   businessName = 'ChequeCheck',
+  preferences?: FormattingPreferences | null,
 ): string {
-  if (template) {
-    const values: MessageValues = {
-      party: party.name,
-      cheque_number: cheque.cheque_number,
-      amount: `${currency}${cheque.amount.toLocaleString()}`,
-      date: new Date(cheque.cheque_date).toLocaleDateString(),
-      status,
-      business: businessName,
-    }
-    return renderMessageTemplate(template, values)
+  const display = createPreferenceFormatter(preferences)
+  const language = preferences?.language || 'en'
+  const messages =
+    language === 'hi'
+      ? hindiMessages
+      : language === 'hi-en'
+        ? hinglishMessages
+        : englishMessages
+  const t = createTranslator({
+    locale: language,
+    messages: messages.PremiumWorkspace,
+  })
+  const values: MessageValues = {
+    party: party.name,
+    cheque_number: cheque.cheque_number,
+    amount: display.currency(cheque.amount, currency),
+    date: display.date(cheque.cheque_date),
+    status: t(`statuses.${status}`),
+    business: businessName,
   }
-  return [
-    `Hi ${party.name},`,
-    `Cheque #${cheque.cheque_number} for ${currency}${cheque.amount.toLocaleString()} dated ${new Date(cheque.cheque_date).toLocaleDateString()} is now ${status}.`,
-    'Regards, ChequeCheck',
-  ].join('\n')
+  return template
+    ? renderMessageTemplate(template, values)
+    : t('defaultMessage', values)
 }
 
 export function buildSmsLink(phone: string, message: string): string {
@@ -67,7 +83,10 @@ export async function buildNotifyPartyAction(
     'party_id' | 'cheque_number' | 'amount' | 'cheque_date' | 'status'
   > &
     Partial<Pick<Cheque, 'business_id'>>,
-  profile: Pick<Profile, 'currency' | 'party_sms_enabled'> | null | undefined,
+  profile:
+    | (FormattingPreferences & Pick<Profile, 'party_sms_enabled'>)
+    | null
+    | undefined,
   label: string,
   canNotify = false,
   accessRequiredMessage = label,
@@ -87,6 +106,7 @@ export async function buildNotifyPartyAction(
           party,
           currency,
           accessRequiredMessage,
+          profile,
         )
       },
     }
@@ -107,6 +127,7 @@ export async function preparePartySms(
   party: Parameters<typeof buildChequeUpdateMessage>[1],
   currency: string,
   accessRequiredMessage = title,
+  preferences?: FormattingPreferences | null,
 ): Promise<void> {
   try {
     if (!(await verifyLifetimePremium())) {
@@ -131,6 +152,7 @@ export async function preparePartySms(
         cheque.status,
         template,
         business?.name,
+        preferences,
       ),
     )
   } catch (error) {

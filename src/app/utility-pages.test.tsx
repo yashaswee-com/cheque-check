@@ -168,12 +168,7 @@ describe('settings and draft routes', () => {
           name: `${translations.Settings.releaseTitle} - v${version}`,
         }),
       ).toBeVisible()
-      const date = new Intl.DateTimeFormat(locale, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        timeZone: 'UTC',
-      }).format(new Date('2026-10-31T00:00:00Z'))
+      const date = '31/10/2026'
       expect(
         screen.getByText(
           translations.Settings.lastUpdated.replace('{date}', date),

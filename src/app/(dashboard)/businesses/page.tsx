@@ -32,6 +32,7 @@ import Link from 'next/link'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useProfile } from '@/features/profile/hooks/use-profile'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { cn } from '@/lib/utils'
 import {
   FilterPillSection,
@@ -70,6 +71,7 @@ export default function BusinessesPage() {
   const tc = useTranslations('Common')
   const { profile } = useProfile()
   const currency = profile?.currency || '₹'
+  const display = useDisplayFormat(profile)
 
   const {
     businesses,
@@ -295,7 +297,7 @@ export default function BusinessesPage() {
                 </div>
                 <p className="font-semibold text-primary">
                   {currency}
-                  {getUpcomingTotal(business.id).toLocaleString()}
+                  {display.number(getUpcomingTotal(business.id))}
                 </p>
               </div>
             </div>

@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useProfile } from '@/features/profile/hooks/use-profile'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { DataState } from '@/components/ui/data-state'
@@ -49,6 +50,7 @@ export default function PartiesPage() {
   const businessId = activeBusiness?.id
 
   const currency = profile?.currency || '₹'
+  const display = useDisplayFormat(profile)
 
   const {
     parties,
@@ -217,7 +219,7 @@ export default function PartiesPage() {
                   </p>
                   <p className="text-sm font-bold text-primary">
                     {currency}
-                    {getBalance(party.id).toLocaleString()}
+                    {display.number(getBalance(party.id))}
                   </p>
                 </div>
                 <HugeiconsIcon

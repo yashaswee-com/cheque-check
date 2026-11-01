@@ -6,6 +6,7 @@ import {
   isPartySmsEnabled,
   preparePartySms,
 } from './notify-party'
+import hindiMessages from '../../../../messages/hi.json'
 
 const mocks = vi.hoisted(() => ({
   verify: vi.fn(),
@@ -56,6 +57,26 @@ describe('notify-party', () => {
     expect(
       buildChequeUpdateMessage(cheque, { name: 'Acme Ltd' }, '₹'),
     ).toContain('Cheque #123456')
+  })
+  it('localizes default SMS text, statuses, currency and dates using the profile', () => {
+    const message = buildChequeUpdateMessage(
+      cheque,
+      { name: 'Acme' },
+      '€',
+      'Cleared',
+      null,
+      'Example',
+      {
+        language: 'hi',
+        date_format: 'MM/dd/yyyy',
+        time_zone: 'America/New_York',
+      },
+    )
+    expect(message).toContain('€12,500')
+    expect(message).toContain('09/30/2026')
+    expect(message).toContain(hindiMessages.PremiumWorkspace.statuses.Cleared)
+    expect(message).not.toContain('Cheque #')
+    expect(message).toContain('Example')
   })
 
   it('offers an authorized action and rechecks access when clicked', async () => {

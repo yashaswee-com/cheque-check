@@ -6,7 +6,7 @@ import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { useChequeDetail } from '@/features/cheques/hooks/use-cheque-detail'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { parseISO } from 'date-fns'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -103,6 +103,7 @@ export default function ChequeDetailPage() {
   const { profile } = useProfile()
   const premium = usePremiumAction()
   const currency = profile?.currency || '₹'
+  const display = useDisplayFormat(profile)
 
   const { cheque, isLoading, updateStatus, isUpdating } = useChequeDetail(id)
   const { deleteCheque } = useChequeActions()
@@ -139,7 +140,7 @@ export default function ChequeDetailPage() {
   )
     .filter(({ status }) => cheque.canTransition(status))
     .map(({ status, icon }) => ({
-      label: t('markAs', { status }),
+      label: t('markAs', { status: tc(status.toLowerCase()) }),
       icon,
       disabled: isUpdating,
       loading: isUpdating,
@@ -179,6 +180,7 @@ export default function ChequeDetailPage() {
                 party,
                 currency,
                 premium.accessRequiredMessage,
+                profile,
               )
             },
           },
@@ -196,6 +198,7 @@ export default function ChequeDetailPage() {
             cheque,
             currency,
             layout ?? getLocalPrintLayout(cheque.account_id),
+            profile,
           )
         } catch (error) {
           toast.add({
@@ -251,7 +254,7 @@ export default function ChequeDetailPage() {
               data-testid="cheque-detail-amount"
             >
               {currency}
-              {cheque.amount.toLocaleString()}
+              {display.number(cheque.amount)}
             </h2>
           </div>
           <div
@@ -349,7 +352,7 @@ export default function ChequeDetailPage() {
                   className="h-3 w-3 text-primary/40"
                 />
                 <p className="font-semibold">
-                  {parseISO(cheque.cheque_date).toLocaleDateString()}
+                  {display.date(cheque.cheque_date)}
                 </p>
               </Link>
             </div>

@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useProfile } from '@/features/profile/hooks/use-profile'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import type { ChequeWithRelations } from '@/types'
 import { SpeedDialFab } from '@/components/speed-dial-fab'
 import { EntityTagsSection } from '@/features/tags/components/tag-chips'
@@ -34,6 +35,7 @@ export default function BusinessDetailPage() {
   const { id } = useParams() as { id: string }
   const { profile } = useProfile()
   const currency = profile?.currency || '₹'
+  const display = useDisplayFormat(profile)
 
   const {
     business,
@@ -117,7 +119,7 @@ export default function BusinessDetailPage() {
             </p>
             <p className="mt-2 text-2xl font-semibold">
               {currency}
-              {stats.totalAmount.toLocaleString()}
+              {display.number(stats.totalAmount)}
             </p>
           </div>
           <div className="rounded-sm bg-canvas-parchment p-4 border border-border/50">

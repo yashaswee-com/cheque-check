@@ -20,7 +20,7 @@ import {
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import { format } from 'date-fns'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useSettings } from '@/features/settings/hooks/use-settings'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
@@ -47,6 +47,7 @@ export default function SettingsPage() {
   const tp = useTranslations('Premium')
   const tpa = useTranslations('PhoneAuth')
   const { profile, isLoading: profileLoading } = useProfile()
+  const display = useDisplayFormat(profile)
   const { handleLogout } = useSettings()
   const { isLoading: monetizationLoading } = useMonetization()
 
@@ -276,7 +277,7 @@ export default function SettingsPage() {
           ChequeCheck v1.0.0
         </p>
         <p className="text-[10px] text-muted-foreground mt-2 opacity-30 font-semibold">
-          {format(new Date(), 'PPpp')}
+          {display.dateTime(new Date())}
         </p>
       </div>
     </div>

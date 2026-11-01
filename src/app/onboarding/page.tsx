@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label'
 import { businessService } from '@/features/businesses/services/business.service'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useProfile } from '@/features/profile/hooks/use-profile'
+import { useTimeFormatOptions } from '@/features/profile/hooks/use-time-format-options'
 import { useQueryClient } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Combobox } from '@/components/ui/combobox'
@@ -51,7 +52,6 @@ import { celebrate } from '@/lib/celebrate'
 import {
   CURRENCY_OPTIONS,
   DATE_FORMAT_OPTIONS,
-  TIME_FORMAT_OPTIONS,
   ONBOARDING_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS,
   TIMEZONE_OPTIONS,
 } from '@/features/profile/lib/preference-options'
@@ -76,6 +76,7 @@ export default function OnboardingPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { profile, updateProfile } = useProfile()
+  const timeFormatOptions = useTimeFormatOptions()
   const { setActiveBusiness } = useBusiness()
 
   const { REMINDERS_PER_DAY_OPTIONS, REMINDER_FREQUENCY_OPTIONS } =
@@ -522,7 +523,7 @@ export default function OnboardingPage() {
                       {t('timeFormat')}
                     </Label>
                     <Combobox
-                      options={TIME_FORMAT_OPTIONS}
+                      options={timeFormatOptions}
                       value={formData.timeFormat}
                       onValueChange={(v) =>
                         setFormData({ ...formData, timeFormat: v })

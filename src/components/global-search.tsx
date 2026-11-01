@@ -27,6 +27,7 @@ import { ChequeWithRelations, Party, AccountWithRelations } from '@/types'
 import { useTranslations } from 'next-intl'
 import { DRAFT_CREATE_PATHS, useDrafts } from '@/features/drafts'
 import type { ChequeDraft, PartyDraft, AccountDraft } from '@/types'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 
 export function GlobalSearch({
   open,
@@ -41,6 +42,7 @@ export function GlobalSearch({
   const router = useRouter()
   const t = useTranslations('Common')
   const tDrafts = useTranslations('Drafts')
+  const display = useDisplayFormat()
 
   const {
     cheques,
@@ -176,7 +178,7 @@ export function GlobalSearch({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">
-                    ₹{c.amount.toLocaleString()}
+                    {display.currency(c.amount)}
                   </p>
                   <p className="text-[10px] text-muted-foreground truncate font-semibold uppercase tracking-wider">
                     {c.party?.name} • #{c.cheque_number}
@@ -203,7 +205,9 @@ export function GlobalSearch({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">
-                    {c.amount ? `₹${c.amount.toLocaleString()}` : t('untitled')}
+                    {c.amount != null
+                      ? display.currency(c.amount)
+                      : t('untitled')}
                   </p>
                   <p className="text-[10px] text-muted-foreground truncate font-semibold uppercase tracking-wider">
                     {c.party?.name}

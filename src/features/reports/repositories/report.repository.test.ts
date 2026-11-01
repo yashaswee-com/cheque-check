@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ChequeWithRelations } from '@/types'
-import { BrowserReportRepository } from './report.repository'
+import {
+  BrowserReportRepository,
+  type ReportPresentation,
+} from './report.repository'
+import { saveTextPdf } from '@/lib/pdf-text'
+import hindi from '../../../../messages/hi.json'
+
+vi.mock('@/lib/pdf-text', () => ({ saveTextPdf: vi.fn() }))
 
 const pdf = vi.hoisted(() => ({
   setFontSize: vi.fn(),
@@ -49,6 +56,30 @@ const cheque: ChequeWithRelations = {
   updated_at: '',
 }
 const repository = new BrowserReportRepository()
+const presentation: ReportPresentation = {
+  preferences: {
+    currency: '€',
+    date_format: 'MM/dd/yyyy',
+    time_zone: 'America/New_York',
+  },
+  language: 'hi',
+  title: hindi.Reports.title,
+  headers: [
+    'Number',
+    'Party',
+    'Account',
+    'Amount',
+    'Date',
+    'Type',
+    'Status',
+    'Notes',
+  ],
+  sheet: hindi.Common.cheques,
+  page: hindi.PremiumWorkspace.page,
+  unknownParty: hindi.Cheques.party,
+  statuses: hindi.PremiumWorkspace.statuses,
+  types: hindi.PremiumWorkspace.types,
+}
 let downloaded: Blob
 
 beforeEach(() => {
@@ -80,6 +111,55 @@ function readBlob(blob: Blob) {
 }
 
 describe('BrowserReportRepository', () => {
+  it('exports preferred currency and dates with translated PDF labels', async () => {
+    await repository.exportToPDF([cheque], 'localized.pdf', presentation)
+    expect(saveTextPdf).toHaveBeenCalledWith(
+      [
+        hindi.Reports.title,
+        presentation.headers.join(' | '),
+        [
+          '000001',
+          hindi.Cheques.party,
+          '',
+          '€125.5',
+          '10/31/2026',
+          hindi.PremiumWorkspace.types.Outward,
+          hindi.PremiumWorkspace.statuses.Issued,
+          'Rent',
+        ].join(' | '),
+      ],
+      'localized.pdf',
+      hindi.PremiumWorkspace.page,
+    )
+    expect(cheque.cheque_date).toBe('2026-10-31')
+  })
+  it('exports translated Excel cells and preferred currency formatting without turning amounts into text', async () => {
+    const worksheet = { sheet: true, D2: { t: 'n', v: 125.5, z: '' } }
+    excel.aoa_to_sheet.mockReturnValueOnce(worksheet)
+    await repository.exportToExcel([cheque], 'localized.xlsx', presentation)
+    expect(excel.sheet_add_aoa).toHaveBeenCalledWith(
+      worksheet,
+      [
+        [
+          '000001',
+          '',
+          '',
+          125.5,
+          '10/31/2026',
+          hindi.PremiumWorkspace.types.Outward,
+          hindi.PremiumWorkspace.statuses.Issued,
+          'Rent',
+        ],
+      ],
+      { origin: -1 },
+    )
+    expect(worksheet.D2.z).toBe('"€"#,##0.00')
+    expect(excel.book_append_sheet).toHaveBeenCalledWith(
+      expect.any(Object),
+      worksheet,
+      hindi.Common.cheques,
+    )
+  })
   it('rejects unsupported browser downloads before allocating an object URL', async () => {
     const create = document.createElement.bind(document)
     vi.spyOn(document, 'createElement').mockImplementation((tag, options) => {

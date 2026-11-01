@@ -7,6 +7,7 @@ import {
   type InputHTMLAttributes,
 } from 'react'
 import { Button } from '@/components/ui/button'
+import { DateInput } from '@/components/ui/date-input'
 
 export const controlClass =
   'w-full min-h-11 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
@@ -31,10 +32,19 @@ export function Field({
 export function TextField({
   label,
   ...props
-}: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+}: InputHTMLAttributes<HTMLInputElement> & {
+  label: string
+  onValidityChange?: (valid: boolean) => void
+}) {
   return (
     <Field label={label}>
-      {(id) => <input {...props} id={id} className={controlClass} />}
+      {(id) =>
+        props.type === 'date' ? (
+          <DateInput {...props} id={id} className={controlClass} />
+        ) : (
+          <input {...props} id={id} className={controlClass} />
+        )
+      }
     </Field>
   )
 }
@@ -60,6 +70,7 @@ export function Confirmation({
   onConfirm,
   onCancel,
   busy,
+  disabled,
 }: {
   message: string
   confirm: string
@@ -67,6 +78,7 @@ export function Confirmation({
   onConfirm: () => void
   onCancel: () => void
   busy: boolean
+  disabled?: boolean
 }) {
   return (
     <div
@@ -75,7 +87,7 @@ export function Confirmation({
     >
       <p>{message}</p>
       <div className="flex flex-wrap gap-2">
-        <Button disabled={busy} loading={busy} onClick={onConfirm}>
+        <Button disabled={busy || disabled} loading={busy} onClick={onConfirm}>
           {confirm}
         </Button>
         <Button variant="outline" disabled={busy} onClick={onCancel}>

@@ -1,5 +1,10 @@
 import { jsPDF } from 'jspdf'
 import type { Cheque, ChequeWithRelations } from '@/types'
+import {
+  createPreferenceFormatter,
+  type FormattingPreferences,
+} from '@/lib/preference-format'
+import { addPdfText } from '@/lib/pdf-text'
 
 export interface PrintLayout {
   payeeX: number
@@ -51,16 +56,23 @@ export function createChequePrintPdf(
     Pick<ChequeWithRelations, 'party'>,
   currency: string,
   layout = getPrintLayout(cheque.account_id),
+  preferences?: FormattingPreferences | null,
 ): jsPDF {
   const document = new jsPDF({ unit: 'mm', format: 'a4' })
   document.setFontSize(11)
-  document.text(cheque.party?.name || '', layout.payeeX, layout.payeeY)
-  document.text(
-    `${currency}${cheque.amount.toLocaleString()}`,
+  const display = createPreferenceFormatter(preferences)
+  addPdfText(document, cheque.party?.name || '', layout.payeeX, layout.payeeY)
+  addPdfText(
+    document,
+    display.currency(cheque.amount, currency),
     layout.amountX,
     layout.amountY,
   )
-  document.text(cheque.cheque_date, layout.dateX, layout.dateY)
+  document.text(
+    preferences ? display.date(cheque.cheque_date) : cheque.cheque_date,
+    layout.dateX,
+    layout.dateY,
+  )
   document.text(
     cheque.cheque_number,
     layout.chequeNumberX,
@@ -77,8 +89,9 @@ export function downloadChequePrintPdf(
     Pick<ChequeWithRelations, 'party'>,
   currency: string,
   layout?: PrintLayout,
+  preferences?: FormattingPreferences | null,
 ): void {
-  createChequePrintPdf(cheque, currency, layout).save(
+  createChequePrintPdf(cheque, currency, layout, preferences).save(
     `cheque-${cheque.cheque_number}.pdf`,
   )
 }

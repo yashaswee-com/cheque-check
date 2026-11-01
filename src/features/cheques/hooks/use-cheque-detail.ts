@@ -37,7 +37,9 @@ export function useChequeDetail(id: string) {
       )
       toast.add({
         title: tc('success'),
-        description: t('statusUpdated', { status: updated.status }),
+        description: t('statusUpdated', {
+          status: tc(updated.status.toLowerCase()),
+        }),
         type: 'success',
         actionProps,
       })

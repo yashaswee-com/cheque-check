@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { format } from 'date-fns'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import type { DateRange } from 'react-day-picker'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -35,6 +35,7 @@ export function StatsDateFilter({
   onCustomRangeChange,
 }: StatsDateFilterProps) {
   const t = useTranslations('Dashboard')
+  const display = useDisplayFormat()
   const [calendarOpen, setCalendarOpen] = useState(false)
 
   const items = DATE_RANGE_PRESETS.map((value) => ({
@@ -44,8 +45,8 @@ export function StatsDateFilter({
 
   const customLabel = customRange?.from
     ? customRange.to && customRange.to !== customRange.from
-      ? `${format(customRange.from, 'd MMM')} – ${format(customRange.to, 'd MMM yy')}`
-      : format(customRange.from, 'd MMM yy')
+      ? `${display.calendarDate(customRange.from)} – ${display.calendarDate(customRange.to)}`
+      : display.calendarDate(customRange.from)
     : t('dateRange.pickDates')
 
   return (

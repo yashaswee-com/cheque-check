@@ -8,6 +8,7 @@ import {
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 import {
   clampPosition,
   loadCalculatorPosition,
@@ -36,6 +37,7 @@ function formatResult(value: number): string {
 }
 
 export function Calculator({ onClose }: { onClose: () => void }) {
+  const t = useTranslations('SharedUI')
   const [result, setResult] = useState('0')
   const [storedValue, setStoredValue] = useState<number | null>(null)
   const [operator, setOperator] = useState<Operator | null>(null)
@@ -167,7 +169,7 @@ export function Calculator({ onClose }: { onClose: () => void }) {
       ref={panelRef}
       className="fixed left-0 top-0 z-[90] w-[248px] rounded-2xl border border-primary/15 bg-background p-3 shadow-2xl will-change-transform"
       role="dialog"
-      aria-label="Calculator"
+      aria-label={t('calculator')}
     >
       <div
         className="flex cursor-grab touch-none select-none items-center justify-between border-b border-border/60 px-1 pb-2 active:cursor-grabbing"
@@ -181,7 +183,7 @@ export function Calculator({ onClose }: { onClose: () => void }) {
             icon={CalculatorIcon}
             className="h-4 w-4 text-primary"
           />
-          Calculator
+          {t('calculator')}
         </div>
         <Button
           type="button"
@@ -190,14 +192,14 @@ export function Calculator({ onClose }: { onClose: () => void }) {
           className="rounded-full"
           onPointerDown={(event) => event.stopPropagation()}
           onClick={onClose}
-          aria-label="Close calculator"
+          aria-label={t('closeCalculator')}
         >
           <HugeiconsIcon icon={CloseIcon} className="h-4 w-4" />
         </Button>
       </div>
 
       <div className="mt-3 rounded-lg bg-foreground px-3 py-3 text-right text-2xl font-semibold tabular-nums text-background">
-        <span>{result}</span>
+        <span>{result === 'Error' ? t('calculatorError') : result}</span>
       </div>
 
       <div className="mt-3 grid grid-cols-4 gap-2 rounded-xl bg-muted/70 p-2">
@@ -216,7 +218,11 @@ export function Calculator({ onClose }: { onClose: () => void }) {
               value === 'RESET' && 'col-span-2',
             )}
           >
-            {value}
+            {value === 'DEL'
+              ? t('calculatorDelete')
+              : value === 'RESET'
+                ? t('calculatorReset')
+                : value}
           </button>
         ))}
       </div>

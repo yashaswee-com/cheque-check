@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useSwipeable } from 'react-swipeable'
 import { useTranslations } from 'next-intl'
-import { format } from 'date-fns'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon as Trash } from '@hugeicons/core-free-icons'
 import { Badge } from '@/components/ui/badge'
@@ -44,6 +44,7 @@ export function DraftCard({
 }: DraftCardProps) {
   const t = useTranslations('Drafts')
   const tc = useTranslations('Common')
+  const display = useDisplayFormat()
   const [offset, setOffset] = useState(0)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -111,7 +112,7 @@ export function DraftCard({
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
             {meta ? `${meta} · ` : ''}
             {t('edited', {
-              date: format(new Date(updatedAt), 'dd MMM, HH:mm'),
+              date: display.dateTime(updatedAt),
             })}
           </p>
         </div>

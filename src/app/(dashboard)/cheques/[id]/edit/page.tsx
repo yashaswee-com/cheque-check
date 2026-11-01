@@ -8,6 +8,7 @@ import { useParties } from '@/features/parties/hooks/use-parties'
 import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
 import { Label } from '@/components/ui/label'
 import { useParams } from 'next/navigation'
@@ -34,7 +35,8 @@ import { SkeletonImage } from '@/components/ui/skeleton-image'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import dynamic from 'next/dynamic'
 import { Party, AccountWithRelations } from '@/types'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { useValidationMessage } from '@/hooks/use-validation-message'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { toast } from '@/components/ui/toast'
 import { TagSelector } from '@/features/tags/components/tag-selector'
@@ -52,6 +54,8 @@ const DeleteConfirmationDialog = dynamic(
 )
 
 export default function EditChequePage() {
+  const validationMessage = useValidationMessage()
+  const locale = useLocale()
   const t = useTranslations('Cheques')
   const tCommon = useTranslations('Common')
   const { id } = useParams() as { id: string }
@@ -275,7 +279,7 @@ export default function EditChequePage() {
               className="h-12 font-semibold rounded-sm"
             />
             <p className="ml-1 text-[10px] text-muted-foreground uppercase tracking-widest">
-              {numberToIndianWords(watch('amount') || 0, currency)}
+              {numberToIndianWords(watch('amount') || 0, currency, locale)}
             </p>
             <p
               className={cn(
@@ -283,7 +287,7 @@ export default function EditChequePage() {
                 !errors.amount && 'invisible',
               )}
             >
-              {(errors.amount?.message as string) || '\u00A0'}
+              {validationMessage(errors.amount?.message) || '\u00A0'}
             </p>
           </div>
 
@@ -310,7 +314,7 @@ export default function EditChequePage() {
                 !errors.cheque_number && 'invisible',
               )}
             >
-              {(errors.cheque_number?.message as string) || '\u00A0'}
+              {validationMessage(errors.cheque_number?.message) || '\u00A0'}
             </p>
           </div>
         </FormSection>
@@ -336,7 +340,7 @@ export default function EditChequePage() {
                 !errors.party_id && 'invisible',
               )}
             >
-              {(errors.party_id?.message as string) || '\u00A0'}
+              {validationMessage(errors.party_id?.message) || '\u00A0'}
             </p>
           </div>
 
@@ -360,7 +364,7 @@ export default function EditChequePage() {
                 !errors.account_id && 'invisible',
               )}
             >
-              {(errors.account_id?.message as string) || '\u00A0'}
+              {validationMessage(errors.account_id?.message) || '\u00A0'}
             </p>
           </div>
         </FormSection>
@@ -374,11 +378,12 @@ export default function EditChequePage() {
             >
               {t('chequeDate')}
             </Label>
-            <Input
+            <DateInput
               leftIcon={Calendar}
               id="cheque_date"
               type="date"
               {...register('cheque_date')}
+              value={watch('cheque_date') || ''}
               className="h-12 rounded-sm"
             />
             <p
@@ -387,7 +392,7 @@ export default function EditChequePage() {
                 !errors.cheque_date && 'invisible',
               )}
             >
-              {(errors.cheque_date?.message as string) || '\u00A0'}
+              {validationMessage(errors.cheque_date?.message) || '\u00A0'}
             </p>
           </div>
 
@@ -399,11 +404,12 @@ export default function EditChequePage() {
             >
               {t('depositDate')}
             </Label>
-            <Input
+            <DateInput
               leftIcon={Calendar}
               id="deposit_date"
               type="date"
               {...register('deposit_date')}
+              value={watch('deposit_date') || ''}
               className="h-14 bg-canvas-parchment border-none rounded-sm"
             />
           </div>

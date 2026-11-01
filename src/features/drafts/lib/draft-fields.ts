@@ -83,13 +83,16 @@ export function toAccountDraftFields(
   }
 }
 
-export function chequeDraftToFormValues(draft: ChequeDraftFields) {
+export function chequeDraftToFormValues(
+  draft: ChequeDraftFields,
+  today = new Date().toISOString().split('T')[0],
+) {
   return {
     party_id: draft.party_id ?? '',
     account_id: draft.account_id ?? '',
     cheque_number: draft.cheque_number ?? '',
     amount: draft.amount ?? 0,
-    cheque_date: draft.cheque_date ?? new Date().toISOString().split('T')[0],
+    cheque_date: draft.cheque_date ?? today,
     deposit_date: draft.deposit_date ?? '',
     type: draft.type ?? 'Outward',
     notes: draft.notes ?? '',

@@ -522,6 +522,10 @@ describe('reports page', () => {
         expect(service).toHaveBeenCalledWith(
           cheques,
           `cheques_report_Acme.${format === 'excel' ? 'xlsx' : format}`,
+          expect.objectContaining({
+            preferences: expect.objectContaining({ currency: '$' }),
+            language: 'en-IN',
+          }),
         ),
       )
       expect(mocks.verify).toHaveBeenCalledWith('reports')
@@ -677,6 +681,10 @@ describe('reports page', () => {
       expect(mocks.pdf).toHaveBeenCalledWith(
         cheques,
         'cheques_report_export.pdf',
+        expect.objectContaining({
+          language: 'en-IN',
+          preferences: expect.any(Object),
+        }),
       ),
     )
   })
@@ -710,6 +718,10 @@ describe('reports page', () => {
       expect(mocks.pdf).toHaveBeenCalledWith(
         cheques,
         'cheques_report_Acme.pdf',
+        expect.objectContaining({
+          language: 'en-IN',
+          preferences: expect.any(Object),
+        }),
       ),
     )
     expect(screen.getByTestId('reports-export-pdf')).toBeDisabled()

@@ -74,7 +74,7 @@ test.describe('locale', () => {
     await language.click()
     await page.getByRole('option', { name: 'Hindi' }).click()
 
-    // Language switch sets a cookie + calls window.location.reload().
+    // The profile provider refreshes translated routes after the save succeeds.
     await expect(page.locator('html')).toHaveAttribute('lang', 'hi')
     await page.goto('/dashboard')
     await expect(page.getByTestId('bottom-nav-parties')).toContainText(

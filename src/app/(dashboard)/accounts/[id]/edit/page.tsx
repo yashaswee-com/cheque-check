@@ -22,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
+import { useValidationMessage } from '@/hooks/use-validation-message'
 import { toast } from '@/components/ui/toast'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useEntityTagsDraft } from '@/features/tags/hooks/use-entity-tags'
@@ -47,6 +48,7 @@ const BankSelector = dynamic(
 )
 
 export default function EditAccountPage() {
+  const validationMessage = useValidationMessage()
   const t = useTranslations('Accounts')
   const tc = useTranslations('Common')
   const { id } = useParams() as { id: string }
@@ -127,7 +129,7 @@ export default function EditAccountPage() {
             />
             {errors.bank_id && (
               <p className="text-xs text-destructive ml-1">
-                {errors.bank_id.message as string}
+                {validationMessage(errors.bank_id.message)}
               </p>
             )}
           </div>
@@ -176,7 +178,7 @@ export default function EditAccountPage() {
             />
             {errors.account_name && (
               <p className="text-xs text-destructive ml-1">
-                {errors.account_name.message as string}
+                {validationMessage(errors.account_name.message)}
               </p>
             )}
           </div>
@@ -198,7 +200,7 @@ export default function EditAccountPage() {
             />
             {errors.account_number && (
               <p className="text-xs text-destructive ml-1">
-                {errors.account_number.message as string}
+                {validationMessage(errors.account_number.message)}
               </p>
             )}
           </div>
@@ -223,7 +225,7 @@ export default function EditAccountPage() {
             />
             {errors.opening_balance && (
               <p className="text-xs text-destructive ml-1">
-                {errors.opening_balance.message as string}
+                {validationMessage(errors.opening_balance.message)}
               </p>
             )}
           </div>
@@ -255,7 +257,7 @@ export default function EditAccountPage() {
             />
             {errors.ifsc_code && (
               <p className="text-xs text-destructive ml-1">
-                {errors.ifsc_code.message as string}
+                {validationMessage(errors.ifsc_code.message)}
               </p>
             )}
           </div>

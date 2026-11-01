@@ -15,7 +15,7 @@ import {
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useProfile } from '@/features/profile/hooks/use-profile'
-import { format } from 'date-fns'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { StatusPill } from '@/components/ui/status-pill'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
@@ -46,9 +46,7 @@ export function ChequeCard({ cheque, onStatusUpdate, tags }: ChequeCardProps) {
   const premium = usePremiumAction()
 
   const currency = profile?.currency || '₹'
-  const dateFormat = (profile?.date_format || 'dd/MM/yyyy')
-    .replace(/DD/g, 'dd')
-    .replace(/YYYY/g, 'yyyy')
+  const display = useDisplayFormat(profile)
 
   const handlers = useSwipeable({
     onSwiping: (e) => {
@@ -95,7 +93,9 @@ export function ChequeCard({ cheque, onStatusUpdate, tags }: ChequeCardProps) {
     trackMouse: true,
   })
 
-  const statusLabel = ChequeEntity.fromRow(cheque).displayStatus()
+  const statusLabel = ChequeEntity.fromRow(cheque).displayStatus(
+    display.today(),
+  )
 
   return (
     <div className="relative overflow-hidden rounded-lg">
@@ -146,8 +146,7 @@ export function ChequeCard({ cheque, onStatusUpdate, tags }: ChequeCardProps) {
             <div>
               <div className="flex items-center gap-2">
                 <p className="text-xl font-bold">
-                  {currency}
-                  {cheque.amount.toLocaleString()}
+                  {display.currency(cheque.amount)}
                 </p>
                 {cheque.image_url && (
                   <Dialog>
@@ -179,7 +178,7 @@ export function ChequeCard({ cheque, onStatusUpdate, tags }: ChequeCardProps) {
           </div>
           <div className="text-right">
             <p className="text-xs font-semibold text-muted-foreground uppercase">
-              {format(new Date(cheque.cheque_date), dateFormat)}
+              {display.date(cheque.cheque_date)}
             </p>
             <div className="mt-1 flex items-center justify-end gap-1.5">
               <TextTruncate
@@ -203,11 +202,12 @@ export function ChequeCard({ cheque, onStatusUpdate, tags }: ChequeCardProps) {
               #{cheque.cheque_number}
             </p>
           </div>
-          <StatusPill status={statusLabel as ChequeStatus} />
+          <StatusPill status={statusLabel} />
         </div>
         {cheque.party?.contact && isPartySmsEnabled(profile) && (
           <button
             type="button"
+            data-premium-feature="notify-party"
             className="pointer-events-auto relative z-10 mt-3 flex min-h-11 items-center gap-1 text-xs font-semibold text-primary"
             onClick={(event) => {
               event.preventDefault()
@@ -220,6 +220,7 @@ export function ChequeCard({ cheque, onStatusUpdate, tags }: ChequeCardProps) {
                 cheque.party!,
                 currency,
                 premium.accessRequiredMessage,
+                profile,
               )
             }}
           >

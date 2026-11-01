@@ -467,13 +467,29 @@ describe('general preferences page', () => {
     expect(mocks.update).toHaveBeenCalledWith({ reduce_motion: true })
   })
 
-  it('updates the locale cookie and reloads after choosing a language', () => {
+  it('persists the language through the profile provider', () => {
     renderPage(<PreferencesPage />)
     fireEvent.change(screen.getByTestId('preferences-language'), {
       target: { value: 'hi' },
     })
     expect(mocks.update).toHaveBeenCalledWith({ language: 'hi' })
-    expect(document.cookie).toContain('NEXT_LOCALE=hi')
+  })
+
+  it('reports failed preference saves without changing the locale cookie', async () => {
+    mocks.update.mockRejectedValueOnce(new Error('Save failed'))
+    const before = document.cookie
+    renderPage(<PreferencesPage />)
+    fireEvent.change(screen.getByTestId('preferences-language'), {
+      target: { value: 'hi' },
+    })
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith({
+        title: messages.Common.error,
+        description: 'Save failed',
+        type: 'error',
+      }),
+    )
+    expect(document.cookie).toBe(before)
   })
 
   it('defaults blank time formats and zero-valued reminder settings', () => {

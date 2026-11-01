@@ -25,6 +25,7 @@ import { EditableAvatar } from '@/components/ui/editable-avatar'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { Controller } from 'react-hook-form'
 import { useTranslations } from 'next-intl'
+import { useValidationMessage } from '@/hooks/use-validation-message'
 import { toast } from '@/components/ui/toast'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useEntityTagsDraft } from '@/features/tags/hooks/use-entity-tags'
@@ -41,6 +42,7 @@ const DeleteConfirmationDialog = dynamic(
 )
 
 export default function EditPartyPage() {
+  const validationMessage = useValidationMessage()
   const t = useTranslations('Parties')
   const tCommon = useTranslations('Common')
   const { id } = useParams() as { id: string }
@@ -140,7 +142,7 @@ export default function EditPartyPage() {
             />
             {errors.name && (
               <p className="text-xs text-destructive ml-1">
-                {errors.name.message as string}
+                {validationMessage(errors.name.message)}
               </p>
             )}
           </div>
@@ -196,7 +198,7 @@ export default function EditPartyPage() {
             />
             {errors.contact && (
               <p className="text-xs text-destructive ml-1">
-                {errors.contact.message as string}
+                {validationMessage(errors.contact.message)}
               </p>
             )}
           </div>

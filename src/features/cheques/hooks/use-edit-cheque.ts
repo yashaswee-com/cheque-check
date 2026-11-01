@@ -9,10 +9,13 @@ import { useRouter } from 'next/navigation'
 import { useEntityEditor } from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import { queryKeys } from '@/lib/query-keys'
+import { useFormattingPreferences } from '@/features/profile/hooks/use-display-format'
+import { localDay } from '@/lib/preference-format'
 
 import type { ChequeFormValues as ChequeFormData } from '@/types'
 
 export function useEditCheque(id: string) {
+  const preferences = useFormattingPreferences()
   const router = useRouter()
   const [isUploading, setIsUploading] = useState(false)
   const tCommon = useTranslations('Common')
@@ -29,7 +32,10 @@ export function useEditCheque(id: string) {
     defaultValues: {
       cheque_number: '',
       amount: 0,
-      cheque_date: new Date().toISOString().split('T')[0],
+      cheque_date: localDay(
+        new Date(),
+        preferences?.time_zone || 'Asia/Kolkata',
+      ),
       deposit_date: '',
       party_id: '',
       account_id: '',

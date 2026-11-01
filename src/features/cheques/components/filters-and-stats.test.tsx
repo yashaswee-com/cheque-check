@@ -188,9 +188,11 @@ it('labels an explicit custom date interval', () => {
     />,
   )
   expect(
-    screen.getByRole('button', { name: '1 Jan – 3 Jan 26' }),
+    screen.getByRole('button', { name: '01/01/2026 – 03/01/2026' }),
   ).toBeInTheDocument()
-  const datePill = screen.getByRole('button', { name: '1 Jan – 3 Jan 26' })
+  const datePill = screen.getByRole('button', {
+    name: '01/01/2026 – 03/01/2026',
+  })
   expect(datePill).toHaveClass('whitespace-nowrap', 'shrink-0')
   const row = screen.getByRole('group', {
     name: messages.Dashboard.dateRange.label,
@@ -211,5 +213,5 @@ it('labels a custom date range while its end date is not selected', () => {
       onCustomRangeChange={vi.fn()}
     />,
   )
-  expect(screen.getByRole('button', { name: '1 Jan 26' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '01/01/2026' })).toBeInTheDocument()
 })

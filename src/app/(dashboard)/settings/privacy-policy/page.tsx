@@ -1,10 +1,14 @@
+'use client'
+
 import { HugeiconsIcon } from '@hugeicons/react'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Shield01Icon as Shield } from '@hugeicons/core-free-icons'
 import { useTranslations } from 'next-intl'
 
 export default function PrivacyPolicyPage() {
   const t = useTranslations('Settings')
   const tm = useTranslations('Monitoring')
+  const display = useDisplayFormat()
 
   return (
     <div className="max-w-2xl space-y-8 pb-20">
@@ -13,7 +17,7 @@ export default function PrivacyPolicyPage() {
           <div className="flex items-center gap-3 text-primary mb-4">
             <HugeiconsIcon icon={Shield} className="h-6 w-6" />
             <span className="font-semibold uppercase tracking-wider text-xs">
-              {t('lastUpdated', { date: 'August 2026' })}
+              {t('lastUpdated', { date: display.month('2026-08') })}
             </span>
           </div>
 

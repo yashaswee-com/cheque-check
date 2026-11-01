@@ -1,5 +1,7 @@
 import { summarizeCheques } from './logic'
 import type { ChequeRow } from './types'
+import { createPreferenceFormatter } from '@/lib/preference-format'
+import { saveTextPdf } from '@/lib/pdf-text'
 
 export interface StatementPdfLabels {
   title: string
@@ -25,38 +27,23 @@ export async function downloadStatementPdf(input: {
   cheques: ChequeRow[]
   currency: string
   locale: string
+  dateFormat?: string
   labels: StatementPdfLabels
 }): Promise<void> {
-  const { jsPDF } = await import('jspdf')
-  const pdf = new jsPDF({ unit: 'mm', format: 'a4' })
   const labels = input.labels
+  const display = createPreferenceFormatter(
+    { date_format: input.dateFormat },
+    input.locale,
+  )
   const money = (amount: number) =>
-    `${input.currency}${amount.toLocaleString(input.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    display.currency(amount, input.currency, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
   const summary = summarizeCheques(input.cheques)
-  const pages: string[][] = []
-  let lines: string[] = []
-  const canvas = document.createElement('canvas')
-  canvas.width = 1240
-  canvas.height = 1754
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('PDF canvas unavailable')
-  await document.fonts?.ready
-  ctx.font = '22px sans-serif'
+  const lines: string[] = []
   const addLine = (text: string) => {
-    // Wrap even long unbroken party names rather than cropping financial information.
-    let line = ''
-    for (const character of text) {
-      if (ctx.measureText(line + character).width > 1110) {
-        lines.push(line)
-        line = ''
-      }
-      line += character
-    }
-    lines.push(line)
-    if (lines.length >= 42) {
-      pages.push(lines)
-      lines = []
-    }
+    lines.push(text)
   }
   addLine(labels.title)
   addLine(`${labels.business}: ${input.business}`)
@@ -71,7 +58,7 @@ export async function downloadStatementPdf(input: {
         Math.round((c.amount ?? 0) * 100) * (c.type === 'Inward' ? 1 : -1)
     addLine(
       [
-        c.cheque_date ?? '',
+        c.cheque_date ? display.date(c.cheque_date) : '',
         c.cheque_number ?? '',
         money(c.amount ?? 0),
         labels.types[c.type ?? ''] ?? '',
@@ -88,16 +75,9 @@ export async function downloadStatementPdf(input: {
   addLine(
     `${labels.pending}: ${money(summary.pending)} | ${labels.netCleared}: ${money(summary.netCleared)}`,
   )
-  if (lines.length) pages.push(lines)
-  pages.forEach((page, index) => {
-    if (index > 0) pdf.addPage()
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = '#111111'
-    ctx.font = '22px sans-serif'
-    page.forEach((line, row) => ctx.fillText(line, 60, 80 + row * 36))
-    ctx.fillText(`${labels.page} ${index + 1} / ${pages.length}`, 60, 1685)
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297)
-  })
-  pdf.save(`party-statement-${new Date().toISOString().slice(0, 10)}.pdf`)
+  await saveTextPdf(
+    lines,
+    `party-statement-${new Date().toISOString().slice(0, 10)}.pdf`,
+    labels.page,
+  )
 }

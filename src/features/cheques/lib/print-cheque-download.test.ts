@@ -14,6 +14,22 @@ vi.mock('jspdf', () => ({
 }))
 
 describe('cheque print download', () => {
+  it('prints dates using the preferred pattern without changing the cheque date', () => {
+    const cheque = {
+      account_id: 'a1',
+      cheque_number: '000001',
+      amount: 125.5,
+      cheque_date: '2026-10-31',
+      party: { name: 'Asha' },
+    }
+    downloadChequePrintPdf(cheque, '$', defaultPrintLayout, {
+      date_format: 'MM/dd/yyyy',
+      time_zone: 'America/New_York',
+    })
+    expect(pdf.text).toHaveBeenCalledWith('10/31/2026', 165, 25)
+    expect(cheque.cheque_date).toBe('2026-10-31')
+    vi.clearAllMocks()
+  })
   it('writes the cheque at configured coordinates and downloads its named PDF', () => {
     downloadChequePrintPdf(
       {

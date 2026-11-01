@@ -11,6 +11,7 @@ import {
 import { PieChartIcon } from '@hugeicons/core-free-icons'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useTranslations } from 'next-intl'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 
 interface ChartData {
   name: string
@@ -29,9 +30,11 @@ export function ChequeStatsChart({
   chartData,
   totalCheques,
   totalLabel,
-  formatValue = (value) => value.toLocaleString(),
+  formatValue: customFormatValue,
 }: ChequeStatsChartProps) {
   const t = useTranslations('Common')
+  const display = useDisplayFormat()
+  const formatValue = customFormatValue ?? display.number
   const total = chartData.reduce((sum, slice) => sum + slice.value, 0)
 
   if (chartData.length === 0) {

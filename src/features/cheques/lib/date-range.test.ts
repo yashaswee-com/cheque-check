@@ -5,6 +5,23 @@ import { filterByChequeDate, resolveDateRange } from './date-range'
 const now = new Date(2026, 8, 16, 12)
 
 describe('resolveDateRange', () => {
+  it('uses the preferred local month and year at UTC calendar boundaries', () => {
+    const instant = new Date('2026-12-31T22:45:00Z')
+    expect(resolveDateRange('thisYear', instant, {}, 'Asia/Kolkata')).toEqual({
+      from: '2027-01-01',
+      to: '2027-12-31',
+    })
+    expect(
+      resolveDateRange('thisMonth', instant, {}, 'America/New_York'),
+    ).toEqual({
+      from: '2026-12-01',
+      to: '2026-12-31',
+    })
+    expect(resolveDateRange('thisMonth', instant, {}, 'Asia/Kolkata')).toEqual({
+      from: '2027-01-01',
+      to: '2027-01-31',
+    })
+  })
   it('supports empty custom bounds and an upper-bound-only custom range', () => {
     expect(resolveDateRange('custom', now)).toEqual({
       from: undefined,
