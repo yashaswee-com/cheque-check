@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete02Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -15,7 +13,6 @@ import {
 
 interface DraftLeaveDialogProps {
   open: boolean
-  showSave: boolean
   onSave: () => Promise<void>
   onDiscard: () => Promise<void>
   onCancel: () => void
@@ -23,7 +20,6 @@ interface DraftLeaveDialogProps {
 
 export function DraftLeaveDialog({
   open,
-  showSave,
   onSave,
   onDiscard,
   onCancel,
@@ -48,22 +44,19 @@ export function DraftLeaveDialog({
           <SheetDescription>{t('leaveDescription')}</SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-2 pt-4">
-          {showSave && (
-            <Button
-              className="w-full rounded-full"
-              onClick={() => run('save')}
-              disabled={!!busy}
-            >
-              {busy === 'save' ? t('saving') : t('saveDraft')}
-            </Button>
-          )}
+          <Button
+            className="w-full rounded-full"
+            onClick={() => run('save')}
+            disabled={!!busy}
+          >
+            {busy === 'save' ? t('saving') : t('saveDraft')}
+          </Button>
           <Button
             variant="destructive"
             className="w-full rounded-full"
             onClick={() => run('discard')}
             disabled={!!busy}
           >
-            <HugeiconsIcon icon={Delete02Icon} className="size-4" />
             {t('discard')}
           </Button>
           <Button

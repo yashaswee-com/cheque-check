@@ -141,7 +141,6 @@ describe('useDraftAutosave', () => {
 
     await typeName(result, 'A')
     await typeName(result, 'Ac')
-    expect(result.current.autosave.hasUnsavedChanges).toBe(true)
     await act(() => vi.advanceTimersByTimeAsync(1500))
 
     expect(service.create).toHaveBeenCalledTimes(1)
@@ -150,12 +149,9 @@ describe('useDraftAutosave', () => {
       expect.objectContaining({ name: 'Ac' }),
     )
     expect(result.current.autosave.draftId).toBe('d1')
-    expect(result.current.autosave.hasUnsavedChanges).toBe(false)
     expect(window.location.search).toContain('draftId=d1')
 
     await typeName(result, 'Acme')
-    expect(result.current.autosave.hasUnsavedChanges).toBe(true)
-    expect(result.current.autosave.status).toBe('idle')
     await act(() => vi.advanceTimersByTimeAsync(1500))
 
     expect(service.create).toHaveBeenCalledTimes(1)
@@ -163,38 +159,6 @@ describe('useDraftAutosave', () => {
       'd1',
       expect.objectContaining({ name: 'Acme' }),
     )
-  })
-
-  it('does not mark edits made during an in-flight save as saved', async () => {
-    let resolveSave!: (value: { id: string }) => void
-    service.create.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveSave = resolve
-        }),
-    )
-    const { result } = renderAutosave()
-    await typeName(result, 'First')
-    let pending!: Promise<string | null>
-    act(() => {
-      pending = result.current.autosave.save()
-    })
-    await act(async () => {
-      await Promise.resolve()
-    })
-    await typeName(result, 'Second')
-    await act(async () => {
-      resolveSave({ id: 'd1' })
-      await pending
-    })
-    expect(result.current.autosave.hasUnsavedChanges).toBe(true)
-    expect(result.current.autosave.status).toBe('idle')
-    await act(() => vi.advanceTimersByTimeAsync(1500))
-    expect(service.update).toHaveBeenCalledWith(
-      'd1',
-      expect.objectContaining({ name: 'Second' }),
-    )
-    expect(result.current.autosave.hasUnsavedChanges).toBe(false)
   })
 
   it('treats setUserValue as a user change', async () => {

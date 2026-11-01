@@ -25,7 +25,6 @@ it('saves and discards asynchronously, blocks dismissal while busy and permits c
     <NextIntlClientProvider locale="en" messages={messages}>
       <DraftLeaveDialog
         open
-        showSave
         onSave={save}
         onDiscard={discard}
         onCancel={cancel}
@@ -60,29 +59,4 @@ it('saves and discards asynchronously, blocks dismissal while busy and permits c
   expect(cancel).toHaveBeenCalledOnce()
   fireEvent.click(screen.getByRole('button', { name: messages.Common.close }))
   expect(cancel).toHaveBeenCalledTimes(2)
-})
-
-it('offers only discard and keep editing when the draft is already saved', () => {
-  render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <DraftLeaveDialog
-        open
-        showSave={false}
-        onSave={vi.fn()}
-        onDiscard={vi.fn()}
-        onCancel={vi.fn()}
-      />
-    </NextIntlClientProvider>,
-  )
-  expect(
-    screen.queryByRole('button', { name: messages.Drafts.saveDraft }),
-  ).not.toBeInTheDocument()
-  expect(
-    screen
-      .getByRole('button', { name: messages.Drafts.discard })
-      .querySelector('svg'),
-  ).not.toBeNull()
-  expect(
-    screen.getByRole('button', { name: messages.Drafts.keepEditing }),
-  ).toBeInTheDocument()
 })
