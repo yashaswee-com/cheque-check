@@ -980,6 +980,31 @@ describe('cheque edit page', () => {
 })
 
 describe('cheque detail page', () => {
+  it.each([
+    {
+      type: 'Outward',
+      label: messages.Cheques.recipient,
+      other: messages.Cheques.payer,
+    },
+    {
+      type: 'Inward',
+      label: messages.Cheques.payer,
+      other: messages.Cheques.recipient,
+    },
+  ])(
+    'labels the party as $label for $type cheques',
+    ({ type, label, other }) => {
+      originalType = type
+      renderPage(<ChequeDetailPage />)
+      expect(screen.getByText(label)).toBeVisible()
+      expect(screen.queryByText(other)).not.toBeInTheDocument()
+      expect(screen.queryByText('Recipient / Payer')).not.toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /Customer/ })).toHaveAttribute(
+        'href',
+        '/parties/party',
+      )
+    },
+  )
   it('links party, account and cheque date to the matching detail pages and day filter', () => {
     renderPage(<ChequeDetailPage />)
     expect(screen.getByRole('link', { name: /Customer/ })).toHaveAttribute(

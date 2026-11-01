@@ -187,6 +187,8 @@ test.describe('cheque lifecycle', () => {
       await expect(page.getByTestId('cheque-detail-status')).toContainText(
         'Received',
       )
+      await expect(page.getByText('Payer', { exact: true })).toBeVisible()
+      await expect(page.getByText('Recipient', { exact: true })).toHaveCount(0)
     })
   })
 

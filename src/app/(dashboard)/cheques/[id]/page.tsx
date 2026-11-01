@@ -284,7 +284,7 @@ export default function ChequeDetailPage() {
                     className="font-semibold block"
                   />
                   <p className="text-[10px] text-muted-foreground uppercase font-semibold">
-                    {t('recipientPayer')}
+                    {cheque.type === 'Outward' ? t('recipient') : t('payer')}
                   </p>
                 </div>
               </Link>

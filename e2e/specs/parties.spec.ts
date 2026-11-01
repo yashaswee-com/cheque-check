@@ -78,6 +78,7 @@ test.describe('parties', () => {
       '3,300',
     )
     await expect(page.getByText(partyName).first()).toBeVisible()
+    await expect(page.getByText('Recipient', { exact: true })).toBeVisible()
   })
 
   test('creates, edits, and deletes a party', async ({ page }) => {
