@@ -20,6 +20,8 @@
     "invalidValue": "सही मान दर्ज करें"
   },
   "SharedUI": {
+    "scrollLeft": "बाईं ओर स्क्रॉल करें",
+    "scrollRight": "दाईं ओर स्क्रॉल करें",
     "previousPage": "पिछला पृष्ठ",
     "nextPage": "अगला पृष्ठ",
     "viewAllCheques": "सभी चेक देखें",

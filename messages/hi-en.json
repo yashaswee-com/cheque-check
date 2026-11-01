@@ -20,6 +20,8 @@
     "invalidValue": "Sahi value daalein"
   },
   "SharedUI": {
+    "scrollLeft": "Baayin taraf scroll karein",
+    "scrollRight": "Daayin taraf scroll karein",
     "previousPage": "Pichhla page",
     "nextPage": "Agla page",
     "viewAllCheques": "Saare cheques dekhein",

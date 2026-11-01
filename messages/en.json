@@ -20,6 +20,8 @@
     "invalidValue": "Enter a valid value"
   },
   "SharedUI": {
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right",
     "previousPage": "Previous page",
     "nextPage": "Next page",
     "viewAllCheques": "View all cheques",
