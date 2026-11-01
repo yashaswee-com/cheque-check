@@ -37,6 +37,9 @@ The local-only `runFeedbackScaling({ users = 10_000, iterations = 30 })`
 helper seeds a migrated PGlite database and measures the bounded roadmap page
 with matching vote volume; it makes no provider calls:
 
+The same scenario is integrated into `npm run test:scaling` and must meet the
+existing 1,000ms p95 budget with 10,000 profiles, published requests and votes.
+
 ```powershell
 npx tsx -e "import { runFeedbackScaling } from './scripts/lib/feedback-scaling.ts'; runFeedbackScaling().then(console.log)"
 ```

@@ -13,6 +13,7 @@ export interface FeedbackScalingResult {
   requestedPageSize: number
   returnedRows: number
   p95Milliseconds: number
+  timings: number[]
 }
 
 function percentile(values: number[], fraction: number) {
@@ -102,6 +103,7 @@ export async function runFeedbackScaling({
       requestedPageSize: 25,
       returnedRows: warmup.rows.length,
       p95Milliseconds: percentile(timings, 0.95),
+      timings,
     }
   } finally {
     await db.close()

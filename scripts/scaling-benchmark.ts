@@ -7,6 +7,7 @@ import { createScalingFixture } from './lib/scaling-fixture'
 import { benchmarkPush } from './lib/push-scaling'
 import { benchmarkReferrals } from './lib/referral-scaling'
 import { benchmarkSecurity } from './lib/security-scaling'
+import { runFeedbackScaling } from './lib/feedback-scaling'
 
 export interface BenchmarkOptions {
   users: number
@@ -467,6 +468,14 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
     reads.push({
       name: 'profile_privacy_and_online_pin',
       ...latencySummary(security.timings),
+    })
+    const feedback = await runFeedbackScaling({
+      users: options.users,
+      iterations: Math.min(options.samples, 200),
+    })
+    reads.push({
+      name: 'feedback_bounded_roadmap',
+      ...latencySummary(feedback.timings),
     })
     const budgetFailures = benchmarkBudgetFailures(reads, schedulerMs, options)
     return {
