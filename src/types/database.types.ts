@@ -791,6 +791,14 @@ export interface Database {
           requested_include_inward?: boolean
           requested_native_search?: string
           requested_native_status?: string
+          requested_statuses?: string[]
+          requested_party_type?: string
+          requested_due_from?: string
+          requested_due_to?: string
+          requested_min_amount?: number
+          requested_max_amount?: number
+          requested_banks?: string[]
+          requested_unknown_bank?: boolean
           requested_type?: string
           requested_party?: string
           requested_from?: string

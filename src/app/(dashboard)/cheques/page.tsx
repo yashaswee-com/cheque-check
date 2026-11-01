@@ -21,6 +21,11 @@ import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { chequeDateFilterSchema } from '@/validators'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
+import { AdvancedChequeFilters } from '@/features/cheques/components/advanced-cheque-filters'
+import {
+  CHEQUE_FILTER_PARAMS,
+  parseChequeListUrl,
+} from '@/validators/cheque-list-filters'
 
 function ChequesContent() {
   const display = useDisplayFormat()
@@ -32,12 +37,34 @@ function ChequesContent() {
   const parsedDate = chequeDateFilterSchema.safeParse(requestedDate)
   const date = parsedDate.success ? parsedDate.data : null
   const invalidDate = requestedDate !== null && !parsedDate.success
+  const url = parseChequeListUrl(new URLSearchParams(searchParams.toString()))
+  const [invalidDateInputs, setInvalidDateInputs] = useState<
+    Record<string, boolean>
+  >({})
+  const [filterReset, setFilterReset] = useState(0)
+  const invalidFilters =
+    !url.success || Object.values(invalidDateInputs).some(Boolean)
   const { activeBusiness } = useBusiness()
   const businessId = activeBusiness?.id
   const [nativeFilters, setNativeFilters] = useState<ChequeFilters>({})
-  const filters = date
-    ? { ...nativeFilters, from: date, to: date }
-    : nativeFilters
+  const filters = { ...nativeFilters, ...(url.success ? url.filters : {}) }
+  const replaceParams = (params: URLSearchParams) => {
+    router.replace(`/cheques${params.size ? `?${params}` : ''}`, {
+      scroll: false,
+    })
+  }
+  const changeParam = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if ((key === 'from' || key === 'to') && params.has('date')) {
+      const linked = params.get('date')!
+      params.set('from', linked)
+      params.set('to', linked)
+      params.delete('date')
+    }
+    if (value) params.set(key, value)
+    else params.delete(key)
+    replaceParams(params)
+  }
 
   const {
     cheques,
@@ -57,7 +84,14 @@ function ChequesContent() {
     hasNextPage,
     nextPage,
     previousPage,
-  } = useChequeList(invalidDate ? undefined : businessId, filters)
+  } = useChequeList(invalidFilters ? undefined : businessId, filters, {
+    search: searchParams.get('q') ?? '',
+    setSearch: (value) => changeParam('q', value),
+    sortBy: url.success ? url.sort : 'date',
+    setSortBy: (value) => changeParam('sort', value),
+    sortOrder: url.success ? url.order : 'desc',
+    setSortOrder: (value) => changeParam('order', value),
+  })
   const tagMap = useEntityTagMap(
     businessId,
     'cheque',
@@ -78,12 +112,14 @@ function ChequesContent() {
     }
   }
   const clearFilters = () => {
-    clearDateFilter()
     setSearch('')
     setFilter('All')
-    setSortBy('date')
-    setSortOrder('desc')
     setNativeFilters({})
+    setInvalidDateInputs({})
+    setFilterReset((previous) => previous + 1)
+    const params = new URLSearchParams(searchParams.toString())
+    CHEQUE_FILTER_PARAMS.forEach((key) => params.delete(key))
+    replaceParams(params)
   }
   const visibleCheques = cheques
 
@@ -98,7 +134,26 @@ function ChequesContent() {
         setSortBy={setSortBy}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
+        hasAdvancedFilters={Object.keys(filters).length > 0}
+        advancedFilters={
+          <AdvancedChequeFilters
+            key={filterReset}
+            params={new URLSearchParams(searchParams.toString())}
+            onChange={changeParam}
+            onClear={clearFilters}
+            onValidityChange={(key, valid) =>
+              setInvalidDateInputs((previous) =>
+                previous[key] === !valid
+                  ? previous
+                  : { ...previous, [key]: !valid },
+              )
+            }
+          />
+        }
       />
+      {invalidFilters && !invalidDate && (
+        <p role="alert">{t('invalidFilters')}</p>
+      )}
       {requestedDate !== null && (
         <div className="flex items-center justify-between gap-3 rounded-lg border bg-primary/5 px-4 py-3">
           <p
@@ -129,7 +184,7 @@ function ChequesContent() {
         onFiltersChange={setNativeFilters}
       />
 
-      {!invalidDate && (
+      {!invalidFilters && (
         <div className="space-y-4">
           <DataState
             isLoading={isLoading}
@@ -137,6 +192,7 @@ function ChequesContent() {
             data={visibleCheques}
             allData={activeCount ? [activeCount] : []}
             onClearFilters={clearFilters}
+            noResultsTitle={t('noChequesMatch')}
             loadingComponent={
               <div className="space-y-4">
                 {[1, 2, 3, 4].map((i) => (

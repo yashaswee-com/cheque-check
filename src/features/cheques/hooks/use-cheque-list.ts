@@ -24,12 +24,26 @@ function useDebouncedSearch(search: string) {
 export function useChequeList(
   businessId: string | undefined,
   nativeFilters: ChequeFilters,
+  controls?: {
+    search: string
+    setSearch: (value: string) => void
+    sortBy: ChequeSortBy
+    setSortBy: (value: ChequeSortBy) => void
+    sortOrder: SortOrder
+    setSortOrder: (value: SortOrder) => void
+  },
 ) {
-  const [search, setSearch] = useState('')
+  const [localSearch, setLocalSearch] = useState('')
+  const search = controls?.search ?? localSearch
+  const setSearch = controls?.setSearch ?? setLocalSearch
   const debouncedSearch = useDebouncedSearch(search)
   const [filter, setFilter] = useState<ChequeStatus | 'All'>('All')
-  const [sortBy, setSortBy] = useState<ChequeSortBy>('date')
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
+  const [localSortBy, setLocalSortBy] = useState<ChequeSortBy>('date')
+  const [localSortOrder, setLocalSortOrder] = useState<SortOrder>('desc')
+  const sortBy = controls?.sortBy ?? localSortBy
+  const setSortBy = controls?.setSortBy ?? setLocalSortBy
+  const sortOrder = controls?.sortOrder ?? localSortOrder
+  const setSortOrder = controls?.setSortOrder ?? setLocalSortOrder
   const [pageIndex, setPageIndex] = useState(0)
   const { profile } = useProfile()
   const criteria = JSON.stringify([

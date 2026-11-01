@@ -190,6 +190,7 @@ export default function BusinessesPage() {
           data={filteredBusinesses}
           allData={businesses}
           onClearFilters={clearFilters}
+          noResultsTitle={tc('noBusinessesMatch')}
           loadingComponent={
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (

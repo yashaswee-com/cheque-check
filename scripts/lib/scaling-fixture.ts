@@ -21,8 +21,10 @@ export async function createScalingFixture(): Promise<PGlite> {
       voice_call_enabled boolean DEFAULT true, phone text DEFAULT '+919800000000',
       time_zone text DEFAULT 'Asia/Kolkata', reminders_per_day int DEFAULT 1);
     CREATE TABLE businesses(id uuid PRIMARY KEY, user_id uuid, deleted_at timestamptz);
-    CREATE TABLE parties(id uuid PRIMARY KEY, name text);
-    CREATE TABLE cheques(id uuid PRIMARY KEY, business_id uuid, party_id uuid,
+    CREATE TABLE parties(id uuid PRIMARY KEY, name text, party_type text);
+    CREATE TABLE accounts(id uuid PRIMARY KEY, business_id uuid, bank_id uuid,
+      is_draft boolean DEFAULT false, deleted_at timestamptz);
+    CREATE TABLE cheques(id uuid PRIMARY KEY, business_id uuid, party_id uuid, account_id uuid,
       cheque_number text, amount numeric, notes text, type text DEFAULT 'Outward',
       status text DEFAULT 'Issued', cheque_date date DEFAULT '2026-10-31',
       deposit_date date, remind_before_days int, is_draft boolean DEFAULT false, deleted_at timestamptz);
@@ -52,7 +54,7 @@ export async function createScalingFixture(): Promise<PGlite> {
     CREATE POLICY own_cheques ON cheques TO authenticated USING(EXISTS
       (SELECT 1 FROM businesses b WHERE b.id = business_id AND b.user_id = auth.uid()));
     GRANT USAGE ON SCHEMA public,auth TO authenticated,service_role;
-    GRANT SELECT ON businesses,cheques,parties TO authenticated;
+    GRANT SELECT ON businesses,cheques,parties,accounts TO authenticated;
     GRANT INSERT ON cheques TO authenticated;
     `)
     for (const migration of [
@@ -62,6 +64,7 @@ export async function createScalingFixture(): Promise<PGlite> {
       '20261031030000_notification_health.sql',
       '20261101110000_free_plan_limits.sql',
       '20261101120000_reminder_times.sql',
+      '20261102070000_extended_cheque_filters.sql',
     ]) {
       await db.exec(
         readFileSync(

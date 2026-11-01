@@ -42,6 +42,8 @@ export interface ChequeFilterBarProps {
   setSortBy: (value: SortBy) => void
   sortOrder: SortOrder
   setSortOrder: (value: SortOrder) => void
+  advancedFilters?: React.ReactNode
+  hasAdvancedFilters?: boolean
 }
 
 export function ChequeFilterBar({
@@ -53,6 +55,8 @@ export function ChequeFilterBar({
   setSortBy,
   sortOrder,
   setSortOrder,
+  advancedFilters,
+  hasAdvancedFilters,
 }: ChequeFilterBarProps) {
   const t = useTranslations('Cheques')
   const tCommon = useTranslations('Common')
@@ -76,7 +80,10 @@ export function ChequeFilterBar({
   ] as const
 
   const isDefault =
-    filter === 'All' && sortBy === 'date' && sortOrder === 'desc'
+    filter === 'All' &&
+    sortBy === 'date' &&
+    sortOrder === 'desc' &&
+    !hasAdvancedFilters
 
   return (
     <div className="flex gap-2">
@@ -152,29 +159,31 @@ export function ChequeFilterBar({
               ))}
             </FilterPillSection>
 
-            <FilterPillSection title={t('filterStatus')}>
-              {statusOptions.map((s) => (
-                <button
-                  key={s.value}
-                  type="button"
-                  data-testid={`cheque-filter-status-${s.value.toLowerCase()}`}
-                  aria-pressed={filter === s.value}
-                  onClick={() => setFilter(s.value as ChequeStatus | 'All')}
-                  className={filterPillClassName(filter === s.value)}
-                >
-                  <HugeiconsIcon icon={s.icon} className="h-4 w-4" />
-                  <span className="font-bold text-sm">
-                    {tCommon(s.value.toLowerCase() as never)}
-                  </span>
-                  {filter === s.value && (
-                    <HugeiconsIcon
-                      icon={Check}
-                      className="h-4 w-4 stroke-[3]"
-                    />
-                  )}
-                </button>
-              ))}
-            </FilterPillSection>
+            {advancedFilters ?? (
+              <FilterPillSection title={t('filterStatus')}>
+                {statusOptions.map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    data-testid={`cheque-filter-status-${s.value.toLowerCase()}`}
+                    aria-pressed={filter === s.value}
+                    onClick={() => setFilter(s.value as ChequeStatus | 'All')}
+                    className={filterPillClassName(filter === s.value)}
+                  >
+                    <HugeiconsIcon icon={s.icon} className="h-4 w-4" />
+                    <span className="font-bold text-sm">
+                      {tCommon(s.value.toLowerCase() as never)}
+                    </span>
+                    {filter === s.value && (
+                      <HugeiconsIcon
+                        icon={Check}
+                        className="h-4 w-4 stroke-[3]"
+                      />
+                    )}
+                  </button>
+                ))}
+              </FilterPillSection>
+            )}
           </div>
         </SheetContent>
       </Sheet>

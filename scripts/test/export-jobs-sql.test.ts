@@ -24,8 +24,7 @@ beforeAll(async () => {
     ALTER TABLE parties ADD COLUMN business_id uuid,ADD COLUMN contact text, ADD COLUMN color text, ADD COLUMN icon text,
       ADD COLUMN avatar_url text, ADD COLUMN deleted_at timestamptz;
     CREATE TABLE banks(id uuid PRIMARY KEY,name text,logo_url text,deleted_at timestamptz);
-    CREATE TABLE accounts(id uuid PRIMARY KEY,business_id uuid,account_name text,color text,icon text,bank_id uuid,deleted_at timestamptz);
-    ALTER TABLE cheques ADD COLUMN account_id uuid;
+    ALTER TABLE accounts ADD COLUMN account_name text, ADD COLUMN color text, ADD COLUMN icon text;
     ALTER TABLE cheques ADD COLUMN image_url text,ADD COLUMN created_at timestamptz DEFAULT now(),ADD COLUMN updated_at timestamptz DEFAULT now();
     CREATE OR REPLACE FUNCTION public.has_lifetime_premium() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS
       $$ SELECT premium FROM profiles WHERE user_id = auth.uid() $$;

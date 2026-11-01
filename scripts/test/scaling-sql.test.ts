@@ -13,7 +13,7 @@ beforeAll(async () => {
 }, 30_000)
 beforeEach(async () => {
   await db.exec(`RESET ROLE; TRUNCATE notification_attempts, notification_jobs, notification_logs,
-    notification_scheduler_runs, user_quotas, cheques, parties, businesses, profiles CASCADE;
+    notification_scheduler_runs, user_quotas, cheques, accounts, parties, businesses, profiles CASCADE;
     SELECT set_config('request.jwt.claim.sub','${user}',false);
     SELECT set_config('request.jwt.claim.role','service_role',false);
     INSERT INTO profiles(user_id) VALUES('${user}');
@@ -101,7 +101,7 @@ describe('bounded cheque reads', () => {
   }, 30_000)
 
   it('preserves native filters, draft/deletion exclusion, exact summaries and RLS', async () => {
-    await db.exec(`INSERT INTO parties VALUES('33333333-3333-4333-8333-333333333333','Supplier');
+    await db.exec(`INSERT INTO parties(id,name) VALUES('33333333-3333-4333-8333-333333333333','Supplier');
       INSERT INTO cheques(id,business_id,party_id,cheque_number,amount,notes)
       VALUES(gen_random_uuid(),'${business}','33333333-3333-4333-8333-333333333333','123456',100,'urgent payment');
       INSERT INTO cheques(id,business_id,amount,is_draft) VALUES(gen_random_uuid(),'${business}',999,true);

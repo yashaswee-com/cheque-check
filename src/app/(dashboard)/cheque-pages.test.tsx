@@ -687,8 +687,8 @@ describe('cheque list page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
     expect(mocks.filterSearch).toHaveBeenCalledWith('')
     expect(mocks.filterStatus).toHaveBeenCalledWith('All')
-    expect(mocks.filterSortBy).toHaveBeenCalledWith('date')
-    expect(mocks.filterSortOrder).toHaveBeenCalledWith('desc')
+    expect(mocks.filterSortBy).not.toHaveBeenCalled()
+    expect(mocks.filterSortOrder).not.toHaveBeenCalled()
     expect(
       screen.getByRole('button', { name: '100123 (0 tags)' }),
     ).toBeVisible()

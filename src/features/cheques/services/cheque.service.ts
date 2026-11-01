@@ -3,6 +3,7 @@ import { ValidationError } from '@/lib/errors'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import type { ChequeListRequest, ChequePage } from '@/types/cheque-list'
 import type { ChequeDateRange } from '../lib/date-range'
+import { chequeListFiltersSchema } from '@/validators/cheque-list-filters'
 import {
   IChequeRepository,
   SupabaseChequeRepository,
@@ -29,6 +30,13 @@ export class ChequeService {
   }
 
   async getPage(request: ChequeListRequest): Promise<ChequePage<ChequeEntity>> {
+    const filters = chequeListFiltersSchema.safeParse(
+      request.nativeFilters ?? {},
+    )
+    if (!filters.success)
+      throw new ValidationError(
+        filters.error.issues.map((issue) => issue.message).join('; '),
+      )
     const page = await this.repository.getPage(request)
     return { ...page, rows: page.rows.map((row) => ChequeEntity.fromRow(row)) }
   }

@@ -83,6 +83,7 @@ export default function PartyDetailPage() {
     outstanding,
     isLoading,
     updateChequeStatus,
+    error,
     search,
     setSearch,
     filter,
@@ -97,8 +98,6 @@ export default function PartyDetailPage() {
   const clearFilters = () => {
     setSearch('')
     setFilter('All')
-    setSortBy('date')
-    setSortOrder('desc')
   }
 
   const sortOptions = [
@@ -365,6 +364,8 @@ export default function PartyDetailPage() {
           data={filteredCheques}
           allData={partyCheques}
           onClearFilters={clearFilters}
+          isError={!!error}
+          noResultsTitle={tc('noChequesMatch')}
           loadingComponent={
             <div className="space-y-4">
               {[1, 2].map((i) => (

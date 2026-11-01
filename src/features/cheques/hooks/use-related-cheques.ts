@@ -15,7 +15,11 @@ export function useRelatedCheques(
   const [filter, setFilter] = useState<'All' | ChequeStatus>('All')
   const [sortBy, setSortBy] = useState<ChequeSortBy>('date')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
-  const { data: cheques, isLoading } = useQuery({
+  const {
+    data: cheques,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: queryKeys.cheques.list(businessId),
     queryFn: () => chequeService.getAll(businessId!),
     enabled: !!businessId,
@@ -59,6 +63,7 @@ export function useRelatedCheques(
     filteredCheques,
     outstanding,
     isLoading,
+    error,
     updateChequeStatus: (id: string, status: ChequeStatus) =>
       mutation.mutate({ id, status }),
     isUpdating: mutation.isPending,

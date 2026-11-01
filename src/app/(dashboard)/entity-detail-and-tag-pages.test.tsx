@@ -448,7 +448,7 @@ describe.each([
     }
   })
 
-  it('connects search, sorting and status filters and restores defaults when no results remain', () => {
+  it('connects search, sorting and status filters and preserves sorting when filters are cleared', () => {
     noResults = true
     renderPage(<Component />)
     const search =
@@ -488,8 +488,8 @@ describe.each([
     expect(filterState).toEqual({
       search: '',
       filter: 'All',
-      sortBy: 'date',
-      sortOrder: 'desc',
+      sortBy: 'amount',
+      sortOrder: 'asc',
     })
   })
   it('explains an empty cheque history rather than offering filter reset', () => {

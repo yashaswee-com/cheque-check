@@ -101,6 +101,17 @@ export class SupabaseChequeRepository
         requested_party: native.party_id,
         requested_from: native.from,
         requested_to: native.to,
+        requested_statuses: native.statuses,
+        requested_party_type: native.party_type,
+        requested_due_from: native.due_from,
+        requested_due_to: native.due_to,
+        requested_min_amount: native.min_amount,
+        requested_max_amount: native.max_amount,
+        requested_banks: native.bank_ids?.filter((id) => id !== 'unknown')
+          .length
+          ? native.bank_ids.filter((id) => id !== 'unknown')
+          : undefined,
+        requested_unknown_bank: native.bank_ids?.includes('unknown'),
       }),
     )
     if (!page.length)

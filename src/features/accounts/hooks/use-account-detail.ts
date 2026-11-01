@@ -17,6 +17,7 @@ export function useAccountDetail(id: string, businessId: string | undefined) {
   const {
     relatedCheques,
     isLoading: chequesLoading,
+    error: chequesError,
     outstanding,
     ...related
   } = useRelatedCheques('account_id', id, businessId)
@@ -26,6 +27,6 @@ export function useAccountDetail(id: string, businessId: string | undefined) {
     account,
     accountCheques: relatedCheques,
     isLoading: accountLoading || chequesLoading,
-    error,
+    error: error || chequesError,
   }
 }

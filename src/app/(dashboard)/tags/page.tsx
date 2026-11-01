@@ -214,6 +214,7 @@ export default function TagsPage() {
           data={filteredTags}
           allData={tags}
           onClearFilters={clearFilters}
+          noResultsTitle={tCommon('noTagsMatch')}
           loadingComponent={
             <div className="space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (

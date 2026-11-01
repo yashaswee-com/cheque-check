@@ -85,6 +85,7 @@ export default function AccountDetailPage() {
     filteredCheques,
     isLoading,
     updateChequeStatus,
+    error,
     search,
     setSearch,
     filter,
@@ -99,8 +100,6 @@ export default function AccountDetailPage() {
   const clearFilters = () => {
     setSearch('')
     setFilter('All')
-    setSortBy('date')
-    setSortOrder('desc')
   }
 
   const sortOptions: Array<{
@@ -374,6 +373,8 @@ export default function AccountDetailPage() {
           data={filteredCheques}
           allData={accountCheques}
           onClearFilters={clearFilters}
+          isError={!!error}
+          noResultsTitle={tc('noChequesMatch')}
           loadingComponent={
             <div className="space-y-4">
               {[1, 2].map((i) => (

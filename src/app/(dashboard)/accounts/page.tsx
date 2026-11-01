@@ -208,6 +208,7 @@ export default function AccountsPage() {
           data={filteredAccounts}
           allData={accounts}
           onClearFilters={clearFilters}
+          noResultsTitle={tc('noAccountsMatch')}
           loadingComponent={
             <div className="grid gap-4">
               {[1, 2, 3].map((i) => (

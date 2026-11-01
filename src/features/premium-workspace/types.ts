@@ -27,6 +27,13 @@ export interface ChequeFilters {
   party_id?: string
   from?: string
   to?: string
+  statuses?: NonNullable<ChequeRow['status']>[]
+  party_type?: 'customer' | 'supplier' | 'vendor' | 'unclassified'
+  due_from?: string
+  due_to?: string
+  min_amount?: number
+  max_amount?: number
+  bank_ids?: string[]
 }
 export interface SafeChequePrefill {
   party_id?: string

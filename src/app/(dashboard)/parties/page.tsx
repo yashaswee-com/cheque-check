@@ -193,6 +193,7 @@ export default function PartiesPage() {
           data={filteredParties}
           allData={parties}
           onClearFilters={clearFilters}
+          noResultsTitle={tCommon('noPartiesMatch')}
           loadingComponent={
             <div className="space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (

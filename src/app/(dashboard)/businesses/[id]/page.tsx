@@ -59,8 +59,6 @@ export default function BusinessDetailPage() {
   const clearFilters = () => {
     setSearch('')
     setFilter('All')
-    setSortBy('date')
-    setSortOrder('desc')
   }
 
   if (isLoading) {
@@ -200,6 +198,7 @@ export default function BusinessDetailPage() {
           data={filteredCheques}
           allData={cheques}
           onClearFilters={clearFilters}
+          noResultsTitle={tc('noChequesMatch')}
           emptyState={
             <EmptyState
               icon={ReceiptText}

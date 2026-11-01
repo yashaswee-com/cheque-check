@@ -8,6 +8,7 @@ export function usePartyDetail(id: string, businessId: string | undefined) {
   const {
     relatedCheques,
     isLoading: chequesLoading,
+    error: chequesError,
     ...related
   } = useRelatedCheques('party_id', id, businessId)
 
@@ -16,6 +17,6 @@ export function usePartyDetail(id: string, businessId: string | undefined) {
     party,
     partyCheques: relatedCheques,
     isLoading: partyLoading || chequesLoading,
-    error,
+    error: error || chequesError,
   }
 }

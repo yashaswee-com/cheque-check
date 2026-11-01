@@ -19,6 +19,7 @@ interface DataStateProps {
   errorState?: React.ReactNode
   unauthorizedState?: React.ReactNode
   noResultsState?: React.ReactNode
+  noResultsTitle?: string
   onClearFilters?: () => void
   children: React.ReactNode
 }
@@ -34,6 +35,7 @@ export function DataState({
   errorState,
   unauthorizedState,
   noResultsState,
+  noResultsTitle,
   onClearFilters,
   children,
 }: DataStateProps) {
@@ -90,7 +92,7 @@ export function DataState({
       noResultsState || (
         <EmptyState
           icon={Search}
-          title={t('noRecordsFound')}
+          title={noResultsTitle ?? t('noRecordsFound')}
           description={t('noResultsMatch')}
           action={
             onClearFilters
