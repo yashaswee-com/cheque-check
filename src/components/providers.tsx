@@ -10,6 +10,7 @@ import { PremiumPromptProvider } from '@/features/monetization/components/premiu
 import { PushAccountGuard } from '@/features/notifications/components/push-account-guard'
 import { ReferralCapture } from '@/features/referrals/components/referral-capture'
 import { AppearanceSync } from '@/features/profile/components/appearance-sync'
+import { PrivacyShield } from '@/features/security/components/privacy-shield'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -27,6 +28,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ProfileProvider>
         <AppearanceSync />
+        <PrivacyShield />
         <BusinessProvider>
           <PremiumPromptProvider>
             <MonitoringProvider />

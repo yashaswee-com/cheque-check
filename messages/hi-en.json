@@ -1,4 +1,10 @@
 {
+  "Security": {
+    "covered": "Preview chhupa diya gaya",
+    "privacyTitle": "Focus hatne par app chhupayein",
+    "privacyLimit": "Privacy cover best-effort hai. Browser OS screenshots, recordings ya task-switcher preview rokne ki guarantee nahi deta.",
+    "saveError": "Security preference save nahi hui. Dobara try karein."
+  },
   "Tour": {
     "progress": "Step {step} / {total}",
     "skip": "Tour skip karein",

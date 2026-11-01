@@ -21,6 +21,7 @@ export function toProfileUpdate(profile: Partial<Profile>): ProfileUpdate {
   const update: Record<string, unknown> = { ...profile }
   for (const field of PROTECTED_PROFILE_FIELDS) delete update[field]
   const choices = closedProfileChoices.parse({
+    privacy_cover: update.privacy_cover,
     currency: update.currency,
     date_format: update.date_format,
     time_format: update.time_format,

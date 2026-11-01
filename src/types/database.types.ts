@@ -179,6 +179,7 @@ export interface Database {
       }
       profiles: {
         Row: {
+          privacy_cover: boolean
           appearance: 'light' | 'dark' | 'system'
           tour_status: 'pending' | 'completed' | 'skipped'
           deletion_batch_id: string | null

@@ -1,4 +1,10 @@
 {
+  "Security": {
+    "covered": "Preview hidden",
+    "privacyTitle": "Hide app when out of focus",
+    "privacyLimit": "Best-effort privacy cover and screenshot-key deterrence. Browsers cannot prevent OS screenshots, recordings or guarantee hidden task-switcher previews.",
+    "saveError": "Could not save your security preference. Please retry."
+  },
   "Tour": {
     "progress": "Step {step} of {total}",
     "skip": "Skip tour",

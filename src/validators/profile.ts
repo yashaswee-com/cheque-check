@@ -33,6 +33,7 @@ export const reminderTimesSchema = z
 
 export const closedProfileChoices = z
   .object({
+    privacy_cover: z.boolean(),
     currency: currencySchema,
     date_format: dateFormatSchema,
     time_format: timeFormatSchema,
