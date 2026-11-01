@@ -449,13 +449,13 @@ describe('shell state components', () => {
       configurable: true,
       value: { register },
     })
-    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     const view = render(<PwaRegistrar />)
-    await waitFor(() => expect(register).toHaveBeenCalledWith('/sw.js'))
-    expect(log).toHaveBeenCalledWith(
-      'Service Worker registered with scope:',
-      '/app/',
+    await waitFor(() =>
+      expect(register).toHaveBeenCalledWith('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none',
+      }),
     )
 
     const registrationError = new Error('registration denied')
@@ -467,7 +467,6 @@ describe('shell state components', () => {
         registrationError,
       ),
     )
-    log.mockRestore()
     error.mockRestore()
   })
 
