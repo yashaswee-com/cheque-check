@@ -2,12 +2,21 @@
 
 ## Pending actions
 
-Use the existing `Button` with `loading`, optional `loadingText`, and
-`spinnerPosition="start" | "end"` (default `start`). Keep its ordinary children
-constant rather than swapping the label or manually rendering a spinner.
-Buttons that receive `loading` reserve spinner and label space in both states.
-An alternate label remains measurable while hidden, so pending does not change
-width. Ordinary buttons without these props retain their existing layout.
+Use the shared `Button` with `loading` for form submissions and externally
+owned pending states. Promise-returning `onClick` handlers are tracked
+automatically; return the promise instead of discarding it with `void`.
+Keep ordinary children constant: pending always shows the shared `Spinner`
+centered in place of the label and icons, never ellipses or alternate text.
+The ordinary content stays measurable and accessible while transparent,
+so pending preserves the button's dimensions and accessible name.
+Synchronous navigation and toggles do not enter a loading state.
+
+Keep the shared `loading` prop consistent. Name boolean state with an `is`
+prefix and its setter with `setIs`: `isPending` for tracked async clicks,
+`isSubmitting` for a complete form submission, and `isSaving`/`isUploading`
+for action-specific owners. Use `pendingAction`/`setPendingAction` for an
+action discriminator (`'upload' | 'delete' | null`), not a boolean `loading`
+or `busy` variable. Derive `isLoading` when combining pending sources.
 
 Pending buttons expose `aria-busy`, ignore activation and are disabled. Preserve
 the action's own execution guard, especially forms submitted with Enter.
