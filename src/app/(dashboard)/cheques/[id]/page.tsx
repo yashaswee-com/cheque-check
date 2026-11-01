@@ -142,6 +142,7 @@ export default function ChequeDetailPage() {
       label: t('markAs', { status }),
       icon,
       disabled: isUpdating,
+      loading: isUpdating,
       testId: `cheque-status-${status.toLowerCase()}`,
       onClick: () => updateStatus(status),
     }))
@@ -171,7 +172,7 @@ export default function ChequeDetailPage() {
             icon: Message,
             onClick: () => {
               if (!premium.requireAccess('notify-party')) return
-              void preparePartySms(
+              return preparePartySms(
                 t('notifyParty'),
                 party.contact,
                 cheque,
@@ -191,7 +192,7 @@ export default function ChequeDetailPage() {
         if (!(await premium.verifyAccess('cheque-printing'))) return
         try {
           const layout = await getPrintLayout(cheque.account_id)
-          downloadChequePrintPdf(
+          await downloadChequePrintPdf(
             cheque,
             currency,
             layout ?? getLocalPrintLayout(cheque.account_id),
@@ -216,7 +217,7 @@ export default function ChequeDetailPage() {
       label: t('duplicate'),
       icon: Copy,
       testId: 'cheque-detail-duplicate',
-      onClick: () => void duplicateCheque(),
+      onClick: () => duplicateCheque(),
     },
     {
       label: t('deleteAction'),

@@ -794,6 +794,20 @@ describe('cheque creation page', () => {
       expect(mocks.extract).toHaveBeenCalledWith('scan-image'),
     )
   })
+  it('uses one spinner instead of upload text and keeps the file picker disabled while uploading', () => {
+    uploading = true
+    const { container } = renderPage(<CreateChequePage />)
+    const button = screen.getByRole('button', {
+      name: messages.Cheques.scanUpload,
+    })
+    expect(button).toHaveAttribute('aria-busy', 'true')
+    expect(button).toBeDisabled()
+    expect(button.querySelectorAll('.animate-spin')).toHaveLength(1)
+    expect(button.querySelector('[data-slot="button-content"]')).toHaveClass(
+      'opacity-0',
+    )
+    expect(container.querySelector('input[type="file"]')).toBeDisabled()
+  })
   it('displays scanning feedback and lets a user remove the imported photo', () => {
     query = new URLSearchParams({ imageUrl: 'scan-image' })
     defaults = { image_url: 'scan-image' }
@@ -976,6 +990,20 @@ describe('cheque edit page', () => {
       screen.getByRole('button', { name: messages.Cheques.removePhoto }),
     ).toBeDisabled()
     expect(screen.getByTestId('cheque-edit-submit-button')).toBeDisabled()
+  })
+  it('keeps the upload action named and shows only the shared spinner while uploading', () => {
+    uploading = true
+    const { container } = renderPage(<EditChequePage />)
+    const button = screen.getByRole('button', {
+      name: messages.Cheques.scanUpload,
+    })
+    expect(button).toHaveAttribute('aria-busy', 'true')
+    expect(button).toBeDisabled()
+    expect(button.querySelectorAll('.animate-spin')).toHaveLength(1)
+    expect(button.querySelector('[data-slot="button-content"]')).toHaveClass(
+      'opacity-0',
+    )
+    expect(container.querySelector('input[type="file"]')).toBeDisabled()
   })
 })
 

@@ -5,6 +5,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 import React from 'react'
+import { Spinner } from './spinner'
 
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-sm border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:scale-95 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -46,130 +47,71 @@ function Button({
   render,
   nativeButton,
   children,
-  loading: loadingProp,
-  loadingText,
-  spinnerPosition = 'start',
+  loading: isLoadingProp,
   disabled,
   onClick,
   ...props
-}: ButtonPrimitive.Props &
+}: Omit<ButtonPrimitive.Props, 'onClick'> &
   VariantProps<typeof buttonVariants> & {
     loading?: boolean
-    loadingText?: React.ReactNode
-    spinnerPosition?: 'start' | 'end'
+    onClick?: (
+      event: Parameters<NonNullable<ButtonPrimitive.Props['onClick']>>[0],
+    ) => unknown
   }) {
+  const [isPending, setIsPending] = React.useState(false)
+  const isPendingRef = React.useRef(false)
   const isNativeButton =
     nativeButton ??
     (!render ||
       (React.isValidElement(render) &&
         (render.type === 'button' || render.type === Button)))
-  const loading = loadingProp ?? false
-  const iconOnly = size === 'icon' || size === 'icon-sm'
-  const spinner = (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="size-4 animate-spin motion-reduce:animate-none"
-    >
-      <circle
-        cx="12"
-        cy="12"
-        r="9"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        opacity=".25"
-      />
-      <path
-        d="M12 3a9 9 0 0 1 9 9"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
+  const isLoading = !!isLoadingProp || isPending
 
   return (
     <ButtonPrimitive
       data-slot="button"
       render={render}
       nativeButton={isNativeButton}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn('relative', buttonVariants({ variant, size, className }))}
       {...props}
-      disabled={disabled || loading}
-      aria-busy={loading || undefined}
+      disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
       onClick={(event) => {
-        if (loading) {
+        if (isLoading || isPendingRef.current) {
           event.preventDefault()
           return
         }
-        onClick?.(event)
+        const result = onClick?.(event)
+        if (
+          result !== null &&
+          (typeof result === 'object' || typeof result === 'function') &&
+          'then' in result &&
+          typeof result.then === 'function'
+        ) {
+          isPendingRef.current = true
+          setIsPending(true)
+          return Promise.resolve(result).finally(() => {
+            isPendingRef.current = false
+            setIsPending(false)
+          })
+        }
       }}
     >
-      {loadingProp === undefined && loadingText === undefined ? (
-        children
-      ) : iconOnly ? (
-        <span className="inline-grid items-center justify-items-center">
-          <span
-            className={cn(
-              'col-start-1 row-start-1 inline-flex',
-              loading && 'invisible',
-            )}
-            aria-hidden={loading || undefined}
-          >
-            {children}
-          </span>
-          <span
-            className={cn(
-              'col-start-1 row-start-1 inline-flex',
-              !loading && 'invisible',
-            )}
-            aria-hidden="true"
-          >
-            {spinner}
-          </span>
-        </span>
-      ) : (
-        <span className="inline-flex items-center justify-center gap-1.5">
-          {spinnerPosition === 'start' && (
-            <span
-              aria-hidden="true"
-              className={cn('inline-flex', !loading && 'invisible')}
-            >
-              {spinner}
-            </span>
-          )}
-          <span className="inline-grid items-center justify-items-center">
-            <span
-              className={cn(
-                'col-start-1 row-start-1 inline-flex items-center justify-center gap-1.5',
-                loading && loadingText != null && 'invisible',
-              )}
-              aria-hidden={(loading && loadingText != null) || undefined}
-            >
-              {children}
-            </span>
-            {loadingText != null && (
-              <span
-                className={cn(
-                  'col-start-1 row-start-1',
-                  !loading && 'invisible',
-                )}
-                aria-hidden={!loading || undefined}
-              >
-                {loadingText}
-              </span>
-            )}
-          </span>
-          {spinnerPosition === 'end' && (
-            <span
-              aria-hidden="true"
-              className={cn('inline-flex', !loading && 'invisible')}
-            >
-              {spinner}
-            </span>
-          )}
+      <span
+        data-slot="button-content"
+        className={cn(
+          'inline-flex items-center justify-center [flex-direction:inherit] [gap:inherit]',
+          isLoading && 'opacity-0',
+        )}
+      >
+        {children}
+      </span>
+      {isLoading && (
+        <span
+          className="absolute inset-0 flex items-center justify-center"
+          aria-hidden="true"
+        >
+          <Spinner />
         </span>
       )}
     </ButtonPrimitive>

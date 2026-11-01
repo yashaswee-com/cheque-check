@@ -76,7 +76,10 @@ export function EditableAvatar({
   size = 'lg',
 }: EditableAvatarProps) {
   const t = useTranslations('Common')
-  const [isUploading, setIsUploading] = useState(false)
+  const [pendingAction, setPendingAction] = useState<
+    'upload' | 'delete' | null
+  >(null)
+  const isPending = pendingAction !== null
   const [isOpen, setIsOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -91,7 +94,7 @@ export function EditableAvatar({
     const file = e.target.files?.[0]
     if (!file) return
 
-    setIsUploading(true)
+    setPendingAction('upload')
     try {
       const croppedFile = await centerCropImage(file)
       const publicUrl = await storageService.uploadAvatar(croppedFile)
@@ -110,13 +113,13 @@ export function EditableAvatar({
         type: 'error',
       })
     } finally {
-      setIsUploading(false)
+      setPendingAction(null)
     }
   }
 
   const handleDelete = async () => {
     if (!onDelete) return
-    setIsUploading(true)
+    setPendingAction('delete')
     try {
       await onDelete()
       toast.add({
@@ -133,7 +136,7 @@ export function EditableAvatar({
         type: 'error',
       })
     } finally {
-      setIsUploading(false)
+      setPendingAction(null)
     }
   }
 
@@ -207,16 +210,20 @@ export function EditableAvatar({
               variant="outline"
               className="flex-1 rounded-full h-12"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
+              disabled={isPending}
+              loading={pendingAction === 'upload'}
             >
-              {isUploading ? t('uploadingShort') : t('uploadNew')}
+              {t('uploadNew')}
             </Button>
             {imageUrl && onDelete && (
               <Button
                 variant="ghost"
+                size="icon"
+                aria-label={t('delete')}
                 className="rounded-full h-12 w-12 p-0 text-destructive hover:bg-destructive/10"
                 onClick={handleDelete}
-                disabled={isUploading}
+                disabled={isPending}
+                loading={pendingAction === 'delete'}
               >
                 <HugeiconsIcon icon={Trash} className="h-5 w-5" />
               </Button>

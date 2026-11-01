@@ -28,12 +28,13 @@ import { useTranslations } from 'next-intl'
 export default function ForgotPasswordPage() {
   const t = useTranslations('Auth')
   const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       const { error } = await authService.resetPassword(email)
       if (error) {
@@ -44,7 +45,7 @@ export default function ForgotPasswordPage() {
     } catch (error) {
       alert(error instanceof Error ? error.message : t('unknownError'))
     } finally {
-      setLoading(false)
+      setIsSubmitting(false)
     }
   }
 
@@ -110,9 +111,10 @@ export default function ForgotPasswordPage() {
                 type="submit"
                 data-testid="forgot-password-submit-button"
                 className="w-full rounded-full h-12 text-lg"
-                disabled={loading}
+                disabled={isSubmitting}
+                loading={isSubmitting}
               >
-                {loading ? t('sending') : t('sendResetLink')}
+                {t('sendResetLink')}
               </Button>
               <Link
                 href="/login"

@@ -678,7 +678,6 @@ export default function FeaturesPage() {
                             <Button
                               type="submit"
                               loading={saving === 'phone'}
-                              loadingText={t('savingPhone')}
                               variant="outline"
                               size="pill"
                               className="w-full font-normal"
@@ -695,7 +694,6 @@ export default function FeaturesPage() {
                         <div className="space-y-2">
                           <Button
                             loading={isSendingTestCall}
-                            loadingText={t('sendingTestCall')}
                             variant="outline"
                             size="pill"
                             className="w-full font-normal"

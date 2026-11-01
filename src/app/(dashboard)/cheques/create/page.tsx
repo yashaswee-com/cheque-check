@@ -4,6 +4,7 @@ import { useCreateCheque } from '@/features/cheques/hooks/use-create-cheque'
 import { useParties } from '@/features/parties/hooks/use-parties'
 import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { Input } from '@/components/ui/input'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
 import { Label } from '@/components/ui/label'
@@ -25,7 +26,6 @@ import {
   HashtagIcon as Hash,
   Calendar03Icon as Calendar,
   Note01Icon as Note,
-  Loading03Icon,
 } from '@hugeicons/core-free-icons'
 import { cn, numberToIndianWords } from '@/lib/utils'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
@@ -43,7 +43,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
 import { useTranslations } from 'next-intl'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useBanks } from '@/features/accounts/hooks/use-banks'
 import { useChequeNumberConflict } from '@/features/cheques/hooks/use-cheque-number-conflict'
 import {
@@ -79,6 +79,7 @@ export default function CreateChequePage() {
   const [cameFromScan] = useState(() => !!imageUrlParam || ScanStore.hasFile())
   // Read once: autosave later writes a new draftId into the URL for the same form.
   const [initialDraftId] = useState(() => searchParams.get('draftId'))
+  const photoInputRef = useRef<HTMLInputElement>(null)
   const { activeBusiness } = useBusiness()
   const businessId = activeBusiness?.id
   const { profile } = useProfile()
@@ -218,10 +219,7 @@ export default function CreateChequePage() {
             {isExtracting && (
               <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 z-10 animate-in fade-in duration-300">
                 <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <HugeiconsIcon
-                    icon={Loading03Icon}
-                    className="h-7 w-7 animate-spin"
-                  />
+                  <Spinner className="size-7" />
                 </div>
                 <div className="text-center">
                   <span className="text-sm font-semibold text-primary block">
@@ -235,26 +233,29 @@ export default function CreateChequePage() {
             )}
           </div>
         ) : (
-          <label className="flex flex-col items-center gap-3 cursor-pointer py-6 w-full relative">
-            <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              {isUploading || isExtracting ? (
-                <HugeiconsIcon
-                  icon={Loading03Icon}
-                  className="h-7 w-7 animate-spin"
-                />
-              ) : (
+          <div className="w-full">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-auto w-full flex-col gap-3 border-0 px-0 py-6 hover:bg-transparent active:scale-100"
+              aria-label={t('scanUpload')}
+              loading={isUploading || isExtracting}
+              onClick={() => photoInputRef.current?.click()}
+            >
+              <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                 <HugeiconsIcon icon={Camera} className="h-7 w-7" />
-              )}
-            </div>
-            <div className="text-center">
-              <span className="text-sm font-semibold text-primary block">
-                {isUploading || isExtracting ? t('loading') : t('scanUpload')}
-              </span>
-              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-semibold">
-                {t('photoInstruction')}
-              </p>
-            </div>
+              </div>
+              <div className="text-center">
+                <span className="text-sm font-semibold text-primary block">
+                  {t('scanUpload')}
+                </span>
+                <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-semibold">
+                  {t('photoInstruction')}
+                </p>
+              </div>
+            </Button>
             <input
+              ref={photoInputRef}
               type="file"
               accept="image/*"
               capture="environment"
@@ -268,7 +269,7 @@ export default function CreateChequePage() {
               }}
               disabled={isUploading || isExtracting}
             />
-          </label>
+          </div>
         )}
       </div>
     </div>
@@ -724,8 +725,9 @@ export default function CreateChequePage() {
               data-testid="cheque-submit-button"
               className="w-full rounded-full h-14 text-lg"
               disabled={isSaving}
+              loading={isSaving || form.formState.isSubmitting}
             >
-              {isSaving ? tCommon('saving') : t('saveAction')}{' '}
+              {t('saveAction')}{' '}
               <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
             </Button>
           </div>
@@ -847,17 +849,14 @@ export default function CreateChequePage() {
             <Button
               className="flex-1 rounded-full gap-2"
               onClick={handleInlineCreate}
+              loading={isCreatingInline}
               disabled={
                 isCreatingInline ||
                 (!createOptions.party && !createOptions.account)
               }
             >
-              {isCreatingInline ? (
-                <div className="h-4 w-4 border-2 border-white border-t-transparent animate-spin rounded-full" />
-              ) : (
-                <HugeiconsIcon icon={Check} className="h-4 w-4" />
-              )}
-              {isCreatingInline ? 'Creating...' : 'Create Selected'}
+              <HugeiconsIcon icon={Check} className="h-4 w-4" />
+              Create Selected
             </Button>
           </DialogFooter>
         </DialogContent>

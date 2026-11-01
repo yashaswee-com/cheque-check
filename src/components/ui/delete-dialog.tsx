@@ -58,19 +58,19 @@ export function DeleteConfirmationDialog({
     onOpenChange?.(value)
   }
   const [inputValue, setInputValue] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const t = useTranslations('Common')
 
   const handleConfirm = async () => {
-    if (inputValue !== confirmName || loading) return
-    setLoading(true)
+    if (inputValue !== confirmName || isDeleting) return
+    setIsDeleting(true)
     try {
       await onDelete()
       setOpen(false)
     } catch (error) {
       alert(error instanceof Error ? error.message : String(error))
     } finally {
-      setLoading(false)
+      setIsDeleting(false)
     }
   }
 
@@ -125,9 +125,8 @@ export function DeleteConfirmationDialog({
           <Button
             variant="destructive"
             onClick={handleConfirm}
-            disabled={inputValue !== confirmName || loading}
-            loading={loading}
-            loadingText={t('deleting')}
+            disabled={inputValue !== confirmName || isDeleting}
+            loading={isDeleting}
             data-testid="delete-dialog-confirm-button"
             className="w-full rounded-pill h-14 font-bold text-lg"
           >

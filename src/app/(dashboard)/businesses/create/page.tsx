@@ -365,8 +365,7 @@ export default function CreateBusinessPage() {
               type="submit"
               className="w-full rounded-full h-14 text-lg"
               disabled={isSaving}
-              loading={isSaving}
-              loadingText={t('creatingBusiness')}
+              loading={isSaving || form.formState.isSubmitting}
               data-testid="business-submit-button"
             >
               {t('newBusiness')}{' '}

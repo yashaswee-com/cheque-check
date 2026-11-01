@@ -223,10 +223,11 @@ function NpsForm({
         <Button
           className="h-12 rounded-full"
           disabled={score === null || isSubmitting}
+          loading={isSubmitting}
           data-testid="nps-submit-button"
           onClick={submit}
         >
-          {isSubmitting ? t('submitting') : t('submit')}
+          {t('submit')}
         </Button>
         <Button
           variant="ghost"

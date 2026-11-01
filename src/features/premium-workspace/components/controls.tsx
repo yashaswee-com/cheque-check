@@ -60,7 +60,6 @@ export function Confirmation({
   onConfirm,
   onCancel,
   busy,
-  loadingText,
 }: {
   message: string
   confirm: string
@@ -68,7 +67,6 @@ export function Confirmation({
   onConfirm: () => void
   onCancel: () => void
   busy: boolean
-  loadingText?: string
 }) {
   return (
     <div
@@ -77,12 +75,7 @@ export function Confirmation({
     >
       <p>{message}</p>
       <div className="flex flex-wrap gap-2">
-        <Button
-          disabled={busy}
-          loading={busy}
-          loadingText={loadingText ?? confirm}
-          onClick={onConfirm}
-        >
+        <Button disabled={busy} loading={busy} onClick={onConfirm}>
           {confirm}
         </Button>
         <Button variant="outline" disabled={busy} onClick={onCancel}>

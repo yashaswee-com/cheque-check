@@ -156,14 +156,40 @@ describe.each([
     fireEvent.click(screen.getByTestId(`${kind}-submit-button`))
     expect(screen.getByTestId(`${kind}-submit-button`)).toBeDisabled()
     expect(screen.getByTestId(`${kind}-submit-button`)).toHaveTextContent(
-      kind === 'login'
-        ? messages.Auth.signingIn
-        : messages.Auth.creatingAccount,
+      kind === 'login' ? messages.Auth.signIn : messages.Auth.createAccount,
     )
+    expect(screen.getByTestId(`${kind}-submit-button`)).toHaveAttribute(
+      'aria-busy',
+      'true',
+    )
+    expect(
+      screen
+        .getByTestId(`${kind}-submit-button`)
+        .querySelectorAll('.animate-spin'),
+    ).toHaveLength(1)
+    fireEvent.submit(
+      screen.getByTestId(`${kind}-submit-button`).closest('form')!,
+    )
+    expect(submit).toHaveBeenCalledOnce()
     finish({ error: null })
     await waitFor(() =>
       expect(screen.getByTestId(`${kind}-submit-button`)).toBeEnabled(),
     )
+  })
+  it('tracks the selected OAuth button until authentication completes', async () => {
+    const task = Promise.withResolvers<{ error: null }>()
+    mocks.oauth.mockReturnValueOnce(task.promise)
+    renderPage(<Component />)
+    const button = screen.getByRole('button', { name: messages.Common.google })
+    fireEvent.click(button)
+    expect(button).toHaveAttribute('aria-busy', 'true')
+    expect(button).toBeDisabled()
+    expect(button.querySelectorAll('.animate-spin')).toHaveLength(1)
+    fireEvent.click(button)
+    expect(mocks.oauth).toHaveBeenCalledOnce()
+    task.resolve({ error: null })
+    await waitFor(() => expect(button).toBeEnabled())
+    expect(button).not.toHaveAttribute('aria-busy')
   })
   it.each(['returned', 'thrown', 'non-error'])(
     'reports %s authentication failures and permits retry',
@@ -306,7 +332,16 @@ describe('forgot password page', () => {
     expect(screen.getByTestId('forgot-password-submit-button')).toBeDisabled()
     expect(
       screen.getByTestId('forgot-password-submit-button'),
-    ).toHaveTextContent(messages.Auth.sending)
+    ).toHaveTextContent(messages.Auth.sendResetLink)
+    expect(screen.getByTestId('forgot-password-submit-button')).toHaveAttribute(
+      'aria-busy',
+      'true',
+    )
+    expect(
+      screen
+        .getByTestId('forgot-password-submit-button')
+        .querySelectorAll('.animate-spin'),
+    ).toHaveLength(1)
     fail(new Error('Reset unavailable'))
     await waitFor(() =>
       expect(mocks.alert).toHaveBeenCalledWith('Reset unavailable'),

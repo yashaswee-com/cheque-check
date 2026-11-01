@@ -107,7 +107,7 @@ function PrintLayoutLoader({
     return (
       <div role="alert" className="space-y-3">
         <p>{query.error.message}</p>
-        <Button onClick={() => void query.refetch()}>{tp('retry')}</Button>
+        <Button onClick={() => query.refetch()}>{tp('retry')}</Button>
       </div>
     )
   return (
@@ -215,7 +215,6 @@ function PrintLayoutForm({
           type="button"
           disabled={isSaving}
           loading={isSaving}
-          loadingText={tc('saving')}
           onClick={() => void save()}
         >
           {t('savePrintLayout')}

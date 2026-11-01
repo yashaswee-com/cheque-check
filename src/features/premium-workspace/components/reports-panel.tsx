@@ -178,7 +178,6 @@ export function ReportsPanel({
         <Button
           disabled={disabled}
           loading={busy}
-          loadingText={t('working')}
           onClick={() =>
             void run(async () => setSnapshot(await fetchSnapshot()))
           }
@@ -190,7 +189,6 @@ export function ReportsPanel({
             variant="outline"
             disabled={disabled}
             loading={busy}
-            loadingText={t('working')}
             onClick={() =>
               void run(async () => {
                 // Never export a cached report after entitlement expiry.

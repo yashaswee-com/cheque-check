@@ -41,7 +41,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
   const reportError = (error: unknown) => {
@@ -54,7 +54,8 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       const { error } = await authService.loginWithPassword(email, password)
       if (error) {
@@ -65,7 +66,7 @@ export default function LoginPage() {
     } catch (error: unknown) {
       reportError(error)
     } finally {
-      setLoading(false)
+      setIsSubmitting(false)
     }
   }
 
@@ -159,9 +160,10 @@ export default function LoginPage() {
                 type="submit"
                 data-testid="login-submit-button"
                 className="w-full rounded-full h-12 text-lg"
-                disabled={loading}
+                disabled={isSubmitting}
+                loading={isSubmitting}
               >
-                {loading ? t('signingIn') : t('signIn')}
+                {t('signIn')}
               </Button>
             </form>
           )}

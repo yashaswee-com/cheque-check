@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef, useState } from 'react'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
 
 import { useEditCheque } from '@/features/cheques/hooks/use-edit-cheque'
@@ -22,7 +23,6 @@ import {
   Cancel01Icon as X,
   Invoice01Icon as ReceiptText,
   UserIcon as User,
-  Loading03Icon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { cn, numberToIndianWords } from '@/lib/utils'
@@ -59,6 +59,7 @@ export default function EditChequePage() {
   const businessId = activeBusiness?.id
   const { profile } = useProfile()
   const currency = profile?.currency || '₹'
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   const {
     form,
@@ -81,24 +82,31 @@ export default function EditChequePage() {
 
   const { parties } = useParties(businessId)
   const tagsDraft = useEntityTagsDraft('cheque', id)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (
-      watch('type') === 'Inward' &&
-      cheque?.type !== 'Inward' &&
-      !premium.requireAccess('inward-tracking')
-    )
-      return
-    if (await form.trigger()) {
-      try {
-        await tagsDraft.commit()
-      } catch {
-        toast.add({ title: tCommon('error'), type: 'error' })
+    if (isSubmitting || isSaving || isUploading) return
+    setIsSubmitting(true)
+    try {
+      if (
+        watch('type') === 'Inward' &&
+        cheque?.type !== 'Inward' &&
+        !premium.requireAccess('inward-tracking')
+      )
         return
+      if (await form.trigger()) {
+        try {
+          await tagsDraft.commit()
+        } catch {
+          toast.add({ title: tCommon('error'), type: 'error' })
+          return
+        }
       }
+      await onSubmit(event)
+    } finally {
+      setIsSubmitting(false)
     }
-    await onSubmit(event)
   }
 
   const { accounts } = useAccounts(businessId)
@@ -139,7 +147,7 @@ export default function EditChequePage() {
     value: string,
   ) => setValue(field, value as never, { shouldDirty: true })
   const imageUrl = watch('image_url')
-  const isBusy = isUploading || isSaving
+  const isBusy = isUploading || isSaving || isSubmitting
 
   return (
     <div className="max-w-2xl space-y-8 pb-20">
@@ -171,27 +179,30 @@ export default function EditChequePage() {
                   </button>
                 </div>
               ) : (
-                <label
-                  className={cn(
-                    'flex flex-col items-center gap-3 cursor-pointer py-6 w-full relative',
-                    isBusy && 'pointer-events-none opacity-50',
-                  )}
-                >
-                  <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <HugeiconsIcon
-                      icon={isUploading ? Loading03Icon : Camera}
-                      className={cn('h-7 w-7', isUploading && 'animate-spin')}
-                    />
-                  </div>
-                  <div className="text-center">
-                    <span className="text-sm font-semibold text-primary block">
-                      {isUploading ? t('uploading') : t('scanUpload')}
-                    </span>
-                    <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-semibold">
-                      {t('photoInstruction')}
-                    </p>
-                  </div>
+                <div className="w-full">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-auto w-full flex-col gap-3 border-0 px-0 py-6 hover:bg-transparent active:scale-100"
+                    aria-label={t('scanUpload')}
+                    disabled={isBusy}
+                    loading={isUploading}
+                    onClick={() => photoInputRef.current?.click()}
+                  >
+                    <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <HugeiconsIcon icon={Camera} className="h-7 w-7" />
+                    </div>
+                    <div className="text-center">
+                      <span className="text-sm font-semibold text-primary block">
+                        {t('scanUpload')}
+                      </span>
+                      <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-semibold">
+                        {t('photoInstruction')}
+                      </p>
+                    </div>
+                  </Button>
                   <input
+                    ref={photoInputRef}
                     type="file"
                     accept="image/*"
                     capture="environment"
@@ -203,7 +214,7 @@ export default function EditChequePage() {
                       if (file) void handleImageUpload(file)
                     }}
                   />
-                </label>
+                </div>
               )}
             </div>
           </div>
@@ -431,9 +442,10 @@ export default function EditChequePage() {
             type="submit"
             className="w-full rounded-full h-14 text-lg"
             disabled={isBusy}
+            loading={isSaving || isSubmitting}
             data-testid="cheque-edit-submit-button"
           >
-            {isSaving ? tCommon('saving') : t('updateAction')}{' '}
+            {t('updateAction')}{' '}
             <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
           </Button>
 

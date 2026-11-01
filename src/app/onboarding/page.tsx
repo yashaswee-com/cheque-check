@@ -72,7 +72,7 @@ export default function OnboardingPage() {
   const tc = useTranslations('Common')
 
   const [step, setStep] = useState(1)
-  const [loading, setLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const queryClient = useQueryClient()
   const { profile, updateProfile } = useProfile()
@@ -123,7 +123,7 @@ export default function OnboardingPage() {
   ).success
 
   const handleFinish = async () => {
-    setLoading(true)
+    setIsSubmitting(true)
     try {
       // 1. Create Business
       const business = await businessService.create({
@@ -155,7 +155,7 @@ export default function OnboardingPage() {
     } catch (error) {
       alert(error instanceof Error ? error.message : tc('error'))
     } finally {
-      setLoading(false)
+      setIsSubmitting(false)
     }
   }
 
@@ -647,9 +647,10 @@ export default function OnboardingPage() {
                   className="w-full rounded-pill h-14 text-lg font-medium active:scale-95 transition-transform"
                   data-testid="onboarding-step4-finish"
                   onClick={handleFinish}
-                  disabled={loading}
+                  disabled={isSubmitting}
+                  loading={isSubmitting}
                 >
-                  {loading ? t('completingSetup') : t('finishSetup')}{' '}
+                  {t('finishSetup')}{' '}
                   <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>

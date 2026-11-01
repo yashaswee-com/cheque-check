@@ -34,7 +34,6 @@ export function TagForm({
   children,
 }: TagFormProps) {
   const t = useTranslations('Tags')
-  const tc = useTranslations('Common')
   const [name, setName] = useState(defaultValues.name)
   const [color, setColor] = useState(defaultValues.color)
   const trimmedName = name.trim()
@@ -105,7 +104,6 @@ export function TagForm({
           className="h-14 w-full rounded-full text-lg"
           disabled={!trimmedName || isSaving}
           loading={isSaving}
-          loadingText={tc('saving')}
         >
           {submitLabel}
           <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />

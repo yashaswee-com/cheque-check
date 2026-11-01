@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useEditBusiness } from '@/features/businesses/hooks/use-edit-business'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -53,18 +54,25 @@ export default function EditBusinessPage() {
     formState: { errors },
   } = form
   const tagsDraft = useEntityTagsDraft('business', id)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (await form.trigger()) {
-      try {
-        await tagsDraft.commit()
-      } catch {
-        toast.add({ title: tc('error'), type: 'error' })
-        return
+    if (isSubmitting || isSaving) return
+    setIsSubmitting(true)
+    try {
+      if (await form.trigger()) {
+        try {
+          await tagsDraft.commit()
+        } catch {
+          toast.add({ title: tc('error'), type: 'error' })
+          return
+        }
       }
+      await onSubmit(event)
+    } finally {
+      setIsSubmitting(false)
     }
-    await onSubmit(event)
   }
 
   const colors = [
@@ -245,8 +253,7 @@ export default function EditBusinessPage() {
             type="submit"
             className="w-full rounded-full h-14 text-lg"
             disabled={isSaving}
-            loading={isSaving}
-            loadingText={tc('saving')}
+            loading={isSaving || isSubmitting}
             data-testid="business-edit-submit-button"
           >
             {t('updateBusiness')}{' '}

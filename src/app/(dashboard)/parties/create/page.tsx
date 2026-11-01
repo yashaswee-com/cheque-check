@@ -302,7 +302,7 @@ export default function CreatePartyPage() {
             type="button"
             variant="ghost"
             size="icon"
-            onClick={() => void nextStep()}
+            onClick={() => nextStep()}
             disabled={step === 3 || isSaving || isAvatarUploading}
             aria-label={t('continue')}
             className="rounded-full h-8 w-8 shrink-0"
@@ -409,7 +409,7 @@ export default function CreatePartyPage() {
             <Button
               type="button"
               data-testid="party-step1-continue"
-              onClick={() => void nextStep()}
+              onClick={() => nextStep()}
               className="w-full rounded-full h-14 text-lg"
             >
               {t('continue')}
@@ -489,7 +489,7 @@ export default function CreatePartyPage() {
             <Button
               type="button"
               data-testid="party-step2-continue"
-              onClick={() => void nextStep()}
+              onClick={() => nextStep()}
               disabled={isAvatarUploading}
               className="w-full rounded-full h-14 text-lg"
             >
@@ -500,7 +500,7 @@ export default function CreatePartyPage() {
               type="button"
               variant="ghost"
               data-testid="party-step2-skip"
-              onClick={() => void nextStep()}
+              onClick={() => nextStep()}
               disabled={isAvatarUploading}
               className="w-full rounded-full"
             >
@@ -593,8 +593,9 @@ export default function CreatePartyPage() {
               data-testid="party-submit-button"
               className="w-full rounded-full h-14 text-lg"
               disabled={isSaving || isAvatarUploading}
-              loading={isSaving || isAvatarUploading}
-              loadingText={tCommon('saving')}
+              loading={
+                isSaving || isAvatarUploading || form.formState.isSubmitting
+              }
             >
               {t('createParty')}
               <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />

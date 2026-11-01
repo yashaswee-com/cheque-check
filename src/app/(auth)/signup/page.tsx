@@ -42,7 +42,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [name, setName] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
   const reportError = (error: unknown) => {
@@ -55,7 +55,8 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       const { error } = await authService.signupWithPassword(
         email,
@@ -71,7 +72,7 @@ export default function SignupPage() {
     } catch (error: unknown) {
       reportError(error)
     } finally {
-      setLoading(false)
+      setIsSubmitting(false)
     }
   }
 
@@ -171,9 +172,10 @@ export default function SignupPage() {
                 type="submit"
                 data-testid="signup-submit-button"
                 className="w-full rounded-full h-12 text-lg"
-                disabled={loading}
+                disabled={isSubmitting}
+                loading={isSubmitting}
               >
-                {loading ? t('creatingAccount') : t('createAccount')}
+                {t('createAccount')}
               </Button>
             </form>
           )}

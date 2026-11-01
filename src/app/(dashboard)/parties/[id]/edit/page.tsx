@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useEditParty } from '@/features/parties/hooks/use-edit-party'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,18 +59,25 @@ export default function EditPartyPage() {
     formState: { errors },
   } = form
   const tagsDraft = useEntityTagsDraft('party', id)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (await form.trigger()) {
-      try {
-        await tagsDraft.commit()
-      } catch {
-        toast.add({ title: tCommon('error'), type: 'error' })
-        return
+    if (isSubmitting || isSaving) return
+    setIsSubmitting(true)
+    try {
+      if (await form.trigger()) {
+        try {
+          await tagsDraft.commit()
+        } catch {
+          toast.add({ title: tCommon('error'), type: 'error' })
+          return
+        }
       }
+      await onSubmit(event)
+    } finally {
+      setIsSubmitting(false)
     }
-    await onSubmit(event)
   }
 
   const colors = [
@@ -261,9 +269,10 @@ export default function EditPartyPage() {
             type="submit"
             className="w-full rounded-full h-14 text-lg"
             disabled={isSaving}
+            loading={isSaving || isSubmitting}
             data-testid="party-edit-submit-button"
           >
-            {isSaving ? tCommon('saving') : t('updateParty')}{' '}
+            {t('updateParty')}{' '}
             <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
           </Button>
 

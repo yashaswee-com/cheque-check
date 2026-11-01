@@ -301,7 +301,6 @@ export function PhoneAuthForm({
             data-testid="phone-auth-send-button"
             className="h-12 flex-1 rounded-full text-lg"
             loading={pending === 'send'}
-            loadingText={t('sendingCode')}
             disabled={pending !== null}
           >
             {t('sendCode')}
@@ -372,7 +371,6 @@ export function PhoneAuthForm({
         data-testid="phone-auth-verify-button"
         className="h-12 w-full rounded-full text-lg"
         loading={pending === 'verify'}
-        loadingText={t('verifying')}
         disabled={pending !== null || code.length !== OTP_LENGTH}
       >
         {purpose === 'link' ? t('linkVerify') : t('verify')}
@@ -399,7 +397,6 @@ export function PhoneAuthForm({
           data-testid="phone-auth-resend-button"
           onClick={() => void requestCode(phone, 'resend')}
           loading={pending === 'resend'}
-          loadingText={t('resending')}
           disabled={pending !== null || secondsLeft > 0}
         >
           <HugeiconsIcon

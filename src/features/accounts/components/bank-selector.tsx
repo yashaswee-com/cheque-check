@@ -173,7 +173,7 @@ export function BankSelector({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => void refetch()}
+                    onClick={() => refetch()}
                   >
                     {tb('retry')}
                   </Button>

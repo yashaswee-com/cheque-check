@@ -25,19 +25,25 @@ export function DraftLeaveDialog({
   onCancel,
 }: DraftLeaveDialogProps) {
   const t = useTranslations('Drafts')
-  const [busy, setBusy] = useState<'save' | 'discard' | null>(null)
+  const [pendingAction, setPendingAction] = useState<'save' | 'discard' | null>(
+    null,
+  )
+  const isPending = pendingAction !== null
 
   const run = async (action: 'save' | 'discard') => {
-    setBusy(action)
+    setPendingAction(action)
     try {
       await (action === 'save' ? onSave() : onDiscard())
     } finally {
-      setBusy(null)
+      setPendingAction(null)
     }
   }
 
   return (
-    <Sheet open={open} onOpenChange={(next) => !next && !busy && onCancel()}>
+    <Sheet
+      open={open}
+      onOpenChange={(next) => !next && !isPending && onCancel()}
+    >
       <SheetContent>
         <SheetHeader>
           <SheetTitle>{t('leaveTitle')}</SheetTitle>
@@ -47,15 +53,17 @@ export function DraftLeaveDialog({
           <Button
             className="w-full rounded-full"
             onClick={() => run('save')}
-            disabled={!!busy}
+            loading={pendingAction === 'save'}
+            disabled={isPending}
           >
-            {busy === 'save' ? t('saving') : t('saveDraft')}
+            {t('saveDraft')}
           </Button>
           <Button
             variant="destructive"
             className="w-full rounded-full"
             onClick={() => run('discard')}
-            disabled={!!busy}
+            loading={pendingAction === 'discard'}
+            disabled={isPending}
           >
             {t('discard')}
           </Button>
@@ -63,7 +71,7 @@ export function DraftLeaveDialog({
             variant="ghost"
             className="w-full rounded-full"
             onClick={onCancel}
-            disabled={!!busy}
+            disabled={isPending}
           >
             {t('keepEditing')}
           </Button>

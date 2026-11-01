@@ -74,10 +74,7 @@ function BusinessWorkspace({
       <div role="alert" className="space-y-3">
         <p>{t('loadError')}</p>
         <Button
-          onClick={() => {
-            void context.refetch()
-            void tools.refetch()
-          }}
+          onClick={() => Promise.all([context.refetch(), tools.refetch()])}
         >
           {t('retry')}
         </Button>

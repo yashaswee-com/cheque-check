@@ -41,11 +41,7 @@ export function PremiumGate({
         {t(`states.${access.state}`)}
       </p>
       {access.state === 'error' ? (
-        <Button
-          variant="outline"
-          size="pill"
-          onClick={() => void access.refresh()}
-        >
+        <Button variant="outline" size="pill" onClick={() => access.refresh()}>
           {t('retry')}
         </Button>
       ) : (

@@ -143,42 +143,46 @@ function ReportsContent() {
             <p className="px-2 pb-1 text-xs font-semibold text-muted-foreground">
               {tr('exportFormat')}
             </p>
-            <button
+            <Button
+              variant="ghost"
               type="button"
               disabled={exporting}
               data-testid="reports-export-csv"
-              className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+              className="h-auto w-full justify-start rounded-md border-0 px-2 py-2 text-left text-sm font-normal hover:bg-muted active:scale-100"
               onClick={() => handleExport('csv')}
             >
               {tr('csvFormat')}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               type="button"
               disabled={exporting}
               data-testid="reports-export-json"
-              className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+              className="h-auto w-full justify-start rounded-md border-0 px-2 py-2 text-left text-sm font-normal hover:bg-muted active:scale-100"
               onClick={() => handleExport('json')}
             >
               {tr('jsonFormat')}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               type="button"
               disabled={exporting}
               data-testid="reports-export-pdf"
-              className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+              className="h-auto w-full justify-start rounded-md border-0 px-2 py-2 text-left text-sm font-normal hover:bg-muted active:scale-100"
               onClick={() => handleExport('pdf')}
             >
               {tr('pdfFormat')}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               type="button"
               disabled={exporting}
               data-testid="reports-export-excel"
-              className="w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+              className="h-auto w-full justify-start rounded-md border-0 px-2 py-2 text-left text-sm font-normal hover:bg-muted active:scale-100"
               onClick={() => handleExport('excel')}
             >
               {tr('excelFormat')}
-            </button>
+            </Button>
           </PopoverContent>
         </Popover>
       </div>

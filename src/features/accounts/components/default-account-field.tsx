@@ -53,7 +53,7 @@ export function DefaultAccountField({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => void query.refetch()}
+              onClick={() => query.refetch()}
             >
               {tc('tryAgain')}
             </Button>

@@ -419,8 +419,7 @@ export default function CreateAccountPage() {
               data-testid="account-submit-button"
               className="w-full rounded-full h-14 text-lg"
               disabled={isSaving}
-              loading={isSaving}
-              loadingText={t('addingAccount')}
+              loading={isSaving || form.formState.isSubmitting}
             >
               {t('addAccount')}{' '}
               <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />

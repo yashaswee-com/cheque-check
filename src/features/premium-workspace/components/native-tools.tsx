@@ -256,10 +256,7 @@ function NativeToolsContent({
         <p>{t('loadError')}</p>
         <Button
           variant="outline"
-          onClick={() => {
-            void context.refetch()
-            void tools.refetch()
-          }}
+          onClick={() => Promise.all([context.refetch(), tools.refetch()])}
         >
           {t('retry')}
         </Button>

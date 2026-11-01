@@ -145,8 +145,9 @@ export default function ProfilePage() {
           type="submit"
           className="h-14 w-full rounded-full text-lg"
           disabled={!trimmedName || !isDirty || isSaving}
+          loading={isSaving}
         >
-          {isSaving ? tc('saving') : t('saveProfile')}
+          {t('saveProfile')}
           <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
         </Button>
       </form>

@@ -147,6 +147,7 @@ export function DraftCard({
               variant="destructive"
               className="flex-1 rounded-full"
               onClick={handleDelete}
+              loading={deleting}
               disabled={deleting}
             >
               {tc('delete')}

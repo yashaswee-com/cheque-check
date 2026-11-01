@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createRef } from 'react'
 import { Button } from './button'
@@ -10,7 +10,7 @@ describe('Button pending state', () => {
     const submit = vi.fn((event) => event.preventDefault())
     const { rerender } = render(
       <form onSubmit={submit}>
-        <Button type="submit" loading={false} loadingText="Saving">
+        <Button type="submit" loading={false}>
           Save cheque
         </Button>
       </form>,
@@ -19,15 +19,16 @@ describe('Button pending state', () => {
     expect(submit).toHaveBeenCalledTimes(1)
     rerender(
       <form onSubmit={submit}>
-        <Button type="submit" loading loadingText="Saving">
+        <Button type="submit" loading>
           Save cheque
         </Button>
       </form>,
     )
-    const button = screen.getByRole('button', { name: 'Saving' })
+    const button = screen.getByRole('button', { name: 'Save cheque' })
     expect(button).toBeDisabled()
     expect(button).toHaveAttribute('aria-busy', 'true')
-    expect(screen.getByText('Save cheque')).toHaveClass('invisible')
+    expect(screen.getByText('Save cheque')).toHaveClass('opacity-0')
+    expect(button.querySelectorAll('.animate-spin')).toHaveLength(1)
     fireEvent.click(button)
     expect(submit).toHaveBeenCalledTimes(1)
   })
@@ -55,16 +56,11 @@ describe('Button pending state', () => {
     expect(ref.current).toHaveClass('bg-destructive/10', 'h-12')
   })
 
-  it.each(['start', 'end'] as const)(
-    'keeps icon-only actions named with spinner at %s',
-    (spinnerPosition) => {
+  it.each(['icon', 'icon-sm'] as const)(
+    'keeps %s actions named while replacing their icon with one spinner',
+    (size) => {
       render(
-        <Button
-          size="icon"
-          aria-label="Refresh access"
-          loading
-          spinnerPosition={spinnerPosition}
-        >
+        <Button size={size} aria-label="Refresh access" loading>
           <svg data-testid="original-icon" />
         </Button>,
       )
@@ -72,7 +68,7 @@ describe('Button pending state', () => {
         screen.getByRole('button', { name: 'Refresh access' }),
       ).toHaveAttribute('aria-busy', 'true')
       expect(screen.getByTestId('original-icon').parentElement).toHaveClass(
-        'invisible',
+        'opacity-0',
       )
     },
   )
@@ -88,26 +84,53 @@ describe('Button pending state', () => {
     expect(click).not.toHaveBeenCalled()
   })
 
-  it('retains the ordinary label when pending text is omitted', () => {
-    render(
-      <Button loading spinnerPosition="end">
-        Export
-      </Button>,
-    )
+  it('retains the ordinary label for assistive technology while showing only a spinner', () => {
+    render(<Button loading>Export</Button>)
     expect(screen.getByRole('button', { name: 'Export' })).toBeDisabled()
     expect(screen.getAllByText('Export')).toHaveLength(1)
   })
 
-  it('keeps the end-position spinner decorative when idle', () => {
+  it('does not reserve additional spinner space when idle', () => {
+    render(<Button loading={false}>Export</Button>)
+    expect(screen.getByRole('button', { name: 'Export' })).toBeEnabled()
+    expect(screen.getByRole('button').querySelector('svg')).toBeNull()
+    expect(screen.getByText('Export')).not.toHaveClass('opacity-0')
+  })
+
+  it('tracks promise-returning actions independently and clears pending on completion', async () => {
+    const task = Promise.withResolvers<void>()
+    const click = vi.fn(() => task.promise)
     render(
-      <Button loading={false} spinnerPosition="end">
-        Export
+      <>
+        <Button onClick={click}>Download</Button>
+        <Button>Other action</Button>
+      </>,
+    )
+    const button = screen.getByRole('button', { name: 'Download' })
+    fireEvent.click(button)
+    expect(button).toHaveAttribute('aria-busy', 'true')
+    expect(button).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Other action' })).toBeEnabled()
+    fireEvent.click(button)
+    expect(click).toHaveBeenCalledOnce()
+    await act(async () => task.resolve())
+    expect(button).toBeEnabled()
+    expect(button).not.toHaveAttribute('aria-busy')
+    expect(button.querySelector('.animate-spin')).toBeNull()
+  })
+
+  it('does not mark synchronous toggles as loading or override positioning', () => {
+    const click = vi.fn()
+    render(
+      <Button className="fixed bottom-6" onClick={click}>
+        Toggle
       </Button>,
     )
-    expect(screen.getByRole('button', { name: 'Export' })).toBeEnabled()
-    expect(screen.getByRole('button').querySelector('svg')).toHaveAttribute(
-      'aria-hidden',
-      'true',
-    )
+    const button = screen.getByRole('button', { name: 'Toggle' })
+    fireEvent.click(button)
+    expect(click).toHaveBeenCalledOnce()
+    expect(button).not.toHaveAttribute('aria-busy')
+    expect(button).toHaveClass('fixed')
+    expect(button).not.toHaveClass('relative')
   })
 })

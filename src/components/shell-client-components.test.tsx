@@ -479,6 +479,52 @@ describe('shell state components', () => {
 })
 
 describe('speed dial actions', () => {
+  it('keeps the menu closed and shows the shared spinner until an action completes', async () => {
+    const task = Promise.withResolvers<void>()
+    const action = vi.fn(() => task.promise)
+    renderIntl(
+      <SpeedDialFab
+        editHref="/cheques/one/edit"
+        editLabel="Edit cheque"
+        actions={[{ label: 'Print cheque', icon: Add01Icon, onClick: action }]}
+      />,
+    )
+    const toggle = screen.getByTestId('speed-dial-toggle')
+    fireEvent.click(toggle)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Print cheque' }))
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    expect(toggle).toHaveAttribute('aria-busy', 'true')
+    expect(toggle).toBeDisabled()
+    expect(toggle.querySelectorAll('.animate-spin')).toHaveLength(1)
+    fireEvent.click(toggle)
+    expect(action).toHaveBeenCalledOnce()
+    await act(async () => task.resolve())
+    expect(toggle).toBeEnabled()
+    expect(toggle).not.toHaveAttribute('aria-busy')
+  })
+
+  it('represents externally owned pending actions on the closed menu trigger', () => {
+    renderIntl(
+      <SpeedDialFab
+        editHref="/cheques/one/edit"
+        editLabel="Edit cheque"
+        actions={[
+          {
+            label: 'Clear cheque',
+            icon: Add01Icon,
+            onClick: vi.fn(),
+            loading: true,
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByTestId('speed-dial-toggle')).toHaveAttribute(
+      'aria-busy',
+      'true',
+    )
+    expect(screen.getByTestId('speed-dial-toggle')).toBeDisabled()
+  })
+
   it('opens actions, closes on Escape or backdrop, and calls the selected action', async () => {
     const user = userEvent.setup()
     const edit = screen.queryByTestId('speed-dial-edit-link')

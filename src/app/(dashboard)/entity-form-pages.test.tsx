@@ -732,6 +732,23 @@ describe.each([
     const { container } = renderPage(<Component />)
     expect(container.querySelector('button[type="submit"]')).toBeDisabled()
   })
+  it('shows the spinner throughout tag persistence and prevents repeated form submissions', async () => {
+    const task = Promise.withResolvers<void>()
+    mocks.commit.mockReturnValueOnce(task.promise)
+    const { container } = renderPage(<Component />)
+    const form = container.querySelector('form')!
+    fireEvent.submit(form)
+    await waitFor(() => expect(mocks.commit).toHaveBeenCalledOnce())
+    const button = container.querySelector('button[type="submit"]')!
+    expect(button).toHaveAttribute('aria-busy', 'true')
+    expect(button.querySelectorAll('.animate-spin')).toHaveLength(1)
+    fireEvent.submit(form)
+    expect(mocks.commit).toHaveBeenCalledOnce()
+    expect(mocks.submit).not.toHaveBeenCalled()
+    task.resolve()
+    await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
+    await waitFor(() => expect(button).toBeEnabled())
+  })
 })
 
 describe('party creation page', () => {
@@ -842,6 +859,7 @@ describe('party creation page', () => {
     fireEvent.click(importButton)
     expect(mocks.requireAccess).toHaveBeenCalledWith('contact-import')
     expect(mocks.toast).not.toHaveBeenCalled()
+    await waitFor(() => expect(importButton).toBeEnabled())
     fireEvent.click(importButton)
     expect(mocks.toast).toHaveBeenCalledWith(
       expect.objectContaining({

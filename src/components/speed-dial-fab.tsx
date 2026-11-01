@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react'
@@ -15,9 +15,10 @@ import { cn } from '@/lib/utils'
 export interface SpeedDialAction {
   label: string
   icon: IconSvgElement
-  onClick: () => void
+  onClick: () => unknown
   destructive?: boolean
   disabled?: boolean
+  loading?: boolean
   testId?: string
 }
 
@@ -35,6 +36,28 @@ export function SpeedDialFab({
 }: SpeedDialFabProps) {
   const t = useTranslations('Common')
   const [open, setOpen] = useState(false)
+  const [isPending, setIsPending] = useState(false)
+  const isPendingRef = useRef(false)
+  const isLoading = isPending || actions.some((action) => action.loading)
+
+  const runAction = (action: SpeedDialAction) => {
+    if (isLoading || isPendingRef.current) return
+    setOpen(false)
+    const result = action.onClick()
+    if (
+      result !== null &&
+      (typeof result === 'object' || typeof result === 'function') &&
+      'then' in result &&
+      typeof result.then === 'function'
+    ) {
+      isPendingRef.current = true
+      setIsPending(true)
+      return Promise.resolve(result).finally(() => {
+        isPendingRef.current = false
+        setIsPending(false)
+      })
+    }
+  }
 
   useEffect(() => {
     if (!open) return
@@ -70,17 +93,16 @@ export function SpeedDialFab({
                   animationDelay: `${(actions.length - 1 - index) * 35}ms`,
                 }}
               >
-                <button
+                <Button
+                  variant="ghost"
                   type="button"
                   role="menuitem"
-                  disabled={action.disabled}
+                  disabled={action.disabled || isLoading}
+                  loading={action.loading}
                   data-testid={action.testId}
-                  onClick={() => {
-                    setOpen(false)
-                    action.onClick()
-                  }}
+                  onClick={() => runAction(action)}
                   className={cn(
-                    'flex items-center gap-3 rounded-full bg-background py-1.5 pl-4 pr-1.5 text-sm font-semibold shadow-lg ring-1 ring-border transition-transform active:scale-95 disabled:opacity-50',
+                    'flex h-auto items-center gap-3 rounded-full border-0 bg-background py-1.5 pl-4 pr-1.5 text-sm font-semibold shadow-lg ring-1 ring-border transition-transform hover:bg-background active:scale-95 disabled:opacity-50',
                     action.destructive && 'text-destructive',
                   )}
                 >
@@ -94,7 +116,7 @@ export function SpeedDialFab({
                   >
                     <HugeiconsIcon icon={action.icon} className="size-4" />
                   </span>
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
@@ -105,6 +127,7 @@ export function SpeedDialFab({
             type="button"
             variant="secondary"
             size="icon"
+            loading={isLoading}
             aria-label={open ? t('close') : t('moreActions')}
             aria-expanded={open}
             data-testid="speed-dial-toggle"
