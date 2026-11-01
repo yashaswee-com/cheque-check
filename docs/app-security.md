@@ -19,7 +19,8 @@ browser or persisted in browser storage. There is no offline unlock.
 
 The dashboard shell does not mount its children before status is checked and,
 when enabled, the PIN is verified. Unlock exists in memory only. Opening/reloading
-locks again; 60 seconds of blur/hidden background locks, with a wall-clock check on
+locks again and requires fresh server status, never a cached disabled preference.
+Sixty seconds of blur/hidden background locks, with a wall-clock check on
 return to cover suspended browser timers. Other tabs/devices observe PIN changes
 through invalidation plus a bounded status refresh.
 

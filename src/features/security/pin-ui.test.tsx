@@ -15,6 +15,8 @@ import { PinGate } from './components/pin-gate'
 import { PinSettings } from './components/pin-settings'
 import { SecurityError } from './types'
 import { PIN_CHANGED_EVENT } from './hooks/use-pin-security'
+import { queryKeys } from '@/lib/query-keys'
+import { renderToString } from 'react-dom/server'
 const mocks = vi.hoisted(() => ({
   owner: 'user',
   status: vi.fn(),
@@ -97,6 +99,38 @@ async function unlock() {
   await screen.findByText('Financial records')
 }
 describe('PIN shell gating', () => {
+  it('never renders financial HTML on the server before the browser verifies security', () => {
+    const html = renderToString(
+      <QueryClientProvider client={client}>
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <PinGate>
+            <Financial />
+          </PinGate>
+        </NextIntlClientProvider>
+      </QueryClientProvider>,
+    )
+    expect(html).not.toContain('Financial records')
+    expect(mocks.mounted).not.toHaveBeenCalled()
+  })
+  it('does not trust a cached disabled status on a new app mount', async () => {
+    client.setQueryData(queryKeys.security.status(mocks.owner), {
+      ...enabled,
+      enabled: false,
+    })
+    let resolve!: (value: typeof enabled) => void
+    mocks.status.mockReturnValue(
+      new Promise<typeof enabled>((done) => {
+        resolve = done
+      }),
+    )
+    mount()
+    expect(mocks.mounted).not.toHaveBeenCalled()
+    await act(async () => resolve(enabled))
+    expect(
+      await screen.findByLabelText('Enter six-digit PIN'),
+    ).toBeInTheDocument()
+    expect(mocks.mounted).not.toHaveBeenCalled()
+  })
   it('traps keyboard focus and never dismisses the lock on Escape', async () => {
     mount()
     await screen.findByLabelText('Enter six-digit PIN')

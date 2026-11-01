@@ -157,10 +157,14 @@ export function usePinGate() {
     refresh,
     verify,
     signOut,
-    loading: isLoading || (statusQuery.isPending && !statusQuery.error),
+    loading:
+      isLoading ||
+      ((!statusQuery.isFetchedAfterMount || statusQuery.isPending) &&
+        !statusQuery.error),
     canEnter: Boolean(
       owner &&
       status &&
+      statusQuery.isFetchedAfterMount &&
       !status.blocked &&
       !error &&
       !statusQuery.isError &&
