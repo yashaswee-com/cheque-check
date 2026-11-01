@@ -17,6 +17,7 @@ import {
   Shield01Icon as Shield,
   LicenseIcon as License,
   Money03Icon as Money,
+  CrownIcon,
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -103,7 +104,7 @@ export default function SettingsPage() {
         {
           name: t('features'),
           description: t('featuresDesc'),
-          icon: Zap,
+          icon: CrownIcon,
           href: '/features',
         },
       ],

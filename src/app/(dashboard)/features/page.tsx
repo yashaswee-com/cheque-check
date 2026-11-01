@@ -28,6 +28,7 @@ import { getPaymentProductIcon } from '@/features/monetization/lib/payment-produ
 import type { Profile } from '@/types'
 import { usePremiumAccess } from '@/features/monetization/hooks/use-premium-access'
 import { PREMIUM_FEATURES } from '@/features/monetization/lib/premium-access'
+import { PremiumMark } from '@/features/monetization/components/premium-mark'
 
 function FeatureStatus({
   children,
@@ -234,6 +235,7 @@ export default function FeaturesPage() {
                   className="text-2xl font-semibold tracking-tight @min-[640px]:text-3xl"
                 >
                   {productNames(PRODUCT_IDS.LIFETIME_PREMIUM)}
+                  <PremiumMark className="ml-2 align-middle" />
                 </h2>
                 <p className="max-w-lg text-[17px] leading-relaxed text-muted-foreground">
                   {t('lifetimeAccess')}
