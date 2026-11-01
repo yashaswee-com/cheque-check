@@ -1013,6 +1013,13 @@
     "allTransactions": "Saare transactions dekhein"
   },
   "Reports": {
+    "viewAllJobs": "Sabhi jobs dekhein",
+    "jobStatusFilter": "Job status",
+    "jobFormatFilter": "Export format",
+    "refreshJobs": "Refresh",
+    "selectBusinessJobs": "Export jobs dekhne ke liye business chunein.",
+    "noJobsMatch": "In filters se koi export job match nahi karta.",
+    "retryExport": "Naya export request karein",
     "exportJobs": "Background exports",
     "exportJobsHelp": "CSV aur JSON request ke samay freeze hote hain aur background mein bante hain. Download 24 ghante baad expire hota hai.",
     "exportProgress": "{total} mein se {done} cheques taiyar",

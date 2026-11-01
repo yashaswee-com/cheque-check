@@ -6,6 +6,7 @@ import { useExportJobs } from './use-export-jobs'
 import type { ExportJob } from '../repositories/export-job.repository'
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
+  listPage: vi.fn(),
   request: vi.fn(),
   cancel: vi.fn(),
   error: vi.fn(),
@@ -32,6 +33,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   mocks.receivedChequesEnabled = false
   mocks.list.mockResolvedValue([])
+  mocks.listPage.mockResolvedValue({ jobs: [], total: 101 })
   mocks.request.mockResolvedValue(undefined)
   mocks.cancel.mockResolvedValue(undefined)
 })
@@ -176,7 +178,7 @@ describe('persistent export job hook', () => {
     },
   )
 
-  it('polls completed jobs at the long interval', async () => {
+  it('does not poll completed jobs while idle', async () => {
     vi.useFakeTimers()
     try {
       const completedJob: ExportJob = {
@@ -207,9 +209,43 @@ describe('persistent export job hook', () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(25000)
       })
-      expect(mocks.list).toHaveBeenCalledTimes(2)
+      expect(mocks.list).toHaveBeenCalledOnce()
     } finally {
       vi.useRealTimers()
+    }
+  })
+  it('requests a server-filtered page and exposes its exact matching count', async () => {
+    const page = {
+      offset: 50,
+      limit: 50,
+      status: 'failed' as const,
+      format: 'csv' as const,
+    }
+    const { result } = renderHook(() => useExportJobs('business', page), {
+      wrapper: wrapper(),
+    })
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(mocks.listPage).toHaveBeenCalledWith('business', page)
+    expect(mocks.list).not.toHaveBeenCalled()
+    expect(result.current.matchingCount).toBe(101)
+    await act(async () => result.current.cancel('job'))
+    expect(mocks.listPage.mock.calls.length).toBeGreaterThan(1)
+  })
+  it('does not start queries while the document is hidden and resumes when visible', async () => {
+    const visibility = vi
+      .spyOn(document, 'visibilityState', 'get')
+      .mockReturnValue('hidden')
+    try {
+      const { result } = renderHook(() => useExportJobs('business'), {
+        wrapper: wrapper(),
+      })
+      expect(mocks.list).not.toHaveBeenCalled()
+      visibility.mockReturnValue('visible')
+      act(() => document.dispatchEvent(new Event('visibilitychange')))
+      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      expect(mocks.list).toHaveBeenCalledOnce()
+    } finally {
+      visibility.mockRestore()
     }
   })
 })

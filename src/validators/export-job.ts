@@ -1,5 +1,20 @@
 import { z } from 'zod'
 
+export const EXPORT_JOB_STATUSES = [
+  'queued',
+  'processing',
+  'ready',
+  'failed',
+  'expired',
+] as const
+export const exportJobPageRequestSchema = z.object({
+  offset: z.number().int().nonnegative(),
+  limit: z.number().int().min(1).max(100),
+  status: z.enum(EXPORT_JOB_STATUSES).optional(),
+  format: z.enum(['csv', 'json']).optional(),
+})
+export type ExportJobPageRequest = z.infer<typeof exportJobPageRequestSchema>
+
 const base = z.object({
   id: z.uuid(),
   user_id: z.uuid(),

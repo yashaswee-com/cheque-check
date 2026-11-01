@@ -994,6 +994,13 @@
     "allTransactions": "View all transactions"
   },
   "Reports": {
+    "viewAllJobs": "View all jobs",
+    "jobStatusFilter": "Job status",
+    "jobFormatFilter": "Export format",
+    "refreshJobs": "Refresh",
+    "selectBusinessJobs": "Select a business to view export jobs.",
+    "noJobsMatch": "No export jobs match these filters.",
+    "retryExport": "Request new export",
     "exportJobs": "Background exports",
     "exportJobsHelp": "CSV and JSON are frozen when requested and prepared in the background. Downloads expire after 24 hours.",
     "exportProgress": "{done} of {total} cheques prepared",

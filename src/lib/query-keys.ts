@@ -1,6 +1,10 @@
 /** Central registry of React Query keys. */
 export const queryKeys = {
   reportExports: {
+    page: (
+      businessId: string | undefined,
+      request: import('@/validators/export-job').ExportJobPageRequest,
+    ) => ['report-exports', businessId, 'page', request] as const,
     list: (businessId: string | undefined) =>
       ['report-exports', businessId] as const,
   },

@@ -27,6 +27,7 @@ import {
   usePremiumAction,
 } from '@/features/monetization/components/premium-gate'
 import { useRef, useState } from 'react'
+import Link from 'next/link'
 import { logger } from '@/lib/logger'
 import { toast } from '@/components/ui/toast'
 import {
@@ -225,6 +226,9 @@ function ReportsContent() {
 
       <section className="space-y-3" aria-label={tr('exportJobs')}>
         <h2 className="font-semibold">{tr('exportJobs')}</h2>
+        <Link href="/reports/jobs" className="text-sm underline">
+          {tr('viewAllJobs')}
+        </Link>
         <p className="text-sm text-muted-foreground">{tr('exportJobsHelp')}</p>
         {jobs.isLoading && <Skeleton className="h-12 w-full" />}
         {jobs.error && (
