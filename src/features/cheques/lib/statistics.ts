@@ -10,6 +10,13 @@ export const DISTRIBUTION_STATUSES = [
 export type DistributionMetric = 'count' | 'amount'
 export type DistributionDirection = 'All' | ChequeType
 
+export function clearanceRate(
+  clearedCount: number,
+  totalCount: number,
+): number | null {
+  return totalCount > 0 ? (clearedCount / totalCount) * 100 : null
+}
+
 type StatisticsCheque = Pick<
   ChequeWithRelations,
   'status' | 'type' | 'amount' | 'cheque_date' | 'is_draft'

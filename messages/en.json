@@ -55,6 +55,9 @@
     "voice_reminder_100": "Voice Reminders - Top-Up (100 calls)"
   },
   "ChartStats": {
+    "clearanceRate": "Clearance rate",
+    "noClearanceData": "No cheques",
+    "clearanceRateDescription": "Cleared cheques as a percentage of all published cheques in this range and direction, by count.",
     "measure": "Measure",
     "count": "Cheque count",
     "amount": "Cheque amount",

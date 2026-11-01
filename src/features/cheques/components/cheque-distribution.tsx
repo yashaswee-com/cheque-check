@@ -11,6 +11,7 @@ import type { ChequeSummaryRow } from '@/types/cheque-list'
 import { ChequeStatsChart } from './cheque-stats-chart'
 import {
   chequeDistribution,
+  clearanceRate,
   DISTRIBUTION_STATUSES,
   type DistributionDirection,
   type DistributionMetric,
@@ -48,6 +49,10 @@ export function ChequeDistribution({
     metric === 'amount'
       ? display.currency(value, currency)
       : display.number(value)
+  const rate = clearanceRate(
+    distribution.slices.find((slice) => slice.status === 'Cleared')?.count ?? 0,
+    distribution.totalCheques,
+  )
 
   return (
     <div className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
@@ -126,6 +131,22 @@ export function ChequeDistribution({
             {distribution.allCleared ? t('allCleared') : t('noPending')}
           </p>
         )}
+      {!isLoading && !error && (
+        <div
+          className="rounded-md bg-muted/30 p-3"
+          data-testid="clearance-rate"
+        >
+          <p className="text-sm font-semibold">{t('clearanceRate')}</p>
+          <p className="text-2xl font-bold">
+            {rate === null
+              ? t('noClearanceData')
+              : `${display.number(rate, { maximumFractionDigits: 1 })}%`}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {t('clearanceRateDescription')}
+          </p>
+        </div>
+      )}
       {!isLoading && !error && (
         <ul className="sr-only" aria-label={t('distribution')}>
           {distribution.slices.map((slice) => (

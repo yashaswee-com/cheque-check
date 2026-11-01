@@ -55,6 +55,9 @@
     "voice_reminder_100": "Voice Reminders - Top-Up (100 calls)"
   },
   "ChartStats": {
+    "clearanceRate": "Clearance rate",
+    "noClearanceData": "Koi cheque nahi",
+    "clearanceRateDescription": "Is range aur direction ke sabhi published cheques mein cleared cheques ka percentage, count ke hisaab se.",
     "measure": "Measure",
     "count": "Cheque ki ginti",
     "amount": "Cheque ki rakam",

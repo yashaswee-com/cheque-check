@@ -45,6 +45,28 @@ const row = (
 })
 
 describe('ChequeDistribution', () => {
+  it('uses counts for clearance rate even in amount mode and excludes drafts/deleted rows', () => {
+    renderChart([
+      row('1', 'Issued', 'Outward', 900),
+      row('2', 'Cleared', 'Inward', 100),
+      { ...row('3', 'Cleared', 'Outward', 500), is_draft: true },
+      { ...row('4', 'Cleared', 'Outward', 500), deleted_at: '2026-10-01' },
+    ])
+    expect(screen.getByTestId('clearance-rate')).toHaveTextContent('50%')
+    fireEvent.change(screen.getByLabelText('Measure'), {
+      target: { value: 'amount' },
+    })
+    expect(screen.getByTestId('clearance-rate')).toHaveTextContent('50%')
+    fireEvent.change(screen.getByLabelText('Direction'), {
+      target: { value: 'Outward' },
+    })
+    expect(screen.getByTestId('clearance-rate')).toHaveTextContent('0%')
+  })
+  it('shows a neutral clearance metric for empty data, not a misleading zero', () => {
+    renderChart([])
+    expect(screen.getByTestId('clearance-rate')).toHaveTextContent('No cheques')
+    expect(screen.getByTestId('clearance-rate')).not.toHaveTextContent('0%')
+  })
   it('preserves measure and direction while only the graph shows loading or errors', () => {
     const view = (isLoading: boolean, error?: string) => (
       <NextIntlClientProvider locale="en" messages={messages}>

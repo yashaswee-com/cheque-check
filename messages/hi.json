@@ -55,6 +55,9 @@
     "voice_reminder_100": "वॉइस रिमाइंडर - टॉप-अप (100 कॉल)"
   },
   "ChartStats": {
+    "clearanceRate": "क्लियरेंस दर",
+    "noClearanceData": "कोई चेक नहीं",
+    "clearanceRateDescription": "इस अवधि और दिशा के सभी प्रकाशित चेकों में क्लियर हुए चेकों का प्रतिशत, संख्या के अनुसार।",
     "measure": "माप",
     "count": "चेक की संख्या",
     "amount": "चेक की राशि",
