@@ -876,6 +876,11 @@ export interface Database {
           voice_limit: number
         }[]
       }
+      latest_developer_message: { Args: Record<string, never>; Returns: Json }
+      acknowledge_developer_message: {
+        Args: { requested_id: string }
+        Returns: undefined
+      }
       mark_notifications_read: {
         Args: {
           requested_id?: string

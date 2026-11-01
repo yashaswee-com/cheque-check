@@ -1,4 +1,10 @@
 {
+  "DeveloperMessage": {
+    "title": "A message from the developer",
+    "continue": "Continue",
+    "loadError": "Developer message could not be loaded.",
+    "saveError": "Could not save your acknowledgement. Please try again."
+  },
   "FreeUsage": {
     "title": "Your free plan usage",
     "cheques": "Active cheques",

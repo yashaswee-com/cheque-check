@@ -4,7 +4,7 @@ import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { AppShellSkeleton } from '@/components/app-shell-skeleton'
-import { PwaInstallCard } from '@/components/pwa-install-card'
+import { DeveloperMessage } from '@/features/announcements/components/developer-message'
 
 export function OnboardingCheck({ children }: { children: React.ReactNode }) {
   const { businesses, isLoading, isFetching } = useBusiness()
@@ -24,7 +24,9 @@ export function OnboardingCheck({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {businesses.length > 0 && pathname === '/dashboard' && <PwaInstallCard />}
+      {businesses.length > 0 && pathname === '/dashboard' && (
+        <DeveloperMessage onboarding />
+      )}
       {children}
     </>
   )

@@ -1,5 +1,8 @@
 /** Central registry of React Query keys. */
 export const queryKeys = {
+  announcements: {
+    latest: (userId?: string) => ['developer-announcement', userId] as const,
+  },
   inbox: {
     all: () => ['notification-inbox'] as const,
     page: (

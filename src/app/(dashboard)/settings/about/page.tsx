@@ -6,6 +6,7 @@ import {
 import { useTranslations } from 'next-intl'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
 import { APP_VERSION } from '@/lib/app-version'
+import { DeveloperMessage } from '@/features/announcements/components/developer-message'
 
 export default function AboutPage() {
   const t = useTranslations('Settings')
@@ -61,6 +62,7 @@ export default function AboutPage() {
         <p className="text-center text-[10px] text-muted-foreground font-semibold uppercase tracking-widest opacity-50">
           {t('madeWithLove')}
         </p>
+        <DeveloperMessage />
       </div>
     </div>
   )

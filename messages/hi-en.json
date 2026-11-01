@@ -1,4 +1,10 @@
 {
+  "DeveloperMessage": {
+    "title": "Developer ka sandesh",
+    "continue": "Aage badhein",
+    "loadError": "Developer message load nahi hua.",
+    "saveError": "Aapki acknowledgement save nahi hui. Dobara try karein."
+  },
   "FreeUsage": {
     "title": "Aapke free plan ka usage",
     "cheques": "Active cheques",

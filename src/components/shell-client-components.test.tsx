@@ -38,6 +38,9 @@ let keyboard = false
 vi.mock('@/features/notifications/components/push-account-guard', () => ({
   PushAccountGuard: () => null,
 }))
+vi.mock('@/features/announcements/components/developer-message', () => ({
+  DeveloperMessage: () => null,
+}))
 vi.mock('@/features/notifications/hooks/use-inbox', () => ({
   useUnreadCount: () => ({ data: 0, error: null }),
 }))
