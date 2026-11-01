@@ -100,3 +100,55 @@ it.each(['/accounts/new', '/accounts/new?source=cheque'])(
     )
   },
 )
+
+it('shows the create action instead of the empty message when there are no records', async () => {
+  const create = vi.fn()
+  render(
+    <Combobox
+      options={[]}
+      onValueChange={vi.fn()}
+      onCreateClick={create}
+      createLabel="Add party"
+      testId="party"
+    />,
+  )
+  fireEvent.click(screen.getByTestId('party'))
+  expect(screen.queryByText('No option found.')).not.toBeInTheDocument()
+  fireEvent.click(await screen.findByRole('button', { name: 'Add party' }))
+  expect(create).toHaveBeenCalledWith('')
+})
+
+it('links to the create page from the empty state, keeping any query', async () => {
+  render(
+    <Combobox
+      options={[]}
+      onValueChange={vi.fn()}
+      createUrl="/accounts/new"
+      testId="account"
+    />,
+  )
+  fireEvent.click(screen.getByTestId('account'))
+  expect(await screen.findByTestId('account-create')).toHaveAttribute(
+    'href',
+    '/accounts/new',
+  )
+  fireEvent.change(screen.getByTestId('account-search'), {
+    target: { value: 'HDFC' },
+  })
+  expect(await screen.findByTestId('account-create')).toHaveAttribute(
+    'href',
+    '/accounts/new?name=HDFC',
+  )
+  expect(screen.getAllByTestId('account-create')).toHaveLength(1)
+})
+
+it('keeps the empty message when records exist but none match', async () => {
+  render(
+    <Combobox options={options} onValueChange={vi.fn()} testId="account" />,
+  )
+  fireEvent.click(screen.getByTestId('account'))
+  fireEvent.change(await screen.findByTestId('account-search'), {
+    target: { value: 'zzz' },
+  })
+  expect(await screen.findByText('No option found.')).toBeInTheDocument()
+})

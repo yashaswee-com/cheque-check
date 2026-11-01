@@ -65,11 +65,47 @@ export function Combobox({
   const hasExactMatch = options.some(
     (option) => option.label.toLowerCase() === trimmedQuery.toLowerCase(),
   )
+  const canCreate = !!(createUrl || onCreateClick)
+  const hasNoRecords = options.length === 0
+  const showEmptyCreate = canCreate && hasNoRecords
   const showCreateRow =
-    !!(createUrl || onCreateClick) && trimmedQuery.length > 0 && !hasExactMatch
+    canCreate && !hasNoRecords && trimmedQuery.length > 0 && !hasExactMatch
   const resolvedCreateLabel = trimmedQuery
     ? `${createLabel} "${trimmedQuery}"`
     : createLabel
+
+  const createAction = canCreate && (
+    <>
+      {onCreateClick ? (
+        <button
+          type="button"
+          data-testid={testId ? `${testId}-create` : undefined}
+          onClick={() => {
+            setOpen(false)
+            onCreateClick(trimmedQuery)
+          }}
+          className="flex w-full items-center gap-2 rounded-sm px-3 py-3 text-sm font-semibold text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+        >
+          <HugeiconsIcon icon={PlusCircle} className="h-4 w-4" />
+          {resolvedCreateLabel}
+        </button>
+      ) : (
+        <Link
+          data-testid={testId ? `${testId}-create` : undefined}
+          href={
+            trimmedQuery
+              ? `${createUrl}${createUrl!.includes('?') ? '&' : '?'}name=${encodeURIComponent(trimmedQuery)}`
+              : createUrl!
+          }
+        >
+          <div className="flex items-center gap-2 rounded-sm px-3 py-3 text-sm font-semibold text-primary hover:bg-primary/5 transition-colors cursor-pointer">
+            <HugeiconsIcon icon={PlusCircle} className="h-4 w-4" />
+            {resolvedCreateLabel}
+          </div>
+        </Link>
+      )}
+    </>
+  )
 
   return (
     <Popover
@@ -122,11 +158,17 @@ export function Combobox({
             onValueChange={setQuery}
           />
           <CommandList className="max-h-[300px]">
-            <CommandEmpty className="py-6 text-center text-sm">
-              <p className="text-muted-foreground font-semibold">
-                {emptyMessage}
-              </p>
-            </CommandEmpty>
+            {showEmptyCreate ? (
+              <CommandEmpty className="p-1 text-sm">
+                {createAction}
+              </CommandEmpty>
+            ) : (
+              <CommandEmpty className="py-6 text-center text-sm">
+                <p className="text-muted-foreground font-semibold">
+                  {emptyMessage}
+                </p>
+              </CommandEmpty>
+            )}
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
@@ -165,30 +207,7 @@ export function Combobox({
           {showCreateRow && (
             <>
               <CommandSeparator />
-              <div className="p-1">
-                {onCreateClick ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpen(false)
-                      onCreateClick(trimmedQuery)
-                    }}
-                    className="flex w-full items-center gap-2 rounded-sm px-3 py-3 text-sm font-semibold text-primary hover:bg-primary/5 transition-colors cursor-pointer"
-                  >
-                    <HugeiconsIcon icon={PlusCircle} className="h-4 w-4" />
-                    {resolvedCreateLabel}
-                  </button>
-                ) : (
-                  <Link
-                    href={`${createUrl}${createUrl!.includes('?') ? '&' : '?'}name=${encodeURIComponent(trimmedQuery)}`}
-                  >
-                    <div className="flex items-center gap-2 rounded-sm px-3 py-3 text-sm font-semibold text-primary hover:bg-primary/5 transition-colors cursor-pointer">
-                      <HugeiconsIcon icon={PlusCircle} className="h-4 w-4" />
-                      {resolvedCreateLabel}
-                    </div>
-                  </Link>
-                )}
-              </div>
+              <div className="p-1">{createAction}</div>
             </>
           )}
         </Command>
