@@ -1,4 +1,10 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../messages/en.json'
@@ -28,6 +34,9 @@ vi.mock('@/features/drafts', () => ({
     mocks.draftList(entity)
     return <p>{entity} drafts</p>
   },
+}))
+vi.mock('@/features/announcements/components/developer-message', () => ({
+  DeveloperMessage: () => null,
 }))
 
 const locales = [
@@ -92,7 +101,7 @@ describe('settings and draft routes', () => {
     },
   )
 
-  it('provides email, WhatsApp, FAQ answers, and a support action', () => {
+  it('provides searchable categorized FAQ branches, issue reporting, and support actions', () => {
     renderPage(<HelpPage />)
     expect(screen.getByRole('link', { name: /email us/i })).toHaveAttribute(
       'href',
@@ -102,14 +111,74 @@ describe('settings and draft routes', () => {
       screen.getByRole('link', { name: /chat on whatsapp/i }),
     ).toHaveAttribute('target', '_blank')
     expect(
-      screen.getByRole('heading', { name: messages.Settings.faqsTitle }),
+      screen.getByRole('heading', { name: messages.FAQ.title }),
     ).toBeVisible()
+    const categories = screen.getByRole('group', {
+      name: messages.FAQ.categoriesLabel,
+    })
+    for (const category of Object.values(messages.FAQ.categories)) {
+      expect(
+        within(categories).getByRole('button', { name: category }),
+      ).toBeVisible()
+    }
+    expect(
+      screen.getByRole('link', { name: messages.Feedback.submitTitle }),
+    ).toHaveAttribute('href', '/feedback')
+    expect(
+      screen.getByRole('link', { name: messages.Feedback.roadmapTitle }),
+    ).toHaveAttribute('href', '/roadmap')
     expect(
       screen.getByRole('link', { name: messages.Settings.contactSupport }),
     ).toHaveAttribute('target', '_blank')
-    expect(screen.getByText(messages.Settings.faq1A)).toBeVisible()
-    expect(screen.getByText(messages.Settings.faq2A)).toBeVisible()
-    expect(screen.getByText(messages.Settings.faq3A)).toBeVisible()
+
+    const search = screen.getByRole('searchbox', {
+      name: messages.FAQ.searchLabel,
+    })
+    fireEvent.change(search, { target: { value: 'camera' } })
+    expect(
+      screen.getByRole('button', {
+        name: messages.FAQ.questions.scan_cheque.question,
+      }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('button', {
+        name: messages.FAQ.questions.add_cheque.question,
+      }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.change(search, { target: { value: '' } })
+    fireEvent.click(
+      within(categories).getByRole('button', {
+        name: messages.FAQ.categories.chequesScanning,
+      }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: messages.FAQ.questions.add_cheque.question,
+      }),
+    )
+    expect(
+      screen.getByText(messages.FAQ.questions.add_cheque.answer),
+    ).toBeVisible()
+    const relatedQuestions = screen.getByText(
+      messages.FAQ.relatedQuestions,
+    ).parentElement!
+    fireEvent.click(
+      within(relatedQuestions).getByRole('button', {
+        name: messages.FAQ.questions.free_plan.question,
+      }),
+    )
+    expect(
+      within(categories).getByRole('button', {
+        name: messages.FAQ.categories.plansPayments,
+      }),
+    ).toHaveAttribute('aria-pressed', 'true')
+    expect(
+      screen.getByText(messages.FAQ.questions.free_plan.answer),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('link', { name: messages.FAQ.reportIssue }),
+    ).toHaveAttribute('href', '/feedback?category=bug')
   })
 
   it('renders the complete privacy, refund, and terms disclosures', () => {
