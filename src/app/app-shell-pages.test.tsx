@@ -91,6 +91,9 @@ vi.mock('@/components/top-nav', () => ({ TopNav: () => <span>Top nav</span> }))
 vi.mock('@/components/bottom-nav', () => ({
   BottomNav: () => <span>Bottom nav</span>,
 }))
+vi.mock('@/features/security/components/pin-gate', () => ({
+  PinGate: ({ children }: { children: ReactNode }) => <>{children}</>,
+}))
 vi.mock('@/components/scroll-to-top', () => ({
   ScrollToTop: () => <span>Scroll reset</span>,
 }))

@@ -115,7 +115,7 @@ export default function SettingsPage() {
           name: t('features'),
           description: t('featuresDesc'),
           icon: CrownIcon,
-          href: '/features',
+          href: '/features/catalog',
         },
         { name: referrals('title'), icon: CrownIcon, href: '/referrals' },
       ],

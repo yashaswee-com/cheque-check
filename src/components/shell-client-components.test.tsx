@@ -174,6 +174,7 @@ describe('navigation components', () => {
     ['/', 'ChequeCheck'],
     ['/dashboard', messages.Navigation.dashboard],
     ['/settings', messages.Navigation.settings],
+    ['/settings/security', messages.Security.pinTitle],
     ['/features/catalog', messages.Navigation.features],
     ['/feedback', messages.Feedback.submitTitle],
     ['/roadmap', messages.Feedback.roadmapTitle],

@@ -75,7 +75,7 @@ describe('settings page', () => {
       '/settings/preferences',
       '/settings/notifications',
       '/settings/transactions',
-      '/features',
+      '/features/catalog',
       '/businesses',
       '/reports',
       '/tags',
