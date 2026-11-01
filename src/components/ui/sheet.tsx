@@ -74,14 +74,16 @@ function SheetContent({
   className,
   children,
   showCloseButton = true,
+  keepMounted = false,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  keepMounted?: boolean
 }) {
   const t = useTranslations('Common')
 
   return (
-    <SheetPortal>
+    <SheetPortal keepMounted={keepMounted}>
       <SheetOverlay />
       <DialogPrimitive.Popup
         data-slot="sheet-content"

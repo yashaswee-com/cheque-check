@@ -2,7 +2,19 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react'
+import {
+  Building03Icon as Building,
+  File02Icon as File,
+  FilterIcon as Filter,
+  Invoice01Icon as Invoice,
+  Mail01Icon as Mail,
+  MoreVerticalIcon as More,
+  Note01Icon as Note,
+  Sorting05Icon as Sort,
+} from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { PrintLayoutEditor } from '@/features/cheques/components/print-layout-editor'
 import { PremiumGate } from '@/features/monetization/components/premium-gate'
 import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
@@ -22,6 +34,16 @@ type Destination =
 
 type BusinessOption = { id: string; name: string }
 const InitialToolContext = createContext<string | null>(null)
+const toolIcons: Record<string, IconSvgElement> = {
+  'bulk-import': File,
+  'cheque-templates': Note,
+  'saved-views': Filter,
+  'bulk-actions': Sort,
+  'party-statements': Invoice,
+  'message-templates': Mail,
+  'consolidated-dashboard': Building,
+  'print-layout': Invoice,
+}
 const toolSections: Record<
   Destination,
   readonly (readonly [string, string])[]
@@ -45,11 +67,13 @@ const toolSections: Record<
 function ToolSection({
   id,
   title,
+  icon,
   children,
   onActivate,
 }: {
   id: string
   title: string
+  icon: IconSvgElement
   children: React.ReactNode
   onActivate?: () => void
 }) {
@@ -77,8 +101,9 @@ function ToolSection({
       }}
       className="scroll-mt-24 rounded-lg border bg-card"
     >
-      <summary className="flex min-h-12 cursor-pointer items-center px-4 py-3 font-semibold">
-        {title}
+      <summary className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-semibold">
+        <HugeiconsIcon icon={icon} className="size-4 shrink-0 text-primary" />
+        <span>{title}</span>
       </summary>
       <div className="border-t p-4 sm:p-5">{children}</div>
     </details>
@@ -99,16 +124,22 @@ export function NativeTools(props: NativeToolsProps) {
   const t = useTranslations('NativeTools')
   const { activeBusiness, businesses } = useBusiness()
   const sections = toolSections[props.destination]
-  const [activated, setActivated] = useState<string | null>(() =>
+  const initialSection = () =>
     typeof window !== 'undefined'
       ? (sections.find(([id]) => window.location.hash === `#${id}`)?.[0] ??
         null)
-      : null,
+      : null
+  const [activated, setActivated] = useState<string | null>(() =>
+    initialSection(),
   )
+  const [sheetOpen, setSheetOpen] = useState(() => initialSection() !== null)
   useEffect(() => {
     const syncHash = () => {
       const section = sections.find(([id]) => window.location.hash === `#${id}`)
-      if (section) setActivated(section[0])
+      if (section) {
+        setActivated(section[0])
+        setSheetOpen(true)
+      }
     }
     window.addEventListener('hashchange', syncHash)
     return () => window.removeEventListener('hashchange', syncHash)
@@ -118,28 +149,50 @@ export function NativeTools(props: NativeToolsProps) {
     activeBusiness?.id ||
     props.businesses?.length ||
     businesses.length
-  if (props.destination === 'account' || !hasBusiness || activated) {
-    return (
+  if (props.destination === 'account' && !props.accountId) return null
+
+  const content =
+    props.destination === 'account' || !hasBusiness || activated ? (
       <InitialToolContext.Provider value={activated}>
         <NativeToolsContent {...props} />
       </InitialToolContext.Provider>
+    ) : (
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">{t('title')}</h2>
+        {sections.map(([id, title]) => (
+          <ToolSection
+            key={id}
+            id={id}
+            title={t(title)}
+            icon={toolIcons[id]}
+            onActivate={() => setActivated(id)}
+          >
+            <p role="status">{t('loading')}</p>
+          </ToolSection>
+        ))}
+      </section>
     )
-  }
-  // Closed tools must not fetch an entire workspace just to render their headings.
+
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-semibold">{t('title')}</h2>
-      {sections.map(([id, title]) => (
-        <ToolSection
-          key={id}
-          id={id}
-          title={t(title)}
-          onActivate={() => setActivated(id)}
-        >
-          <p role="status">{t('loading')}</p>
-        </ToolSection>
-      ))}
-    </section>
+    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+      <SheetTrigger
+        render={
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            aria-label={t('title')}
+            data-testid="native-tools-fab"
+            className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-24 z-40 size-12 rounded-full shadow-lg ring-1 ring-border"
+          >
+            <HugeiconsIcon icon={More} className="size-5" />
+          </Button>
+        }
+      />
+      <SheetContent keepMounted className="max-h-[80dvh] overflow-y-auto">
+        {content}
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -176,7 +229,11 @@ function NativeToolsContent({
     return accountId ? (
       <div className="space-y-3">
         <h2 className="text-lg font-semibold">{t('title')}</h2>
-        <ToolSection id="print-layout" title={t('printLayout')}>
+        <ToolSection
+          id="print-layout"
+          title={t('printLayout')}
+          icon={toolIcons['print-layout']}
+        >
           <PrintLayoutEditor accountId={accountId} />
         </ToolSection>
       </div>
@@ -243,10 +300,18 @@ function NativeToolsContent({
 
       {destination === 'cheques' && (
         <>
-          <ToolSection id="bulk-import" title={t('import')}>
+          <ToolSection
+            id="bulk-import"
+            title={t('import')}
+            icon={toolIcons['bulk-import']}
+          >
             {gated('bulk-import', importPanel('cheques'))}
           </ToolSection>
-          <ToolSection id="cheque-templates" title={t('templates')}>
+          <ToolSection
+            id="cheque-templates"
+            title={t('templates')}
+            icon={toolIcons['cheque-templates']}
+          >
             {gated(
               'cheque-templates',
               <TemplatesPanel
@@ -260,7 +325,11 @@ function NativeToolsContent({
               />,
             )}
           </ToolSection>
-          <ToolSection id="saved-views" title={t('views')}>
+          <ToolSection
+            id="saved-views"
+            title={t('views')}
+            icon={toolIcons['saved-views']}
+          >
             {gated(
               'saved-views',
               <FiltersPanel
@@ -276,7 +345,11 @@ function NativeToolsContent({
               />,
             )}
           </ToolSection>
-          <ToolSection id="bulk-actions" title={t('bulk')}>
+          <ToolSection
+            id="bulk-actions"
+            title={t('bulk')}
+            icon={toolIcons['bulk-actions']}
+          >
             {gated(
               'bulk-actions',
               <FiltersPanel
@@ -297,10 +370,18 @@ function NativeToolsContent({
 
       {destination === 'parties' && (
         <>
-          <ToolSection id="bulk-import" title={t('import')}>
+          <ToolSection
+            id="bulk-import"
+            title={t('import')}
+            icon={toolIcons['bulk-import']}
+          >
             {gated('bulk-import', importPanel('parties'))}
           </ToolSection>
-          <ToolSection id="party-statements" title={t('partyStatement')}>
+          <ToolSection
+            id="party-statements"
+            title={t('partyStatement')}
+            icon={toolIcons['party-statements']}
+          >
             {gated(
               'party-statements',
               <ReportsPanel
@@ -319,7 +400,11 @@ function NativeToolsContent({
       )}
 
       {destination === 'party' && (
-        <ToolSection id="party-statements" title={t('partyStatement')}>
+        <ToolSection
+          id="party-statements"
+          title={t('partyStatement')}
+          icon={toolIcons['party-statements']}
+        >
           {gated(
             'party-statements',
             <ReportsPanel
@@ -338,7 +423,11 @@ function NativeToolsContent({
       )}
 
       {destination === 'business' && (
-        <ToolSection id="message-templates" title={t('messages')}>
+        <ToolSection
+          id="message-templates"
+          title={t('messages')}
+          icon={toolIcons['message-templates']}
+        >
           {gated(
             'message-templates',
             <MessagePanel
@@ -357,7 +446,11 @@ function NativeToolsContent({
       )}
 
       {destination === 'businesses' && (
-        <ToolSection id="consolidated-dashboard" title={t('consolidated')}>
+        <ToolSection
+          id="consolidated-dashboard"
+          title={t('consolidated')}
+          icon={toolIcons['consolidated-dashboard']}
+        >
           {gated(
             'consolidated-dashboard',
             <ReportsPanel

@@ -218,19 +218,39 @@ describe('PremiumWorkspace navigation', () => {
 })
 
 describe('NativeTools destinations', () => {
-  function activate(container: HTMLElement) {
-    const details = container.querySelector('details')
+  function openTools() {
+    const trigger = screen.getByTestId('native-tools-fab')
+    if (trigger.getAttribute('aria-expanded') !== 'true')
+      fireEvent.click(trigger)
+  }
+
+  function activate() {
+    openTools()
+    const details = document.querySelector('details')
     if (!details) throw new Error('Expected a tool section')
     details.open = true
     fireEvent(details, new Event('toggle'))
   }
 
   it('does not fetch workspace data for closed tool headings', () => {
-    const { container } = render(<NativeTools destination="cheques" />)
+    render(<NativeTools destination="cheques" />)
     expect(useWorkspaceContext).not.toHaveBeenCalled()
-    expect(container.querySelectorAll('details')).toHaveLength(4)
-    activate(container)
+    openTools()
+    expect(document.querySelectorAll('details')).toHaveLength(4)
+    activate()
     expect(useWorkspaceContext).toHaveBeenCalled()
+  })
+
+  it('preserves the open tool section when the sheet is closed and reopened', () => {
+    render(<NativeTools destination="cheques" />)
+    openTools()
+    const details = document.querySelector<HTMLDetailsElement>('#bulk-import')
+    if (!details) throw new Error('Expected the import section')
+    details.open = true
+    fireEvent(details, new Event('toggle'))
+    fireEvent.click(screen.getByRole('button', { name: 'close' }))
+    openTools()
+    expect(document.querySelector('#bulk-import')).toHaveAttribute('open')
   })
   it.each([
     [
@@ -242,10 +262,8 @@ describe('NativeTools destinations', () => {
     ['business', ['message-templates']],
     ['businesses', ['consolidated-dashboard']],
   ] as const)('wires premium boundaries for %s', (destination, gates) => {
-    const { container } = render(
-      <NativeTools destination={destination} partyId="p1" />,
-    )
-    activate(container)
+    render(<NativeTools destination={destination} partyId="p1" />)
+    activate()
     for (const gate of gates)
       expect(screen.getByTestId(`gate-${gate}`)).toBeInTheDocument()
     expect(screen.getAllByTestId(/^gate-/)).toHaveLength(gates.length)
@@ -259,15 +277,15 @@ describe('NativeTools destinations', () => {
     )
     expect(container).toBeEmptyDOMElement()
     rerender(<NativeTools destination="account" accountId="a1" />)
+    openTools()
     expect(screen.getByText('Print a1')).toBeInTheDocument()
   })
 
   it('reports no business and supports explicitly supplied business options', () => {
     state.business.activeBusiness = null
     state.business.businesses = []
-    const { rerender, container } = render(
-      <NativeTools destination="businesses" />,
-    )
+    const { rerender } = render(<NativeTools destination="businesses" />)
+    openTools()
     expect(screen.getByText('noBusiness')).toBeInTheDocument()
     rerender(
       <NativeTools
@@ -275,14 +293,14 @@ describe('NativeTools destinations', () => {
         businesses={[{ id: 'b3', name: 'Third' }]}
       />,
     )
-    activate(container)
+    activate()
     expect(screen.getByText('Reports consolidated')).toBeInTheDocument()
   })
 
   it('retries failed active queries while ignoring disabled tools queries', () => {
     state.tools.isError = true
-    const { rerender, container } = render(<NativeTools destination="party" />)
-    activate(container)
+    const { rerender } = render(<NativeTools destination="party" />)
+    activate()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     state.context.isError = true
     rerender(<NativeTools destination="party" />)
@@ -305,10 +323,10 @@ describe('NativeTools destinations', () => {
       ['businesses', 'consolidated-dashboard', 'Reports consolidated'],
     ] as const) {
       window.history.replaceState(null, '', `/#${section}`)
-      const { container, unmount } = render(
+      const { unmount } = render(
         <NativeTools destination={destination} businessId="b1" />,
       )
-      expect(container).toHaveTextContent(expected)
+      expect(document.body).toHaveTextContent(expected)
       unmount()
     }
   })
@@ -334,24 +352,22 @@ describe('NativeTools destinations', () => {
   it('shows pending active queries and waits for actual workspace data', () => {
     state.tools.isPending = true
     state.tools.fetchStatus = 'fetching'
-    const { rerender, container } = render(
-      <NativeTools destination="cheques" />,
-    )
-    activate(container)
+    const { rerender } = render(<NativeTools destination="cheques" />)
+    activate()
     expect(screen.getByRole('status')).toHaveTextContent('loading')
     state.tools.isPending = false
     state.context.data = undefined
     rerender(<NativeTools destination="cheques" />)
-    expect(container).toBeEmptyDOMElement()
+    expect(document.querySelector('details')).not.toBeInTheDocument()
   })
 
   it('synchronizes expandable tools with hash navigation', () => {
     window.history.replaceState(null, '', '/#bulk-import')
-    const { container } = render(<NativeTools destination="cheques" />)
-    expect(container.querySelector('#bulk-import')).toHaveAttribute('open')
+    render(<NativeTools destination="cheques" />)
+    expect(document.querySelector('#bulk-import')).toHaveAttribute('open')
     window.history.replaceState(null, '', '/#saved-views')
     fireEvent(window, new HashChangeEvent('hashchange'))
-    expect(container.querySelector('#saved-views')).toHaveAttribute('open')
-    expect(container.querySelector('#bulk-import')).not.toHaveAttribute('open')
+    expect(document.querySelector('#saved-views')).toHaveAttribute('open')
+    expect(document.querySelector('#bulk-import')).not.toHaveAttribute('open')
   })
 })
