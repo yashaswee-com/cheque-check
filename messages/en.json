@@ -473,7 +473,104 @@
     "notNow": "Not now",
     "thanksTitle": "Thank you!",
     "thanksDescription": "Your feedback helps us improve ChequeCheck.",
-    "submitFailed": "Could not send your feedback. Please try again."
+    "submitFailed": "Could not send your feedback. Please try again.",
+    "submitTitle": "Send feedback",
+    "privacyNote": "Bug reports and other feedback stay private. Feature requests appear on the signed-in roadmap only after our team publishes them. Do not include passwords or sensitive financial details.",
+    "viewRoadmap": "View the roadmap",
+    "categoryLabel": "Feedback type",
+    "categories": {
+      "bug": "Report a bug",
+      "feature": "Request a feature",
+      "other": "Other feedback"
+    },
+    "titleLabel": "Title",
+    "descriptionLabel": "Description",
+    "characterCount": "{count} / 3,000 characters",
+    "submitFeedback": "Send feedback",
+    "submitSuccess": "Your feedback was sent. You can track its status below.",
+    "rateLimited": "You can send up to five submissions per hour. Please try again later.",
+    "mySubmissions": "Your submissions",
+    "privateListNote": "Only you and the support team can see your private reports.",
+    "noSubmissions": "You have not sent any feedback yet.",
+    "statuses": {
+      "under_review": "Under review",
+      "planned": "Planned",
+      "in_progress": "In progress",
+      "shipped": "Shipped",
+      "declined": "Declined"
+    },
+    "nowOnRoadmap": "Now on the roadmap",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "roadmapTitle": "Product roadmap",
+    "roadmapPrivacy": "Only feature requests our team publishes are shown here. Signed-in users can vote once per request.",
+    "suggestFeature": "Suggest a feature",
+    "voteFailed": "Your vote could not be saved. Please try again.",
+    "roadmapEmpty": "There are no published roadmap items yet.",
+    "voted": "Voted",
+    "vote": "Vote",
+    "voteCount": "Votes"
+  },
+  "FAQ": {
+    "title": "Help & FAQs",
+    "description": "Search common questions, explore related topics, or report a problem.",
+    "searchLabel": "Search FAQs",
+    "searchPlaceholder": "Search questions and answers",
+    "categoriesLabel": "FAQ categories",
+    "allCategories": "All topics",
+    "categories": {
+      "gettingStarted": "Getting started",
+      "chequesScanning": "Cheques/scanning",
+      "plansPayments": "Plans/payments",
+      "notifications": "Notifications",
+      "privacySecurity": "Privacy/security"
+    },
+    "resultCount": "{count, plural, one {# question} other {# questions}}",
+    "relatedQuestions": "Related questions",
+    "reportIssue": "Report issue",
+    "noResults": "No questions match your search.",
+    "questions": {
+      "create_business": {
+        "question": "How do I create a business?",
+        "answer": "From your dashboard, choose the option to create a business and enter its details. You can then add accounts, parties, and cheques for that business."
+      },
+      "manage_businesses": {
+        "question": "Can I manage more than one business?",
+        "answer": "Yes. Create a separate business for each set of records, then use the business switcher to move between them."
+      },
+      "add_cheque": {
+        "question": "How do I add a cheque?",
+        "answer": "Open Cheques, choose Add cheque, and enter the cheque details. Review the selected business, account, party, amount, and dates before saving."
+      },
+      "scan_cheque": {
+        "question": "How can I scan a cheque?",
+        "answer": "Open the scan tool and use your camera or photo library where supported. Always review and correct the extracted fields before saving the cheque."
+      },
+      "free_plan": {
+        "question": "What is included in the free plan?",
+        "answer": "The free plan supports up to 50 active cheques. Available paid tools and limits are listed on the Features page."
+      },
+      "plans_payment": {
+        "question": "Where can I see plans and payments?",
+        "answer": "Open Features to review available plans and add-ons. Your purchases and access are associated with your signed-in account."
+      },
+      "reminders": {
+        "question": "When will I get cheque reminders?",
+        "answer": "Reminders follow the due dates and notification preferences configured for your account. Check your notification settings if a reminder is not expected."
+      },
+      "notification_settings": {
+        "question": "How do I change notification settings?",
+        "answer": "Open Settings and choose Notifications to review the available reminder preferences for your account."
+      },
+      "data_privacy": {
+        "question": "How is my cheque data protected?",
+        "answer": "Your cheque records belong to your signed-in account and are not displayed on the public website. Avoid sharing passwords or sensitive account details in support messages."
+      },
+      "secure_account": {
+        "question": "How can I secure my account?",
+        "answer": "Use a strong sign-in method, keep your device protected, and never share verification codes. If available, you can also set an app PIN in Settings → Security."
+      }
+    }
   },
   "Premium": {
     "marker": "Premium feature",

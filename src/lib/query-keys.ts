@@ -7,6 +7,20 @@ export const queryKeys = {
   announcements: {
     latest: (userId?: string) => ['developer-announcement', userId] as const,
   },
+  feedback: {
+    mine: (
+      userId?: string,
+      request?: import('@/validators/feedback').FeedbackPageRequest,
+    ) =>
+      request
+        ? (['feedback-mine', userId, request] as const)
+        : (['feedback-mine', userId] as const),
+    roadmapAll: () => ['feedback-roadmap'] as const,
+    roadmap: (
+      userId?: string,
+      request?: import('@/validators/feedback').FeedbackPageRequest,
+    ) => ['feedback-roadmap', userId, request] as const,
+  },
   inbox: {
     all: () => ['notification-inbox'] as const,
     page: (

@@ -17,6 +17,8 @@ describe('shell route classification', () => {
     '/reports',
     '/features',
     '/profile',
+    '/feedback',
+    '/roadmap',
     '/cheques/id-containing-create',
     '/parties/credit-edit',
   ])('shows bottom navigation on viewing route %s', (path) => {
@@ -49,6 +51,8 @@ describe('shell route classification', () => {
     expect(getShellRoute('/settings/transactions').showBusinessSwitcher).toBe(
       false,
     )
+    expect(getShellRoute('/feedback').showBusinessSwitcher).toBe(false)
+    expect(getShellRoute('/roadmap').showBusinessSwitcher).toBe(false)
   })
 })
 

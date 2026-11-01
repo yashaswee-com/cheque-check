@@ -473,7 +473,104 @@
     "notNow": "Abhi nahi",
     "thanksTitle": "Dhanyavaad!",
     "thanksDescription": "Aapka feedback ChequeCheck ko behtar banane mein madad karta hai.",
-    "submitFailed": "Feedback nahi bhej paaye. Dobara try karein."
+    "submitFailed": "Feedback nahi bhej paaye. Dobara try karein.",
+    "submitTitle": "Feedback bhejein",
+    "privacyNote": "Bug reports aur baaki feedback private rehte hain. Feature requests tabhi signed-in roadmap par dikhte hain jab hamari team publish kare. Password ya sensitive financial details share na karein.",
+    "viewRoadmap": "Roadmap dekhein",
+    "categoryLabel": "Feedback ka type",
+    "categories": {
+      "bug": "Bug report karein",
+      "feature": "Feature request karein",
+      "other": "Other feedback"
+    },
+    "titleLabel": "Title",
+    "descriptionLabel": "Description",
+    "characterCount": "{count} / 3,000 characters",
+    "submitFeedback": "Feedback bhejein",
+    "submitSuccess": "Aapka feedback bhej diya gaya. Neeche iska status dekh sakte hain.",
+    "rateLimited": "Aap ek ghante mein maximum paanch submissions bhej sakte hain. Baad mein dobara try karein.",
+    "mySubmissions": "Aapke submissions",
+    "privateListNote": "Private reports sirf aap aur support team dekh sakte hain.",
+    "noSubmissions": "Aapne abhi tak feedback nahi bheja hai.",
+    "statuses": {
+      "under_review": "Review ho raha hai",
+      "planned": "Planned",
+      "in_progress": "Kaam chal raha hai",
+      "shipped": "Shipped",
+      "declined": "Declined"
+    },
+    "nowOnRoadmap": "Ab roadmap par",
+    "previousPage": "Pichhla",
+    "nextPage": "Agla",
+    "roadmapTitle": "Product roadmap",
+    "roadmapPrivacy": "Yahan sirf wahi feature requests dikhte hain jinhe hamari team publish karti hai. Signed-in users har request par ek baar vote kar sakte hain.",
+    "suggestFeature": "Feature suggest karein",
+    "voteFailed": "Aapka vote save nahi hua. Dobara try karein.",
+    "roadmapEmpty": "Abhi koi published roadmap item nahi hai.",
+    "voted": "Vote diya",
+    "vote": "Vote karein",
+    "voteCount": "Votes"
+  },
+  "FAQ": {
+    "title": "Help aur FAQs",
+    "description": "Common questions search karein, related topics dekhein, ya problem report karein.",
+    "searchLabel": "FAQs search karein",
+    "searchPlaceholder": "Questions aur answers search karein",
+    "categoriesLabel": "FAQ categories",
+    "allCategories": "Saare topics",
+    "categories": {
+      "gettingStarted": "Shuruaat",
+      "chequesScanning": "Cheques aur scanning",
+      "plansPayments": "Plans aur payments",
+      "notifications": "Notifications",
+      "privacySecurity": "Privacy aur security"
+    },
+    "resultCount": "{count, plural, one {# question} other {# questions}}",
+    "relatedQuestions": "Related questions",
+    "reportIssue": "Problem report karein",
+    "noResults": "Aapki search se match karta koi question nahi mila.",
+    "questions": {
+      "create_business": {
+        "question": "Main business kaise banaoon?",
+        "answer": "Dashboard se business banane ka option choose karein aur details bharein. Phir us business ke liye accounts, parties aur cheques add karein."
+      },
+      "manage_businesses": {
+        "question": "Kya main ek se zyada businesses manage kar sakta hoon?",
+        "answer": "Haan. Har set of records ke liye alag business banayein, phir business switcher se unke beech move karein."
+      },
+      "add_cheque": {
+        "question": "Main cheque kaise add karoon?",
+        "answer": "Cheques kholein, Add cheque choose karein aur details bharein. Save karne se pehle business, account, party, amount aur dates review karein."
+      },
+      "scan_cheque": {
+        "question": "Main cheque scan kaise kar sakta hoon?",
+        "answer": "Scan tool kholein aur supported hone par camera ya photo library use karein. Cheque save karne se pehle extracted fields zaroor check aur correct karein."
+      },
+      "free_plan": {
+        "question": "Free plan mein kya milta hai?",
+        "answer": "Free plan mein 50 tak active cheques supported hain. Available paid tools aur limits Features page par listed hain."
+      },
+      "plans_payment": {
+        "question": "Plans aur payments kahan dekh sakta hoon?",
+        "answer": "Available plans aur add-ons review karne ke liye Features kholein. Purchases aur access aapke signed-in account se linked hote hain."
+      },
+      "reminders": {
+        "question": "Cheque reminders kab milenge?",
+        "answer": "Reminders aapke account mein configured due dates aur notification preferences ke hisaab se aate hain. Agar reminder expected na ho to notification settings check karein."
+      },
+      "notification_settings": {
+        "question": "Notification settings kaise badloon?",
+        "answer": "Apne account ki reminder preferences dekhne ke liye Settings kholein aur Notifications choose karein."
+      },
+      "data_privacy": {
+        "question": "Mera cheque data kaise protected hai?",
+        "answer": "Aapke cheque records aapke signed-in account ke hain aur public website par show nahi hote. Support messages mein passwords ya sensitive account details share na karein."
+      },
+      "secure_account": {
+        "question": "Main apna account secure kaise karoon?",
+        "answer": "Strong sign-in method use karein, device protected rakhein aur verification codes share na karein. Available hone par Settings → Security mein app PIN bhi set kar sakte hain."
+      }
+    }
   },
   "Premium": {
     "marker": "Premium feature",

@@ -14,6 +14,8 @@ const viewingRoutes = new Set([
   'premium',
   'notifications',
   'referrals',
+  'feedback',
+  'roadmap',
 ])
 
 /** Classify complete route segments, never substrings in entity IDs. */

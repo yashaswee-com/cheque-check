@@ -3,6 +3,7 @@ import type { Database } from '../../src/types/database.types'
 import type { OpsContext } from '../lib/context'
 import { toOpsError, unwrapRows } from '../lib/errors'
 import { LOCAL_ALLOWLIST } from '../lib/project'
+import type { FeedbackCursor } from '../../src/validators/feedback'
 import {
   EDGE_FUNCTIONS,
   probeFunction,
@@ -164,6 +165,89 @@ export interface OpsStats {
   revenue30dPaise: number
   jobs24h: Record<string, number>
   audit7d: number
+}
+
+export type FeedbackOpsRow =
+  Database['public']['Tables']['feedback_items']['Row']
+
+export interface FeedbackOpsPage {
+  items: FeedbackOpsRow[]
+  nextCursor: FeedbackCursor | null
+}
+
+export async function listFeedback(
+  db: AdminClient,
+  options: {
+    status?: FeedbackOpsRow['status']
+    limit: number
+    before?: FeedbackCursor
+  },
+): Promise<FeedbackOpsPage> {
+  let query = db
+    .from(TABLES.FEEDBACK_ITEMS)
+    .select(
+      'id,user_id,category,title,description,status,roadmap_published,vote_count,created_at,updated_at',
+    )
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(options.limit + 1)
+  if (options.status) query = query.eq('status', options.status)
+  if (options.before)
+    query = query.or(
+      `created_at.lt.${options.before.createdAt},and(created_at.eq.${options.before.createdAt},id.lt.${options.before.id})`,
+    )
+  const rows = unwrapRows(await query, 'Loading feedback items')
+  const items = rows.slice(0, options.limit)
+  const last = items.at(-1)
+  return {
+    items,
+    nextCursor:
+      rows.length > items.length && last
+        ? { createdAt: last.created_at, id: last.id }
+        : null,
+  }
+}
+
+export async function getFeedbackItem(
+  db: AdminClient,
+  id: string,
+): Promise<FeedbackOpsRow> {
+  const result = await db
+    .from(TABLES.FEEDBACK_ITEMS)
+    .select(
+      'id,user_id,category,title,description,status,roadmap_published,vote_count,created_at,updated_at',
+    )
+    .eq('id', id)
+    .maybeSingle()
+  if (result.error) throw toOpsError(result.error, 'Loading feedback item')
+  if (!result.data) throw new Error(`Feedback item ${id} was not found.`)
+  return result.data
+}
+
+export interface FeedbackUpdateResult {
+  item: FeedbackOpsRow
+  audit_id: string
+}
+
+export async function updateFeedback(
+  db: AdminClient,
+  input: {
+    id: string
+    status?: FeedbackOpsRow['status']
+    published?: boolean
+    operator: string
+    reason?: string
+  },
+): Promise<FeedbackUpdateResult> {
+  const { data, error } = await db.rpc('admin_update_feedback', {
+    requested_id: input.id,
+    requested_status: input.status ?? null,
+    requested_published: input.published ?? null,
+    requested_operator: input.operator,
+    requested_reason: input.reason ?? null,
+  })
+  if (error) throw toOpsError(error, 'Updating feedback item')
+  return data as unknown as FeedbackUpdateResult
 }
 
 export async function getStats(

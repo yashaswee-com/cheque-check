@@ -1,22 +1,17 @@
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Mail01Icon as Mail,
-  MessageQuestionIcon as FAQ,
   HelpCircleIcon as WhatsApp,
 } from '@hugeicons/core-free-icons'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { getWhatsAppSupportLink } from '@/lib/whatsapp'
+import { FaqExplorer } from '@/features/faqs/components/faq-explorer'
 
 export default function HelpAndSupportPage() {
   const t = useTranslations('Settings')
-
-  const faqs = [
-    { q: t('faq1Q'), a: t('faq1A') },
-    { q: t('faq2Q'), a: t('faq2A') },
-    { q: t('faq3Q'), a: t('faq3A') },
-  ]
+  const feedback = useTranslations('Feedback')
 
   return (
     <div className="max-w-2xl space-y-8 pb-20">
@@ -46,27 +41,22 @@ export default function HelpAndSupportPage() {
           </a>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 px-2">
-            <HugeiconsIcon
-              icon={FAQ}
-              className="h-4 w-4 text-muted-foreground"
-            />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              {t('faqsTitle')}
-            </h2>
-          </div>
-          <div className="divide-y rounded-lg border bg-card overflow-hidden">
-            {faqs.map((faq, i) => (
-              <div key={i} className="p-4 space-y-2">
-                <h3 className="font-bold text-sm">{faq.q}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {faq.a}
-                </p>
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/feedback"
+            className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium hover:bg-muted"
+          >
+            {feedback('submitTitle')}
+          </Link>
+          <Link
+            href="/roadmap"
+            className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium hover:bg-muted"
+          >
+            {feedback('roadmapTitle')}
+          </Link>
         </div>
+
+        <FaqExplorer />
 
         <div className="rounded-lg bg-primary/5 border border-primary/20 p-6 text-center space-y-2">
           <h3 className="font-bold">{t('stillNeedHelp')}</h3>

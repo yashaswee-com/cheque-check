@@ -175,6 +175,8 @@ describe('navigation components', () => {
     ['/dashboard', messages.Navigation.dashboard],
     ['/settings', messages.Navigation.settings],
     ['/features/catalog', messages.Navigation.features],
+    ['/feedback', messages.Feedback.submitTitle],
+    ['/roadmap', messages.Feedback.roadmapTitle],
     ['/profile', messages.Settings.profile],
     ['/settings/privacy-policy', messages.Settings.privacyPolicy],
     ['/settings/terms-and-conditions', messages.Settings.termsAndConditions],
@@ -221,6 +223,8 @@ describe('navigation components', () => {
           '/parties',
           '/businesses',
           '/tags',
+          '/feedback',
+          '/roadmap',
         ].includes(route)
       ) {
         expect(

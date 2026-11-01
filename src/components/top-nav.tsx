@@ -64,6 +64,10 @@ export function TopNav() {
     if (path === '/') return { title: 'ChequeCheck', icon: null }
     if (path === '/dashboard')
       return { title: t('Navigation.dashboard'), icon: null }
+    if (path === '/feedback')
+      return { title: t('Feedback.submitTitle'), icon: Help }
+    if (path === '/roadmap')
+      return { title: t('Feedback.roadmapTitle'), icon: Star }
     if (path === '/settings')
       return { title: t('Navigation.settings'), icon: Settings }
     if (path === '/notifications')

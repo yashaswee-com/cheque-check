@@ -63,6 +63,50 @@ export interface Database {
         Update: never
         Relationships: []
       }
+      feedback_items: {
+        Row: {
+          id: string
+          user_id: string
+          category: 'bug' | 'feature' | 'other'
+          title: string
+          description: string
+          status:
+            'under_review' | 'planned' | 'in_progress' | 'shipped' | 'declined'
+          roadmap_published: boolean
+          vote_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string
+          category: 'bug' | 'feature' | 'other'
+          title: string
+          description: string
+          status?:
+            'under_review' | 'planned' | 'in_progress' | 'shipped' | 'declined'
+          roadmap_published?: boolean
+          vote_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: never
+        Relationships: []
+      }
+      feedback_votes: {
+        Row: {
+          feedback_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          feedback_id: string
+          user_id?: string
+          created_at?: string
+        }
+        Update: never
+        Relationships: []
+      }
       notification_provider_capacity: {
         Row: {
           provider: string
@@ -754,6 +798,56 @@ export interface Database {
           window_seconds: number
         }
         Returns: boolean
+      }
+      list_my_feedback: {
+        Args: {
+          requested_before_created_at?: string
+          requested_before_id?: string
+          requested_limit?: number
+        }
+        Returns: {
+          id: string
+          category: 'bug' | 'feature' | 'other'
+          title: string
+          description: string
+          status:
+            'under_review' | 'planned' | 'in_progress' | 'shipped' | 'declined'
+          roadmap_published: boolean
+          created_at: string
+        }[]
+      }
+      list_feedback_roadmap: {
+        Args: {
+          requested_before_created_at?: string
+          requested_before_id?: string
+          requested_limit?: number
+        }
+        Returns: {
+          id: string
+          title: string
+          description: string
+          status:
+            'under_review' | 'planned' | 'in_progress' | 'shipped' | 'declined'
+          vote_count: number
+          has_voted: boolean
+          created_at: string
+        }[]
+      }
+      admin_update_feedback: {
+        Args: {
+          requested_id: string
+          requested_status:
+            | 'under_review'
+            | 'planned'
+            | 'in_progress'
+            | 'shipped'
+            | 'declined'
+            | null
+          requested_published: boolean | null
+          requested_operator: string
+          requested_reason?: string | null
+        }
+        Returns: Json
       }
       referral_summary: { Args: Record<string, never>; Returns: Json }
       apply_referral_code: {

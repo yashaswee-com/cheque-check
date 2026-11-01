@@ -54,6 +54,19 @@ describe('public middleware access', () => {
     )
   })
 
+  it.each(['/feedback', '/roadmap'])(
+    'keeps signed-in-only route %s protected',
+    async (path) => {
+      const response = await updateSession(
+        new NextRequest(`https://chequecheck.test${path}`),
+      )
+      expect(response.status).toBe(307)
+      const location = new URL(response.headers.get('location') ?? '')
+      expect(location.pathname).toBe('/login')
+      expect(location.searchParams.get('next')).toBe(path)
+    },
+  )
+
   it('does not trust a caller-supplied public-shell header on private paths', async () => {
     const response = await updateSession(
       new NextRequest('https://chequecheck.test/dashboard', {

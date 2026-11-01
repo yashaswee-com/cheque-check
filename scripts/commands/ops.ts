@@ -39,6 +39,7 @@ import {
   type NotificationHealth,
 } from '../domain/notification-health'
 import { askValue, LIMIT_OPTION, selectUser } from './shared'
+import { feedbackActions } from './feedback'
 
 const STATUS_ICON = {
   ok: colors.green('✔'),
@@ -562,5 +563,6 @@ export const opsGroup: GroupDef = {
     audit,
     bulk,
     allowlistAdd,
+    ...feedbackActions,
   ],
 }
