@@ -15,6 +15,7 @@ Dashboard and Reports share the same status distribution component and helpers.
   shows a loading state (or an explicit fetch error), preserving both selections.
 - Today, Upcoming and Overdue counts are centered immediately below the balance
   card, followed by quick-action buttons with overflow arrows.
+- The blue balance card has no decorative document icon.
 - New cheques default both cheque and expected deposit dates to today in the
   profile time zone (browser-local when unavailable). Resumed drafts retain
   their stored dates, including incomplete values.

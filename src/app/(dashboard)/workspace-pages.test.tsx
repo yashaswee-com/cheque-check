@@ -350,6 +350,13 @@ afterEach(() => {
 })
 
 describe('dashboard page', () => {
+  it('does not render a decorative icon inside the blue balance card', () => {
+    renderPage(<DashboardPage />)
+    const card = screen
+      .getByTestId('dashboard-current-balance')
+      .closest('.bg-primary')!
+    expect(card.querySelector('svg')).toBeNull()
+  })
   it('shows only available overflow arrows and scrolls the quick actions', () => {
     let onResize!: () => void
     vi.stubGlobal(

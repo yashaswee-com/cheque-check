@@ -193,9 +193,6 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="absolute -right-10 -bottom-10 opacity-10 rotate-12">
-              <HugeiconsIcon icon={FileText} size={200} />
-            </div>
           </div>
 
           <div
