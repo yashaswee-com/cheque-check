@@ -62,7 +62,7 @@ for metric definitions, local benchmark commands, and production capacity gates.
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `notification_jobs`  | The queue. One row per (business, channel, day, slot) for real reminders, or one row per sample test call. `idempotency_key` prevents duplicate enqueues across overlapping scheduler ticks.        |
 | `notification_logs`  | Immutable delivery audit trail — one row per dispatch attempt that actually reached a provider (Twilio), with `provider_message_id` (Twilio Call SID) for cross-referencing Twilio's own Call Logs. |
-| `push_subscriptions` | Reserved for the future Web Push channel (not wired up yet).                                                                                                                                        |
+| `push_subscriptions` | Existing multi-device Web Push endpoints; ownership/device limits are enforced through subscription RPCs. See [Web Push](web-push.md).                                                              |
 | `user_quotas`        | Shared with the rest of the monetization system. `feature_id = 'voice_reminder'` is the quota pool both real reminders **and** sample test calls draw from.                                         |
 
 `channel`, `status` and `purpose` are PostgreSQL enums after the closed-choice
@@ -351,12 +351,16 @@ the Supabase CLI's resolved JS entry point via `node` directly (see
 `runSupabase` in
 `scripts/lib/supabase-cli.ts`, used by every `npm run ops -- dev ...` command).
 
-## 10. Extending to new channels (Email / Push / WhatsApp)
+## 10. Extending channels
 
-The schema was deliberately built generic (`channel` + `purpose` + `payload`
-JSONB) so adding a channel means: (1) add the new value to the `channel`
-`CHECK` constraint, (2) add a case in `DispatcherOrchestrator.dispatch()`,
-(3) add a provider call (SendGrid REST API for email, Web Push for push,
-Twilio Messages API with an approved template for WhatsApp) following the
-same raw-`fetch`, no-SDK pattern as `TwilioVoiceService`. No schema migration
-is needed for a new `purpose` value since it's unconstrained `TEXT`.
+Voice and Web Push are implemented; email and WhatsApp remain future channels.
+The generic queue retains `channel`, `purpose` and JSONB payloads, but channel
+and purpose are now closed enums (`20261021010000_closed_choices.sql`).
+Add enum values in a separate committed migration before deploying new producers.
+Add dispatcher routing, lifecycle eligibility, shared provider admission and
+idempotent settlement for any new provider.
+
+Voice retains its raw-fetch implementation. Web Push uses pinned `web-push`
+in the Edge Deno manifest because VAPID signing and encrypted browser payloads
+must not be reimplemented as ad-hoc cryptography. See [Web Push](web-push.md) and
+[Notification inbox](notification-inbox.md) for Phase 3 behavior and deployment.

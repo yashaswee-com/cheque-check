@@ -16,6 +16,8 @@ export interface ClaimedJob {
     /** Set only by service-role callers (ops CLI); users cannot insert jobs. */
     to_override?: string
     request_id?: string
+    subscription_id?: string
+    inbox_id?: string
   }
   attempts: number
   claim_token: string

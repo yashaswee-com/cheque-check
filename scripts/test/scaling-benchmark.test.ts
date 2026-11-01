@@ -89,7 +89,7 @@ describe('local benchmark input and measurements', () => {
       settled: 3,
       accounting_verified: true,
     })
-    expect(report.reads).toHaveLength(12)
+    expect(report.reads).toHaveLength(13)
     expect(report.reads.map((read) => read.name)).toEqual(
       expect.arrayContaining([
         'free_plan_usage',
@@ -99,9 +99,15 @@ describe('local benchmark input and measurements', () => {
         'inbox_page',
         'inbox_unread',
         'inbox_mark_all',
+        'push_registration_and_ownership',
       ]),
     )
     expect(report.reads.every((read) => read.samples === 2)).toBe(true)
+    expect(report.push).toEqual({
+      queued: 3,
+      simulated_accepted: 1,
+      quota_independent: true,
+    })
     expect(report.scope).toContain('no HTTP')
     expect(report.health).toMatchObject({ pending_due: 0, sent_in_window: 3 })
   }, 30000)

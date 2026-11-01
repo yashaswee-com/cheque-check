@@ -2,6 +2,7 @@ import { DispatcherDatabaseService } from '../services/database.service.ts'
 import { TwilioVoiceService } from '../../_shared/twilio-voice.service.ts'
 import { Logger } from '../../_shared/logger.ts'
 import { NOTIFICATION_PURPOSE } from '../../_shared/notifications.ts'
+import { WebPushService } from '../../_shared/web-push.service.ts'
 import {
   ClaimedJob,
   DispatchCheque,
@@ -48,8 +49,9 @@ interface DeliveryMetrics {
 export class DispatcherOrchestrator {
   constructor(
     private db: DispatcherDatabaseService,
-    private twilio: TwilioVoiceService,
+    private twilio: TwilioVoiceService | null,
     private testMode: TestModeConfig = { enabled: false, phone: '' },
+    private push?: WebPushService,
   ) {}
 
   /** Without a scope this is the global cron claim; a scope limits the claim itself. */
@@ -162,6 +164,7 @@ export class DispatcherOrchestrator {
     state: { providerStarted: boolean },
     metrics: DeliveryMetrics,
   ): Promise<DispatchResult> {
+    if (job.channel === 'push') return this.dispatchPush(job, state, metrics)
     if (job.channel !== 'voice') {
       await this.db.markSkipped(
         job,
@@ -173,11 +176,69 @@ export class DispatcherOrchestrator {
     return this.dispatchVoice(job, state, metrics)
   }
 
+  private async dispatchPush(
+    job: ClaimedJob,
+    state: { providerStarted: boolean },
+    metrics: DeliveryMetrics,
+  ): Promise<DispatchResult> {
+    if (!this.push) throw new Error('Web Push VAPID configuration unavailable')
+    if (!job.payload.inbox_id || !/^\d{1,19}$/.test(job.payload.inbox_id))
+      return this.skip(job, 'Invalid inbox push payload')
+    const profile = await this.db.fetchProfile(job.user_id)
+    if (!profile || profile.deleted_at)
+      return this.skip(job, 'User account is unavailable')
+    const admission = await this.db.startPushDelivery(job)
+    if (admission.status === 'throttled') {
+      metrics.provider_throttled++
+      return { jobId: job.id, status: 'queued' }
+    }
+    if (admission.status === 'skipped')
+      return { jobId: job.id, status: 'skipped' }
+    state.providerStarted = true
+    const result =
+      Date.now() >= admission.startBefore
+        ? { outcome: 'rejected' as const, status: 503 }
+        : await this.push.deliver(
+            admission.subscription,
+            job.payload.inbox_id,
+            profile.language,
+          )
+    metrics.provider_requests++
+    if (result.outcome === 'accepted') metrics.provider_accepted++
+    else if (result.outcome === 'rejected') metrics.provider_rejected++
+    else {
+      metrics.provider_uncertain++
+      metrics.reconciliation_required++
+    }
+    // Retry only database finalization, never the HTTP send, after response loss.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await this.db.finishPushDelivery(job, result)
+        break
+      } catch (error) {
+        Logger.error(`Push finalization failed for job ${job.id}`, error)
+        if (attempt >= 2) throw error
+        metrics.finalization_retries++
+      }
+    }
+    return {
+      jobId: job.id,
+      status:
+        result.outcome === 'accepted'
+          ? 'sent'
+          : result.status === 404 || result.status === 410
+            ? 'skipped'
+            : 'failed',
+    }
+  }
+
   private async dispatchVoice(
     job: ClaimedJob,
     state: { providerStarted: boolean },
     metrics: DeliveryMetrics,
   ): Promise<DispatchResult> {
+    if (!this.twilio)
+      throw new Error('Voice provider configuration unavailable')
     const profile = await this.db.fetchProfile(job.user_id)
     if (!profile || profile.deleted_at) {
       return this.skip(job, 'User account is unavailable')

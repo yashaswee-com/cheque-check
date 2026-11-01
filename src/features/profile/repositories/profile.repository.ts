@@ -109,6 +109,9 @@ export class SupabaseProfileRepository
   }
 
   async delete(): Promise<{ providerCleanup: boolean }> {
+    const { pushService } =
+      await import('@/features/notifications/services/push.service')
+    await pushService.disable()
     // The route runs lifecycle_deactivate() first, then bans the Auth user and
     // revokes provider sessions.
     const response = await fetch('/api/account/deactivate', { method: 'POST' })

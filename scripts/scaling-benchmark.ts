@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { performance } from 'node:perf_hooks'
 import { createHash } from 'node:crypto'
 import { createScalingFixture } from './lib/scaling-fixture'
+import { benchmarkPush } from './lib/push-scaling'
 
 export interface BenchmarkOptions {
   users: number
@@ -150,11 +151,11 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
       'SELECT count(*)::int AS total FROM cheques',
     )
     assert.equal(count.rows[0].total, expectedCheques, 'Seeded cheque count')
-    const seedMs = performance.now() - started
     await db.query(`INSERT INTO notification_inbox(user_id,business_id,kind,event_key)
       SELECT user_id,user_id,'cheque_reminder','benchmark:'||user_id||':'||i
       FROM profiles CROSS JOIN generate_series(1,100) i WHERE voice_call_enabled`)
     await db.exec('ANALYZE notification_inbox')
+    const seedMs = performance.now() - started
     await db.query("SELECT set_config('request.jwt.claim.sub',$1,false)", [
       hotBusiness,
     ])
@@ -435,6 +436,13 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
       'No duplicate acceptance audits',
     )
     const health = await db.query('SELECT * FROM notification_health(60)')
+    const deliveryMs = performance.now() - deliveryStarted
+    const push = await benchmarkPush(db, hotBusiness, options.samples)
+    assert.equal(push.queued, options.activeUsers)
+    reads.push({
+      name: 'push_registration_and_ownership',
+      ...latencySummary(push.timings),
+    })
     const budgetFailures = benchmarkBudgetFailures(reads, schedulerMs, options)
     return {
       version: 1,
@@ -460,8 +468,13 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
       },
       simulated_delivery: {
         settled,
-        duration_ms: performance.now() - deliveryStarted,
+        duration_ms: deliveryMs,
         accounting_verified: true,
+      },
+      push: {
+        queued: push.queued,
+        simulated_accepted: push.simulated_accepted,
+        quota_independent: push.quota_independent,
       },
       health: health.rows[0],
       total_ms: performance.now() - started,

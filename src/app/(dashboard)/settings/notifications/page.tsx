@@ -9,6 +9,7 @@ import { useProfile } from '@/features/profile/hooks/use-profile'
 import { PremiumSwitch } from '@/features/monetization/components/premium-controls'
 import { toast } from '@/components/ui/toast'
 import type { Profile } from '@/types'
+import { PushSettings } from '@/features/notifications/components/push-settings'
 
 export default function NotificationsPage() {
   const t = useTranslations('Settings')
@@ -76,6 +77,7 @@ export default function NotificationsPage() {
       </div>
 
       <div className="space-y-3">
+        <PushSettings />
         {channels.map((channel) => (
           <div
             key={channel.key}

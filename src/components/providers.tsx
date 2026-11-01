@@ -7,6 +7,7 @@ import { ProfileProvider } from '@/features/profile/hooks/use-profile'
 import { CelebrationHost } from '@/components/celebration-host'
 import { MonitoringProvider } from '@/components/monitoring-provider'
 import { PremiumPromptProvider } from '@/features/monetization/components/premium-prompt'
+import { PushAccountGuard } from '@/features/notifications/components/push-account-guard'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -26,6 +27,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <BusinessProvider>
           <PremiumPromptProvider>
             <MonitoringProvider />
+            <PushAccountGuard />
             {children}
             <CelebrationHost />
           </PremiumPromptProvider>

@@ -37,6 +37,12 @@ export async function createScalingFixture(): Promise<PGlite> {
       scheduled_at timestamptz DEFAULT now(), status notification_job_status DEFAULT 'pending',
       attempts int DEFAULT 0, last_error text, idempotency_key text UNIQUE,
       created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now());
+    CREATE TABLE push_subscriptions(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL REFERENCES profiles(user_id) ON DELETE CASCADE,endpoint text NOT NULL UNIQUE,
+      p256dh text NOT NULL,auth text NOT NULL,user_agent text,created_at timestamptz DEFAULT now(),last_seen_at timestamptz DEFAULT now());
+    CREATE INDEX push_subscriptions_user_id_idx ON push_subscriptions(user_id);
+    ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY "Users can manage their own push subscriptions" ON push_subscriptions FOR ALL TO authenticated USING(user_id=auth.uid());
     CREATE TABLE notification_logs(id uuid DEFAULT gen_random_uuid(), job_id uuid, user_id uuid,
       channel notification_channel, purpose notification_purpose, recipient text, status notification_log_status, provider text,
       provider_message_id text, error text);

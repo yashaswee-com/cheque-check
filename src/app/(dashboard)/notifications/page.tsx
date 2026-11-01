@@ -7,6 +7,7 @@ import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useInbox } from '@/features/notifications/hooks/use-inbox'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Button } from '@/components/ui/button'
+import { PushSettings } from '@/features/notifications/components/push-settings'
 import { logger } from '@/lib/logger'
 import type { InboxItem, InboxRequest } from '@/validators/notification-inbox'
 
@@ -53,6 +54,7 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-4 pb-24">
       <h1 className="text-2xl font-bold">{t('title')}</h1>
+      <PushSettings />
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"

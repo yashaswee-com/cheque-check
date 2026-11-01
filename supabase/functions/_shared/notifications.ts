@@ -1,13 +1,13 @@
 // Keep in sync with src/types/index.ts (NotificationChannel, NotificationJobStatus).
-// `purpose` is intentionally free-form TEXT in the DB (not an enum) so new
-// business events don't need a migration - these are just the values this
-// codebase currently emits/consumes.
+// Purpose became a closed enum in 20261021010000_closed_choices.sql.
+// Adding an event purpose requires an enum migration before deploying producers.
 export type NotificationChannel =
   'voice' | 'whatsapp' | 'email' | 'push' | 'sms'
 
 export const NOTIFICATION_PURPOSE = {
   CHEQUE_REMINDER: 'cheque_reminder',
   SAMPLE_VOICE_TEST: 'sample_voice_test',
+  INBOX_EVENT: 'inbox_event',
 } as const
 
 export type NotificationPurpose =

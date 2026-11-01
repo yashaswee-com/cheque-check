@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
 import { NotificationBell } from './notification-bell'
 import NotificationsPage from '@/app/(dashboard)/notifications/page'
+vi.mock('./push-settings', () => ({ PushSettings: () => null }))
 
 const mocks = vi.hoisted(() => ({
   count: { data: 120, error: null as Error | null },

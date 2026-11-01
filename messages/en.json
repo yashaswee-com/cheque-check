@@ -1,4 +1,21 @@
 {
+  "Push": {
+    "retry": "Retry loading push status",
+    "title": "Push on this device",
+    "privacy": "Free reminders and report alerts. Lock-screen messages never show cheque numbers, parties or amounts. The Push notifications switch controls all devices.",
+    "enable": "Enable on this device",
+    "disable": "Disable on this device",
+    "error": "Push action failed. Check permission and connection, then try again. A maximum of 10 devices is allowed.",
+    "cleanupError": "Could not detach this browser's old push subscription. Disable push in browser settings before switching accounts.",
+    "states": {
+      "unsupported": "Push is not supported here. Use a supported browser over HTTPS.",
+      "install": "On iOS, install from Safari using Share > Add to Home Screen, then open the installed app.",
+      "unconfigured": "Push is not configured on this deployment.",
+      "denied": "Permission is blocked. Allow notifications in browser settings and reload.",
+      "enabled": "This device is registered.",
+      "available": "This device is not registered. Permission is requested only when you enable it."
+    }
+  },
   "Inbox": {
     "title": "Notifications",
     "bell": "Notifications, {count} unread",

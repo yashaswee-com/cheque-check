@@ -844,6 +844,22 @@ export interface Database {
         }
         Returns: Json
       }
+      register_push_subscription: {
+        Args: {
+          requested_endpoint: string
+          requested_p256dh: string
+          requested_auth: string
+        }
+        Returns: string
+      }
+      owns_push_subscription: {
+        Args: { requested_endpoint: string }
+        Returns: boolean
+      }
+      remove_push_subscription: {
+        Args: { requested_endpoint: string }
+        Returns: undefined
+      }
       count_unread_notifications: {
         Args: { requested_business?: string }
         Returns: number
@@ -1156,7 +1172,8 @@ export interface Database {
       notification_job_status:
         'pending' | 'processing' | 'sent' | 'failed' | 'skipped' | 'cancelled'
       notification_log_status: 'success' | 'failed'
-      notification_purpose: 'cheque_reminder' | 'sample_voice_test'
+      notification_purpose:
+        'cheque_reminder' | 'sample_voice_test' | 'inbox_event'
       premium_tool_kind: 'cheque-template' | 'saved-view' | 'message-template'
       lifecycle_action: 'delete' | 'restore' | 'deactivate'
       cheque_status: 'Issued' | 'Received' | 'Cleared' | 'Bounced'

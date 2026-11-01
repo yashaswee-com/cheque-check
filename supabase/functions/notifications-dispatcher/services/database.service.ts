@@ -7,6 +7,10 @@ import {
   DispatchScope,
   DeliveryAdmission,
 } from '../types.ts'
+import type {
+  BrowserSubscription,
+  PushOutcome,
+} from '../../_shared/web-push.service.ts'
 
 export class DispatcherDatabaseService {
   constructor(private supabase: SupabaseClient) {}
@@ -126,6 +130,74 @@ export class DispatcherDatabaseService {
       requested_token: job.claim_token,
       requested_error: reason,
       requested_skip: true,
+    })
+    if (error) throw error
+  }
+  async startPushDelivery(
+    job: ClaimedJob,
+  ): Promise<
+    | { status: 'throttled' }
+    | { status: 'skipped' }
+    | {
+        status: 'started'
+        startBefore: number
+        subscription: BrowserSubscription
+      }
+  > {
+    const { data, error } = await this.supabase.rpc('admit_push_delivery', {
+      requested_job: job.id,
+      requested_token: job.claim_token,
+    })
+    if (error) throw error
+    const result: unknown = data
+    if (result && typeof result === 'object' && 'status' in result) {
+      if (result.status === 'throttled' || result.status === 'skipped')
+        return { status: result.status }
+      if (
+        result.status === 'started' &&
+        'start_before' in result &&
+        typeof result.start_before === 'string' &&
+        'subscription' in result &&
+        result.subscription &&
+        typeof result.subscription === 'object'
+      ) {
+        const s = result.subscription
+        if (
+          'endpoint' in s &&
+          typeof s.endpoint === 'string' &&
+          'keys' in s &&
+          s.keys &&
+          typeof s.keys === 'object' &&
+          'p256dh' in s.keys &&
+          typeof s.keys.p256dh === 'string' &&
+          'auth' in s.keys &&
+          typeof s.keys.auth === 'string'
+        ) {
+          const startBefore = Date.parse(result.start_before)
+          if (Number.isFinite(startBefore))
+            return {
+              status: 'started',
+              startBefore,
+              subscription: {
+                endpoint: s.endpoint,
+                keys: { p256dh: s.keys.p256dh, auth: s.keys.auth },
+              },
+            }
+        }
+      }
+    }
+    throw new Error('Invalid push admission response')
+  }
+
+  async finishPushDelivery(
+    job: ClaimedJob,
+    result: PushOutcome,
+  ): Promise<void> {
+    const { error } = await this.supabase.rpc('finish_push_delivery', {
+      requested_job: job.id,
+      requested_token: job.claim_token,
+      requested_outcome: result.outcome,
+      requested_status: result.status,
     })
     if (error) throw error
   }

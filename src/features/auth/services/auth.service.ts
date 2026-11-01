@@ -1,4 +1,5 @@
 import type { Provider } from '@supabase/supabase-js'
+import { pushService } from '@/features/notifications/services/push.service'
 import type {
   PhoneOtpSendInput,
   PhoneOtpVerifyInput,
@@ -43,8 +44,11 @@ export class AuthService {
     return this.repository.verifyPhoneOtp(input)
   }
 
-  signOut() {
-    return this.repository.signOut()
+  async signOut() {
+    await pushService.disable()
+    const result = await this.repository.signOut()
+    if (result.error) throw result.error
+    return result
   }
 
   resetPassword(email: string) {
