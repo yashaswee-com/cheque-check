@@ -7,7 +7,6 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowRight01Icon as ChevronRight,
   Delete02Icon as Trash2,
-  Mail01Icon as Mail,
   Settings02Icon as Settings2,
   Tick02Icon as Check,
   UserIcon as User,
@@ -20,8 +19,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/components/ui/toast'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useSettings } from '@/features/settings/hooks/use-settings'
-import { publicEnv } from '@/lib/env/client'
 import { LoginPhoneSection } from '@/features/auth/components/login-phone-section'
+import { EmailLinkSection } from '@/features/auth/components/email-link-section'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -50,8 +49,6 @@ async function clearPwaCache() {
 
 export default function ProfilePage() {
   const t = useTranslations('Settings')
-  const tc = useTranslations('Common')
-  const tp = useTranslations('PhoneAuth')
   const { profile, updateProfile, isLoading } = useProfile()
   const { handleDeleteProfile } = useSettings()
   const [draftName, setDraftName] = useState<string | null>(null)
@@ -124,23 +121,6 @@ export default function ProfilePage() {
           />
         </div>
 
-        <div className="space-y-2">
-          <Label
-            htmlFor="profile-email"
-            className="ml-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-          >
-            {tc('email')}
-          </Label>
-          <Input
-            leftIcon={Mail}
-            id="profile-email"
-            value={profile?.email ?? tp('noEmail')}
-            readOnly
-            disabled
-            className="h-14 rounded-sm border-none bg-canvas-parchment dark:bg-surface-tile-1"
-          />
-        </div>
-
         <Button
           type="submit"
           className="h-14 w-full rounded-full text-lg"
@@ -152,9 +132,8 @@ export default function ProfilePage() {
         </Button>
       </form>
 
-      {publicEnv.NEXT_PUBLIC_PHONE_AUTH_ENABLED === 'true' && (
-        <LoginPhoneSection />
-      )}
+      <EmailLinkSection />
+      <LoginPhoneSection />
 
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-2">

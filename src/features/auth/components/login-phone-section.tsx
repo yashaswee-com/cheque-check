@@ -8,8 +8,15 @@ import { logger } from '@/lib/logger'
 import { toast } from '@/components/ui/toast'
 import { maskPhone } from '@/lib/phone-auth'
 import { PhoneAuthForm } from './phone-auth-form'
+import { publicEnv } from '@/lib/env/client'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
-export function LoginPhoneSection() {
+export function LoginPhoneSection({
+  enabled = publicEnv.NEXT_PUBLIC_PHONE_AUTH_ENABLED === 'true',
+}: {
+  enabled?: boolean
+}) {
   const t = useTranslations('PhoneAuth')
   const [phone, setPhone] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
@@ -18,7 +25,11 @@ export function LoginPhoneSection() {
   const refresh = useCallback(async () => {
     try {
       const user = await authService.getUser()
-      setPhone(user?.phone ? `+${user.phone.replace(/^\+/, '')}` : null)
+      setPhone(
+        user?.phone && user.phone_confirmed_at
+          ? `+${user.phone.replace(/^\+/, '')}`
+          : null,
+      )
     } catch (error) {
       logger.error('Failed to load linked login phone', error)
       toast.add({ title: t('errors.unknown'), type: 'error' })
@@ -38,15 +49,26 @@ export function LoginPhoneSection() {
       <p className="ml-1 text-xs text-muted-foreground">
         {t('linkDescription')}
       </p>
-      <p className="ml-1 text-sm font-medium">
-        {phone ? t('linkedAs', { phone: maskPhone(phone) }) : t('notLinked')}
-      </p>
+      <Label htmlFor="verified-phone">{t('linkTitle')}</Label>
+      <Input
+        id="verified-phone"
+        readOnly
+        value={phone ?? ''}
+        placeholder={t('notLinked')}
+      />
+      {phone && (
+        <p className="ml-1 text-sm">
+          {t('linkedAs', { phone: maskPhone(phone) })}
+        </p>
+      )}
+      {!phone && <p>{t('notLinked')}</p>}
+      {!enabled && <p>{t('linkDisabled')}</p>}
       {linked && (
         <p role="status" className="ml-1 text-sm text-green-600">
           {t('linkSuccess')}
         </p>
       )}
-      {editing ? (
+      {editing && enabled ? (
         <PhoneAuthForm
           purpose="link"
           onCancel={() => setEditing(false)}
@@ -59,6 +81,7 @@ export function LoginPhoneSection() {
       ) : (
         <Button
           type="button"
+          disabled={!enabled}
           variant="outline"
           className="w-full"
           data-testid="login-phone-link-button"

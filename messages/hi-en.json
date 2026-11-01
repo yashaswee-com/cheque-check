@@ -1,4 +1,20 @@
 {
+  "EmailLink": {
+    "title": "Email",
+    "newEmail": "Link karne ke liye email",
+    "send": "Verification email bhejein",
+    "pending": "Verification bheji gayi. Email link kholein, phir Profile par lautein. Verify hone tak email linked nahi hai.",
+    "loading": "Verified email load ho raha hai",
+    "unlinked": "Koi verified email linked nahi",
+    "loadError": "Verified email load nahi hua.",
+    "refresh": "Refresh",
+    "invalid_email": "Valid email daalein.",
+    "email_in_use": "Yeh email dusre account ka hai.",
+    "already_linked": "Email pehle se linked hai.",
+    "rate_limited": "Bahut requests. Baad mein try karein.",
+    "unauthorized": "Dobara sign in karein.",
+    "send_failed": "Verification email nahi bheji gayi. Dobara try karein."
+  },
   "Appearance": {
     "title": "Appearance",
     "light": "Light",
@@ -570,6 +586,7 @@
     "signOut": "Sign Out karein"
   },
   "PhoneAuth": {
+    "linkDisabled": "Is environment mein phone login linking enabled nahi hai.",
     "errorTitle": "Phone verification mein dhyan dein",
     "usePhone": "Phone number se continue karein",
     "useEmail": "Email se continue karein",

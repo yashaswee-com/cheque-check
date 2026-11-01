@@ -43,12 +43,33 @@ afterEach(cleanup)
 function mount() {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <LoginPhoneSection />
+      <LoginPhoneSection enabled />
     </NextIntlClientProvider>,
   )
 }
 
 describe('LoginPhoneSection', () => {
+  it('keeps an unlinked phone field visible when OTP linking is disabled', () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <LoginPhoneSection enabled={false} />
+      </NextIntlClientProvider>,
+    )
+    expect(screen.getByTestId('login-phone-link-button')).toBeDisabled()
+    expect(screen.getByLabelText(messages.PhoneAuth.linkTitle)).toHaveValue('')
+    expect(
+      screen.getByText(messages.PhoneAuth.linkDisabled),
+    ).toBeInTheDocument()
+  })
+  it('does not display an unconfirmed login phone as linked', async () => {
+    mocks.getUser.mockResolvedValue({
+      phone: '919876543210',
+      phone_confirmed_at: null,
+    })
+    mount()
+    await waitFor(() => expect(mocks.getUser).toHaveBeenCalledOnce())
+    expect(screen.getByLabelText(messages.PhoneAuth.linkTitle)).toHaveValue('')
+  })
   it('offers linking for an unlinked user and permits canceling', async () => {
     mount()
     await waitFor(() => expect(mocks.getUser).toHaveBeenCalledOnce())
@@ -60,7 +81,10 @@ describe('LoginPhoneSection', () => {
   })
 
   it('masks an existing linked phone and offers changing it', async () => {
-    mocks.getUser.mockResolvedValue({ phone: '919876543210' })
+    mocks.getUser.mockResolvedValue({
+      phone: '919876543210',
+      phone_confirmed_at: '2026-11-02T00:00:00Z',
+    })
     mount()
     await waitFor(() =>
       expect(screen.getByTestId('login-phone-link-button')).toHaveTextContent(
@@ -73,7 +97,10 @@ describe('LoginPhoneSection', () => {
   it('refreshes the identity and reports a successful link after verification', async () => {
     mocks.getUser
       .mockResolvedValueOnce(null)
-      .mockResolvedValue({ phone: '+919876543210' })
+      .mockResolvedValue({
+        phone: '+919876543210',
+        phone_confirmed_at: '2026-11-02T00:00:00Z',
+      })
     mount()
     await waitFor(() => expect(mocks.getUser).toHaveBeenCalledOnce())
     fireEvent.click(screen.getByTestId('login-phone-link-button'))

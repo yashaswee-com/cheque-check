@@ -1,4 +1,20 @@
 {
+  "EmailLink": {
+    "title": "Email",
+    "newEmail": "Email to link",
+    "send": "Send verification email",
+    "pending": "Verification sent. Follow the email link, then return to Profile. The email is not linked until verified.",
+    "loading": "Loading verified email",
+    "unlinked": "No verified email linked",
+    "loadError": "Could not load verified email.",
+    "refresh": "Refresh",
+    "invalid_email": "Enter a valid email.",
+    "email_in_use": "This email belongs to another account.",
+    "already_linked": "An email is already linked.",
+    "rate_limited": "Too many requests. Try again later.",
+    "unauthorized": "Please sign in again.",
+    "send_failed": "Verification email could not be sent. Try again."
+  },
   "Appearance": {
     "title": "Appearance",
     "light": "Light",
@@ -570,6 +586,7 @@
     "signOut": "Sign Out"
   },
   "PhoneAuth": {
+    "linkDisabled": "Phone login linking is not enabled in this environment.",
     "errorTitle": "Phone verification needs attention",
     "usePhone": "Use phone number",
     "useEmail": "Use email instead",

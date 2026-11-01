@@ -271,6 +271,9 @@ vi.mock('@/lib/env/client', () => ({
 vi.mock('@/features/auth/components/login-phone-section', () => ({
   LoginPhoneSection: () => <span>Login phone settings</span>,
 }))
+vi.mock('@/features/auth/components/email-link-section', () => ({
+  EmailLinkSection: () => <input aria-label="Email" readOnly value="" />,
+}))
 vi.mock('@/components/ui/editable-avatar', () => ({
   EditableAvatar: ({
     onUpload,
@@ -840,10 +843,10 @@ describe('profile page', () => {
     cleanup()
     loading = false
     renderPage(<ProfilePage />)
-    expect(screen.getByLabelText(messages.Common.email)).toBeDisabled()
-    expect(screen.getByLabelText(messages.Common.email)).toHaveValue(
-      'person@example.test',
+    expect(screen.getByLabelText(messages.Common.email)).toHaveAttribute(
+      'readonly',
     )
+    expect(screen.getByLabelText(messages.Common.email)).toHaveValue('')
     expect(screen.getByText('Login phone settings')).toBeVisible()
   })
   it('rejects unchanged and empty names then trims valid changes before saving', async () => {
@@ -943,9 +946,7 @@ describe('profile page', () => {
     profile = null
     renderPage(<ProfilePage />)
     expect(screen.getByLabelText(messages.Settings.fullName)).toHaveValue('')
-    expect(screen.getByLabelText(messages.Common.email)).toHaveValue(
-      messages.PhoneAuth.noEmail,
-    )
+    expect(screen.getByLabelText(messages.Common.email)).toHaveValue('')
   })
 })
 

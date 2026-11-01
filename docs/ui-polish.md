@@ -22,3 +22,12 @@ A static head script sets the root class before paint; System follows OS changes
 Failed profile saves restore the previous theme with an explicit error.
 Focus refreshes profile preferences across devices.
 Apply `20261105010000_profile_appearance.sql`.
+
+Profile always shows login email and phone, sourced from confirmed Supabase Auth
+identity rather than editable contact fields. Phone OTP linking retains its existing
+feature gate and claimed-number checks; when disabled the field remains visible.
+Phone-only users can request email-change verification (five sends/hour), and the UI
+never marks the email linked on send. Auth's unique identity rules reject claimed
+emails without merging accounts. Configure verified email change and the existing
+PKCE `/auth/callback?next=/profile` allow-list in hosted Auth before deployment.
+No production Auth configuration or provider credentials are changed by this work.
