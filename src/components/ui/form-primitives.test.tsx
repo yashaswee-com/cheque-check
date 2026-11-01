@@ -7,9 +7,25 @@ import { Switch } from './switch'
 import { CurrencyPrefixInput } from './currency-prefix-input'
 import { Progress } from './progress'
 import { FormSection } from './form-section'
+import { Label } from './label'
 import { CreationSuccessScreen } from './creation-success-screen'
 
 afterEach(cleanup)
+
+it('marks only required labels with a small red asterisk', () => {
+  render(
+    <>
+      <Label required htmlFor="name">
+        Name
+      </Label>
+      <Label>Notes</Label>
+    </>,
+  )
+  const marker = screen.getByText('*')
+  expect(marker).toHaveClass('text-destructive', 'text-xs')
+  expect(marker).toHaveAttribute('aria-hidden', 'true')
+  expect(screen.getByText('Notes').querySelector('span')).toBeNull()
+})
 
 it('toggles checkbox and switch controls and preserves their accessibility labels', () => {
   const checked = vi.fn(),

@@ -97,6 +97,7 @@ export default function EditBusinessPage() {
         <FormSection title={t('businessProfile')} icon={Store}>
           <div className="space-y-2">
             <Label
+              required
               htmlFor="name"
               className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
             >

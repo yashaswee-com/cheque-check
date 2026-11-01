@@ -237,7 +237,9 @@ export function BankSelector({
             <DialogDescription>{tb('privateHelp')}</DialogDescription>
           </DialogHeader>
           <form className="space-y-4" onSubmit={addBank}>
-            <Label htmlFor={nameId}>{tb('name')}</Label>
+            <Label required htmlFor={nameId}>
+              {tb('name')}
+            </Label>
             <Input
               id={nameId}
               value={name}

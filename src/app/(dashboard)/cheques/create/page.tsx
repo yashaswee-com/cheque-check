@@ -370,7 +370,10 @@ export default function CreateChequePage() {
             {cameFromScan && photoWidget}
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+              <Label
+                required
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              >
                 {t('type')}
               </Label>
               <Tabs
@@ -413,6 +416,7 @@ export default function CreateChequePage() {
 
             <div className="space-y-2">
               <Label
+                required
                 htmlFor="amount"
                 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
               >
@@ -448,6 +452,7 @@ export default function CreateChequePage() {
 
             <div className="space-y-2">
               <Label
+                required
                 htmlFor="cheque_number"
                 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
               >
@@ -491,7 +496,10 @@ export default function CreateChequePage() {
         {step === 2 && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+              <Label
+                required
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              >
                 {t('party')}
               </Label>
               <Combobox
@@ -517,7 +525,10 @@ export default function CreateChequePage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+              <Label
+                required
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              >
                 {t('account')}
               </Label>
               <Combobox
@@ -565,6 +576,7 @@ export default function CreateChequePage() {
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
               <Label
+                required
                 htmlFor="cheque_date"
                 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
               >
@@ -587,6 +599,7 @@ export default function CreateChequePage() {
 
             <div className="space-y-2">
               <Label
+                required
                 htmlFor="deposit_date"
                 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
               >
@@ -800,7 +813,10 @@ export default function CreateChequePage() {
 
                 {createOptions.account && (
                   <div className="space-y-2 ml-7">
-                    <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <Label
+                      required
+                      className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2"
+                    >
                       <HugeiconsIcon icon={Bank} className="h-3 w-3" />
                       Select Bank
                     </Label>

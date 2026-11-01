@@ -209,7 +209,10 @@ export default function EditChequePage() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+            <Label
+              required
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            >
               {t('type')}
             </Label>
             <Tabs
@@ -245,6 +248,7 @@ export default function EditChequePage() {
 
           <div className="space-y-2">
             <Label
+              required
               htmlFor="amount"
               className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
             >
@@ -274,6 +278,7 @@ export default function EditChequePage() {
 
           <div className="space-y-2">
             <Label
+              required
               htmlFor="cheque_number"
               className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
             >
@@ -301,7 +306,10 @@ export default function EditChequePage() {
 
         <FormSection title={t('entities')} icon={User}>
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+            <Label
+              required
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            >
               {t('party')}
             </Label>
             <Combobox
@@ -322,7 +330,10 @@ export default function EditChequePage() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+            <Label
+              required
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            >
               {t('account')}
             </Label>
             <Combobox
@@ -346,6 +357,7 @@ export default function EditChequePage() {
         <FormSection title={t('datesReview')} icon={ReceiptText}>
           <div className="space-y-2">
             <Label
+              required
               htmlFor="cheque_date"
               className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
             >
@@ -370,6 +382,7 @@ export default function EditChequePage() {
 
           <div className="space-y-2">
             <Label
+              required
               htmlFor="deposit_date"
               className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
             >

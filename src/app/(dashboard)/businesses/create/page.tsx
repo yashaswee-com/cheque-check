@@ -173,6 +173,7 @@ export default function CreateBusinessPage() {
 
               <div className="space-y-2" data-testid="business-name-field">
                 <Label
+                  required
                   htmlFor="name"
                   className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
                 >

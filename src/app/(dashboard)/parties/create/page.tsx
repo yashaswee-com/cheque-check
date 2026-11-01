@@ -247,6 +247,7 @@ export default function CreatePartyPage() {
         <div className="space-y-6">
           <div className="space-y-2">
             <Label
+              required
               htmlFor="name"
               className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
             >
@@ -285,6 +286,7 @@ export default function CreatePartyPage() {
 
           <div className="space-y-2">
             <Label
+              required
               htmlFor="contact"
               className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
             >

@@ -104,7 +104,10 @@ export default function EditAccountPage() {
       <form onSubmit={handleSubmit} className="space-y-10">
         <FormSection title={t('accountInfo')} icon={User}>
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+            <Label
+              required
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            >
               {t('selectBank')}
             </Label>
             <BankSelector
@@ -150,6 +153,7 @@ export default function EditAccountPage() {
         <FormSection title={t('bankDetails')} icon={CreditCard}>
           <div className="space-y-2">
             <Label
+              required
               htmlFor="account_name"
               className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
             >
@@ -171,6 +175,7 @@ export default function EditAccountPage() {
 
           <div className="space-y-2">
             <Label
+              required
               htmlFor="account_number"
               className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
             >
@@ -192,6 +197,7 @@ export default function EditAccountPage() {
 
           <div className="space-y-2">
             <Label
+              required
               htmlFor="opening_balance"
               className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
             >

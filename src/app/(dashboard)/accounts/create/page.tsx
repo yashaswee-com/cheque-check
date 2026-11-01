@@ -217,7 +217,10 @@ export default function CreateAccountPage() {
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+                <Label
+                  required
+                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                >
                   {t('selectBank')}
                 </Label>
                 <BankSelector
@@ -272,6 +275,7 @@ export default function CreateAccountPage() {
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
               <Label
+                required
                 htmlFor="account_name"
                 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
               >
@@ -299,6 +303,7 @@ export default function CreateAccountPage() {
 
             <div className="space-y-2">
               <Label
+                required
                 htmlFor="account_number"
                 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
               >
@@ -326,6 +331,7 @@ export default function CreateAccountPage() {
 
             <div className="space-y-2">
               <Label
+                required
                 htmlFor="opening_balance"
                 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
               >

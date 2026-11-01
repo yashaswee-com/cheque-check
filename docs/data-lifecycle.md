@@ -87,6 +87,9 @@ an inline draft-status label beneath the navigation steppers or above the form.
 Autosave, manual saves, leave confirmation and save-failure toasts are unchanged.
 Business creation and published-entity editors do not use this draft indicator.
 
+Required entity
+fields in create/edit forms use a small red asterisk; optional fields are unmarked.
+
 ## Atomic tagged duplication
 
 `duplicate_cheque_draft(requested_cheque)` freshly checks Premium entitlement,

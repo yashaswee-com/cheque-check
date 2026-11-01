@@ -51,6 +51,7 @@ export function TagForm({
       <FormSection title={t('details')} icon={TagIcon}>
         <div className="space-y-2">
           <Label
+            required
             htmlFor="tag-name"
             className="ml-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
           >
@@ -69,7 +70,10 @@ export function TagForm({
         </div>
 
         <div className="space-y-3">
-          <Label className="ml-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Label
+            required
+            className="ml-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+          >
             {t('tagColor')}
           </Label>
           <TagColorPicker
