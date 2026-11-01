@@ -1,26 +1,30 @@
 const BRAND_COLORS = ['#0066cc', '#2997ff', '#34C759', '#FFCC00', '#FF9500']
+import { logger } from '@/lib/logger'
 
 export function celebrate() {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function')
+    return
   if (
     document.documentElement.hasAttribute('data-reduce-motion') ||
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
   )
     return
 
-  import('canvas-confetti').then(({ default: confetti }) => {
-    confetti({
-      particleCount: 140,
-      spread: 75,
-      startVelocity: 60,
-      gravity: 1.1,
-      ticks: 90,
-      origin: { x: 0.5, y: 1 },
-      colors: BRAND_COLORS,
-      zIndex: 9999,
-      disableForReducedMotion: true,
+  import('canvas-confetti')
+    .then(({ default: confetti }) => {
+      confetti({
+        particleCount: 140,
+        spread: 75,
+        startVelocity: 60,
+        gravity: 1.1,
+        ticks: 90,
+        origin: { x: 0.5, y: 1 },
+        colors: BRAND_COLORS,
+        zIndex: 9999,
+        disableForReducedMotion: true,
+      })
     })
-  })
+    .catch((error) => logger.error('Celebration could not load', error))
 }
 
 export interface PendingCelebration {

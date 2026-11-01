@@ -3,7 +3,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { usePathname } from 'next/navigation'
 import {
-  celebrate,
   clearPendingCelebration,
   getPendingCelebration,
   subscribeCelebrations,
@@ -25,7 +24,6 @@ export function CelebrationHost() {
   useEffect(() => {
     if (!pending || pending.target !== pathname) return
     clearPendingCelebration()
-    celebrate()
 
     const cheque = pending.cheque
     if (!cheque) return

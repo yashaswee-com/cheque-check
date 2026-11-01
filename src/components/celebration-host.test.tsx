@@ -69,7 +69,7 @@ describe('CelebrationHost', () => {
     state.pending = { target: '/cheques' }
     render(<CelebrationHost />)
     expect(state.clear).toHaveBeenCalledOnce()
-    expect(state.celebrate).toHaveBeenCalledOnce()
+    expect(state.celebrate).not.toHaveBeenCalled()
     expect(state.shouldPrompt).not.toHaveBeenCalled()
   })
 

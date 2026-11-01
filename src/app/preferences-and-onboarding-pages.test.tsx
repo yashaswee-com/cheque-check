@@ -50,6 +50,7 @@ vi.mock('@/features/monetization/components/premium-gate', () => ({
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
   motion: {
+    path: () => <path />,
     div: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   },
 }))

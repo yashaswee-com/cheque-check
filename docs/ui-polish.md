@@ -9,3 +9,8 @@ remain in effect; read-only avatars never become upload controls.
 Tag selectors use the shared 50-option paging/search helper. Inline creation opens
 a name/color sheet, selects the saved tag without losing prior selection, and
 updates the business-scoped cache immediately. Failures leave the sheet usable.
+
+Creation/onboarding success screens draw a white SVG tick and fire one confetti
+burst on mount, never on Continue or destination navigation. OS/profile reduced
+motion disables tick/pulse animation and confetti. Post-cheque NPS timing remains
+on navigation independently of celebration.

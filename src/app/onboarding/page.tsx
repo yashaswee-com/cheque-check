@@ -15,7 +15,6 @@ import {
   Wallet01Icon as Wallet,
   Building03Icon as Building2,
   Settings02Icon as Settings2,
-  CheckmarkCircle01Icon as CheckCircle2,
   Notification01Icon as Bell,
   ArrowRight01Icon as ArrowRight,
   ArrowLeft01Icon as ArrowLeft,
@@ -48,7 +47,7 @@ import { useTranslations } from 'next-intl'
 import { EditableAvatar } from '@/components/ui/editable-avatar'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { businessSchema } from '@/validators'
-import { celebrate } from '@/lib/celebrate'
+import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
 import {
   CURRENCY_OPTIONS,
   DATE_FORMAT_OPTIONS,
@@ -152,7 +151,6 @@ export default function OnboardingPage() {
       })
 
       setStep(5)
-      celebrate()
     } catch (error) {
       alert(error instanceof Error ? error.message : tc('error'))
     } finally {
@@ -658,51 +656,14 @@ export default function OnboardingPage() {
             )}
 
             {step === 5 && (
-              <motion.div
+              <CreationSuccessScreen
                 key="step5"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex flex-col items-center text-center space-y-12 py-12"
-              >
-                <div className="relative">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{
-                      type: 'spring',
-                      damping: 12,
-                      stiffness: 200,
-                      delay: 0.2,
-                    }}
-                    className="flex h-32 w-32 items-center justify-center rounded-full bg-green-500 text-white"
-                  >
-                    <HugeiconsIcon icon={CheckCircle2} className="h-16 w-16" />
-                  </motion.div>
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute inset-0 bg-green-500 rounded-full -z-10"
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <h2 className="text-display-md font-semibold tracking-tight">
-                    {t('readyToGo')}
-                  </h2>
-                  <p className="text-lead text-muted-foreground max-w-sm mx-auto">
-                    {t('successMessage')}
-                  </p>
-                </div>
-
-                <Button
-                  onClick={() => router.push('/dashboard')}
-                  data-testid="onboarding-enter-dashboard"
-                  className="w-full max-w-sm rounded-pill h-14 text-xl font-semibold hover:scale-105 active:scale-95 transition-all"
-                >
-                  {t('enterDashboard')}{' '}
-                  <HugeiconsIcon icon={ArrowRight} className="ml-2 h-6 w-6" />
-                </Button>
-              </motion.div>
+                title={t('readyToGo')}
+                description={t('successMessage')}
+                ctaLabel={t('enterDashboard')}
+                continueTestId="onboarding-enter-dashboard"
+                onContinue={() => router.push('/dashboard')}
+              />
             )}
           </AnimatePresence>
         </div>
