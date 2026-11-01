@@ -608,7 +608,9 @@ describe('tag create and edit pages', () => {
   })
   it('rejects blank tag names, trims valid input and navigates to the newly created tag', async () => {
     renderPage(<CreateTagPage />)
-    const input = screen.getByLabelText(messages.Tags.tagName)
+    const input = screen.getByRole('textbox', {
+      name: new RegExp(messages.Tags.tagName),
+    })
     fireEvent.change(input, { target: { value: '   ' } })
     expect(screen.getByTestId('tag-form-submit-button')).toBeDisabled()
     fireEvent.change(input, { target: { value: '  Priority  ' } })
@@ -634,9 +636,14 @@ describe('tag create and edit pages', () => {
       mocks.create.mockRejectedValueOnce(new Error('Offline'))
       mocks.update.mockRejectedValueOnce(new Error('Offline'))
       renderPage(<Component />)
-      fireEvent.change(screen.getByLabelText(messages.Tags.tagName), {
-        target: { value: 'Priority' },
-      })
+      fireEvent.change(
+        screen.getByRole('textbox', {
+          name: new RegExp(messages.Tags.tagName),
+        }),
+        {
+          target: { value: 'Priority' },
+        },
+      )
       fireEvent.click(screen.getByTestId('tag-form-submit-button'))
       await waitFor(() =>
         expect(mocks.toast).toHaveBeenCalledWith({
@@ -653,9 +660,14 @@ describe('tag create and edit pages', () => {
     (Component) => {
       saving = true
       renderPage(<Component />)
-      fireEvent.change(screen.getByLabelText(messages.Tags.tagName), {
-        target: { value: 'Priority' },
-      })
+      fireEvent.change(
+        screen.getByRole('textbox', {
+          name: new RegExp(messages.Tags.tagName),
+        }),
+        {
+          target: { value: 'Priority' },
+        },
+      )
       expect(screen.getByTestId('tag-form-submit-button')).toBeDisabled()
     },
   )
@@ -664,7 +676,9 @@ describe('tag create and edit pages', () => {
     renderPage(<EditTagPage />)
     expect(screen.getByText(messages.Tags.notFound)).toBeVisible()
     expect(
-      screen.queryByLabelText(messages.Tags.tagName),
+      screen.queryByRole('textbox', {
+        name: new RegExp(messages.Tags.tagName),
+      }),
     ).not.toBeInTheDocument()
   })
   it('shows the delete-dialog placeholder while the dynamic dialog loads', () => {
@@ -676,10 +690,15 @@ describe('tag create and edit pages', () => {
   })
   it('prefills the existing tag, saves its update, and returns only after success', async () => {
     renderPage(<EditTagPage />)
-    expect(screen.getByLabelText(messages.Tags.tagName)).toHaveValue('Urgent')
-    fireEvent.change(screen.getByLabelText(messages.Tags.tagName), {
-      target: { value: ' Revised ' },
-    })
+    expect(
+      screen.getByRole('textbox', { name: new RegExp(messages.Tags.tagName) }),
+    ).toHaveValue('Urgent')
+    fireEvent.change(
+      screen.getByRole('textbox', { name: new RegExp(messages.Tags.tagName) }),
+      {
+        target: { value: ' Revised ' },
+      },
+    )
     fireEvent.click(screen.getByTestId('tag-form-submit-button'))
     await waitFor(() => expect(mocks.back).toHaveBeenCalledOnce())
     expect(mocks.update).toHaveBeenCalledWith({
