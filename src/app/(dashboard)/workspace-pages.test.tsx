@@ -10,6 +10,7 @@ import {
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../messages/en.json'
+import { expectHorizontalPillRows } from '@/test/pill-rows'
 import DashboardPage from './dashboard/page'
 import ReportsPage from './reports/page'
 import ProfilePage from './profile/page'
@@ -844,6 +845,7 @@ describe('business list page', () => {
       messages.Businesses.searchPlaceholder,
     )
     fireEvent.change(search, { target: { value: 'Missing' } })
+    expectHorizontalPillRows([messages.Common.sortBy, messages.Common.order])
     fireEvent.click(
       screen.getByRole('button', { name: messages.Businesses.sortByUpcoming }),
     )

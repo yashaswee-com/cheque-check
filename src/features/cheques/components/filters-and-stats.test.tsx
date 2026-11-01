@@ -5,6 +5,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { useState } from 'react'
 import messages from '../../../../messages/en.json'
 import { ChequeFilterBar } from './cheque-filter-bar'
+import { expectHorizontalPillRows } from '@/test/pill-rows'
 import { StatsDateFilter } from './stats-date-filter'
 import { ChequeStatsChart } from './cheque-stats-chart'
 import type { DateRange } from 'react-day-picker'
@@ -61,6 +62,19 @@ it('routes search and every sorting and filtering action to its controlled sette
   expect(search).toHaveBeenCalledWith('123')
   fireEvent.click(screen.getByTestId('cheque-filter-trigger'))
   await screen.findByRole('dialog')
+  expectHorizontalPillRows([
+    messages.Common.sortBy,
+    messages.Common.order,
+    messages.Cheques.filterStatus,
+  ])
+  expect(screen.getByTestId('cheque-filter-status-all')).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  expect(screen.getByTestId('cheque-filter-status-bounced')).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  )
   for (const status of ['all', 'issued', 'received', 'cleared', 'bounced'])
     fireEvent.click(screen.getByTestId(`cheque-filter-status-${status}`))
   expect(filter).toHaveBeenLastCalledWith('Bounced')

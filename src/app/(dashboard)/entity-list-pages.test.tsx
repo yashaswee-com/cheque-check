@@ -6,6 +6,8 @@ import messages from '../../../messages/en.json'
 import AccountsPage from './accounts/page'
 import PartiesPage from './parties/page'
 import TagsPage from './tags/page'
+import { TAG_COLORS } from '@/features/tags/lib/tag-colors'
+import { expectHorizontalPillRows } from '@/test/pill-rows'
 
 let loading = false
 let empty = false
@@ -125,6 +127,11 @@ describe.each([
     title: 'Operating',
     search: messages.Accounts.searchPlaceholder,
     sort: messages.Accounts.sortByBankName,
+    sections: [
+      messages.Common.sortBy,
+      messages.Common.order,
+      messages.Accounts.filterBank,
+    ],
   },
   {
     kind: 'parties',
@@ -132,6 +139,7 @@ describe.each([
     title: 'Customer',
     search: messages.Parties.searchPlaceholder,
     sort: messages.Parties.sortByBalance,
+    sections: [messages.Common.sortBy, messages.Common.order],
   },
   {
     kind: 'tags',
@@ -139,8 +147,18 @@ describe.each([
     title: 'Urgent',
     search: messages.Tags.searchPlaceholder,
     sort: messages.Tags.sortByUsage,
+    sections: [
+      messages.Common.sortBy,
+      messages.Common.order,
+      messages.Tags.filterUsage,
+      messages.Tags.filterColor,
+    ],
   },
-])('$kind list page', ({ kind, Component, title, search, sort }) => {
+])('$kind list page', ({ kind, Component, title, search, sort, sections }) => {
+  it('lays out every sort and filter section as a horizontally scrollable pill row', () => {
+    renderPage(<Component />)
+    expectHorizontalPillRows(sections)
+  })
   it('renders records with usable detail links and entity-specific metadata', () => {
     renderPage(<Component />)
     expect(screen.getByText(title)).toBeVisible()
@@ -222,9 +240,7 @@ describe('list-specific filters', () => {
   })
   it('toggles tag colors and selects used/unused filters', () => {
     renderPage(<TagsPage />)
-    const color = screen
-      .getAllByRole('button')
-      .find((button) => button.hasAttribute('aria-pressed'))!
+    const color = screen.getByRole('button', { name: TAG_COLORS[0].name })
     fireEvent.click(color)
     expect(color).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(color)

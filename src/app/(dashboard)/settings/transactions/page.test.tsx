@@ -13,6 +13,7 @@ import hinglish from '../../../../../messages/hi-en.json'
 import type { Transaction } from '@/features/monetization/repositories/monetization.repository'
 import { FEATURE_IDS } from '@/features/monetization/constants'
 import TransactionsPage from './page'
+import { expectHorizontalPillRows } from '@/test/pill-rows'
 
 const mocks = vi.hoisted(() => ({ refresh: vi.fn(), copy: vi.fn() }))
 let transactions: Transaction[] | undefined = []
@@ -198,6 +199,12 @@ describe('payment history cards', () => {
     fireEvent.click(
       screen.getByRole('button', { name: messages.Transactions.sortAndFilter }),
     )
+    expectHorizontalPillRows([
+      messages.Transactions.type,
+      messages.Transactions.status,
+      messages.Transactions.sortBy,
+      messages.Transactions.order,
+    ])
     fireEvent.click(
       screen.getByRole('button', { name: messages.Transactions.subscription }),
     )

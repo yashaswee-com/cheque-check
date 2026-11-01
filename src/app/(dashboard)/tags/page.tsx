@@ -33,14 +33,10 @@ import { useTagList } from '@/features/tags/hooks/use-tag-list'
 import { TAG_COLORS } from '@/features/tags/lib/tag-colors'
 import type { TagSortBy, TagUsageFilter } from '@/features/tags/lib/tag-list'
 import { cn } from '@/lib/utils'
-
-const optionClass = (active: boolean) =>
-  cn(
-    'flex items-center justify-between px-4 py-3 rounded-xl border transition-all active:scale-[0.98]',
-    active
-      ? 'bg-primary/5 border-primary text-primary'
-      : 'bg-muted/30 border-transparent text-foreground',
-  )
+import {
+  FilterPillSection,
+  filterPillClassName,
+} from '@/components/ui/pill-scroller'
 
 export default function TagsPage() {
   const t = useTranslations('Tags')
@@ -118,117 +114,94 @@ export default function TagsPage() {
             </SheetHeader>
 
             <div className="space-y-6 overflow-y-auto py-4">
-              <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {tCommon('sortBy')}
-                </h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setSortBy(option.value)}
-                      className={optionClass(sortBy === option.value)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-                        <span className="text-sm font-bold">
-                          {option.label}
-                        </span>
-                      </div>
-                      {sortBy === option.value && (
-                        <HugeiconsIcon
-                          icon={Check}
-                          className="h-4 w-4 stroke-[3]"
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {tCommon('order')}
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {orderOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setSortOrder(option.value)}
-                      className={cn(
-                        optionClass(sortOrder === option.value),
-                        'justify-center gap-2',
-                      )}
-                    >
-                      <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-                      <span className="text-sm font-bold">{option.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {t('filterUsage')}
-                </h3>
-                <div className="grid grid-cols-3 gap-2">
-                  {usageOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setUsage(option.value)}
-                      className={cn(
-                        optionClass(usage === option.value),
-                        'justify-center px-2',
-                      )}
-                    >
-                      <span className="text-sm font-bold">{option.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {t('filterColor')}
-                </h3>
-                <div className="flex flex-wrap gap-3">
+              <FilterPillSection title={tCommon('sortBy')}>
+                {sortOptions.map((option) => (
                   <button
+                    key={option.value}
                     type="button"
-                    onClick={() => setColor(null)}
-                    className={cn(
-                      'h-9 rounded-full border px-3 text-xs font-bold',
-                      !color
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-transparent bg-muted/30',
-                    )}
+                    aria-pressed={sortBy === option.value}
+                    onClick={() => setSortBy(option.value)}
+                    className={filterPillClassName(sortBy === option.value)}
                   >
-                    {tCommon('all')}
+                    <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
+                    <span className="text-sm font-bold">{option.label}</span>
+                    {sortBy === option.value && (
+                      <HugeiconsIcon
+                        icon={Check}
+                        className="h-4 w-4 stroke-[3]"
+                      />
+                    )}
                   </button>
-                  {TAG_COLORS.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      aria-label={option.name}
-                      aria-pressed={color === option.value}
-                      onClick={() =>
-                        setColor(color === option.value ? null : option.value)
-                      }
-                      className={cn(
-                        'flex size-9 items-center justify-center rounded-full text-white ring-offset-2 ring-offset-background transition-transform active:scale-90',
-                        color === option.value && 'ring-2 ring-foreground/70',
-                      )}
-                      style={{ backgroundColor: option.value }}
-                    >
-                      {color === option.value && (
-                        <HugeiconsIcon icon={Check} className="size-4" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                ))}
+              </FilterPillSection>
+
+              <FilterPillSection title={tCommon('order')}>
+                {orderOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={sortOrder === option.value}
+                    onClick={() => setSortOrder(option.value)}
+                    className={filterPillClassName(sortOrder === option.value)}
+                  >
+                    <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
+                    <span className="text-sm font-bold">{option.label}</span>
+                  </button>
+                ))}
+              </FilterPillSection>
+
+              <FilterPillSection title={t('filterUsage')}>
+                {usageOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={usage === option.value}
+                    onClick={() => setUsage(option.value)}
+                    className={filterPillClassName(usage === option.value)}
+                  >
+                    <span className="text-sm font-bold">{option.label}</span>
+                  </button>
+                ))}
+              </FilterPillSection>
+
+              <FilterPillSection
+                title={t('filterColor')}
+                scrollerClassName="gap-3 p-1"
+              >
+                <button
+                  type="button"
+                  aria-pressed={!color}
+                  onClick={() => setColor(null)}
+                  className={cn(
+                    'h-9 shrink-0 snap-start whitespace-nowrap rounded-full border px-3 text-xs font-bold',
+                    !color
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-transparent bg-muted/30',
+                  )}
+                >
+                  {tCommon('all')}
+                </button>
+                {TAG_COLORS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-label={option.name}
+                    aria-pressed={color === option.value}
+                    onClick={() =>
+                      setColor(color === option.value ? null : option.value)
+                    }
+                    className={cn(
+                      'flex size-9 shrink-0 snap-start items-center justify-center rounded-full text-white ring-offset-2 ring-offset-background transition-transform active:scale-90',
+                      color === option.value && 'ring-2 ring-foreground/70',
+                    )}
+                    style={{ backgroundColor: option.value }}
+                  >
+                    {color === option.value && (
+                      <HugeiconsIcon icon={Check} className="size-4" />
+                    )}
+                  </button>
+                ))}
+              </FilterPillSection>
             </div>
           </SheetContent>
         </Sheet>

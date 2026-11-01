@@ -90,6 +90,37 @@ test.describe('cheques', () => {
     await expect(cards.last()).toContainText(`#${earlierCheque}`)
   })
 
+  test.describe('sort and filter sheet on a phone-sized screen', () => {
+    test.use({ viewport: { width: 390, height: 844 } })
+
+    test('keeps filter pills in one horizontally scrollable row', async ({
+      page,
+    }) => {
+      await new ChequesPage(page).goto()
+      await page.getByTestId('cheque-filter-trigger').click()
+
+      const statusRow = page.getByRole('group', { name: 'Filter Status' })
+      await expect(statusRow).toBeVisible()
+      const layout = await statusRow.evaluate((row) => ({
+        overflows: row.scrollWidth > row.clientWidth,
+        rows: new Set(
+          Array.from(row.children).map((pill) =>
+            Math.round(pill.getBoundingClientRect().top),
+          ),
+        ).size,
+        scrollLeft: row.scrollLeft,
+      }))
+      expect(layout).toEqual({ overflows: true, rows: 1, scrollLeft: 0 })
+
+      const bounced = page.getByTestId('cheque-filter-status-bounced')
+      await bounced.click()
+      await expect(bounced).toHaveAttribute('aria-pressed', 'true')
+      expect(await statusRow.evaluate((row) => row.scrollLeft)).toBeGreaterThan(
+        0,
+      )
+    })
+  })
+
   // Inward (Received) cheques are Premium-only.
   test.describe('with premium access', () => {
     test.use({ storageState: { cookies: [], origins: [] } })

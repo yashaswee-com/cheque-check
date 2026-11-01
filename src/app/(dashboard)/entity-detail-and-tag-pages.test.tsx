@@ -9,6 +9,7 @@ import {
 } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../messages/en.json'
+import { expectHorizontalPillRows } from '@/test/pill-rows'
 import AccountDetailPage from './accounts/[id]/page'
 import PartyDetailPage from './parties/[id]/page'
 import BusinessDetailPage from './businesses/[id]/page'
@@ -553,6 +554,26 @@ it('shows safe account fallbacks when optional bank details are absent', () => {
   renderPage(<AccountDetailPage />)
   expect(screen.getByText(messages.Common.notAvailable)).toBeVisible()
   expect(screen.getByText('₹2,500.50')).toBeVisible()
+})
+
+describe.each([
+  { kind: 'account', Component: AccountDetailPage },
+  { kind: 'party', Component: PartyDetailPage },
+])('$kind detail sort and filter sheet', ({ Component }) => {
+  it('lays out sort, order and status pills as horizontally scrollable rows', () => {
+    renderPage(<Component />)
+    expectHorizontalPillRows([
+      messages.Common.sortBy,
+      messages.Common.order,
+      messages.Common.filterStatus,
+    ])
+    const cleared = screen.getByRole('button', {
+      name: messages.Common.cleared,
+    })
+    expect(cleared).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(cleared)
+    expect(cleared).toHaveAttribute('aria-pressed', 'true')
+  })
 })
 
 describe('business detail error state', () => {

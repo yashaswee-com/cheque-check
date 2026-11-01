@@ -33,6 +33,10 @@ import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { cn } from '@/lib/utils'
+import {
+  FilterPillSection,
+  filterPillClassName,
+} from '@/components/ui/pill-scroller'
 import dynamic from 'next/dynamic'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -137,61 +141,41 @@ export default function BusinessesPage() {
             </SheetHeader>
 
             <div className="space-y-6 py-4">
-              <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {tc('sortBy')}
-                </h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => setSortBy(option.value as any)}
-                      className={cn(
-                        'flex items-center justify-between px-4 py-3 rounded-xl border transition-all active:scale-[0.98]',
-                        sortBy === option.value
-                          ? 'bg-primary/5 border-primary text-primary'
-                          : 'bg-muted/30 border-transparent text-foreground',
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-                        <span className="font-bold text-sm">
-                          {option.label}
-                        </span>
-                      </div>
-                      {sortBy === option.value && (
-                        <HugeiconsIcon
-                          icon={Check}
-                          className="h-4 w-4 stroke-[3]"
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <FilterPillSection title={tc('sortBy')}>
+                {sortOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={sortBy === option.value}
+                    onClick={() => setSortBy(option.value as any)}
+                    className={filterPillClassName(sortBy === option.value)}
+                  >
+                    <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
+                    <span className="font-bold text-sm">{option.label}</span>
+                    {sortBy === option.value && (
+                      <HugeiconsIcon
+                        icon={Check}
+                        className="h-4 w-4 stroke-[3]"
+                      />
+                    )}
+                  </button>
+                ))}
+              </FilterPillSection>
 
-              <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {tc('order')}
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {orderOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => setSortOrder(option.value as any)}
-                      className={cn(
-                        'flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all active:scale-[0.98]',
-                        sortOrder === option.value
-                          ? 'bg-primary/5 border-primary text-primary'
-                          : 'bg-muted/30 border-transparent text-foreground',
-                      )}
-                    >
-                      <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-                      <span className="font-bold text-sm">{option.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <FilterPillSection title={tc('order')}>
+                {orderOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={sortOrder === option.value}
+                    onClick={() => setSortOrder(option.value as any)}
+                    className={filterPillClassName(sortOrder === option.value)}
+                  >
+                    <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
+                    <span className="font-bold text-sm">{option.label}</span>
+                  </button>
+                ))}
+              </FilterPillSection>
             </div>
           </SheetContent>
         </Sheet>

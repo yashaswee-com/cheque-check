@@ -30,7 +30,10 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import {
+  FilterPillSection,
+  filterPillClassName,
+} from '@/components/ui/pill-scroller'
 import { useTranslations } from 'next-intl'
 import { transactionProductId } from '@/features/monetization/lib/transaction-product'
 import { PaymentReferences } from '@/features/monetization/components/payment-references'
@@ -211,137 +214,101 @@ export default function TransactionsPage() {
             </SheetHeader>
 
             <div className="space-y-6 py-6">
-              {/* Filter Type */}
-              <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {t('type')}
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['all', 'lifetime', 'subscription', 'top_up'] as const).map(
-                    (opt) => (
-                      <button
-                        key={opt}
-                        onClick={() => setFilterType(opt)}
-                        className={cn(
-                          'flex items-center justify-between px-4 py-3 rounded-xl border transition-all active:scale-[0.98]',
-                          filterType === opt
-                            ? 'bg-primary/5 border-primary text-primary'
-                            : 'bg-muted/30 border-transparent text-foreground',
-                        )}
-                      >
-                        <span className="font-bold text-sm">
-                          {opt === 'all' ? t('allTypes') : typeLabels[opt]}
-                        </span>
-                        {filterType === opt && (
-                          <HugeiconsIcon
-                            icon={Check}
-                            className="h-4 w-4 stroke-[3]"
-                          />
-                        )}
-                      </button>
-                    ),
-                  )}
-                </div>
-              </div>
-
-              {/* Filter Status */}
-              <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {t('status')}
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {(
-                    [
-                      'all',
-                      'captured',
-                      'authorized',
-                      'failed',
-                      'refunded',
-                      'created',
-                    ] as const
-                  ).map((opt) => (
+              <FilterPillSection title={t('type')}>
+                {(['all', 'lifetime', 'subscription', 'top_up'] as const).map(
+                  (opt) => (
                     <button
                       key={opt}
-                      onClick={() => setFilterStatus(opt)}
-                      className={cn(
-                        'flex items-center justify-between px-4 py-3 rounded-xl border transition-all active:scale-[0.98]',
-                        filterStatus === opt
-                          ? 'bg-primary/5 border-primary text-primary'
-                          : 'bg-muted/30 border-transparent text-foreground',
-                      )}
+                      type="button"
+                      aria-pressed={filterType === opt}
+                      onClick={() => setFilterType(opt)}
+                      className={filterPillClassName(filterType === opt)}
                     >
-                      <span className="font-bold text-sm capitalize">
-                        {opt === 'all' ? t('allStatuses') : statusLabels[opt]}
+                      <span className="font-bold text-sm">
+                        {opt === 'all' ? t('allTypes') : typeLabels[opt]}
                       </span>
-                      {filterStatus === opt && (
+                      {filterType === opt && (
                         <HugeiconsIcon
                           icon={Check}
                           className="h-4 w-4 stroke-[3]"
                         />
                       )}
                     </button>
-                  ))}
-                </div>
-              </div>
+                  ),
+                )}
+              </FilterPillSection>
 
-              {/* Sort By */}
-              <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {t('sortBy')}
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { label: t('date'), value: 'date' },
-                    { label: t('amount'), value: 'amount' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setSortBy(opt.value as any)}
-                      className={cn(
-                        'flex items-center justify-between px-4 py-3 rounded-xl border transition-all active:scale-[0.98]',
-                        sortBy === opt.value
-                          ? 'bg-primary/5 border-primary text-primary'
-                          : 'bg-muted/30 border-transparent text-foreground',
-                      )}
-                    >
-                      <span className="font-bold text-sm">{opt.label}</span>
-                      {sortBy === opt.value && (
-                        <HugeiconsIcon
-                          icon={Check}
-                          className="h-4 w-4 stroke-[3]"
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <FilterPillSection title={t('status')}>
+                {(
+                  [
+                    'all',
+                    'captured',
+                    'authorized',
+                    'failed',
+                    'refunded',
+                    'created',
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    aria-pressed={filterStatus === opt}
+                    onClick={() => setFilterStatus(opt)}
+                    className={filterPillClassName(filterStatus === opt)}
+                  >
+                    <span className="font-bold text-sm capitalize">
+                      {opt === 'all' ? t('allStatuses') : statusLabels[opt]}
+                    </span>
+                    {filterStatus === opt && (
+                      <HugeiconsIcon
+                        icon={Check}
+                        className="h-4 w-4 stroke-[3]"
+                      />
+                    )}
+                  </button>
+                ))}
+              </FilterPillSection>
 
-              {/* Sort Order */}
-              <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {t('order')}
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: t('ascending'), value: 'asc', icon: AscIcon },
-                    { label: t('descending'), value: 'desc', icon: DescIcon },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setSortOrder(opt.value as any)}
-                      className={cn(
-                        'flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all active:scale-[0.98]',
-                        sortOrder === opt.value
-                          ? 'bg-primary/5 border-primary text-primary'
-                          : 'bg-muted/30 border-transparent text-foreground',
-                      )}
-                    >
-                      <HugeiconsIcon icon={opt.icon} className="h-4 w-4" />
-                      <span className="font-bold text-sm">{opt.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <FilterPillSection title={t('sortBy')}>
+                {[
+                  { label: t('date'), value: 'date' },
+                  { label: t('amount'), value: 'amount' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    aria-pressed={sortBy === opt.value}
+                    onClick={() => setSortBy(opt.value as any)}
+                    className={filterPillClassName(sortBy === opt.value)}
+                  >
+                    <span className="font-bold text-sm">{opt.label}</span>
+                    {sortBy === opt.value && (
+                      <HugeiconsIcon
+                        icon={Check}
+                        className="h-4 w-4 stroke-[3]"
+                      />
+                    )}
+                  </button>
+                ))}
+              </FilterPillSection>
+
+              <FilterPillSection title={t('order')}>
+                {[
+                  { label: t('ascending'), value: 'asc', icon: AscIcon },
+                  { label: t('descending'), value: 'desc', icon: DescIcon },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    aria-pressed={sortOrder === opt.value}
+                    onClick={() => setSortOrder(opt.value as any)}
+                    className={filterPillClassName(sortOrder === opt.value)}
+                  >
+                    <HugeiconsIcon icon={opt.icon} className="h-4 w-4" />
+                    <span className="font-bold text-sm">{opt.label}</span>
+                  </button>
+                ))}
+              </FilterPillSection>
             </div>
           </SheetContent>
         </Sheet>
