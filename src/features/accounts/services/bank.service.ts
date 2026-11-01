@@ -52,6 +52,7 @@ export class BankService {
       throw new ValidationError('Select a valid country.')
     }
     return this.repository.create({
+      ...(input.logo_url !== undefined ? { logo_url: input.logo_url } : {}),
       name: input.name.trim(),
       abbreviation: abbreviation || null,
       bank_type: input.bank_type ?? null,

@@ -75,6 +75,7 @@ export function toAccountDraftFields(
   values: Record<string, unknown>,
 ): AccountDraftFields {
   return {
+    logo_url: text(values.logo_url),
     bank_id: text(values.bank_id),
     account_name: text(values.account_name),
     account_number: text(values.account_number),
@@ -122,6 +123,7 @@ export function partyDraftToFormValues(draft: PartyDraftFields) {
 
 export function accountDraftToFormValues(draft: AccountDraftFields) {
   return {
+    logo_url: draft.logo_url ?? null,
     bank_id: draft.bank_id ?? '',
     account_name: draft.account_name ?? '',
     account_number: draft.account_number ?? '',

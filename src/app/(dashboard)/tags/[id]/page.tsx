@@ -124,7 +124,7 @@ export default function TagDetailPage() {
         subtitle: `${a.bank?.name ?? ''} ${a.account_number.slice(-4)}`.trim(),
         color: a.color,
         icon: a.icon,
-        imageUrl: a.bank?.logo_url,
+        imageUrl: a.logo_url ?? a.bank?.logo_url,
       })),
     business: businesses
       .filter((b) => idsByType.business.has(b.id))

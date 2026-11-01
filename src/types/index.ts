@@ -112,6 +112,7 @@ export interface TagWithUsage extends Tag {
 }
 
 export interface Account {
+  logo_url?: string | null
   id: string
   business_id: string
   bank_id: string | null
@@ -248,6 +249,7 @@ export type PartyDraftFields = {
 export type PartyDraft = DraftBase & PartyDraftFields
 
 export type AccountDraftFields = {
+  logo_url?: string | null
   bank_id: string | null
   account_name: string | null
   account_number: string | null

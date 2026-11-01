@@ -145,6 +145,8 @@ export function EditableAvatar({
       <DialogTrigger
         render={
           <button
+            type="button"
+            aria-label={t('changePhoto')}
             className={cn(
               'relative group rounded-full overflow-hidden border-2 border-background transition-all active:scale-95',
               sizeClasses[size],
@@ -172,6 +174,12 @@ export function EditableAvatar({
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <HugeiconsIcon icon={Camera} className="text-white h-1/3 w-1/3" />
             </div>
+            <span
+              className="absolute bottom-0 right-0 rounded-full bg-primary p-1 text-primary-foreground"
+              data-testid="avatar-camera-badge"
+            >
+              <HugeiconsIcon icon={Camera} className="size-4" />
+            </span>
           </button>
         }
       />

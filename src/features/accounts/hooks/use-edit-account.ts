@@ -26,6 +26,7 @@ export function useEditAccount(id: string, businessId: string | undefined) {
     schema: accountSchema,
     defaultValues: {
       bank_id: '',
+      logo_url: null,
       account_name: '',
       account_number: '',
       ifsc_code: '',
@@ -35,6 +36,7 @@ export function useEditAccount(id: string, businessId: string | undefined) {
       is_default: false,
     },
     toFormValues: (account) => ({
+      logo_url: account.logo_url ?? null,
       bank_id: account.bank_id || '',
       account_name: account.account_name,
       account_number: account.account_number,

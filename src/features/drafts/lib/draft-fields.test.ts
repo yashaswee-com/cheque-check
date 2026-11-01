@@ -92,6 +92,7 @@ describe('party and account draft fields', () => {
 
   it('restores blank accounts with form defaults and preserves balance and default selection', () => {
     expect(accountDraftToFormValues(toAccountDraftFields({}))).toEqual({
+      logo_url: null,
       bank_id: '',
       account_name: '',
       account_number: '',
@@ -103,6 +104,7 @@ describe('party and account draft fields', () => {
     })
     const populated = {
       bank_id: 'b1',
+      logo_url: 'avatars/account.png',
       account_name: 'Main',
       account_number: '123456',
       ifsc_code: 'SBIN0001234',

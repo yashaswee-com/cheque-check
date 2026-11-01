@@ -311,7 +311,7 @@ export function GlobalSearch({
                   name={a.bank?.name || t('bank')}
                   color={a.color}
                   icon={a.icon}
-                  imageUrl={a.bank?.logo_url}
+                  imageUrl={a.logo_url ?? a.bank?.logo_url}
                   size="lg"
                   className="rounded-sm shrink-0"
                 />
@@ -345,7 +345,7 @@ export function GlobalSearch({
                 <EntityAvatar
                   name={a.bank?.name || t('bank')}
                   color={a.color ?? undefined}
-                  imageUrl={a.bank?.logo_url}
+                  imageUrl={a.logo_url ?? a.bank?.logo_url}
                   size="lg"
                   className="rounded-sm shrink-0"
                 />

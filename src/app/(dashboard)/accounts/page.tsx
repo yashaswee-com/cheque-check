@@ -236,7 +236,7 @@ export default function AccountsPage() {
                     name={account.bank?.name || tc('bank')}
                     color={account.color}
                     icon={account.icon}
-                    imageUrl={account.bank?.logo_url}
+                    imageUrl={account.logo_url ?? account.bank?.logo_url}
                     size="md"
                   />
                   <div className="flex-1 min-w-0">

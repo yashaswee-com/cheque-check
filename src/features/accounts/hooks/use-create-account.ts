@@ -51,6 +51,7 @@ export function useCreateAccount(
     resolver: zodResolver(accountSchema),
     defaultValues: {
       bank_id: '',
+      logo_url: null,
       account_name: '',
       account_number: '',
       ifsc_code: '',

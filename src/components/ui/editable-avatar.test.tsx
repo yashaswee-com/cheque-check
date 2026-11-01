@@ -69,6 +69,14 @@ function selectFile(
 }
 
 describe('EditableAvatar', () => {
+  it('exposes an accessible non-submit camera button on touch surfaces', () => {
+    render(<EditableAvatar name="Asha" onUpload={vi.fn()} />)
+    expect(screen.getByRole('button', { name: 'changePhoto' })).toHaveAttribute(
+      'type',
+      'button',
+    )
+    expect(screen.getByTestId('avatar-camera-badge')).toBeVisible()
+  })
   it('center-crops and uploads a selected image, then persists and notifies', async () => {
     const { onUpload } = openEditor()
     selectFile()

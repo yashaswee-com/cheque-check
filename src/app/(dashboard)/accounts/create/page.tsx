@@ -37,6 +37,7 @@ import { getSafeChequeReturnTo } from '@/lib/cheque-draft'
 import { DraftLeaveDialog, DraftSaveFab } from '@/features/drafts'
 import { DefaultAccountField } from '@/features/accounts/components/default-account-field'
 import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
+import { EditableAvatar } from '@/components/ui/editable-avatar'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { tagService } from '@/features/tags/services/tag.service'
 
@@ -217,6 +218,15 @@ export default function CreateAccountPage() {
       <form onSubmit={onSubmit} className="space-y-8">
         {step === 1 && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+            <div className="flex justify-center">
+              <EditableAvatar
+                name={watch('account_name') || t('accountName')}
+                imageUrl={watch('logo_url')}
+                color={watch('color')}
+                onUpload={async (url) => setUserValue('logo_url', url)}
+                onDelete={async () => setUserValue('logo_url', null)}
+              />
+            </div>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label

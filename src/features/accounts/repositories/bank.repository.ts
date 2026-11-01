@@ -3,6 +3,7 @@ import { TABLES } from '@/lib/supabase/tables'
 import { SupabaseRepository } from '@/repositories/base.repository'
 
 export interface CustomBankInput {
+  logo_url?: string | null
   name: string
   abbreviation?: string | null
   bank_type?: BankType | null

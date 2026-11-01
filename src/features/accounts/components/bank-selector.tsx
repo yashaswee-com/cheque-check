@@ -25,6 +25,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
+import { EditableAvatar } from '@/components/ui/editable-avatar'
 import { useBanks, useBankMutations } from '../hooks/use-banks'
 import { useTranslations } from 'next-intl'
 import {
@@ -73,6 +74,7 @@ export function BankSelector({
   const tb = useTranslations('BankCatalog')
   const [adding, setAdding] = React.useState(false)
   const [name, setName] = React.useState('')
+  const [logo, setLogo] = React.useState<string | null>(null)
   const [nameError, setNameError] = React.useState<string | null>(null)
   const [abbreviation, setAbbreviation] = React.useState('')
   const [abbreviationError, setAbbreviationError] = React.useState<
@@ -99,6 +101,7 @@ export function BankSelector({
   const trimmedQuery = paged.query.trim()
   const addLabel = trimmedQuery ? `${tb('add')} "${trimmedQuery}"` : tb('add')
   const resetDetails = () => {
+    setLogo(null)
     setAbbreviation('')
     setAbbreviationError(null)
     setBankType(null)
@@ -124,6 +127,7 @@ export function BankSelector({
     setAbbreviationError(null)
     try {
       const bank = await create.mutateAsync({
+        ...(logo ? { logo_url: logo } : {}),
         name,
         abbreviation: normalizeBankAbbreviation(abbreviation) || null,
         bank_type: bankType,
@@ -320,6 +324,14 @@ export function BankSelector({
             <SheetDescription>{tb('privateHelp')}</SheetDescription>
           </SheetHeader>
           <form className="space-y-4" onSubmit={addBank}>
+            <div className="flex justify-center">
+              <EditableAvatar
+                name={name || tb('name')}
+                imageUrl={logo}
+                onUpload={async (url) => setLogo(url)}
+                onDelete={async () => setLogo(null)}
+              />
+            </div>
             <Label required htmlFor={nameId}>
               {tb('name')}
             </Label>

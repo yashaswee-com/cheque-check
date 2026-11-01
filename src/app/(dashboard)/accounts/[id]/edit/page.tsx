@@ -27,6 +27,7 @@ import { toast } from '@/components/ui/toast'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useEntityTagsDraft } from '@/features/tags/hooks/use-entity-tags'
 import { DefaultAccountField } from '@/features/accounts/components/default-account-field'
+import { EditableAvatar } from '@/components/ui/editable-avatar'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -113,6 +114,19 @@ export default function EditAccountPage() {
     <div className="max-w-2xl space-y-8 pb-20">
       <form onSubmit={handleSubmit} className="space-y-10">
         <FormSection title={t('accountInfo')} icon={User}>
+          <div className="flex justify-center">
+            <EditableAvatar
+              name={watch('account_name') || t('accountName')}
+              imageUrl={watch('logo_url')}
+              color={watch('color')}
+              onUpload={async (url) =>
+                setValue('logo_url', url, { shouldDirty: true })
+              }
+              onDelete={async () =>
+                setValue('logo_url', null, { shouldDirty: true })
+              }
+            />
+          </div>
           <div className="space-y-2">
             <Label
               required

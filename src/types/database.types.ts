@@ -334,6 +334,7 @@ export interface Database {
       }
       accounts: {
         Row: {
+          logo_url: string | null
           deletion_batch_id: string | null
           id: string
           business_id: string

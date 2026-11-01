@@ -75,7 +75,7 @@ export function DraftList({ entity }: { entity: DraftEntity }) {
       avatar: {
         name: account.bank?.name || account.account_name || '?',
         color: account.color,
-        imageUrl: account.bank?.logo_url,
+        imageUrl: account.logo_url ?? account.bank?.logo_url,
       },
     }
   }
