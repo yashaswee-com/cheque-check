@@ -292,7 +292,7 @@ describe('durable scheduler batches', () => {
   it.each([1001, 10000])(
     'schedules %i eligible profiles completely and idempotently',
     async (count) => {
-      await db.exec(`TRUNCATE profiles,businesses,cheques;
+      await db.exec(`TRUNCATE profiles,businesses,cheques CASCADE;
       INSERT INTO profiles(user_id) SELECT md5(i::text)::uuid FROM generate_series(1,${count}) i;
       INSERT INTO businesses(id,user_id) SELECT user_id,user_id FROM profiles;
       INSERT INTO cheques(id,business_id,cheque_number,amount)

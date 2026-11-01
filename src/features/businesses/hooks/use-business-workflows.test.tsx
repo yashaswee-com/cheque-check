@@ -4,6 +4,7 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Business } from '@/types'
 import { queryKeys } from '@/lib/query-keys'
+import { localDay } from '@/lib/preference-format'
 import { BusinessProvider, useBusiness } from './use-business'
 import { useBusinesses } from './use-businesses-page'
 import { useCreateBusiness } from './use-create-business'
@@ -94,7 +95,7 @@ describe('business hooks', () => {
     await waitFor(() => expect(result.current.getUpcomingTotal('b2')).toBe(500))
     expect(result.current.getUpcomingTotal('b1')).toBe(100)
     expect(mocks.getCheques).toHaveBeenCalledWith(
-      new Date().toISOString().split('T')[0],
+      localDay(new Date(), 'Asia/Kolkata'),
     )
     expect(mocks.getCheques).toHaveBeenCalledTimes(1)
     act(() => {
