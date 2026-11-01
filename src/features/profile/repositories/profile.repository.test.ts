@@ -178,6 +178,14 @@ describe('toProfileUpdate', () => {
     expect(() => toProfileUpdate({ currency: 'XYZ' })).toThrow()
   })
 
+  it('sorts reminder times to the stored order and rejects invalid ones', () => {
+    expect(toProfileUpdate({ reminder_times: ['18:00:00', '07:30'] })).toEqual({
+      reminder_times: ['07:30', '18:00'],
+    })
+    expect(() => toProfileUpdate({ reminder_times: ['23:00'] })).toThrow()
+    expect(() => toProfileUpdate({ reminder_times: [] })).toThrow()
+  })
+
   it('returns incomplete provider cleanup after deactivation and signs out locally', async () => {
     mocks.signOut.mockResolvedValue({ error: null })
     vi.stubGlobal(

@@ -23,6 +23,8 @@ export interface Profile {
   time_zone: string
   language: string
   reminders_per_day: number
+  /** Local HH:MM[:SS] times, sorted, 1-3 entries; reminders_per_day mirrors the count. */
+  reminder_times?: string[]
   default_reminder_days: number
   received_cheques_enabled: boolean
   phone: string | null

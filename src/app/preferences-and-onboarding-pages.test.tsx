@@ -442,7 +442,7 @@ describe('general preferences page', () => {
 
   it('persists currency, date/time formats, timezone, reminder counts and reduce motion', () => {
     renderPage(<PreferencesPage />)
-    const selects = screen.getAllByRole('combobox')
+    const selects = screen.getAllByRole('combobox').slice(0, 7)
     const expectedFields = [
       'currency',
       'language',
@@ -505,5 +505,39 @@ describe('general preferences page', () => {
     expect(screen.getByTestId('preferences-time-format')).toHaveValue('12h')
     expect(screen.getAllByRole('combobox')[5]).toHaveValue('1')
     expect(screen.getAllByRole('combobox')[6]).toHaveValue('3')
+  })
+
+  it('edits individual reminder times and saves the sorted list', () => {
+    profile = {
+      ...profile,
+      reminders_per_day: 2,
+      reminder_times: ['09:00:00', '17:00:00'],
+    }
+    renderPage(<PreferencesPage />)
+    const first = screen.getByTestId('reminder-time-1')
+    const second = screen.getByTestId('reminder-time-2')
+    expect(first).toHaveValue('09:00')
+    expect(second).toHaveValue('17:00')
+    expect(
+      Array.from((first as HTMLSelectElement).options).map((o) => o.value),
+    ).not.toContain('17:00')
+    expect(
+      screen.getByRole('option', { name: '9:00 AM', hidden: true }),
+    ).toBeInTheDocument()
+    fireEvent.change(second, { target: { value: '07:30' } })
+    expect(mocks.update).toHaveBeenCalledWith({
+      reminder_times: ['07:30', '09:00'],
+    })
+  })
+
+  it('falls back to the historical slots before reminder times load', () => {
+    profile = { ...profile, reminders_per_day: 3, time_format: '24h' }
+    renderPage(<PreferencesPage />)
+    expect(
+      ['reminder-time-1', 'reminder-time-2', 'reminder-time-3'].map(
+        (id) => (screen.getByTestId(id) as HTMLSelectElement).value,
+      ),
+    ).toEqual(['09:00', '13:00', '18:00'])
+    expect(screen.getAllByText('13:00').length).toBeGreaterThan(0)
   })
 })

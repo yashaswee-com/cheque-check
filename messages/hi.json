@@ -460,6 +460,9 @@
     "orderId": "ऑर्डर ID"
   },
   "Settings": {
+    "reminderTimes": "Reminder times",
+    "reminderTimeLabel": "Reminder {number}",
+    "reminderTimesHelp": "Voice reminders are placed at these times in your time zone on reminder days. Choose between 6:00 AM and 10:00 PM.",
     "user": "उपयोगकर्ता",
     "currency": "मुद्रा",
     "dateFormat": "तारीख का प्रारूप",

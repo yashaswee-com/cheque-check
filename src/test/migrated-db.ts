@@ -30,6 +30,9 @@ export async function createMigratedDb(later: string[] = []) {
     ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
     CREATE FUNCTION storage.foldername(name text) RETURNS text[] LANGUAGE sql IMMUTABLE AS
       $$ SELECT string_to_array(name,'/') $$;
+    CREATE SCHEMA cron;
+    CREATE TABLE cron.job(jobid bigint, jobname text);
+    CREATE FUNCTION cron.alter_job(job_id bigint, schedule text) RETURNS void LANGUAGE sql AS $$ SELECT $$;
     GRANT USAGE ON SCHEMA public,auth,storage TO authenticated,service_role;
   `)
   const files = readdirSync(directory)

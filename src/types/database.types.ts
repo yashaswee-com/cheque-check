@@ -187,6 +187,7 @@ export interface Database {
           currency: Database['public']['Enums']['profile_currency'] | null
           date_format: Database['public']['Enums']['profile_date_format'] | null
           reminders_per_day: number | null
+          reminder_times: string[]
           default_reminder_days: number | null
           received_cheques_enabled: boolean | null
           time_format: Database['public']['Enums']['profile_time_format'] | null

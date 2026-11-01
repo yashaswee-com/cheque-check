@@ -17,6 +17,8 @@ import { useReminderOptions } from '@/features/profile/hooks/use-reminder-option
 import { toast } from '@/components/ui/toast'
 import type { Profile } from '@/types'
 import { useTimeFormatOptions } from '@/features/profile/hooks/use-time-format-options'
+import { ReminderTimesEditor } from '@/features/profile/components/reminder-times-editor'
+import { DEFAULT_REMINDER_TIMES } from '@/features/profile/lib/reminder-times'
 
 export default function PreferencesPage() {
   const t = useTranslations('Onboarding')
@@ -152,6 +154,16 @@ export default function PreferencesPage() {
               {t('advancedWarningHelp')}
             </p>
           </div>
+
+          <ReminderTimesEditor
+            times={
+              profile.reminder_times ??
+              DEFAULT_REMINDER_TIMES[profile.reminders_per_day] ??
+              DEFAULT_REMINDER_TIMES[1]
+            }
+            timeFormat={profile.time_format}
+            onChange={(reminder_times) => savePreference({ reminder_times })}
+          />
         </div>
       </div>
 

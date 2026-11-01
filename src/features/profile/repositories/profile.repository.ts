@@ -1,4 +1,5 @@
-import { closedProfileChoices } from '@/validators/profile'
+import { closedProfileChoices, reminderTimesSchema } from '@/validators/profile'
+import { normalizeReminderTimes } from '@/features/profile/lib/reminder-times'
 import { Profile } from '@/types'
 import type { Database } from '@/types/database.types'
 import { TABLES } from '@/lib/supabase/tables'
@@ -27,6 +28,11 @@ export function toProfileUpdate(profile: Partial<Profile>): ProfileUpdate {
   })
   for (const key of Object.keys(choices) as (keyof typeof choices)[]) {
     update[key] = choices[key]
+  }
+  if (update.reminder_times !== undefined) {
+    update.reminder_times = normalizeReminderTimes(
+      reminderTimesSchema.parse(update.reminder_times),
+    )
   }
   return update as ProfileUpdate
 }

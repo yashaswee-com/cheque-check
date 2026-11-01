@@ -56,6 +56,7 @@ export async function createScalingFixture(): Promise<PGlite> {
       '20261031010000_notification_delivery_leases.sql',
       '20261031020000_bounded_notification_scheduler.sql',
       '20261031030000_notification_health.sql',
+      '20261101120000_reminder_times.sql',
     ]) {
       await db.exec(
         readFileSync(
