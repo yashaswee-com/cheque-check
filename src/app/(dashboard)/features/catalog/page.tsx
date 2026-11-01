@@ -5,7 +5,7 @@ import {
   PremiumSwitch,
 } from '@/features/monetization/components/premium-controls'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
@@ -70,12 +70,14 @@ export default function FeaturesPage() {
     getEntitlementState,
   } = useMonetization()
   const { processPayment, isProcessing } = useRazorpay()
+  const processPaymentRef = useRef(processPayment)
   const [profilePhone, setProfilePhone] = useState<string>()
   const [saving, setSaving] = useState<string | null>(null)
   const [isSendingTestCall, setIsSendingTestCall] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [phoneError, setPhoneError] = useState(false)
   const purchaseProcessed = useRef<string | null>(null)
+  const refreshInProgress = useRef(false)
   const phone = profilePhone ?? profile?.phone ?? ''
   const phoneChanged = phone !== (profile?.phone ?? '')
   const validPhone = isValidE164Phone(phone)
@@ -85,13 +87,16 @@ export default function FeaturesPage() {
     (voiceQuota?.limit ?? 0) - (voiceQuota?.used ?? 0),
   )
 
-  function notifyError(error: unknown) {
-    toast.add({
-      title: tc('error'),
-      description: error instanceof Error ? error.message : t('updateFailed'),
-      type: 'error',
-    })
-  }
+  const notifyError = useCallback(
+    (error: unknown) => {
+      toast.add({
+        title: tc('error'),
+        description: error instanceof Error ? error.message : t('updateFailed'),
+        type: 'error',
+      })
+    },
+    [t, tc],
+  )
 
   async function saveProfile(key: string, changes: Partial<Profile>) {
     if (saving !== null) return
@@ -110,8 +115,9 @@ export default function FeaturesPage() {
     }
   }
 
-  async function refreshAccess() {
-    if (isRefreshing) return
+  const refreshAccess = useCallback(async () => {
+    if (refreshInProgress.current) return
+    refreshInProgress.current = true
     setIsRefreshing(true)
     try {
       await Promise.all([
@@ -127,9 +133,14 @@ export default function FeaturesPage() {
     } catch (error) {
       notifyError(error)
     } finally {
+      refreshInProgress.current = false
       setIsRefreshing(false)
     }
-  }
+  }, [notifyError, queryClient])
+
+  useEffect(() => {
+    processPaymentRef.current = processPayment
+  }, [processPayment])
 
   useEffect(() => {
     if (isLoading || isLoadingProfile) return
@@ -149,11 +160,11 @@ export default function FeaturesPage() {
     purchaseProcessed.current = productId
     url.searchParams.delete('purchase')
     window.history.replaceState(null, '', `${url.pathname}${url.search}`)
-    void processPayment({
+    void processPaymentRef.current({
       productId: productId as (typeof PRODUCT_IDS)[keyof typeof PRODUCT_IDS],
       onSuccess: refreshAccess,
     })
-  }, [isLoading, isLoadingProfile, processPayment, refreshAccess])
+  }, [isLoading, isLoadingProfile, refreshAccess])
 
   async function sendTestCall() {
     if (isSendingTestCall) return

@@ -679,13 +679,15 @@ describe('Features page', () => {
       '/features/catalog?purchase=ai_scanner_30d',
     )
     expect(window.location.search).toBe('?purchase=ai_scanner_30d')
-    renderPage()
+    const { rerender } = renderPage()
 
     await waitFor(() =>
       expect(mocks.payment).toHaveBeenCalledWith(
         expect.objectContaining({ productId: PRODUCT_IDS.AI_SCANNER_30D }),
       ),
     )
+    rerender(<FeaturesPage />)
+    expect(mocks.payment).toHaveBeenCalledTimes(1)
     expect(window.location.search).toBe('')
   })
 
