@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { DigitSlotsInput } from '@/components/ui/digit-slots-input'
 import { Controller } from 'react-hook-form'
 import { DateInput } from '@/components/ui/date-input'
+import { DueDatePresets } from '@/features/cheques/components/due-date-presets'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
 import { Label } from '@/components/ui/label'
 import { useSearchParams } from 'next/navigation'
@@ -622,13 +623,25 @@ export default function CreateChequePage() {
               >
                 {t('depositDate')}
               </Label>
-              <DateInput
-                leftIcon={Calendar}
-                id="deposit_date"
-                type="date"
-                {...register('deposit_date')}
-                value={watch('deposit_date') || ''}
-                className="h-14 bg-canvas-parchment border-none rounded-sm"
+              <Controller
+                control={form.control}
+                name="deposit_date"
+                render={({ field }) => (
+                  <>
+                    <DateInput
+                      {...field}
+                      leftIcon={Calendar}
+                      id="deposit_date"
+                      type="date"
+                      value={field.value || ''}
+                      className="h-14 bg-canvas-parchment border-none rounded-sm"
+                    />
+                    <DueDatePresets
+                      value={field.value || ''}
+                      onSelect={field.onChange}
+                    />
+                  </>
+                )}
               />
               {errors.deposit_date && (
                 <p className="text-xs text-destructive ml-1">

@@ -666,6 +666,10 @@
     "duplicateNumber": "इस खाते में इस नंबर का चेक पहले से मौजूद है"
   },
   "Cheques": {
+    "dueDateShortcuts": "नियत तिथि के विकल्प",
+    "dueToday": "आज",
+    "dueInDays": "+{days} दिन",
+    "endOfMonth": "महीने का अंत",
     "legacyChequeNumberHint": "This cheque was saved with an older number format ({number}). Enter the 6-digit cheque number to save changes.",
     "title": "चेक",
     "newCheque": "नया चेक",
