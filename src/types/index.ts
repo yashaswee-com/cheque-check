@@ -13,6 +13,7 @@ export type ChequeType = ClosedChoice['cheque_type']
 export type IconType = any // For now, to be safe with HugeIcons and Lucide
 
 export interface Profile {
+  appearance?: 'light' | 'dark' | 'system'
   id: string
   user_id: string
   name: string | null

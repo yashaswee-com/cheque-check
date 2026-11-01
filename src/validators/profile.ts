@@ -8,6 +8,7 @@ export const dateFormatSchema = z.enum([
   'yyyy-MM-dd',
 ])
 export const timeFormatSchema = z.enum(['12h', '24h'])
+export const appearanceSchema = z.enum(['light', 'dark', 'system'])
 
 /** Mirrors profile_reminder_times_valid: 1-3 distinct 15-minute times, 06:00-22:00. */
 export const reminderTimesSchema = z
@@ -35,5 +36,6 @@ export const closedProfileChoices = z
     date_format: dateFormatSchema,
     time_format: timeFormatSchema,
     language: localeSchema,
+    appearance: appearanceSchema,
   })
   .partial()

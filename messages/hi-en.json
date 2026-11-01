@@ -1,4 +1,11 @@
 {
+  "Appearance": {
+    "title": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "error": "Appearance save nahi hui. Pichhli preference restore hui."
+  },
   "SelectorPolish": {
     "searchTags": "Tags khojein",
     "noMatch": "Is search se koi tag nahi mila.",

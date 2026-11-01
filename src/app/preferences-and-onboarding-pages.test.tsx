@@ -443,7 +443,7 @@ describe('general preferences page', () => {
 
   it('persists currency, date/time formats, timezone, reminder counts and reduce motion', () => {
     renderPage(<PreferencesPage />)
-    const selects = screen.getAllByRole('combobox').slice(0, 7)
+    const selects = screen.getAllByRole('combobox').slice(1, 8)
     const expectedFields = [
       'currency',
       'language',
@@ -504,8 +504,8 @@ describe('general preferences page', () => {
     renderPage(<PreferencesPage />)
 
     expect(screen.getByTestId('preferences-time-format')).toHaveValue('12h')
-    expect(screen.getAllByRole('combobox')[5]).toHaveValue('1')
-    expect(screen.getAllByRole('combobox')[6]).toHaveValue('3')
+    expect(screen.getAllByRole('combobox')[6]).toHaveValue('1')
+    expect(screen.getAllByRole('combobox')[7]).toHaveValue('3')
   })
 
   it('edits individual reminder times and saves the sorted list', () => {

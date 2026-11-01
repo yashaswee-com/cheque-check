@@ -19,6 +19,7 @@ import type { Profile } from '@/types'
 import { useTimeFormatOptions } from '@/features/profile/hooks/use-time-format-options'
 import { ReminderTimesEditor } from '@/features/profile/components/reminder-times-editor'
 import { DEFAULT_REMINDER_TIMES } from '@/features/profile/lib/reminder-times'
+import { AppearancePreference } from '@/features/profile/components/appearance-preference'
 
 export default function PreferencesPage() {
   const t = useTranslations('Onboarding')
@@ -49,6 +50,7 @@ export default function PreferencesPage() {
 
   return (
     <div className="max-w-2xl space-y-8 pb-20">
+      <AppearancePreference />
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-2">

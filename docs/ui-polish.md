@@ -16,3 +16,9 @@ motion disables tick/pulse animation and confetti. Post-cheque NPS timing remain
 on navigation independently of celebration.
 
 Settings displays the build's `package.json` version immediately below Sign Out.
+
+Appearance defaults to System and persists in profile plus local theme storage.
+A static head script sets the root class before paint; System follows OS changes.
+Failed profile saves restore the previous theme with an explicit error.
+Focus refreshes profile preferences across devices.
+Apply `20261105010000_profile_appearance.sql`.

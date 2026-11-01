@@ -10,6 +10,7 @@ import Script from 'next/script'
 import { Suspense } from 'react'
 import { PwaRegistrar } from '@/components/pwa-registrar'
 import { LaunchSplash } from '@/components/launch-splash'
+import { APPEARANCE_BOOTSTRAP } from '@/features/profile/lib/appearance'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -57,7 +58,17 @@ export default async function RootLayout({
   const t = await getTranslations('Common')
 
   return (
-    <html lang={locale} className={`${inter.variable}`}>
+    <html
+      lang={locale}
+      className={`${inter.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script
+          id="appearance-bootstrap"
+          dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOTSTRAP }}
+        />
+      </head>
       <body className="bg-primary font-sans text-foreground selection:bg-primary/10 antialiased flex items-center justify-center min-h-[100dvh] overflow-hidden">
         <PwaRegistrar />
         <LaunchSplash />

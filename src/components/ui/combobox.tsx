@@ -47,6 +47,7 @@ interface ComboboxProps {
   createLabel?: string
   onCreateClick?: (query: string) => void
   testId?: string
+  disabled?: boolean
 }
 
 export function Combobox({
@@ -60,6 +61,7 @@ export function Combobox({
   createLabel = 'Add new',
   onCreateClick,
   testId,
+  disabled = false,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const paged = usePagedOptions(options, optionLabel)
@@ -117,11 +119,13 @@ export function Combobox({
     <Popover
       open={open}
       onOpenChange={(next) => {
+        if (disabled) return
         setOpen(next)
         if (!next) setQuery('')
       }}
     >
       <PopoverTrigger
+        disabled={disabled}
         data-testid={testId}
         className={cn(
           buttonVariants({

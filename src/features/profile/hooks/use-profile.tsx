@@ -26,6 +26,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { data: profile, isLoading } = useQuery({
     queryKey: queryKeys.profile.detail(),
     queryFn: () => profileService.get(),
+    refetchOnWindowFocus: 'always',
   })
 
   useEffect(() => {

@@ -1,4 +1,11 @@
 {
+  "Appearance": {
+    "title": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "error": "Appearance could not be saved. Your previous preference was restored."
+  },
   "SelectorPolish": {
     "searchTags": "Search tags",
     "noMatch": "No tags match this search.",
