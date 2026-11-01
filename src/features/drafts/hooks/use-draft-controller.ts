@@ -118,6 +118,7 @@ export function useDraftController<TValues extends FieldValues, TDraft>({
 
   const leaveDialogProps = {
     open: guard.isLeavePending,
+    showSave: !autosave.draftId || autosave.hasUnsavedChanges,
     onSave: async () => {
       try {
         await autosave.save()
@@ -128,7 +129,13 @@ export function useDraftController<TValues extends FieldValues, TDraft>({
       guard.confirmLeave()
     },
     onDiscard: async () => {
-      await autosave.discard()
+      try {
+        await autosave.discard()
+      } catch {
+        autosave.resume()
+        toast.add({ title: tc('error'), type: 'error' })
+        return
+      }
       guard.confirmLeave()
     },
     onCancel: guard.cancelLeave,

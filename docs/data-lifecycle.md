@@ -87,7 +87,9 @@ an inline draft-status label beneath the navigation steppers or above the form.
 Autosave, manual saves, leave confirmation and save-failure toasts are unchanged.
 Business creation and published-entity editors do not use this draft indicator.
 
-Required entity
+The draft leave sheet shows Save Draft only when no draft exists or user edits
+remain unsaved, including edits made during an in-flight autosave. After saving,
+only Discard (with its trash icon) and Keep Editing remain. Required entity
 fields in create/edit forms use a small red asterisk; optional fields are unmarked.
 
 ## Atomic tagged duplication

@@ -40,6 +40,8 @@ export function useDraftAutosave<TValues extends FieldValues>({
   const [draftId, setDraftId] = useState(initialDraftId)
   const [status, setStatus] = useState<DraftSaveStatus>('idle')
   const [hasUserChanges, setHasUserChanges] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const revisionRef = useRef(0)
 
   const draftIdRef = useRef(initialDraftId)
   const queueRef = useRef<Promise<unknown>>(Promise.resolve())
@@ -63,6 +65,7 @@ export function useDraftAutosave<TValues extends FieldValues>({
       if (stoppedRef.current || !currentBusinessId) return draftIdRef.current
 
       setStatus('saving')
+      const revision = revisionRef.current
       const fields = convert(form.getValues() as Record<string, unknown>)
       const service = draftServices[entity]
       try {
@@ -79,7 +82,9 @@ export function useDraftAutosave<TValues extends FieldValues>({
         queryClient.invalidateQueries({
           queryKey: draftKeys.list(entity, currentBusinessId),
         })
-        setStatus('saved')
+        const hasNewChanges = revisionRef.current !== revision
+        setHasUnsavedChanges(hasNewChanges)
+        setStatus(hasNewChanges ? 'idle' : 'saved')
         return saved.id
       } catch (error) {
         logger.error('Draft autosave failed', error)
@@ -94,6 +99,9 @@ export function useDraftAutosave<TValues extends FieldValues>({
   const scheduleSave = useCallback(() => {
     if (stoppedRef.current) return
     setHasUserChanges(true)
+    revisionRef.current += 1
+    setHasUnsavedChanges(true)
+    setStatus('idle')
     clearTimer()
     timerRef.current = setTimeout(() => {
       save().catch(() => undefined)
@@ -159,6 +167,7 @@ export function useDraftAutosave<TValues extends FieldValues>({
     draftId,
     status,
     hasUserChanges,
+    hasUnsavedChanges,
     setUserValue,
     save,
     discard,

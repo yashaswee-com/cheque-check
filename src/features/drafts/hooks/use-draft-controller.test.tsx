@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
     draftId: 'draft-1' as string | null,
     status: 'saved' as string,
     hasUserChanges: true,
+    hasUnsavedChanges: false,
     setUserValue: vi.fn(),
     save: vi.fn(),
     discard: vi.fn(),
@@ -99,6 +100,7 @@ beforeEach(() => {
   mocks.autosave.draftId = 'draft-1'
   mocks.autosave.status = 'saved'
   mocks.autosave.hasUserChanges = true
+  mocks.autosave.hasUnsavedChanges = false
   mocks.guard.isLeavePending = false
   mocks.guard.bypass.mockImplementation((navigate) => navigate())
   mocks.autosave.save.mockResolvedValue('draft-1')
@@ -112,6 +114,28 @@ afterEach(() => {
 })
 
 describe('useDraftController', () => {
+  it('shows the leave-sheet save action only for missing drafts or unsaved edits', () => {
+    const { result, rerender } = setup()
+    expect(result.current.controller.leaveDialogProps.showSave).toBe(false)
+    mocks.autosave.hasUnsavedChanges = true
+    rerender()
+    expect(result.current.controller.leaveDialogProps.showSave).toBe(true)
+    mocks.autosave.hasUnsavedChanges = false
+    mocks.autosave.draftId = null
+    rerender()
+    expect(result.current.controller.leaveDialogProps.showSave).toBe(true)
+  })
+  it('keeps editing possible and does not navigate when discarding fails', async () => {
+    mocks.autosave.discard.mockRejectedValueOnce(new Error('offline'))
+    const { result } = setup()
+    await act(() => result.current.controller.leaveDialogProps.onDiscard())
+    expect(mocks.guard.confirmLeave).not.toHaveBeenCalled()
+    expect(mocks.autosave.resume).toHaveBeenCalledOnce()
+    expect(mocks.toastAdd).toHaveBeenCalledWith({
+      title: 'error',
+      type: 'error',
+    })
+  })
   it('marks publishing complete and does not confirm navigation after failed leave saves', async () => {
     const { result } = setup()
     act(() => result.current.controller.finishPublish())
