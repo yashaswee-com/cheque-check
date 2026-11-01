@@ -23,15 +23,15 @@ test.describe('free plan limits', () => {
 
     const inwardTab = page.getByTestId('cheque-type-inward')
     await inwardTab.click()
-    const toast = shell.upgradeToast('Inward cheque tracking')
-    await expect(toast).toBeVisible()
+    const sheet = shell.upgradeSheet('Inward cheque tracking')
+    await expect(sheet).toBeVisible()
     await expect(inwardTab).toHaveAttribute('aria-selected', 'false')
     await expect(page.getByTestId('cheque-type-outward')).toHaveAttribute(
       'aria-selected',
       'true',
     )
 
-    await toast.getByRole('button', { name: VIEW_PLAN }).click()
+    await sheet.getByRole('button', { name: VIEW_PLAN }).click()
     await expect(page).toHaveURL('/features')
     await expect(
       page.getByRole('button', { name: 'Get Premium - Lifetime' }),
@@ -63,14 +63,18 @@ test.describe('free plan limits', () => {
     await page.getByTestId('speed-dial-toggle').click()
     await page.getByTestId('cheque-detail-duplicate').click()
     await expect(
-      shell.upgradeToast('Duplicate cheque to a draft'),
+      shell.upgradeSheet('Duplicate cheque to a draft'),
     ).toBeVisible()
     await expect(page).toHaveURL(detailUrl)
+    await shell
+      .upgradeSheet('Duplicate cheque to a draft')
+      .getByRole('button', { name: 'Maybe Later' })
+      .click()
 
     await page.getByTestId('speed-dial-toggle').click()
     await page.getByTestId('cheque-detail-print').click()
     await expect(
-      shell.upgradeToast('Cheque printing & saved layouts'),
+      shell.upgradeSheet('Cheque printing & saved layouts'),
     ).toBeVisible()
     await expect(page).toHaveURL(detailUrl)
   })
@@ -79,7 +83,11 @@ test.describe('free plan limits', () => {
     await page.goto('/reports')
     const gate = page.getByTestId('reports-premium-gate')
     await expect(gate).toContainText('Advanced reports & exports')
-    await gate.getByRole('link', { name: VIEW_PLAN }).click()
+    await gate.getByRole('button', { name: VIEW_PLAN }).click()
+    await page
+      .getByRole('dialog', { name: 'Advanced reports & exports' })
+      .getByRole('button', { name: VIEW_PLAN })
+      .click()
     await expect(page).toHaveURL('/features')
   })
 })

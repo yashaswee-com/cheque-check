@@ -1,14 +1,14 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { usePremiumAccess } from '../hooks/use-premium-access'
 import type { PremiumFeature } from '../lib/premium-access'
 import { toast } from '@/components/ui/toast'
 import { verifyLifetimePremium } from '../services/premium-authorization'
-import { useRouter } from 'next/navigation'
+import { usePremiumPrompt } from './premium-prompt'
+import { PremiumMark } from './premium-mark'
 
 export function PremiumGate({
   feature,
@@ -20,6 +20,7 @@ export function PremiumGate({
   testId?: string
 }) {
   const access = usePremiumAccess()
+  const showPremium = usePremiumPrompt()
   const t = useTranslations('Premium')
   if (access.isLoading)
     return (
@@ -33,7 +34,10 @@ export function PremiumGate({
       className="space-y-4 rounded-lg border bg-card p-5"
       data-testid={testId}
     >
-      <h2 className="text-lg font-semibold">{t(`features.${feature}`)}</h2>
+      <h2 className="flex items-center gap-2 text-lg font-semibold">
+        {t(`features.${feature}`)}
+        <PremiumMark />
+      </h2>
       <p
         role={access.state === 'error' ? 'alert' : undefined}
         className="text-sm leading-relaxed text-muted-foreground"
@@ -45,12 +49,12 @@ export function PremiumGate({
           {t('retry')}
         </Button>
       ) : (
-        <Link
-          href="/features"
-          className="inline-flex min-h-11 items-center text-sm text-primary"
+        <Button
+          variant="outline"
+          onClick={() => showPremium({ feature, state: access.state })}
         >
           {t('viewPlan')}
-        </Link>
+        </Button>
       )}
       <p className="text-xs leading-relaxed text-muted-foreground">
         {t('coreUnaffected')}
@@ -62,18 +66,10 @@ export function PremiumGate({
 export function usePremiumAction() {
   const access = usePremiumAccess()
   const t = useTranslations('Premium')
-  const router = useRouter()
+  const showPremium = usePremiumPrompt()
   function requireAccess(feature: PremiumFeature) {
     if (access.canUse(feature)) return true
-    toast.add({
-      title: t(`features.${feature}`),
-      description: t(`states.${access.state}`),
-      type: access.state === 'error' ? 'error' : 'info',
-      actionProps: {
-        children: t('viewPlan'),
-        onClick: () => router.push('/features'),
-      },
-    })
+    showPremium({ feature, state: access.state })
     return false
   }
   async function verifyAccess(feature: PremiumFeature) {
@@ -81,11 +77,7 @@ export function usePremiumAction() {
     try {
       if (await verifyLifetimePremium()) return true
       await access.refresh()
-      toast.add({
-        title: t(`features.${feature}`),
-        description: t('states.expired'),
-        type: 'info',
-      })
+      showPremium({ feature, state: 'expired' })
     } catch (error) {
       toast.add({
         title: t(`features.${feature}`),

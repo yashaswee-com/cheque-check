@@ -158,10 +158,7 @@
       "deposit_date": "Deposit date",
       "status": "Status"
     },
-    "types": {
-      "Inward": "Inward",
-      "Outward": "Outward"
-    },
+    "types": { "Inward": "Inward", "Outward": "Outward" },
     "statuses": {
       "Issued": "Issued",
       "Received": "Received",
@@ -242,6 +239,22 @@
     "submitFailed": "Could not send your feedback. Please try again."
   },
   "Premium": {
+    "marker": "Premium feature",
+    "descriptions": {
+      "notify-party": "Prepare a cheque update for your party in the SMS app. Your carrier's SMS charges may apply.",
+      "contact-import": "Fill party details from your phone contacts on supported mobile browsers. Manual entry is always available.",
+      "duplicate-cheque": "Start a new draft from an existing cheque, then review and edit it before publishing.",
+      "cheque-printing": "Print cheque PDFs and save a reusable layout for each account.",
+      "reports": "Explore cheque reports and export CSV, JSON, Excel, or PDF reports.",
+      "bulk-import": "Preview and validate CSV or Excel files before importing parties or cheques together.",
+      "cheque-templates": "Save reusable cheque details and apply them to future cheques.",
+      "bulk-actions": "Review and confirm status changes for multiple cheques in one operation.",
+      "saved-views": "Save your cheque filters and reuse them across devices.",
+      "party-statements": "Generate date-based party statements and export them as PDF or Excel.",
+      "consolidated-dashboard": "See a consolidated cheque overview across your businesses.",
+      "message-templates": "Save custom party SMS templates for your business.",
+      "inward-tracking": "Track received cheques alongside issued cheques. Existing received cheques remain editable without Premium."
+    },
     "title": "Premium - Lifetime",
     "loading": "Checking Premium access...",
     "retry": "Retry access check",

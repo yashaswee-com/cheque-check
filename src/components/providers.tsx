@@ -6,6 +6,7 @@ import { BusinessProvider } from '@/features/businesses/hooks/use-business'
 import { ProfileProvider } from '@/features/profile/hooks/use-profile'
 import { CelebrationHost } from '@/components/celebration-host'
 import { MonitoringProvider } from '@/components/monitoring-provider'
+import { PremiumPromptProvider } from '@/features/monetization/components/premium-prompt'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -23,9 +24,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ProfileProvider>
         <BusinessProvider>
-          <MonitoringProvider />
-          {children}
-          <CelebrationHost />
+          <PremiumPromptProvider>
+            <MonitoringProvider />
+            {children}
+            <CelebrationHost />
+          </PremiumPromptProvider>
         </BusinessProvider>
       </ProfileProvider>
     </QueryClientProvider>

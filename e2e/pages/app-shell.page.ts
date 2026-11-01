@@ -42,10 +42,7 @@ export class AppShell {
     await expect(this.page).toHaveURL('/settings')
   }
 
-  /** Premium upgrade prompts surface as a toast with a "View Premium plan" action. */
-  upgradeToast(featureTitle: string) {
-    return this.page
-      .locator('[data-slot="toast"]')
-      .filter({ hasText: featureTitle })
+  upgradeSheet(featureTitle: string) {
+    return this.page.getByRole('dialog', { name: featureTitle, exact: true })
   }
 }

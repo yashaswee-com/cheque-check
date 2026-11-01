@@ -158,10 +158,7 @@
       "deposit_date": "Deposit date",
       "status": "Status"
     },
-    "types": {
-      "Inward": "Aane wala",
-      "Outward": "Jaane wala"
-    },
+    "types": { "Inward": "Aane wala", "Outward": "Jaane wala" },
     "statuses": {
       "Issued": "Diya gaya",
       "Received": "Mila",
@@ -242,6 +239,22 @@
     "submitFailed": "Feedback nahi bhej paaye. Dobara try karein."
   },
   "Premium": {
+    "marker": "Premium feature",
+    "descriptions": {
+      "notify-party": "SMS app mein party ke liye cheque update taiyar karein. Carrier ke SMS charges lag sakte hain.",
+      "contact-import": "Supported mobile browsers mein phone contacts se party details bharein. Manual entry hamesha available hai.",
+      "duplicate-cheque": "Existing cheque se naya draft banayein, phir publish karne se pehle review aur edit karein.",
+      "cheque-printing": "Cheque PDF print karein aur har account ke liye reusable layout save karein.",
+      "reports": "Cheque reports dekhein aur CSV, JSON, Excel ya PDF mein export karein.",
+      "bulk-import": "Parties ya cheques ek saath import karne se pehle CSV ya Excel files preview aur validate karein.",
+      "cheque-templates": "Reusable cheque details save karein aur naye cheques mein use karein.",
+      "bulk-actions": "Ek saath kai cheques ke status changes review aur confirm karein.",
+      "saved-views": "Cheque filters save karein aur alag devices par dobara use karein.",
+      "party-statements": "Date ke hisaab se party statements banayein aur PDF ya Excel mein export karein.",
+      "consolidated-dashboard": "Apne saare businesses ke cheques ka consolidated overview dekhein.",
+      "message-templates": "Business ke liye custom party SMS templates save karein.",
+      "inward-tracking": "Issued cheques ke saath received cheques bhi track karein. Existing received cheques Premium ke bina bhi edit kar sakte hain."
+    },
     "title": "Premium - Lifetime",
     "loading": "Premium access check ho raha hai...",
     "retry": "Access dobara check karein",

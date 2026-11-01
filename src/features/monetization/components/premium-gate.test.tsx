@@ -1,5 +1,6 @@
 import {
   cleanup,
+  act,
   fireEvent,
   render,
   renderHook,
@@ -9,6 +10,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import { PremiumGate, usePremiumAction } from './premium-gate'
+import { PremiumPromptProvider } from './premium-prompt'
 import { PREMIUM_FEATURES, type PremiumState } from '../lib/premium-access'
 import messages from '../../../../messages/en.json'
 
@@ -42,7 +44,7 @@ beforeEach(() => {
 function Wrapper({ children }: { children: ReactNode }) {
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
-      {children}
+      <PremiumPromptProvider>{children}</PremiumPromptProvider>
     </NextIntlClientProvider>
   )
 }
@@ -67,8 +69,8 @@ describe('PremiumGate', () => {
         screen.getByRole('button', { name: 'Update cheque status' }),
       ).toBeEnabled()
       expect(
-        screen.getByRole('link', { name: messages.Premium.viewPlan }),
-      ).toHaveAttribute('href', '/features')
+        screen.getByRole('button', { name: messages.Premium.viewPlan }),
+      ).toBeEnabled()
     },
   )
 
@@ -135,17 +137,25 @@ describe('PremiumGate', () => {
 })
 
 describe('Premium execution guard', () => {
-  it('opens the plans page from the access-required toast action', () => {
+  it('shows a retryable contextual sheet rather than an upsell on access errors', () => {
     mocks.state = 'error'
     const { result } = renderHook(() => usePremiumAction(), {
       wrapper: Wrapper,
     })
-    expect(result.current.requireAccess('reports')).toBe(false)
-    expect(mocks.toast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error' }),
+    act(() => {
+      expect(result.current.requireAccess('reports')).toBe(false)
+    })
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      messages.Premium.features.reports,
     )
-    mocks.toast.mock.calls[0][0].actionProps.onClick()
-    expect(mocks.push).toHaveBeenCalledWith('/features')
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Premium.retry }),
+    )
+    expect(mocks.refresh).toHaveBeenCalledOnce()
+    expect(
+      screen.queryByRole('button', { name: messages.Premium.viewPlan }),
+    ).not.toBeInTheDocument()
+    expect(mocks.toast).not.toHaveBeenCalled()
   })
 
   it('allows verified access and handles non-Error provider failures', async () => {
@@ -170,10 +180,12 @@ describe('Premium execution guard', () => {
     const { result } = renderHook(() => usePremiumAction(), {
       wrapper: Wrapper,
     })
-    expect(await result.current.verifyAccess('cheque-printing')).toBe(false)
+    await act(async () => {
+      expect(await result.current.verifyAccess('cheque-printing')).toBe(false)
+    })
     expect(mocks.verify).not.toHaveBeenCalled()
-    expect(mocks.toast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'info' }),
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      messages.Premium.features['cheque-printing'],
     )
   })
 
@@ -183,10 +195,12 @@ describe('Premium execution guard', () => {
     const { result } = renderHook(() => usePremiumAction(), {
       wrapper: Wrapper,
     })
-    expect(await result.current.verifyAccess('duplicate-cheque')).toBe(false)
+    await act(async () => {
+      expect(await result.current.verifyAccess('duplicate-cheque')).toBe(false)
+    })
     expect(mocks.refresh).toHaveBeenCalledOnce()
-    expect(mocks.toast).toHaveBeenCalledWith(
-      expect.objectContaining({ description: messages.Premium.states.expired }),
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      messages.Premium.states.expired,
     )
   })
 
