@@ -17,14 +17,26 @@ import { ChequeWithRelations } from '@/types'
 import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { NativeTools } from '@/features/premium-workspace/components/native-tools'
 import type { ChequeFilters } from '@/features/premium-workspace/types'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { chequeDateFilterSchema } from '@/validators'
+import { parseISO } from 'date-fns'
 
-export default function ChequesPage() {
+function ChequesContent() {
   const t = useTranslations('Cheques')
   const tc = useTranslations('SharedUI')
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const requestedDate = searchParams.get('date')
+  const parsedDate = chequeDateFilterSchema.safeParse(requestedDate)
+  const date = parsedDate.success ? parsedDate.data : null
+  const invalidDate = requestedDate !== null && !parsedDate.success
   const { activeBusiness } = useBusiness()
   const businessId = activeBusiness?.id
   const [nativeFilters, setNativeFilters] = useState<ChequeFilters>({})
+  const filters = date
+    ? { ...nativeFilters, from: date, to: date }
+    : nativeFilters
 
   const {
     cheques,
@@ -44,14 +56,28 @@ export default function ChequesPage() {
     hasNextPage,
     nextPage,
     previousPage,
-  } = useChequeList(businessId, nativeFilters)
+  } = useChequeList(invalidDate ? undefined : businessId, filters)
   const tagMap = useEntityTagMap(
     businessId,
     'cheque',
     cheques.map((row) => row.id),
   )
 
+  const clearDateFilter = () => {
+    const remaining = { ...nativeFilters }
+    delete remaining.from
+    delete remaining.to
+    setNativeFilters(remaining)
+    if (requestedDate !== null) {
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('date')
+      router.replace(`/cheques${params.size ? `?${params}` : ''}`, {
+        scroll: false,
+      })
+    }
+  }
   const clearFilters = () => {
+    clearDateFilter()
     setSearch('')
     setFilter('All')
     setSortBy('date')
@@ -72,6 +98,28 @@ export default function ChequesPage() {
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
       />
+      {requestedDate !== null && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border bg-primary/5 px-4 py-3">
+          <p
+            role={invalidDate ? 'alert' : undefined}
+            className="text-sm font-medium"
+          >
+            {date
+              ? t('chequesOnDate', {
+                  date: parseISO(date).toLocaleDateString(),
+                })
+              : t('invalidDateFilter')}
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={clearDateFilter}
+          >
+            {t('clearDateFilter')}
+          </Button>
+        </div>
+      )}
 
       <DraftsLink entity="cheque" />
       <NativeTools
@@ -80,61 +128,71 @@ export default function ChequesPage() {
         onFiltersChange={setNativeFilters}
       />
 
-      <div className="space-y-4">
-        <DataState
-          isLoading={isLoading}
-          isError={!!error}
-          data={visibleCheques}
-          allData={activeCount ? [activeCount] : []}
-          onClearFilters={clearFilters}
-          loadingComponent={
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-32 w-full rounded-lg" />
-              ))}
+      {!invalidDate && (
+        <div className="space-y-4">
+          <DataState
+            isLoading={isLoading}
+            isError={!!error}
+            data={visibleCheques}
+            allData={activeCount ? [activeCount] : []}
+            onClearFilters={clearFilters}
+            loadingComponent={
+              <div className="space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-32 w-full rounded-lg" />
+                ))}
+              </div>
+            }
+            emptyState={
+              <EmptyState
+                icon={ReceiptText}
+                data-testid="cheques-empty-state"
+                title={t('noChequesTitle')}
+                description={t('noChequesDesc')}
+                action={{
+                  label: t('recordFirst'),
+                  href: '/cheques/create',
+                }}
+              />
+            }
+          >
+            {visibleCheques.map((cheque: ChequeWithRelations) => (
+              <ChequeCard
+                key={cheque.id}
+                cheque={cheque}
+                onStatusUpdate={updateStatus}
+                tags={tagMap[cheque.id]}
+              />
+            ))}
+          </DataState>
+          {!isLoading && !error && activeCount > 0 && (
+            <div className="flex justify-between gap-4">
+              <Button
+                variant="outline"
+                disabled={pageIndex === 0}
+                onClick={previousPage}
+              >
+                {tc('previousPage')}
+              </Button>
+              <Button
+                variant="outline"
+                disabled={!hasNextPage}
+                onClick={nextPage}
+              >
+                {tc('nextPage')}
+              </Button>
             </div>
-          }
-          emptyState={
-            <EmptyState
-              icon={ReceiptText}
-              data-testid="cheques-empty-state"
-              title={t('noChequesTitle')}
-              description={t('noChequesDesc')}
-              action={{
-                label: t('recordFirst'),
-                href: '/cheques/create',
-              }}
-            />
-          }
-        >
-          {visibleCheques.map((cheque: ChequeWithRelations) => (
-            <ChequeCard
-              key={cheque.id}
-              cheque={cheque}
-              onStatusUpdate={updateStatus}
-              tags={tagMap[cheque.id]}
-            />
-          ))}
-        </DataState>
-        {!isLoading && !error && activeCount > 0 && (
-          <div className="flex justify-between gap-4">
-            <Button
-              variant="outline"
-              disabled={pageIndex === 0}
-              onClick={previousPage}
-            >
-              {tc('previousPage')}
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!hasNextPage}
-              onClick={nextPage}
-            >
-              {tc('nextPage')}
-            </Button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
+  )
+}
+
+export default function ChequesPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-32 w-full rounded-lg" />}>
+      <ChequesContent />
+    </Suspense>
   )
 }

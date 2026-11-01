@@ -548,6 +548,9 @@
     "duplicateNumber": "इस खाते में इस नंबर का चेक पहले से मौजूद है"
   },
   "Cheques": {
+    "chequesOnDate": "{date} के चेक",
+    "invalidDateFilter": "चेक की तारीख का फ़िल्टर गलत है। चेक देखने के लिए इसे हटाएँ।",
+    "clearDateFilter": "तारीख का फ़िल्टर हटाएँ",
     "scan": "चेक स्कैन",
     "loading": "विवरण निकाले जा रहे हैं...",
     "replacePhoto": "फ़ोटो बदलें",

@@ -5,6 +5,8 @@ import { useParty } from '@/features/parties/hooks/use-party'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { useChequeDetail } from '@/features/cheques/hooks/use-cheque-detail'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { parseISO } from 'date-fns'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -265,7 +267,10 @@ export default function ChequeDetailPage() {
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 {t('party')}
               </p>
-              <div className="flex items-center gap-3">
+              <Link
+                href={`/parties/${cheque.party_id}`}
+                className="flex items-center gap-3 rounded-sm transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+              >
                 <EntityAvatar
                   name={cheque.party?.name || 'Party'}
                   color={cheque.party?.color}
@@ -282,14 +287,17 @@ export default function ChequeDetailPage() {
                     {t('recipientPayer')}
                   </p>
                 </div>
-              </div>
+              </Link>
             </div>
 
             <div className="space-y-4">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 {t('account')}
               </p>
-              <div className="flex items-center gap-3">
+              <Link
+                href={`/accounts/${cheque.account_id}`}
+                className="flex items-center gap-3 rounded-sm transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+              >
                 <EntityAvatar
                   name={cheque.account?.bank?.name || tc('bank')}
                   color={cheque.account?.color}
@@ -308,7 +316,7 @@ export default function ChequeDetailPage() {
                     className="text-[10px] text-muted-foreground uppercase font-semibold block"
                   />
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
 
@@ -331,15 +339,18 @@ export default function ChequeDetailPage() {
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 {t('chequeDate')}
               </p>
-              <div className="flex items-center gap-2">
+              <Link
+                href={`/cheques?date=${encodeURIComponent(cheque.cheque_date)}`}
+                className="flex items-center gap-2 rounded-sm transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+              >
                 <HugeiconsIcon
                   icon={Calendar as any}
                   className="h-3 w-3 text-primary/40"
                 />
                 <p className="font-semibold">
-                  {new Date(cheque.cheque_date).toLocaleDateString()}
+                  {parseISO(cheque.cheque_date).toLocaleDateString()}
                 </p>
-              </div>
+              </Link>
             </div>
           </div>
 

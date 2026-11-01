@@ -16,6 +16,11 @@ Dashboard and Reports share the same status distribution component and helpers.
 - Today, Upcoming and Overdue counts are centered immediately below the balance
   card, followed by quick-action buttons with overflow arrows.
 - The blue balance card has no decorative document icon.
+- Cheque detail party/account rows link to their respective detail pages. The
+  cheque date links to `/cheques?date=YYYY-MM-DD`, applying inclusive matching
+  cheque-date bounds in the paginated server query. The list shows a clearable
+  date-filter label; invalid dates show an error without fetching an unfiltered
+  list. Reloads and client-side date-link navigation retain the selected day.
 - New cheques default both cheque and expected deposit dates to today in the
   profile time zone (browser-local when unavailable). Resumed drafts retain
   their stored dates, including incomplete values.

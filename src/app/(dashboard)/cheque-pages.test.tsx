@@ -42,6 +42,7 @@ const mocks = vi.hoisted(() => ({
   filterStatus: vi.fn(),
   filterSortBy: vi.fn(),
   filterSortOrder: vi.fn(),
+  listRequest: vi.fn(),
 }))
 let loading = false
 let saving = false
@@ -189,27 +190,36 @@ vi.mock('@/features/cheques/hooks/use-cheques', () => ({
   }),
 }))
 vi.mock('@/features/cheques/hooks/use-cheque-list', () => ({
-  useChequeList: (_business: string, native: { status?: string }) => ({
-    cheques: (filteredCheques ?? []).filter(
-      (row) => !native.status || row.status === native.status,
-    ),
-    activeCount: listedCheques.length,
-    isLoading: loading,
-    error: listError,
-    search: '',
-    setSearch: mocks.filterSearch,
-    filter: 'All',
-    setFilter: mocks.filterStatus,
-    sortBy: 'date',
-    setSortBy: mocks.filterSortBy,
-    sortOrder: 'desc',
-    setSortOrder: mocks.filterSortOrder,
-    updateStatus: mocks.status,
-    pageIndex: 0,
-    hasNextPage: false,
-    nextPage: vi.fn(),
-    previousPage: vi.fn(),
-  }),
+  useChequeList: (
+    business: string | undefined,
+    native: { status?: string; from?: string; to?: string },
+  ) => {
+    mocks.listRequest(business, native)
+    return {
+      cheques: (filteredCheques ?? []).filter(
+        (row) =>
+          (!native.status || row.status === native.status) &&
+          (!native.from || row.cheque_date >= native.from) &&
+          (!native.to || row.cheque_date <= native.to),
+      ),
+      activeCount: listedCheques.length,
+      isLoading: loading,
+      error: listError,
+      search: '',
+      setSearch: mocks.filterSearch,
+      filter: 'All',
+      setFilter: mocks.filterStatus,
+      sortBy: 'date',
+      setSortBy: mocks.filterSortBy,
+      sortOrder: 'desc',
+      setSortOrder: mocks.filterSortOrder,
+      updateStatus: mocks.status,
+      pageIndex: 0,
+      hasNextPage: false,
+      nextPage: vi.fn(),
+      previousPage: vi.fn(),
+    }
+  },
 }))
 vi.mock('@/features/cheques/hooks/use-cheque-actions', () => ({
   useChequeActions: () => ({ deleteCheque: mocks.delete }),
@@ -584,6 +594,57 @@ describe('cheque draft status presentation', () => {
 })
 
 describe('cheque list page', () => {
+  it('applies the linked date as inclusive server-side bounds and makes it clearable', () => {
+    query = new URLSearchParams('date=2026-10-31&source=detail')
+    const { rerender } = renderPage(<ChequesPage />)
+    expect(mocks.listRequest).toHaveBeenLastCalledWith('business', {
+      from: '2026-10-31',
+      to: '2026-10-31',
+    })
+    expect(
+      screen.getByRole('button', { name: '100123 (0 tags)' }),
+    ).toBeVisible()
+    query = new URLSearchParams('date=2026-11-01&source=detail')
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ChequesPage />
+      </NextIntlClientProvider>,
+    )
+    expect(mocks.listRequest).toHaveBeenLastCalledWith('business', {
+      from: '2026-11-01',
+      to: '2026-11-01',
+    })
+    expect(
+      screen.queryByRole('button', { name: '100123 (0 tags)' }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Cheques.clearDateFilter }),
+    )
+    expect(mocks.replace).toHaveBeenCalledWith('/cheques?source=detail', {
+      scroll: false,
+    })
+    query = new URLSearchParams('source=detail')
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ChequesPage />
+      </NextIntlClientProvider>,
+    )
+    expect(mocks.listRequest).toHaveBeenLastCalledWith('business', {})
+    expect(
+      screen.getByRole('button', { name: '100123 (0 tags)' }),
+    ).toBeVisible()
+  })
+  it('rejects invalid linked dates rather than fetching an unfiltered list', () => {
+    query = new URLSearchParams('date=2026-02-30')
+    renderPage(<ChequesPage />)
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      messages.Cheques.invalidDateFilter,
+    )
+    expect(mocks.listRequest).toHaveBeenLastCalledWith(undefined, {})
+    expect(
+      screen.queryByRole('button', { name: '100123 (0 tags)' }),
+    ).not.toBeInTheDocument()
+  })
   it('renders cheque records with tags and forwards status updates', () => {
     renderPage(<ChequesPage />)
     fireEvent.click(screen.getByRole('button', { name: '100123 (0 tags)' }))
@@ -919,6 +980,20 @@ describe('cheque edit page', () => {
 })
 
 describe('cheque detail page', () => {
+  it('links party, account and cheque date to the matching detail pages and day filter', () => {
+    renderPage(<ChequeDetailPage />)
+    expect(screen.getByRole('link', { name: /Customer/ })).toHaveAttribute(
+      'href',
+      '/parties/party',
+    )
+    expect(screen.getByRole('link', { name: /Operating/ })).toHaveAttribute(
+      'href',
+      '/accounts/account',
+    )
+    expect(
+      document.querySelector('a[href="/cheques?date=2026-10-31"]'),
+    ).toBeInTheDocument()
+  })
   it.each(['loading', 'draft', 'missing'])(
     'handles %s without exposing cheque actions',
     (state) => {

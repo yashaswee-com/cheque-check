@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { isValidE164Phone } from '@/lib/phone'
 
 const PHONE_ERROR = 'Enter a valid phone number'
+export const chequeDateFilterSchema = z.iso.date()
 
 export const businessSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
