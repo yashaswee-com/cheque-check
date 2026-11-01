@@ -52,6 +52,7 @@ let empty = false
 let noResults = false
 let hasMoreToday = false
 let statsError = false
+let statsLoading = false
 let missingBusinessEmail = false
 let balance = -100
 let exportJobs: ExportJob[] | undefined = []
@@ -184,6 +185,7 @@ vi.mock('@/features/cheques/hooks/use-dashboard-cheques', () => ({
     data: cheques,
     isLoading: loading,
     isError: statsError,
+    isFetching: statsLoading,
   }),
 }))
 vi.mock('@/features/tags/hooks/use-entity-tags', () => ({
@@ -202,10 +204,21 @@ vi.mock('@/features/cheques/components/cheque-distribution', () => ({
   ChequeDistribution: ({
     summary,
     cheques: rows,
+    isLoading,
+    error,
   }: {
     summary?: unknown[]
     cheques?: unknown[]
-  }) => <span>Chart records: {(summary ?? rows ?? []).length}</span>,
+    isLoading?: boolean
+    error?: string
+  }) =>
+    isLoading ? (
+      <span role="status">Loading chart</span>
+    ) : error ? (
+      <span role="alert">{error}</span>
+    ) : (
+      <span>Chart records: {(summary ?? rows ?? []).length}</span>
+    ),
 }))
 vi.mock('@/features/cheques/components/stats-date-filter', () => ({
   StatsDateFilter: ({
@@ -294,10 +307,19 @@ function renderPage(page: ReactNode) {
 }
 beforeEach(() => {
   vi.resetAllMocks()
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    },
+  )
   loading = empty = noResults = false
   active = true
   hasMoreToday = false
   statsError = false
+  statsLoading = false
   missingBusinessEmail = false
   balance = -100
   cheques = [baseCheque]
@@ -325,6 +347,72 @@ afterEach(() => {
 })
 
 describe('dashboard page', () => {
+  it('shows only available overflow arrows and scrolls the quick actions', () => {
+    let onResize!: () => void
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          onResize = callback
+        }
+        observe() {}
+        disconnect() {}
+      },
+    )
+    renderPage(<DashboardPage />)
+    const actions = screen.getByTestId('dashboard-quick-actions')
+    Object.defineProperties(actions, {
+      scrollWidth: { configurable: true, value: 460 },
+      clientWidth: { configurable: true, value: 320 },
+    })
+    actions.scrollBy = vi.fn()
+    act(() => onResize())
+    expect(
+      screen.queryByRole('button', { name: 'Previous page' }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
+    expect(actions.scrollBy).toHaveBeenCalledWith({
+      left: 180,
+      behavior: 'smooth',
+    })
+    actions.scrollLeft = 140
+    fireEvent.scroll(actions)
+    expect(
+      screen.queryByRole('button', { name: 'Next page' }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Previous page' }))
+    expect(actions.scrollBy).toHaveBeenCalledWith({
+      left: -180,
+      behavior: 'smooth',
+    })
+    actions.scrollLeft = 0
+    Object.defineProperty(actions, 'clientWidth', { value: 460 })
+    act(() => onResize())
+    expect(
+      screen.queryByRole('button', { name: 'Next page' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Previous page' }),
+    ).not.toBeInTheDocument()
+  })
+  it('places centered status counts before quick actions and removes the quick actions heading', () => {
+    renderPage(<DashboardPage />)
+    const cards = screen.getByTestId('dashboard-status-cards')
+    expect(cards.nextElementSibling).toContainElement(
+      screen.getByTestId('dashboard-quick-actions'),
+    )
+    for (const card of cards.children) expect(card).toHaveClass('text-center')
+    expect(
+      screen.queryByRole('heading', { name: messages.Dashboard.quickActions }),
+    ).not.toBeInTheDocument()
+  })
+  it('keeps date controls visible while statistics are fetching', async () => {
+    statsLoading = true
+    renderPage(<DashboardPage />)
+    expect(screen.getByRole('button', { name: 'Today chart' })).toBeVisible()
+    expect(await screen.findByRole('status')).toHaveTextContent('Loading chart')
+    expect(screen.getByTestId('dashboard-current-balance')).toBeVisible()
+  })
   it.each([true, false])(
     'shows loading or first-business onboarding (%s)',
     (pending) => {

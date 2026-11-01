@@ -45,6 +45,39 @@ const row = (
 })
 
 describe('ChequeDistribution', () => {
+  it('preserves measure and direction while only the graph shows loading or errors', () => {
+    const view = (isLoading: boolean, error?: string) => (
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ChequeDistribution
+          currency="₹"
+          cheques={[row('1', 'Cleared', 'Inward', 300)]}
+          isLoading={isLoading}
+          error={error}
+        />
+      </NextIntlClientProvider>
+    )
+    const { rerender } = render(view(false))
+    fireEvent.change(screen.getByLabelText('Measure'), {
+      target: { value: 'amount' },
+    })
+    fireEvent.change(screen.getByLabelText('Direction'), {
+      target: { value: 'Inward' },
+    })
+    const measure = screen.getByLabelText('Measure')
+    rerender(view(true))
+    expect(screen.getByLabelText('Measure')).toBe(measure)
+    expect(measure).toHaveValue('amount')
+    expect(screen.getByLabelText('Direction')).toHaveValue('Inward')
+    expect(screen.getByRole('status')).toHaveTextContent(
+      messages.Common.loading,
+    )
+    expect(screen.queryByTestId('chart-total')).not.toBeInTheDocument()
+    rerender(view(false, 'Could not load'))
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not load')
+    rerender(view(false))
+    expect(screen.getByTestId('chart-total')).toHaveTextContent('₹300')
+    expect(screen.getByLabelText('Measure')).toBe(measure)
+  })
   it('uses exact server aggregates for count, amount and direction', () => {
     render(
       <NextIntlClientProvider locale="en" messages={messages}>

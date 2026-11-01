@@ -9,6 +9,12 @@ Dashboard and Reports share the same status distribution component and helpers.
   accessible table use amounts, not count labels.
 - Direction filtering (All, Outward, Inward) is independent of status.
   Dashboard's existing cheque-date range is applied before the distribution.
+- Dashboard date presets and the selected custom dates share one horizontally
+  scrollable row. The unwrapped date pill follows Custom range.
+  Measure and Direction stay mounted across range changes; only the graph
+  shows a loading state (or an explicit fetch error), preserving both selections.
+- Today, Upcoming and Overdue counts are centered immediately below the balance
+  card, followed by quick-action buttons with overflow arrows.
 - Fully cleared nonempty data shows 100% Cleared. Empty data is neutral;
   bounced-only data says No pending cheques, not All cleared.
 - Issued and Received are pending. Bounced and Cleared do not contribute to

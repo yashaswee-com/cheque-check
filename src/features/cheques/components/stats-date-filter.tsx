@@ -7,12 +7,9 @@ import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Calendar03Icon as CalendarIcon } from '@hugeicons/core-free-icons'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+  PillScroller,
+  filterPillClassName,
+} from '@/components/ui/pill-scroller'
 import {
   Popover,
   PopoverContent,
@@ -52,10 +49,29 @@ export function StatsDateFilter({
     : t('dateRange.pickDates')
 
   return (
-    <div className="flex items-center gap-2">
+    <PillScroller aria-label={t('dateRange.label')}>
+      {items.map((item) => (
+        <button
+          key={item.value}
+          type="button"
+          aria-pressed={preset === item.value}
+          className={filterPillClassName(
+            preset === item.value,
+            'text-xs font-medium',
+          )}
+          onClick={() => {
+            onPresetChange(item.value)
+            if (item.value === 'custom') setCalendarOpen(true)
+          }}
+        >
+          {item.label}
+        </button>
+      ))}
       {preset === 'custom' && (
         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-          <PopoverTrigger className="flex h-7 items-center gap-1.5 rounded-lg border border-input px-2 text-xs font-medium">
+          <PopoverTrigger
+            className={filterPillClassName(true, 'text-xs font-medium')}
+          >
             <HugeiconsIcon icon={CalendarIcon} className="h-3.5 w-3.5" />
             {customLabel}
           </PopoverTrigger>
@@ -70,26 +86,6 @@ export function StatsDateFilter({
           </PopoverContent>
         </Popover>
       )}
-      <Select
-        items={items}
-        value={preset}
-        onValueChange={(value) => {
-          const next = value as DateRangePreset
-          onPresetChange(next)
-          if (next === 'custom') setCalendarOpen(true)
-        }}
-      >
-        <SelectTrigger size="sm" aria-label={t('dateRange.label')}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent align="end" alignItemWithTrigger={false}>
-          {items.map((item) => (
-            <SelectItem key={item.value} value={item.value}>
-              {item.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    </PillScroller>
   )
 }

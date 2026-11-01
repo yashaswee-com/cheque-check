@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Chart01Icon, ArrowUpDownIcon } from '@hugeicons/core-free-icons'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { ChequeWithRelations } from '@/types'
 import type { ChequeSummaryRow } from '@/types/cheque-list'
 import { ChequeStatsChart } from './cheque-stats-chart'
@@ -23,12 +26,17 @@ export function ChequeDistribution({
   cheques,
   currency,
   summary,
+  isLoading = false,
+  error,
 }: {
   cheques?: ChequeWithRelations[]
   summary?: ChequeSummaryRow[]
   currency: string
+  isLoading?: boolean
+  error?: string
 }) {
   const t = useTranslations('ChartStats')
+  const tc = useTranslations('Common')
   const [metric, setMetric] = useState<DistributionMetric>('count')
   const [direction, setDirection] = useState<DistributionDirection>('All')
   const distribution = summary
@@ -43,7 +51,10 @@ export function ChequeDistribution({
     <div className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
       <div className="flex flex-wrap gap-3">
         <label className="flex flex-1 flex-col gap-1 text-xs font-medium">
-          {t('measure')}
+          <span className="flex items-center gap-1.5">
+            <HugeiconsIcon icon={Chart01Icon} className="size-3.5" />
+            {t('measure')}
+          </span>
           <select
             value={metric}
             onChange={(event) => {
@@ -60,7 +71,10 @@ export function ChequeDistribution({
           </select>
         </label>
         <label className="flex flex-1 flex-col gap-1 text-xs font-medium">
-          {t('direction')}
+          <span className="flex items-center gap-1.5">
+            <HugeiconsIcon icon={ArrowUpDownIcon} className="size-3.5" />
+            {t('direction')}
+          </span>
           <select
             value={direction}
             onChange={(event) => {
@@ -76,36 +90,53 @@ export function ChequeDistribution({
           </select>
         </label>
       </div>
-      <div className="relative h-[280px]">
-        <ChequeStatsChart
-          chartData={distribution.slices
-            .filter((slice) => slice.value > 0)
-            .map((slice) => ({
-              name: t(slice.status),
-              value: slice.value,
-              color: COLORS[slice.status],
-            }))}
-          totalCheques={distribution.totalCheques}
-          totalLabel={formatValue(distribution.total)}
-          formatValue={formatValue}
-        />
+      <div className="relative h-[280px]" aria-busy={isLoading}>
+        {isLoading ? (
+          <div role="status" className="h-full">
+            <span className="sr-only">{tc('loading')}</span>
+            <Skeleton className="h-full w-full rounded-lg" />
+          </div>
+        ) : error ? (
+          <p role="alert">{error}</p>
+        ) : (
+          <ChequeStatsChart
+            chartData={distribution.slices
+              .filter((slice) => slice.value > 0)
+              .map((slice) => ({
+                name: t(slice.status),
+                value: slice.value,
+                color: COLORS[slice.status],
+              }))}
+            totalCheques={distribution.totalCheques}
+            totalLabel={formatValue(distribution.total)}
+            formatValue={formatValue}
+          />
+        )}
       </div>
-      {distribution.totalCheques > 0 && !distribution.hasPending && (
-        <p role="status" className="text-center text-sm text-muted-foreground">
-          {distribution.allCleared ? t('allCleared') : t('noPending')}
-        </p>
+      {!isLoading &&
+        !error &&
+        distribution.totalCheques > 0 &&
+        !distribution.hasPending && (
+          <p
+            role="status"
+            className="text-center text-sm text-muted-foreground"
+          >
+            {distribution.allCleared ? t('allCleared') : t('noPending')}
+          </p>
+        )}
+      {!isLoading && !error && (
+        <ul className="sr-only" aria-label={t('distribution')}>
+          {distribution.slices.map((slice) => (
+            <li key={slice.status}>
+              {t(slice.status)}: {formatValue(slice.value)} (
+              {distribution.total > 0
+                ? ((slice.value / distribution.total) * 100).toFixed(1)
+                : '0'}
+              %)
+            </li>
+          ))}
+        </ul>
       )}
-      <ul className="sr-only" aria-label={t('distribution')}>
-        {distribution.slices.map((slice) => (
-          <li key={slice.status}>
-            {t(slice.status)}: {formatValue(slice.value)} (
-            {distribution.total > 0
-              ? ((slice.value / distribution.total) * 100).toFixed(1)
-              : '0'}
-            %)
-          </li>
-        ))}
-      </ul>
     </div>
   )
 }

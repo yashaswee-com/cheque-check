@@ -148,14 +148,16 @@ it('changes date presets, opens a custom calendar and selects dates', async () =
     )
   }
   wrap(<Filter />)
-  await user.click(screen.getByRole('combobox'))
-  await user.click(await screen.findByRole('option', { name: 'Custom range' }))
+  await user.click(screen.getByRole('button', { name: 'Custom range' }))
   const day = (await screen.findAllByRole('button')).find((button) =>
     button.getAttribute('data-day'),
   )
   expect(day).toBeDefined()
   fireEvent.click(day!)
-  expect(screen.getByRole('combobox')).toHaveTextContent('Custom range')
+  expect(screen.getByRole('button', { name: 'Custom range' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
 })
 
 it('does not open a calendar for a non-custom date preset', async () => {
@@ -169,8 +171,7 @@ it('does not open a calendar for a non-custom date preset', async () => {
       onCustomRangeChange={vi.fn()}
     />,
   )
-  await user.click(screen.getByRole('combobox'))
-  await user.click(await screen.findByRole('option', { name: 'This week' }))
+  await user.click(screen.getByRole('button', { name: 'This week' }))
   expect(onPresetChange).toHaveBeenCalledWith('thisWeek')
   expect(
     screen.queryByRole('button', { name: 'Pick dates' }),
@@ -189,6 +190,16 @@ it('labels an explicit custom date interval', () => {
   expect(
     screen.getByRole('button', { name: '1 Jan – 3 Jan 26' }),
   ).toBeInTheDocument()
+  const datePill = screen.getByRole('button', { name: '1 Jan – 3 Jan 26' })
+  expect(datePill).toHaveClass('whitespace-nowrap', 'shrink-0')
+  const row = screen.getByRole('group', {
+    name: messages.Dashboard.dateRange.label,
+  })
+  expect(row).toHaveClass('overflow-x-auto', 'flex-nowrap')
+  expect(datePill.closest('[data-slot="pill-scroller"]')).toBe(row)
+  expect(
+    screen.getByRole('button', { name: 'Custom range' }).nextElementSibling,
+  ).toBe(datePill)
 })
 
 it('labels a custom date range while its end date is not selected', () => {

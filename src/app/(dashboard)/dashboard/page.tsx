@@ -3,14 +3,14 @@
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   File02Icon as FileText,
-  FlashIcon as Zap,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
   Calendar03Icon as Calendar,
   Chart01Icon as Stats,
   Camera01Icon as Camera,
   Building03Icon,
   Calendar01Icon,
 } from '@hugeicons/core-free-icons'
-import { Button } from '@/components/ui/button'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import {
   useDashboardCheques,
@@ -20,14 +20,13 @@ import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { ChequeCard } from '@/components/cheque-card'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
-import { logger } from '@/lib/logger'
 import { DraftsSummaryCard } from '@/features/drafts'
 import { cn } from '@/lib/utils'
 import type { DateRange } from 'react-day-picker'
@@ -59,6 +58,20 @@ export default function HomePage() {
   const { profile } = useProfile()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const actionsRef = useRef<HTMLDivElement>(null)
+  const [actionsOverflow, setActionsOverflow] = useState({
+    left: false,
+    right: false,
+  })
+  const updateActionsOverflow = useCallback(
+    (element: HTMLDivElement) =>
+      setActionsOverflow({
+        left: element.scrollLeft > 1,
+        right:
+          element.scrollLeft + element.clientWidth < element.scrollWidth - 1,
+      }),
+    [],
+  )
 
   const {
     todayCheques,
@@ -73,6 +86,13 @@ export default function HomePage() {
     updateStatus,
     hasMoreToday,
   } = useDashboardCheques(activeBusiness?.id)
+  useEffect(() => {
+    const element = actionsRef.current
+    if (!element) return
+    const observer = new ResizeObserver(() => updateActionsOverflow(element))
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [isLoading, activeBusiness?.id, error, updateActionsOverflow])
   const tagMap = useEntityTagMap(
     activeBusiness?.id,
     'cheque',
@@ -178,18 +198,74 @@ export default function HomePage() {
             </div>
           </div>
 
+          <div
+            className="grid grid-cols-3 gap-3"
+            data-testid="dashboard-status-cards"
+          >
+            {[
+              {
+                label: tDashboard('today'),
+                count: todayCount,
+                color: 'bg-primary/5',
+              },
+              {
+                label: tDashboard('upcoming'),
+                count: upcomingCount,
+                color: 'bg-green-500/5',
+              },
+              {
+                label: tDashboard('overdue'),
+                count: overdueCount,
+                color: 'bg-red-500/5',
+              },
+            ].map((status) => (
+              <div
+                key={status.label}
+                className={`rounded-lg border ${status.color} p-4 text-center`}
+              >
+                <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  {status.label}
+                </p>
+                <p className="mt-2 text-2xl font-semibold">{status.count}</p>
+              </div>
+            ))}
+          </div>
+
           {/* Quick Actions */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 px-1">
-              <HugeiconsIcon
-                icon={Zap}
-                className="h-3 w-3 text-muted-foreground opacity-80"
-              />
-              <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {tDashboard('quickActions')}
-              </h2>
-            </div>
+          <div className="relative">
+            {actionsOverflow.left && (
+              <button
+                type="button"
+                aria-label={tShared('previousPage')}
+                onClick={() =>
+                  actionsRef.current?.scrollBy({
+                    left: -180,
+                    behavior: 'smooth',
+                  })
+                }
+                className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border bg-background p-1 shadow-sm"
+              >
+                <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+              </button>
+            )}
+            {actionsOverflow.right && (
+              <button
+                type="button"
+                aria-label={tShared('nextPage')}
+                onClick={() =>
+                  actionsRef.current?.scrollBy({
+                    left: 180,
+                    behavior: 'smooth',
+                  })
+                }
+                className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border bg-background p-1 shadow-sm"
+              >
+                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+              </button>
+            )}
             <div
+              ref={actionsRef}
+              onScroll={(event) => updateActionsOverflow(event.currentTarget)}
               className="flex max-w-full gap-3 overflow-x-auto overscroll-x-contain snap-x snap-proximity px-1 py-2"
               data-testid="dashboard-quick-actions"
             >
@@ -280,37 +356,6 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Today/Upcoming/Overdue Cards */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              {
-                label: tDashboard('today'),
-                count: todayCount,
-                color: 'bg-primary/5',
-              },
-              {
-                label: tDashboard('upcoming'),
-                count: upcomingCount,
-                color: 'bg-green-500/5',
-              },
-              {
-                label: tDashboard('overdue'),
-                count: overdueCount,
-                color: 'bg-red-500/5',
-              },
-            ].map((status) => (
-              <div
-                key={status.label}
-                className={`group relative rounded-lg border ${status.color} p-4 transition-all active:scale-95 overflow-hidden`}
-              >
-                <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  {status.label}
-                </p>
-                <p className="mt-2 text-2xl font-semibold">{status.count}</p>
-              </div>
-            ))}
-          </div>
-
           {/* Statistics Pie Chart */}
           <div className="space-y-4 pt-4">
             <div className="flex items-center gap-2 px-1">
@@ -321,25 +366,21 @@ export default function HomePage() {
               <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 {tDashboard('statistics')}
               </h2>
-              <div className="ml-auto">
-                <StatsDateFilter
-                  preset={statsPreset}
-                  onPresetChange={setStatsPreset}
-                  customRange={customRange}
-                  onCustomRangeChange={setCustomRange}
-                />
-              </div>
             </div>
-            {statsSummary.isLoading ? (
-              <Skeleton className="h-[280px] w-full" />
-            ) : statsSummary.isError ? (
-              <p role="alert">{tCommon('loadDataError')}</p>
-            ) : (
-              <ChequeStatsChart
-                summary={statsSummary.data}
-                currency={currency}
-              />
-            )}
+            <StatsDateFilter
+              preset={statsPreset}
+              onPresetChange={setStatsPreset}
+              customRange={customRange}
+              onCustomRangeChange={setCustomRange}
+            />
+            <ChequeStatsChart
+              summary={statsSummary.data}
+              currency={currency}
+              isLoading={statsSummary.isFetching}
+              error={
+                statsSummary.isError ? tCommon('loadDataError') : undefined
+              }
+            />
           </div>
         </>
       </DataState>
