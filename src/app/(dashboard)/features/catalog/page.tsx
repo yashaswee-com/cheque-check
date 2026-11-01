@@ -5,7 +5,7 @@ import {
   PremiumSwitch,
 } from '@/features/monetization/components/premium-controls'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
@@ -75,6 +75,7 @@ export default function FeaturesPage() {
   const [isSendingTestCall, setIsSendingTestCall] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [phoneError, setPhoneError] = useState(false)
+  const purchaseProcessed = useRef<string | null>(null)
   const phone = profilePhone ?? profile?.phone ?? ''
   const phoneChanged = phone !== (profile?.phone ?? '')
   const validPhone = isValidE164Phone(phone)
@@ -129,6 +130,30 @@ export default function FeaturesPage() {
       setIsRefreshing(false)
     }
   }
+
+  useEffect(() => {
+    if (isLoading || isLoadingProfile) return
+    const url = new URL(window.location.href || 'http://localhost/')
+    const productId = url.searchParams.get('purchase')
+    if (!productId || purchaseProcessed.current === productId) return
+    if (
+      !Object.values(PRODUCT_IDS).includes(
+        productId as (typeof PRODUCT_IDS)[keyof typeof PRODUCT_IDS],
+      )
+    ) {
+      url.searchParams.delete('purchase')
+      window.history.replaceState(null, '', `${url.pathname}${url.search}`)
+      return
+    }
+
+    purchaseProcessed.current = productId
+    url.searchParams.delete('purchase')
+    window.history.replaceState(null, '', `${url.pathname}${url.search}`)
+    void processPayment({
+      productId: productId as (typeof PRODUCT_IDS)[keyof typeof PRODUCT_IDS],
+      onSuccess: refreshAccess,
+    })
+  }, [isLoading, isLoadingProfile, processPayment, refreshAccess])
 
   async function sendTestCall() {
     if (isSendingTestCall) return

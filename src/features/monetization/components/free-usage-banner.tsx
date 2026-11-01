@@ -60,7 +60,7 @@ export function FreeUsageBanner() {
           </div>
         )
       })}
-      <Link className="underline text-sm" href="/features">
+      <Link className="underline text-sm" href="/features/catalog">
         {t('upgrade')}
       </Link>
     </aside>

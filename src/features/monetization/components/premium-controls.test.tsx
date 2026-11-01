@@ -76,7 +76,7 @@ describe('Premium controls', () => {
     fireEvent.click(
       screen.getByRole('button', { name: english.Premium.viewPlan }),
     )
-    expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/features')
+    expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/features/catalog')
   })
 
   it.each(['active', 'trialing'] as const)(

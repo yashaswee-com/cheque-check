@@ -1506,5 +1506,86 @@
     "accounts": "Accounts",
     "businesses": "Businesses",
     "noLinkedItems": "Is tag ke saath abhi kuch nahi hai."
+  },
+  "PublicSite": {
+    "nav": {
+      "home": "Home",
+      "features": "Features",
+      "pricing": "Pricing",
+      "privacy": "Privacy",
+      "contact": "Contact",
+      "signIn": "Sign in",
+      "getStarted": "Shuru karein",
+      "language": "Bhasha",
+      "navigation": "Main navigation"
+    },
+    "locales": {
+      "en": "English",
+      "hi": "हिन्दी",
+      "hi-en": "Hinglish"
+    },
+    "footer": {
+      "tagline": "Aapke business ke liye clear aur organized cheque management.",
+      "copyright": "ChequeCheck"
+    },
+    "landing": {
+      "eyebrow": "Roz ke business ke liye cheque management",
+      "title": "Har cheque par nazar rakhein.",
+      "description": "Cheques, accounts, parties aur due dates ko ek clear workspace mein organize karein.",
+      "primaryCta": "Apna account banayein",
+      "secondaryCta": "Features dekhein",
+      "sectionTitle": "Cheque management ka ek clear tareeka",
+      "sectionDescription": "Zaroori details ko saath rakhein aur aasani se dhoondhein.",
+      "cheques": "Cheques track karein",
+      "chequesDescription": "Cheque details, status aur expected deposit dates record karein.",
+      "accounts": "Accounts organize karein",
+      "accountsDescription": "Bank accounts aur unki cheque activity ko saath rakhein.",
+      "parties": "Parties manage karein",
+      "partiesDescription": "Customer, supplier aur vendor details ko cheques ke saath dhoondhein.",
+      "reports": "Activity review karein",
+      "reportsDescription": "Recorded cheque activity ko summaries aur reports se dekhein."
+    },
+    "features": {
+      "title": "Features",
+      "description": "Aapke business ki cheque activity record aur review karne ke tools.",
+      "itemsTitle": "Aapka cheque workflow, ek jagah",
+      "cheques": "Inward aur outward cheques, unka status aur due dates record karein.",
+      "accounts": "Cheque activity ko bank account ke hisaab se organize karein.",
+      "parties": "Customer, supplier aur vendor records ek jagah rakhein.",
+      "reminders": "Aane wali cheque dates ke reminders set karein.",
+      "reports": "Summaries aur reports se cheque activity review karein."
+    },
+    "pricing": {
+      "title": "Pricing",
+      "description": "Active ChequeCheck catalogue ke current products aur prices.",
+      "loadingError": "Abhi pricing available nahi hai. Baad mein phir try karein.",
+      "empty": "Is waqt koi product available nahi hai.",
+      "purchase": "Aage badhne ke liye sign in karein",
+      "oneTime": "One-time purchase",
+      "subscription": "Subscription",
+      "topUp": "Usage top-up",
+      "catalogNote": "Prices aur availability active product catalogue ke mutabik hain. Yahan koi discount shamil nahi hai."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "updated": "Aakhri update: {date}"
+    },
+    "contact": {
+      "title": "ChequeCheck se contact karein",
+      "description": "Hamari support team ko private message bhejein. Is form se email nahi bheja jata.",
+      "name": "Naam",
+      "email": "Email",
+      "message": "Message",
+      "namePlaceholder": "Aapka naam",
+      "emailPlaceholder": "you@example.com",
+      "messagePlaceholder": "Hum aapki kaise madad kar sakte hain?",
+      "submit": "Message bhejein",
+      "sending": "Bhej rahe hain…",
+      "success": "Aapka message mil gaya hai.",
+      "failure": "Message nahi bheja ja saka. Phir try karein.",
+      "rateLimited": "Bahut saare messages bheje gaye hain. Thodi der baad try karein.",
+      "whatsapp": "WhatsApp par contact karein",
+      "whatsappText": "Hello, mujhe ChequeCheck ke liye help chahiye."
+    }
   }
 }

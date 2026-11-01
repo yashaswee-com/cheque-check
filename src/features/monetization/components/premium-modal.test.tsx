@@ -26,7 +26,7 @@ it('closes and navigates to plans without applying the dismissal redirect', () =
     screen.getByRole('button', { name: messages.Common.viewPremiumPlans }),
   )
   expect(change).toHaveBeenCalledWith(false)
-  expect(push).toHaveBeenCalledExactlyOnceWith('/features')
+  expect(push).toHaveBeenCalledExactlyOnceWith('/features/catalog')
 })
 it('applies the optional redirect when declining premium', () => {
   const change = vi.fn()

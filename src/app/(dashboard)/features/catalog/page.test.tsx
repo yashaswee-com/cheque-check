@@ -16,9 +16,9 @@ import type { PhoneInputProps } from '@/components/ui/phone-input'
 import { FEATURE_IDS, PRODUCT_IDS } from '@/features/monetization/constants'
 import { queryKeys } from '@/lib/query-keys'
 import { stubWindowReload } from '@/test/browser'
-import messages from '../../../../messages/en.json'
-import hindi from '../../../../messages/hi.json'
-import hinglish from '../../../../messages/hi-en.json'
+import messages from '../../../../../messages/en.json'
+import hindi from '../../../../../messages/hi.json'
+import hinglish from '../../../../../messages/hi-en.json'
 import FeaturesPage from './page'
 import type { PremiumState } from '@/features/monetization/lib/premium-access'
 import { PremiumPromptProvider } from '@/features/monetization/components/premium-prompt'
@@ -42,7 +42,11 @@ let premiumState: PremiumState | null = null
 let finitePremium = false
 let resolvedEntitlementState: string | null = null
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+  window.history.replaceState({}, '', '/')
+})
 
 vi.mock('@/features/profile/hooks/use-profile', () => ({
   useProfile: () => ({
@@ -666,6 +670,23 @@ describe('Features page', () => {
       screen.getByRole('button', { name: messages.Features.tryAgain }),
     )
     expect(reload).toHaveBeenCalledOnce()
+  })
+
+  it('resumes a validated checkout intent after the login redirect', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/features/catalog?purchase=ai_scanner_30d',
+    )
+    expect(window.location.search).toBe('?purchase=ai_scanner_30d')
+    renderPage()
+
+    await waitFor(() =>
+      expect(mocks.payment).toHaveBeenCalledWith(
+        expect.objectContaining({ productId: PRODUCT_IDS.AI_SCANNER_30D }),
+      ),
+    )
+    expect(window.location.search).toBe('')
   })
 
   it('keeps purchase controls independent of unavailable payment history', () => {

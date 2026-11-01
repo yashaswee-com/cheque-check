@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { Children, type ReactElement, type ReactNode } from 'react'
 import {
   cleanup,
   fireEvent,
@@ -10,7 +10,7 @@ import {
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../messages/en.json'
-import LandingPage from './page'
+import LandingPage from './(public)/page'
 import RootLayout, { generateMetadata } from './layout'
 import ErrorBoundary from './error'
 import GlobalError from './global-error'
@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   getLocale: vi.fn(),
   getMessages: vi.fn(),
   getTranslations: vi.fn(),
+  headers: vi.fn(),
   redirect: vi.fn(),
   logError: vi.fn(),
   logFatal: vi.fn(),
@@ -43,6 +44,7 @@ vi.mock('next-intl/server', () => ({
   getMessages: mocks.getMessages,
   getTranslations: mocks.getTranslations,
 }))
+vi.mock('next/headers', () => ({ headers: mocks.headers }))
 vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({ auth: { getUser: mocks.getUser } }),
 }))
@@ -120,15 +122,19 @@ afterEach(() => {
 
 describe('application shell routes', () => {
   it('renders landing actions when there is no signed-in user', async () => {
+    mocks.getTranslations.mockResolvedValue((key: string) => `public:${key}`)
     mocks.getUser.mockResolvedValue({ data: { user: null }, error: null })
     const page = await LandingPage()
     renderIntl(page)
-    expect(screen.getByRole('heading', { name: 'ChequeCheck' })).toBeVisible()
-    expect(screen.getByText('Log in')).toBeVisible()
-    expect(screen.getByText('Sign up')).toBeVisible()
+    expect(
+      screen.getByRole('heading', { name: 'public:landing.title' }),
+    ).toBeVisible()
+    expect(screen.getByText('public:landing.primaryCta')).toBeVisible()
+    expect(screen.getByText('public:landing.secondaryCta')).toBeVisible()
   })
 
   it('logs session lookup errors and still renders public landing actions', async () => {
+    mocks.getTranslations.mockResolvedValue((key: string) => `public:${key}`)
     const error = new Error('Session lookup unavailable')
     mocks.getUser.mockResolvedValue({ data: { user: null }, error })
     const log = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -138,7 +144,7 @@ describe('application shell routes', () => {
       error,
     )
     renderIntl(page)
-    expect(screen.getByText('Log in')).toBeVisible()
+    expect(screen.getByText('public:landing.primaryCta')).toBeVisible()
     log.mockRestore()
   })
 
@@ -158,6 +164,7 @@ describe('application shell routes', () => {
     })
     mocks.getLocale.mockResolvedValue('hi')
     mocks.getMessages.mockResolvedValue(messages)
+    mocks.headers.mockResolvedValue(new Headers())
     const metadata = await generateMetadata()
     expect(metadata.description).toBe('settings:appDescription')
     expect(metadata.manifest).toBe('/site.webmanifest')
@@ -169,9 +176,42 @@ describe('application shell routes', () => {
 
     const layout = await RootLayout({ children: <p>Application content</p> })
     expect(layout.props.lang).toBe('hi')
-    const body = layout.props.children
+    const body = Children.toArray(layout.props.children).find(
+      (child) =>
+        typeof child === 'object' &&
+        child !== null &&
+        'type' in child &&
+        child.type === 'body',
+    ) as ReactElement<{ className?: string; children: ReactNode }>
     expect(body.type).toBe('body')
     expect(body.props.children).toHaveLength(5)
+  })
+
+  it('renders the public root without the authenticated device frame', async () => {
+    mocks.getLocale.mockResolvedValue('en')
+    mocks.getMessages.mockResolvedValue(messages)
+    mocks.getTranslations.mockImplementation(async (namespace: string) => {
+      if (namespace === 'Settings') return (key: string) => `settings:${key}`
+      return (key: string) => `common:${key}`
+    })
+    mocks.headers.mockResolvedValue(new Headers({ 'x-public-site': 'true' }))
+    const layout = await RootLayout({ children: <p>Public content</p> })
+    const body = Children.toArray(layout.props.children).find(
+      (child) =>
+        typeof child === 'object' &&
+        child !== null &&
+        'type' in child &&
+        child.type === 'body',
+    ) as ReactElement<{ className?: string; children: ReactNode }>
+    const children = Children.toArray(body.props.children)
+    expect(body.props.className).toContain('min-h-screen')
+    expect(children).toHaveLength(2)
+    const publicShell = children[1] as ReactElement<{ children: ReactNode }>
+    const publicContent = publicShell.props.children as ReactElement<{
+      children: ReactNode
+    }>
+    expect(publicContent.type).toBe('div')
+    expect(publicContent.props.children).toEqual(<p>Public content</p>)
   })
 
   it('logs errors from both boundaries and exposes reset actions', async () => {

@@ -117,7 +117,7 @@ export default function ReferralsPage() {
               <p>{t('emptyWallet')}</p>
             )}
             <p className="text-sm">{t('walletRules')}</p>
-            <Link className="underline" href="/features">
+            <Link className="underline" href="/features/catalog">
               {t('topups')}
             </Link>
             <h3>{t('recent')}</h3>

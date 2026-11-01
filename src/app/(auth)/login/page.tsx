@@ -33,6 +33,21 @@ import { getAuthErrorMessageKey } from '@/features/auth/auth-error-message'
 
 const PHONE_AUTH_ENABLED = publicEnv.NEXT_PUBLIC_PHONE_AUTH_ENABLED === 'true'
 
+function getPostLoginPath() {
+  const requested = new URLSearchParams(window.location.search).get('next')
+  if (
+    !requested ||
+    !requested.startsWith('/') ||
+    requested.startsWith('//') ||
+    requested.startsWith('/login') ||
+    requested.includes('\\') ||
+    /[\u0000-\u001f]/.test(requested)
+  ) {
+    return '/dashboard'
+  }
+  return requested
+}
+
 export default function LoginPage() {
   const t = useTranslations('Auth')
   const tp = useTranslations('PhoneAuth')
@@ -61,7 +76,7 @@ export default function LoginPage() {
       if (error) {
         reportError(error)
       } else {
-        router.push('/dashboard')
+        router.push(getPostLoginPath())
       }
     } catch (error: unknown) {
       reportError(error)
@@ -103,7 +118,7 @@ export default function LoginPage() {
           {PHONE_AUTH_ENABLED && usePhone ? (
             <PhoneAuthForm
               purpose="login"
-              onVerified={() => router.replace('/dashboard')}
+              onVerified={() => router.replace(getPostLoginPath())}
             />
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">

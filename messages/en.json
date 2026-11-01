@@ -1506,5 +1506,86 @@
     "noBusiness": "Select or create a business to use these tools.",
     "operationSuccess": "Completed successfully.",
     "operationError": "The operation could not complete. Check your data and Premium access, then retry."
+  },
+  "PublicSite": {
+    "nav": {
+      "home": "Home",
+      "features": "Features",
+      "pricing": "Pricing",
+      "privacy": "Privacy",
+      "contact": "Contact",
+      "signIn": "Sign in",
+      "getStarted": "Get started",
+      "language": "Language",
+      "navigation": "Main navigation"
+    },
+    "locales": {
+      "en": "English",
+      "hi": "हिन्दी",
+      "hi-en": "Hinglish"
+    },
+    "footer": {
+      "tagline": "Clear, organized cheque management for your business.",
+      "copyright": "ChequeCheck"
+    },
+    "landing": {
+      "eyebrow": "Cheque management for everyday business",
+      "title": "Keep every cheque in view.",
+      "description": "Organize cheques, accounts, parties, and due dates in one clear workspace.",
+      "primaryCta": "Create your account",
+      "secondaryCta": "Explore features",
+      "sectionTitle": "A clearer way to manage cheques",
+      "sectionDescription": "Keep the details you rely on together and easy to find.",
+      "cheques": "Track cheques",
+      "chequesDescription": "Record cheque details, status, and expected deposit dates.",
+      "accounts": "Organize accounts",
+      "accountsDescription": "Keep bank accounts and their cheque activity together.",
+      "parties": "Manage parties",
+      "partiesDescription": "Find customer, supplier, and vendor details alongside cheques.",
+      "reports": "Review activity",
+      "reportsDescription": "Use summaries and reports to review recorded cheque activity."
+    },
+    "features": {
+      "title": "Features",
+      "description": "Tools for recording and reviewing the cheque activity your business manages.",
+      "itemsTitle": "Your cheque workflow, together",
+      "cheques": "Record inward and outward cheques, their status, and due dates.",
+      "accounts": "Group cheque activity by bank account.",
+      "parties": "Keep customer, supplier, and vendor records in one place.",
+      "reminders": "Set reminders for upcoming cheque dates.",
+      "reports": "Review cheque activity with summaries and reports."
+    },
+    "pricing": {
+      "title": "Pricing",
+      "description": "Current products and prices from the active ChequeCheck catalogue.",
+      "loadingError": "Pricing is unavailable right now. Please try again later.",
+      "empty": "There are no products available at this time.",
+      "purchase": "Sign in to continue",
+      "oneTime": "One-time purchase",
+      "subscription": "Subscription",
+      "topUp": "Usage top-up",
+      "catalogNote": "Prices and availability reflect the active product catalogue. No discount is included here."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "updated": "Last Updated: {date}"
+    },
+    "contact": {
+      "title": "Contact ChequeCheck",
+      "description": "Send a private message to our support team. We do not send email from this form.",
+      "name": "Name",
+      "email": "Email",
+      "message": "Message",
+      "namePlaceholder": "Your name",
+      "emailPlaceholder": "you@example.com",
+      "messagePlaceholder": "How can we help?",
+      "submit": "Send message",
+      "sending": "Sending…",
+      "success": "Your message has been received.",
+      "failure": "We could not send your message. Please try again.",
+      "rateLimited": "Too many messages were sent. Please wait before trying again.",
+      "whatsapp": "Contact us on WhatsApp",
+      "whatsappText": "Hello, I need help with ChequeCheck."
+    }
   }
 }

@@ -174,7 +174,7 @@ describe('navigation components', () => {
     ['/', 'ChequeCheck'],
     ['/dashboard', messages.Navigation.dashboard],
     ['/settings', messages.Navigation.settings],
-    ['/features', messages.Navigation.features],
+    ['/features/catalog', messages.Navigation.features],
     ['/profile', messages.Settings.profile],
     ['/settings/privacy-policy', messages.Settings.privacyPolicy],
     ['/settings/terms-and-conditions', messages.Settings.termsAndConditions],
@@ -214,7 +214,7 @@ describe('navigation components', () => {
         [
           '/dashboard',
           '/settings',
-          '/features',
+          '/features/catalog',
           '/profile',
           '/cheques',
           '/accounts',

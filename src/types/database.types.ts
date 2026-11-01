@@ -27,6 +27,42 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['application_pins']['Row']>
         Relationships: []
       }
+      contact_messages: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          message: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          message: string
+          created_at?: string
+        }
+        Update: never
+        Relationships: []
+      }
+      contact_message_rate_limits: {
+        Row: {
+          address_hash: string
+          window_started_at: string
+          request_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          address_hash: string
+          window_started_at: string
+          request_count: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: never
+        Relationships: []
+      }
       notification_provider_capacity: {
         Row: {
           provider: string
@@ -707,6 +743,17 @@ export interface Database {
           requested_revision: string
         }
         Returns: Json
+      }
+      submit_contact_message: {
+        Args: {
+          requested_name: string
+          requested_email: string
+          requested_message: string
+          requested_address_hash: string
+          request_limit: number
+          window_seconds: number
+        }
+        Returns: boolean
       }
       referral_summary: { Args: Record<string, never>; Returns: Json }
       apply_referral_code: {

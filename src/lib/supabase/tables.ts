@@ -6,6 +6,8 @@ type PublicTableName = keyof Database['public']['Tables']
 // break at compile time if a migration renames or drops a table.
 export const TABLES = {
   APPLICATION_PINS: 'application_pins',
+  CONTACT_MESSAGES: 'contact_messages',
+  CONTACT_MESSAGE_RATE_LIMITS: 'contact_message_rate_limits',
   REPORT_EXPORT_JOBS: 'report_export_jobs',
   PROFILES: 'profiles',
   BUSINESSES: 'businesses',

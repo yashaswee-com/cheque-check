@@ -47,7 +47,10 @@ describe('free usage thresholds', () => {
     mount()
     const text = await screen.findByText(`Active cheques: ${used} / 50 used`)
     expect(text.parentElement).toHaveAttribute('data-state', state)
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/features')
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      '/features/catalog',
+    )
   })
   it('hides the card for unlimited access', async () => {
     data.unlimited = true

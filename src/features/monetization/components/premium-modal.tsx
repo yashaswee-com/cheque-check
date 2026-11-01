@@ -82,7 +82,7 @@ export function PremiumModal({
               className="w-full h-12 text-base font-semibold"
               onClick={() => {
                 onOpenChange(false)
-                router.push('/features')
+                router.push('/features/catalog')
               }}
             >
               {t('viewPremiumPlans')}
@@ -151,7 +151,9 @@ function PremiumAccessActions({
           onClick={() => {
             onClose()
             router.push(
-              state === 'paused' ? '/settings/help-and-support' : '/features',
+              state === 'paused'
+                ? '/settings/help-and-support'
+                : '/features/catalog',
             )
           }}
         >

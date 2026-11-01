@@ -68,7 +68,7 @@ export function TopNav() {
       return { title: t('Navigation.settings'), icon: Settings }
     if (path === '/notifications')
       return { title: t('Inbox.title'), icon: null }
-    if (path === '/features')
+    if (path === '/features' || path.startsWith('/features/'))
       return { title: t('Navigation.features'), icon: Star }
     if (path === '/profile') return { title: t('Settings.profile'), icon: User }
 
@@ -175,7 +175,7 @@ export function TopNav() {
 
   const { title, icon: TitleIcon } = getNavInfo(pathname)
   const route = getShellRoute(pathname)
-  const isMainTab = route.isTopLevel
+  const isMainTab = route.isTopLevel || pathname === '/features/catalog'
 
   const hideSettingsIcon =
     pathname.startsWith('/settings') ||

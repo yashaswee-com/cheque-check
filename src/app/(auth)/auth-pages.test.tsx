@@ -74,6 +74,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  window.history.replaceState({}, '', '/')
 })
 
 describe.each([
@@ -288,6 +289,46 @@ describe.each([
       expect(mocks.push).not.toHaveBeenCalled()
     },
   )
+})
+
+describe('login return path', () => {
+  it('continues a validated internal checkout destination after authentication', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/login?next=%2Ffeatures%2Fcatalog%3Fpurchase%3Dlifetime_premium',
+    )
+    renderPage(<LoginPage />)
+    fireEvent.click(screen.getByTestId('login-toggle-phone-button'))
+    fireEvent.change(screen.getByTestId('login-email-input'), {
+      target: { value: 'buyer@example.test' },
+    })
+    fireEvent.change(screen.getByTestId('login-password-input'), {
+      target: { value: 'correct-password' },
+    })
+    fireEvent.click(screen.getByTestId('login-submit-button'))
+
+    await waitFor(() =>
+      expect(mocks.push).toHaveBeenCalledWith(
+        '/features/catalog?purchase=lifetime_premium',
+      ),
+    )
+  })
+
+  it('rejects external redirect targets', async () => {
+    window.history.replaceState({}, '', '/login?next=%2F%2Fexample.test')
+    renderPage(<LoginPage />)
+    fireEvent.click(screen.getByTestId('login-toggle-phone-button'))
+    fireEvent.change(screen.getByTestId('login-email-input'), {
+      target: { value: 'buyer@example.test' },
+    })
+    fireEvent.change(screen.getByTestId('login-password-input'), {
+      target: { value: 'correct-password' },
+    })
+    fireEvent.click(screen.getByTestId('login-submit-button'))
+
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/dashboard'))
+  })
 })
 
 describe('forgot password page', () => {
