@@ -67,6 +67,9 @@ vi.mock('@/features/monetization/components/premium-gate', () => ({
     children: ReactNode
   }) => <div data-testid={`gate-${feature}`}>{children}</div>,
 }))
+vi.mock('@/features/monetization/components/premium-mark', () => ({
+  PremiumMark: () => null,
+}))
 vi.mock('@/features/cheques/components/print-layout-editor', () => ({
   PrintLayoutEditor: ({ accountId }: { accountId: string }) => (
     <p>Print {accountId}</p>

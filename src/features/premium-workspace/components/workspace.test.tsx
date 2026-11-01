@@ -85,6 +85,9 @@ vi.mock('@/features/monetization/components/premium-gate', () => ({
   usePremiumAction: () => ({ requireAccess: () => true }),
   PremiumGate: ({ children }: { children: React.ReactNode }) => children,
 }))
+vi.mock('@/features/monetization/components/premium-mark', () => ({
+  PremiumMark: () => null,
+}))
 vi.mock('../service', () => ({
   premiumWorkspaceService: {
     importRows,
