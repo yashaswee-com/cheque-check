@@ -10,7 +10,7 @@ import { useTranslations } from 'next-intl'
 import { Party, type ChequeDraft } from '@/types'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { useProfile } from '@/features/profile/hooks/use-profile'
-import { ConflictError } from '@/lib/errors'
+import { ConflictError, PlanLimitError } from '@/lib/errors'
 import { queueCelebration } from '@/lib/celebrate'
 import { useEntityCreateMutation } from '@/hooks/use-entity-mutations'
 import { useQueryClient } from '@tanstack/react-query'
@@ -169,6 +169,10 @@ export function useCreateCheque(
   }
 
   function showCreateError(error: unknown) {
+    if (error instanceof PlanLimitError) {
+      premium.requireAccess('unlimited-cheques')
+      return
+    }
     if (error instanceof ConflictError) {
       toast.add({
         title: tc('error'),

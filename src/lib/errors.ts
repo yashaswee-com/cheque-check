@@ -34,6 +34,13 @@ export class DatabaseError extends AppError {
   }
 }
 
+/** A free-plan cap enforced by the database (SQLSTATE 53400). */
+export class PlanLimitError extends AppError {
+  constructor(message: string, cause?: unknown) {
+    super(message, 'PLAN_LIMIT', cause)
+  }
+}
+
 export function mapSupabaseError(error: unknown): AppError {
   if (error instanceof AppError) {
     return error
@@ -67,6 +74,10 @@ export function mapSupabaseError(error: unknown): AppError {
 
   if (code === '42501') {
     return new ValidationError(message, error)
+  }
+
+  if (code === '53400') {
+    return new PlanLimitError(message, error)
   }
 
   return new DatabaseError(message, error)

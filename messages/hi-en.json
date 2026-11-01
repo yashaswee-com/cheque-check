@@ -260,6 +260,7 @@
   "Premium": {
     "marker": "Premium feature",
     "descriptions": {
+      "unlimited-cheques": "The free plan includes 50 active cheques. Lifetime Premium removes the limit.",
       "notify-party": "SMS app mein party ke liye cheque update taiyar karein. Carrier ke SMS charges lag sakte hain.",
       "contact-import": "Supported mobile browsers mein phone contacts se party details bharein. Manual entry hamesha available hai.",
       "duplicate-cheque": "Existing cheque se naya draft banayein, phir publish karne se pehle review aur edit karein.",
@@ -306,6 +307,7 @@
       "expired": "Access expired"
     },
     "features": {
+      "unlimited-cheques": "Unlimited cheques",
       "notify-party": "Party SMS taiyar karein",
       "contact-import": "Phone contacts se import",
       "duplicate-cheque": "Cheque ka duplicate draft",

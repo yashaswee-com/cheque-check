@@ -4,7 +4,7 @@ import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { queryKeys } from '@/lib/query-keys'
-import { ConflictError } from '@/lib/errors'
+import { ConflictError, PlanLimitError } from '@/lib/errors'
 import { useCreateCheque } from './use-create-cheque'
 
 const mocks = vi.hoisted(() => ({
@@ -325,6 +325,24 @@ describe('useCreateCheque', () => {
     expect(
       controllerOptions.toFields({ cheque_number: '123456' }),
     ).toMatchObject({ remind_before_days: 5 })
+  })
+
+  it('opens the Unlimited cheques upgrade instead of an error toast at the free cap', async () => {
+    const { result } = setup('Outward', { draftId: 'draft-1' })
+    mocks.draft.beginPublish.mockResolvedValue('draft-1')
+    mocks.publish.mockRejectedValueOnce(
+      new PlanLimitError('Free plan limit of 50 active cheques reached'),
+    )
+    setValidCheque(result)
+    mocks.premium.requireAccess.mockClear()
+
+    await act(async () => result.current.onSubmit())
+
+    expect(mocks.draft.failPublish).toHaveBeenCalledOnce()
+    expect(mocks.premium.requireAccess).toHaveBeenCalledWith(
+      'unlimited-cheques',
+    )
+    expect(mocks.toastAdd).not.toHaveBeenCalled()
   })
 
   it('surfaces publish errors and rejects cheque creation without a business', async () => {

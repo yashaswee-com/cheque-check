@@ -260,6 +260,7 @@
   "Premium": {
     "marker": "Premium feature",
     "descriptions": {
+      "unlimited-cheques": "The free plan includes 50 active cheques. Lifetime Premium removes the limit.",
       "notify-party": "Prepare a cheque update for your party in the SMS app. Your carrier's SMS charges may apply.",
       "contact-import": "Fill party details from your phone contacts on supported mobile browsers. Manual entry is always available.",
       "duplicate-cheque": "Start a new draft from an existing cheque, then review and edit it before publishing.",
@@ -306,6 +307,7 @@
       "expired": "Access expired"
     },
     "features": {
+      "unlimited-cheques": "Unlimited cheques",
       "notify-party": "Prepare a party SMS",
       "contact-import": "Import from phone contacts",
       "duplicate-cheque": "Duplicate cheque to a draft",

@@ -14,6 +14,7 @@ export const PREMIUM_FEATURES = [
   'consolidated-dashboard',
   'message-templates',
   'inward-tracking',
+  'unlimited-cheques',
 ] as const
 
 export type PremiumFeature = (typeof PREMIUM_FEATURES)[number]

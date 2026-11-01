@@ -797,6 +797,7 @@
   "Premium": {
     "marker": "प्रीमियम सुविधा",
     "descriptions": {
+      "unlimited-cheques": "The free plan includes 50 active cheques. Lifetime Premium removes the limit.",
       "notify-party": "SMS ऐप में पार्टी के लिए चेक अपडेट तैयार करें। आपके मोबाइल सेवा प्रदाता के SMS शुल्क लागू हो सकते हैं।",
       "contact-import": "समर्थित मोबाइल ब्राउज़र में फ़ोन संपर्क से पार्टी की जानकारी भरें। मैन्युअल जानकारी भरना हमेशा उपलब्ध है।",
       "duplicate-cheque": "मौजूदा चेक से नया ड्राफ़्ट बनाएँ और प्रकाशित करने से पहले जाँचकर संपादित करें।",
@@ -843,6 +844,7 @@
       "expired": "एक्सेस समाप्त"
     },
     "features": {
+      "unlimited-cheques": "Unlimited cheques",
       "notify-party": "पार्टी का SMS तैयार करें",
       "contact-import": "फ़ोन संपर्क से आयात",
       "duplicate-cheque": "चेक का नया ड्राफ़्ट बनाएँ",

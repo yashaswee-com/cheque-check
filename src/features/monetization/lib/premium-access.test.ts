@@ -45,7 +45,8 @@ describe('Lifetime Premium policy', () => {
   )
 
   it('catalogs every proposed benefit without metered AI or Voice products', () => {
-    expect(PREMIUM_FEATURES).toHaveLength(13)
+    expect(PREMIUM_FEATURES).toHaveLength(14)
+    expect(PREMIUM_FEATURES).toContain('unlimited-cheques')
     expect(PREMIUM_FEATURES).not.toContain('ai_scan')
     expect(PREMIUM_FEATURES).not.toContain('voice_reminder')
   })

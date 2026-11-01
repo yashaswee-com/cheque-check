@@ -4,6 +4,7 @@ import {
   ConflictError,
   DatabaseError,
   NotFoundError,
+  PlanLimitError,
   ValidationError,
   mapSupabaseError,
 } from './errors'
@@ -32,6 +33,13 @@ describe('mapSupabaseError', () => {
     expect(
       mapSupabaseError({ code: '42501', message: 'Denied' }),
     ).toBeInstanceOf(ValidationError)
+    const limit = mapSupabaseError({
+      code: '53400',
+      message: 'Free plan limit of 50 active cheques reached',
+    })
+    expect(limit).toBeInstanceOf(PlanLimitError)
+    expect(limit.code).toBe('PLAN_LIMIT')
+    expect(limit.message).toBe('Free plan limit of 50 active cheques reached')
   })
 
   it('maps unknown values to DatabaseError', () => {
