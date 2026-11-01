@@ -5,6 +5,7 @@ type PublicTableName = keyof Database['public']['Tables']
 // Central table-name registry so `.from(...)` calls get editor autocomplete and
 // break at compile time if a migration renames or drops a table.
 export const TABLES = {
+  APPLICATION_PINS: 'application_pins',
   REPORT_EXPORT_JOBS: 'report_export_jobs',
   PROFILES: 'profiles',
   BUSINESSES: 'businesses',

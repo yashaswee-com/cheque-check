@@ -54,6 +54,7 @@ export default function SettingsPage() {
   const referrals = useTranslations('Referrals')
   const tp = useTranslations('Premium')
   const tpa = useTranslations('PhoneAuth')
+  const security = useTranslations('Security')
   const { profile, isLoading: profileLoading } = useProfile()
   const display = useDisplayFormat(profile)
   const { handleLogout } = useSettings()
@@ -92,6 +93,11 @@ export default function SettingsPage() {
           description: t('preferencesDesc'),
           icon: Settings2,
           href: '/settings/preferences',
+        },
+        {
+          name: security('pinTitle'),
+          icon: Shield,
+          href: '/settings/security',
         },
         {
           name: t('notifications'),

@@ -11,6 +11,22 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      application_pins: {
+        Row: {
+          user_id: string
+          digest: string | null
+          salt: string | null
+          revision: string
+          failures: number
+          proof_digest: string | null
+          proof_expires_at: string | null
+        }
+        Insert: Partial<
+          Database['public']['Tables']['application_pins']['Row']
+        > & { user_id: string }
+        Update: Partial<Database['public']['Tables']['application_pins']['Row']>
+        Relationships: []
+      }
       notification_provider_capacity: {
         Row: {
           provider: string
@@ -671,6 +687,27 @@ export interface Database {
       }
     }
     Functions: {
+      security_pin_proof: {
+        Args: { requested_user: string; requested_proof: string }
+        Returns: undefined
+      }
+      security_pin_manage: {
+        Args: {
+          requested_user: string
+          requested_proof: string
+          requested_digest?: string
+          requested_salt?: string
+        }
+        Returns: undefined
+      }
+      security_pin_check: {
+        Args: {
+          requested_user: string
+          requested_digest: string
+          requested_revision: string
+        }
+        Returns: Json
+      }
       referral_summary: { Args: Record<string, never>; Returns: Json }
       apply_referral_code: {
         Args: { requested_code: string }

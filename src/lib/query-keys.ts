@@ -1,5 +1,6 @@
 /** Central registry of React Query keys. */
 export const queryKeys = {
+  security: { status: (userId?: string) => ['app-security', userId] as const },
   referrals: {
     summary: (userId?: string) => ['referral-summary', userId] as const,
   },
