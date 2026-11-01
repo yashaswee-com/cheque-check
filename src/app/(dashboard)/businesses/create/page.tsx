@@ -154,8 +154,24 @@ export default function CreateBusinessPage() {
       <form onSubmit={onSubmit} className="space-y-8">
         {step === 1 && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-            <div className="space-y-4">
-              <div className="space-y-2">
+            <div className="space-y-4" data-testid="business-step1-fields">
+              <div className="space-y-2" data-testid="business-logo-field">
+                <div className="flex flex-col items-center gap-3 py-2">
+                  <EditableAvatar
+                    name={watch('name') || t('businessName')}
+                    color={watch('color')}
+                    imageUrl={watch('logo_url')}
+                    onUpload={async (url) => setValue('logo_url', url)}
+                    onDelete={async () => setValue('logo_url', null)}
+                    size="xl"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t('businessLogo')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2" data-testid="business-name-field">
                 <Label
                   htmlFor="name"
                   className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
@@ -182,23 +198,10 @@ export default function CreateBusinessPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <div className="flex flex-col items-center gap-3 py-2">
-                  <EditableAvatar
-                    name={watch('name') || t('businessName')}
-                    color={watch('color')}
-                    imageUrl={watch('logo_url')}
-                    onUpload={async (url) => setValue('logo_url', url)}
-                    onDelete={async () => setValue('logo_url', null)}
-                    size="xl"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {t('businessLogo')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
+              <div
+                className="space-y-2"
+                data-testid="business-theme-color-field"
+              >
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
                   {tc('themeColor')}
                 </Label>

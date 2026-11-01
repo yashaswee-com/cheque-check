@@ -379,6 +379,19 @@ it.each([
 })
 
 describe('business creation page', () => {
+  it('orders the business logo, name, and theme color fields', () => {
+    renderPage(<CreateBusinessPage />)
+
+    const fields = screen.getByTestId('business-step1-fields')
+    expect(
+      Array.from(fields.children, (field) => field.getAttribute('data-testid')),
+    ).toEqual([
+      'business-logo-field',
+      'business-name-field',
+      'business-theme-color-field',
+    ])
+  })
+
   it('gates each step, keeps entered contact details, and submits the displayed summary', async () => {
     renderPage(<CreateBusinessPage />)
     expect(screen.getByTestId('business-step1-continue')).toBeDisabled()
