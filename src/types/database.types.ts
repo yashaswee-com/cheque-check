@@ -370,6 +370,7 @@ export interface Database {
           party_id: string | null
           account_id: string | null
           cheque_number: string | null
+          cheque_number_legacy?: boolean
           amount: number | null
           cheque_date: string | null
           deposit_date: string | null

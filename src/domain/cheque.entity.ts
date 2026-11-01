@@ -53,6 +53,10 @@ export class Cheque {
     return this.row.cheque_number
   }
 
+  get cheque_number_legacy(): boolean {
+    return this.row.cheque_number_legacy ?? false
+  }
+
   get amount(): number {
     return this.row.amount
   }

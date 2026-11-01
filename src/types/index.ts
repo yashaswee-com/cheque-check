@@ -132,6 +132,8 @@ export interface Cheque {
   party_id: string
   account_id: string
   cheque_number: string
+  /** Pre-existing number that is not six digits; cleared once the number is edited. */
+  cheque_number_legacy?: boolean
   amount: number
   cheque_date: string
   deposit_date: string | null

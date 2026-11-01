@@ -50,6 +50,11 @@ describe('Cheque entity', () => {
     json.notes = 'Modified'
     expect(entity.notes).toBe('Note')
     expect(Cheque.fromRow({ ...row, is_draft: undefined }).is_draft).toBe(false)
+    expect(entity.cheque_number_legacy).toBe(false)
+    expect(
+      Cheque.fromRow({ ...row, cheque_number_legacy: true })
+        .cheque_number_legacy,
+    ).toBe(true)
     expect(entity.isOverdue('2026-11-02')).toBe(true)
     expect(Cheque.fromRow({ ...row, status: 'Cleared' }).isOverdue()).toBe(
       false,

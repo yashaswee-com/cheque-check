@@ -642,6 +642,7 @@
     "duplicateNumber": "इस खाते में इस नंबर का चेक पहले से मौजूद है"
   },
   "Cheques": {
+    "legacyChequeNumberHint": "This cheque was saved with an older number format ({number}). Enter the 6-digit cheque number to save changes.",
     "title": "चेक",
     "newCheque": "नया चेक",
     "editCheque": "चेक संपादित करें",

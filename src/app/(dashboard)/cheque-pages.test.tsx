@@ -58,6 +58,7 @@ let initialStep = 1
 let query = new URLSearchParams()
 let originalType = 'Outward'
 let defaults: Record<string, unknown> = {}
+let legacyNumber = false
 let errors: Record<string, { message: string }> = {}
 let unmatched: Record<string, string> | null = null
 let listedCheques: Array<typeof cheque> = []
@@ -111,7 +112,13 @@ function useChequeForm(options?: {
     step,
     nextStep: () => setStep((s) => s + 1),
     prevStep: () => setStep((s) => s - 1),
-    cheque: { ...cheque, type: originalType },
+    cheque: {
+      ...cheque,
+      type: originalType,
+      ...(legacyNumber
+        ? { cheque_number: '12-345', cheque_number_legacy: true }
+        : {}),
+    },
     isLoading: loading,
     isSaving: saving,
     isUploading: uploading,
@@ -532,6 +539,7 @@ beforeEach(() => {
     conflict =
     extracting =
     imageFailed =
+    legacyNumber =
       false
   found = true
   draftStatus = 'saved'
@@ -869,6 +877,25 @@ describe('cheque creation page', () => {
 })
 
 describe('cheque edit page', () => {
+  it('renders the cheque number as six digit slots', () => {
+    defaults = { cheque_number: '100123' }
+    renderPage(<EditChequePage />)
+    const input = document.getElementById('cheque_number')!
+    expect(input).toHaveAttribute('maxlength', '6')
+    expect(
+      Array.from(document.querySelectorAll('[data-slot="digit-slot"]')).map(
+        (slot) => slot.textContent,
+      ),
+    ).toEqual(['1', '0', '0', '1', '2', '3'])
+    expect(screen.queryByTestId('legacy-cheque-number')).not.toBeInTheDocument()
+  })
+  it('explains how to fix a legacy cheque number', () => {
+    legacyNumber = true
+    renderPage(<EditChequePage />)
+    expect(screen.getByTestId('legacy-cheque-number')).toHaveTextContent(
+      '12-345',
+    )
+  })
   it('shows loading placeholders instead of editable fields', () => {
     loading = true
     renderPage(<EditChequePage />)

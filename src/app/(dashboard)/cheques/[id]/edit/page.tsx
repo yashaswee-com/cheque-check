@@ -12,13 +12,14 @@ import { useParties } from '@/features/parties/hooks/use-parties'
 import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DigitSlotsInput } from '@/components/ui/digit-slots-input'
+import { Controller } from 'react-hook-form'
 import { DateInput } from '@/components/ui/date-input'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
 import { Label } from '@/components/ui/label'
 import { useParams } from 'next/navigation'
 import {
   Calendar03Icon as Calendar,
-  HashtagIcon as Hash,
   Note01Icon as Note,
   Tick02Icon as Check,
   Delete02Icon as Trash2,
@@ -300,14 +301,20 @@ export default function EditChequePage() {
             >
               {t('chequeNumber')}
             </Label>
-            <Input
-              leftIcon={Hash}
-              id="cheque_number"
-              inputMode="numeric"
-              maxLength={6}
-              {...register('cheque_number')}
-              placeholder={t('chequeNumberPlaceholder')}
-              className="h-12 rounded-sm"
+            <Controller
+              control={form.control}
+              name="cheque_number"
+              render={({ field }) => (
+                <DigitSlotsInput
+                  ref={field.ref}
+                  id="cheque_number"
+                  data-testid="cheque-number-input"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  invalid={!!errors.cheque_number}
+                />
+              )}
             />
             <p
               className={cn(
@@ -317,6 +324,17 @@ export default function EditChequePage() {
             >
               {validationMessage(errors.cheque_number?.message) || '\u00A0'}
             </p>
+            {cheque?.cheque_number_legacy && (
+              <p
+                role="status"
+                data-testid="legacy-cheque-number"
+                className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm"
+              >
+                {t('legacyChequeNumberHint', {
+                  number: cheque.cheque_number ?? '',
+                })}
+              </p>
+            )}
           </div>
         </FormSection>
 

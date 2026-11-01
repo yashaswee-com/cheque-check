@@ -602,6 +602,7 @@
     "duplicateNumber": "A cheque with this number already exists for this account"
   },
   "Cheques": {
+    "legacyChequeNumberHint": "This cheque was saved with an older number format ({number}). Enter the 6-digit cheque number to save changes.",
     "title": "Cheques",
     "newCheque": "New Cheque",
     "editCheque": "Edit Cheque",

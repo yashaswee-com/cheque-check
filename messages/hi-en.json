@@ -602,6 +602,7 @@
     "duplicateNumber": "Is account mein is number ka cheque pehle se hai"
   },
   "Cheques": {
+    "legacyChequeNumberHint": "This cheque was saved with an older number format ({number}). Enter the 6-digit cheque number to save changes.",
     "title": "Cheques",
     "newCheque": "Naya Cheque",
     "editCheque": "Cheque Edit karein",

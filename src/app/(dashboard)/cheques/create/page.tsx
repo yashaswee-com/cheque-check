@@ -6,6 +6,8 @@ import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { Input } from '@/components/ui/input'
+import { DigitSlotsInput } from '@/components/ui/digit-slots-input'
+import { Controller } from 'react-hook-form'
 import { DateInput } from '@/components/ui/date-input'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
 import { Label } from '@/components/ui/label'
@@ -24,7 +26,6 @@ import {
   CreditCardIcon as CreditCard,
   BankIcon as Bank,
   Delete02Icon as Trash,
-  HashtagIcon as Hash,
   Calendar03Icon as Calendar,
   Note01Icon as Note,
 } from '@hugeicons/core-free-icons'
@@ -468,15 +469,20 @@ export default function CreateChequePage() {
               >
                 {t('chequeNumber')}
               </Label>
-              <Input
-                leftIcon={Hash}
-                id="cheque_number"
-                inputMode="numeric"
-                maxLength={6}
-                data-testid="cheque-number-input"
-                {...register('cheque_number')}
-                placeholder={t('chequeNumberPlaceholder')}
-                className="h-12 rounded-sm"
+              <Controller
+                control={form.control}
+                name="cheque_number"
+                render={({ field }) => (
+                  <DigitSlotsInput
+                    ref={field.ref}
+                    id="cheque_number"
+                    data-testid="cheque-number-input"
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    invalid={!!errors.cheque_number}
+                  />
+                )}
               />
               <p
                 className={cn(
