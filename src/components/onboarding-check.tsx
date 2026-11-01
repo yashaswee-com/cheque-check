@@ -4,6 +4,7 @@ import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { AppShellSkeleton } from '@/components/app-shell-skeleton'
+import { PwaInstallCard } from '@/components/pwa-install-card'
 
 export function OnboardingCheck({ children }: { children: React.ReactNode }) {
   const { businesses, isLoading, isFetching } = useBusiness()
@@ -21,5 +22,10 @@ export function OnboardingCheck({ children }: { children: React.ReactNode }) {
   if (isLoading || (isFetching && businesses.length === 0))
     return <AppShellSkeleton />
 
-  return <>{children}</>
+  return (
+    <>
+      {businesses.length > 0 && pathname === '/dashboard' && <PwaInstallCard />}
+      {children}
+    </>
+  )
 }

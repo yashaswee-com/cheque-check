@@ -1,4 +1,12 @@
 {
+  "PWA": {
+    "title": "ChequeCheck install karein",
+    "description": "Aasaan access ke liye app ko home screen par jodein.",
+    "iosInstructions": "Safari mein Share tap karein, phir Add to Home Screen chunein. Push notifications ke liye installed app kholein.",
+    "install": "Install karein",
+    "later": "Baad mein",
+    "error": "Yeh action poora nahi hua. Dobara try karein."
+  },
   "Validation": {
     "phone": "Sahi phone number daalein",
     "businessName": "Business ka naam zaroori hai",

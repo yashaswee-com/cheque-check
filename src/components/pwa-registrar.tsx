@@ -1,22 +1,31 @@
 'use client'
 
 import { useEffect } from 'react'
+import { captureInstallPrompt, clearInstallPrompt } from '@/lib/pwa-install'
 
 export function PwaRegistrar() {
   useEffect(() => {
+    window.addEventListener('beforeinstallprompt', captureInstallPrompt)
+    window.addEventListener('appinstalled', clearInstallPrompt)
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const registerServiceWorker = async () => {
         try {
-          const registration = await navigator.serviceWorker.register('/sw.js');
-          console.log('Service Worker registered with scope:', registration.scope);
+          await navigator.serviceWorker.register('/sw.js', {
+            scope: '/',
+            updateViaCache: 'none',
+          })
         } catch (error) {
-          console.error('Service Worker registration failed:', error);
+          console.error('Service Worker registration failed:', error)
         }
-      };
+      }
 
-      registerServiceWorker();
+      registerServiceWorker()
     }
-  }, []);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', captureInstallPrompt)
+      window.removeEventListener('appinstalled', clearInstallPrompt)
+    }
+  }, [])
 
-  return null;
+  return null
 }

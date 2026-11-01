@@ -1,4 +1,12 @@
 {
+  "PWA": {
+    "title": "Install ChequeCheck",
+    "description": "Add the app to your home screen for easier access.",
+    "iosInstructions": "In Safari, tap Share, then Add to Home Screen. Open the installed app to enable push notifications.",
+    "install": "Install",
+    "later": "Later",
+    "error": "Could not complete this action. Please try again."
+  },
   "Validation": {
     "phone": "Enter a valid phone number",
     "businessName": "Business name is required",
