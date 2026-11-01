@@ -21,7 +21,12 @@ export function useTags(businessId: string | undefined) {
   >({
     mutationFn: (input: Pick<Tag, 'business_id' | 'name' | 'color'>) =>
       tagService.create(input),
-    onSuccess: () => {
+    onSuccess: (tag) => {
+      queryClient.setQueryData<Tag[]>(queryKey, (current = []) =>
+        current.some((item) => item.id === tag.id)
+          ? current
+          : [...current, tag],
+      )
       queryClient.invalidateQueries({ queryKey })
     },
   })
@@ -51,6 +56,7 @@ export function useTags(businessId: string | undefined) {
     tags: query.data ?? [],
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
     createTag: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
     updateTag: updateMutation.mutateAsync,

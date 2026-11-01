@@ -1,4 +1,10 @@
 {
+  "SelectorPolish": {
+    "searchTags": "Search tags",
+    "noMatch": "No tags match this search.",
+    "loadError": "Could not load tags.",
+    "retry": "Retry"
+  },
   "Referrals": {
     "title": "Referrals and credits",
     "rules": "A paid Lifetime owner can invite you for 20% off your first Lifetime purchase. After verified payment, they receive credits equal to 20% of the original price. Apply before starting checkout.",

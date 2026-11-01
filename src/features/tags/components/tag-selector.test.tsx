@@ -56,6 +56,52 @@ function selector(onChange = vi.fn()) {
 }
 
 describe('Tag Selector modal backdrop', () => {
+  it('searches bounded pages and displays no matches explicitly', async () => {
+    mocks.tags = Array.from({ length: 120 }, (_, i) => ({
+      id: `tag-${i}`,
+      name: `Label ${i}`,
+      color: '#ff0000',
+    }))
+    selector()
+    fireEvent.click(screen.getByTestId('tag-selector-trigger'))
+    expect(
+      document.querySelectorAll('[data-testid^="tag-selector-option-"]'),
+    ).toHaveLength(50)
+    fireEvent.change(screen.getByTestId('tag-selector-create-input'), {
+      target: { value: 'zzzz-no-match' },
+    })
+    expect(
+      await screen.findByText(messages.SelectorPolish.noMatch),
+    ).toBeInTheDocument()
+  })
+  it('creates with selected color and does not submit the enclosing entity form', async () => {
+    const outer = vi.fn(),
+      change = vi.fn()
+    mocks.create.mockResolvedValue({ id: 'new' })
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <form onSubmit={outer}>
+          <TagSelector
+            businessId="business"
+            value={['tag-1']}
+            onChange={change}
+          />
+        </form>
+      </NextIntlClientProvider>,
+    )
+    fireEvent.click(screen.getByTestId('tag-selector-trigger'))
+    fireEvent.change(screen.getByTestId('tag-selector-create-input'), {
+      target: { value: 'Invoice' },
+    })
+    fireEvent.click(screen.getByTestId('tag-selector-create-button'))
+    fireEvent.click(await screen.findByRole('radio', { name: 'red' }))
+    fireEvent.click(screen.getByTestId('tag-form-submit-button'))
+    await waitFor(() => expect(change).toHaveBeenCalledWith(['tag-1', 'new']))
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Invoice', color: '#dc2626' }),
+    )
+    expect(outer).not.toHaveBeenCalled()
+  })
   it('removes a selected tag and creates a trimmed new tag', async () => {
     const change = vi.fn()
     mocks.create.mockResolvedValue({ id: 'new' })
@@ -67,13 +113,16 @@ describe('Tag Selector modal backdrop', () => {
       target: { value: '  Invoice  ' },
     })
     fireEvent.click(screen.getByTestId('tag-selector-create-button'))
+    fireEvent.click(await screen.findByTestId('tag-form-submit-button'))
     await waitFor(() =>
       expect(change).toHaveBeenLastCalledWith(['tag-1', 'new']),
     )
     expect(mocks.create).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Invoice' }),
     )
-    expect(screen.getByTestId('tag-selector-create-input')).toHaveValue('')
+    expect(
+      screen.queryByTestId('tag-form-submit-button'),
+    ).not.toBeInTheDocument()
   })
 
   it('renders selected and catalog placeholders while tags load', async () => {
@@ -132,12 +181,13 @@ describe('Tag Selector modal backdrop', () => {
     )
     selector()
     await user.click(screen.getByTestId('tag-selector-trigger'))
-    const input = screen.getByRole('textbox', {
-      name: messages.SharedUI.newTag,
+    await user.click(screen.getByTestId('tag-selector-create-button'))
+    const input = await screen.findByRole('textbox', {
+      name: new RegExp(messages.Tags.tagName),
     })
     fireEvent.change(input, { target: { value: 'Invoice' } })
-    fireEvent.keyDown(input, { key: 'Enter' })
-    fireEvent.keyDown(input, { key: 'Enter' })
+    fireEvent.submit(input.closest('form')!)
+    fireEvent.submit(input.closest('form')!)
     expect(mocks.create).toHaveBeenCalledTimes(1)
     reject(new Error('Unavailable'))
     expect(await screen.findByRole('alert')).toHaveTextContent(

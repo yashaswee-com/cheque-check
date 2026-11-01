@@ -43,6 +43,7 @@ export function TagForm({
       className="space-y-10"
       onSubmit={(event) => {
         event.preventDefault()
+        event.stopPropagation()
         if (trimmedName && !isSaving)
           void onSubmit({ name: trimmedName, color })
       }}

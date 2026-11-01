@@ -1,4 +1,10 @@
 {
+  "SelectorPolish": {
+    "searchTags": "Tags khojein",
+    "noMatch": "Is search se koi tag nahi mila.",
+    "loadError": "Tags load nahi hue.",
+    "retry": "Dobara try karein"
+  },
   "Referrals": {
     "title": "Referrals aur credits",
     "rules": "Paid Lifetime owner aapko pehli Lifetime purchase par 20% discount de sakta hai. Verified payment ke baad use original price ka 20% credit milta hai. Checkout se pehle code lagayein.",
