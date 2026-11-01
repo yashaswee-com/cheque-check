@@ -8,7 +8,10 @@ import type { InboxRequest } from '@/validators/notification-inbox'
 
 export function useUnreadCount(businessId?: string) {
   const { profile } = useProfile()
-  const [visible, setVisible] = useState(true)
+  const [visible, setVisible] = useState(
+    () =>
+      typeof document === 'undefined' || document.visibilityState !== 'hidden',
+  )
   useEffect(() => {
     const update = () => setVisible(document.visibilityState !== 'hidden')
     update()
