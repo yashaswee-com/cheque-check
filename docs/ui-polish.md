@@ -14,3 +14,5 @@ Creation/onboarding success screens draw a white SVG tick and fire one confetti
 burst on mount, never on Continue or destination navigation. OS/profile reduced
 motion disables tick/pulse animation and confetti. Post-cheque NPS timing remains
 on navigation independently of celebration.
+
+Settings displays the build's `package.json` version immediately below Sign Out.

@@ -31,6 +31,7 @@ import { useMonetization } from '@/features/monetization/hooks/use-monetization'
 import { PremiumLink } from '@/features/monetization/components/premium-controls'
 import { PremiumMark } from '@/features/monetization/components/premium-mark'
 import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
+import { version } from '../../../../package.json'
 
 interface SettingsItem {
   name: string
@@ -296,7 +297,7 @@ export default function SettingsPage() {
 
       <div className="text-center pb-8">
         <p className="text-xs text-muted-foreground font-semibold opacity-50 uppercase tracking-wider">
-          ChequeCheck v1.0.0
+          ChequeCheck v{version}
         </p>
         <p className="text-[10px] text-muted-foreground mt-2 opacity-30 font-semibold">
           {display.dateTime(new Date())}
