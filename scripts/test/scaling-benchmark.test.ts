@@ -89,9 +89,10 @@ describe('local benchmark input and measurements', () => {
       settled: 3,
       accounting_verified: true,
     })
-    expect(report.reads).toHaveLength(16)
+    expect(report.reads).toHaveLength(17)
     expect(report.reads.map((read) => read.name)).toEqual(
       expect.arrayContaining([
+        'profile_privacy_and_online_pin',
         'profile_appearance_and_tour_persistence',
         'free_plan_usage',
         'free_cap_check',

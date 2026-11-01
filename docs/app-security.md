@@ -36,3 +36,8 @@ A person controlling the browser or its existing Auth token can bypass client UI
 use Auth-authorized APIs. PIN protection is not a claim of at-rest encryption,
 offline protection, or protection against browser compromise. Configure hosted Auth
 OTP delivery before enabling PINs for accounts without passwords.
+
+The existing scaling runner includes 10,000 owner-scoped privacy profiles,
+PBKDF2 PIN verification at the full 600,000-iteration work factor, and transactional
+PIN removal/recovery checks. Its 1,000ms p95 budget is unchanged. The benchmark
+is local serialized SQL/Node work, not an HTTP/provider or production-concurrency test.

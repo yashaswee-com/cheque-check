@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto'
 import { createScalingFixture } from './lib/scaling-fixture'
 import { benchmarkPush } from './lib/push-scaling'
 import { benchmarkReferrals } from './lib/referral-scaling'
+import { benchmarkSecurity } from './lib/security-scaling'
 
 export interface BenchmarkOptions {
   users: number
@@ -462,6 +463,11 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
         ...latencySummary(referrals.preferences),
       },
     )
+    const security = await benchmarkSecurity(options.users, options.samples)
+    reads.push({
+      name: 'profile_privacy_and_online_pin',
+      ...latencySummary(security.timings),
+    })
     const budgetFailures = benchmarkBudgetFailures(reads, schedulerMs, options)
     return {
       version: 1,
