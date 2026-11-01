@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { bankService } from '@/features/accounts/services/bank.service'
+import type { CustomBankInput } from '@/features/accounts/repositories/bank.repository'
 import { Bank } from '@/types'
 import { queryKeys } from '@/lib/query-keys'
 
@@ -16,7 +17,7 @@ export function useBankMutations() {
   const refresh = () =>
     client.invalidateQueries({ queryKey: queryKeys.banks.list() })
   const create = useMutation({
-    mutationFn: (name: string) => bankService.create(name),
+    mutationFn: (input: CustomBankInput) => bankService.create(input),
     onSuccess: refresh,
   })
   const remove = useMutation({

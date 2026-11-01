@@ -226,11 +226,14 @@ describe('lazy production services', () => {
     await expect(getAll()).resolves.toEqual([])
     boundary.result.data = { id: 'bank-1', name: 'Private Bank' }
     const create = bankService.create
-    await expect(create('  Private Bank  ')).resolves.toEqual(
+    await expect(create({ name: '  Private Bank  ' })).resolves.toEqual(
       boundary.result.data,
     )
     expect(boundary.query.insert).toHaveBeenLastCalledWith({
       name: 'Private Bank',
+      abbreviation: null,
+      bank_type: null,
+      country_code: 'IN',
       owner_id: 'user-1',
       category: 'custom',
     })

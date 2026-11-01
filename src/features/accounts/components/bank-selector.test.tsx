@@ -183,9 +183,12 @@ describe('BankSelector', () => {
     )
     submit()
     await waitFor(() => expect(change).toHaveBeenCalledWith('new-bank'))
-    expect(state.create.mutateAsync).toHaveBeenCalledWith(
-      'Zzz Local Credit Bank',
-    )
+    expect(state.create.mutateAsync).toHaveBeenCalledWith({
+      name: 'Zzz Local Credit Bank',
+      abbreviation: null,
+      bank_type: null,
+      country_code: 'IN',
+    })
   })
 
   it('does not reuse an abandoned name when adding without a search', async () => {
@@ -237,7 +240,12 @@ describe('BankSelector', () => {
     fireEvent.change(input, { target: { value: 'New Bank' } })
     submit()
     await waitFor(() =>
-      expect(state.create.mutateAsync).toHaveBeenCalledWith('New Bank'),
+      expect(state.create.mutateAsync).toHaveBeenCalledWith({
+        name: 'New Bank',
+        abbreviation: null,
+        bank_type: null,
+        country_code: 'IN',
+      }),
     )
   })
 
@@ -282,7 +290,77 @@ describe('BankSelector', () => {
     fireEvent.change(input, { target: { value: 'Local Bank' } })
     submit()
     await waitFor(() => expect(onValueChange).toHaveBeenCalledWith('new-bank'))
-    expect(state.create.mutateAsync).toHaveBeenCalledWith('Local Bank')
+    expect(state.create.mutateAsync).toHaveBeenCalledWith({
+      name: 'Local Bank',
+      abbreviation: null,
+      bank_type: null,
+      country_code: 'IN',
+    })
+  })
+
+  it('sends a normalised abbreviation, bank type and country', async () => {
+    mount()
+    const input = await addForm()
+    fireEvent.change(input, { target: { value: 'Paytm Payments Bank' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'abbreviation' }), {
+      target: { value: ' ppbl ' },
+    })
+    const payments = screen.getByRole('button', { name: 'types.payments' })
+    fireEvent.click(payments)
+    expect(payments).toHaveAttribute('aria-pressed', 'true')
+    expect(
+      screen
+        .getByRole('group', { name: 'bankType' })
+        .querySelectorAll('button'),
+    ).toHaveLength(9)
+    expect(screen.getByTestId('custom-bank-country')).toHaveTextContent('India')
+    fireEvent.click(screen.getByTestId('custom-bank-country'))
+    fireEvent.change(await screen.findByPlaceholderText('countrySearch'), {
+      target: { value: 'Nepal' },
+    })
+    fireEvent.click(await screen.findByRole('option', { name: /Nepal/ }))
+    submit()
+    await waitFor(() =>
+      expect(state.create.mutateAsync).toHaveBeenCalledWith({
+        name: 'Paytm Payments Bank',
+        abbreviation: 'PPBL',
+        bank_type: 'payments',
+        country_code: 'NP',
+      }),
+    )
+  })
+
+  it('rejects an invalid abbreviation before saving', async () => {
+    mount()
+    const input = await addForm()
+    fireEvent.change(input, { target: { value: 'Local Bank' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'abbreviation' }), {
+      target: { value: '1' },
+    })
+    submit()
+    expect(screen.getByRole('alert')).toHaveTextContent('invalidAbbreviation')
+    expect(state.create.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('finds banks by abbreviation and shows it beside the name', async () => {
+    state.banks = [
+      {
+        id: 'sbi',
+        name: 'State Bank of India',
+        logo_url: null,
+        owner_id: null,
+        abbreviation: 'SBI',
+      } as (typeof state.banks)[number],
+      { id: 'other', name: 'Other Bank', logo_url: null, owner_id: null },
+    ]
+    mount()
+    open()
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'SBI' },
+    })
+    const options = await screen.findAllByTestId('bank-option')
+    expect(options[0]).toHaveTextContent('State Bank of India')
+    expect(options[0]).toHaveTextContent('SBI')
   })
 
   it('reports creation errors without losing the entered name', async () => {

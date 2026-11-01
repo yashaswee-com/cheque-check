@@ -28,13 +28,49 @@ describe('BankService', () => {
   }
   const service = new BankService(repository)
 
-  it('trims valid names and delegates to the repository', async () => {
-    await service.create('  My Bank  ')
-    expect(repository.create).toHaveBeenCalledWith('My Bank')
+  it('trims valid names, normalises details and delegates to the repository', async () => {
+    await service.create({ name: '  My Bank  ' })
+    expect(repository.create).toHaveBeenCalledWith({
+      name: 'My Bank',
+      abbreviation: null,
+      bank_type: null,
+      country_code: 'IN',
+    })
+    await service.create({
+      name: 'Co-op Bank',
+      abbreviation: ' cb  ltd ',
+      bank_type: 'urban_cooperative',
+      country_code: 'NP',
+    })
+    expect(repository.create).toHaveBeenLastCalledWith({
+      name: 'Co-op Bank',
+      abbreviation: 'CB LTD',
+      bank_type: 'urban_cooperative',
+      country_code: 'NP',
+    })
   })
 
   it('does not send invalid names to the database', async () => {
-    await expect(service.create('!')).rejects.toThrow()
+    await expect(service.create({ name: '!' })).rejects.toThrow()
+  })
+
+  it('rejects invalid abbreviations, bank types and countries', async () => {
+    vi.mocked(repository.create).mockClear()
+    for (const abbreviation of ['A', 'ABCDEFGHIJK', '12', 'S$B']) {
+      await expect(
+        service.create({ name: 'Bank', abbreviation }),
+      ).rejects.toThrow('abbreviation')
+    }
+    await expect(
+      service.create({
+        name: 'Bank',
+        bank_type: 'custom' as unknown as 'public',
+      }),
+    ).rejects.toThrow('bank type')
+    await expect(
+      service.create({ name: 'Bank', country_code: 'ZZ' }),
+    ).rejects.toThrow('country')
+    expect(repository.create).not.toHaveBeenCalled()
   })
 
   it('propagates database failures rather than claiming success', async () => {

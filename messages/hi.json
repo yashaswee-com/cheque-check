@@ -71,6 +71,25 @@
     "pendingNetHelp": "लंबित प्राप्तियाँ घटाकर लंबित भुगतान। यह आपके बैंक का बैलेंस नहीं है।"
   },
   "BankCatalog": {
+    "abbreviation": "Abbreviation (optional)",
+    "abbreviationPlaceholder": "e.g. SBI",
+    "invalidAbbreviation": "Use 2 to 10 letters or digits for the abbreviation.",
+    "bankType": "Bank type (optional)",
+    "country": "Country",
+    "countrySearch": "Search countries",
+    "countryEmpty": "No country found",
+    "types": {
+      "public": "Public sector",
+      "private": "Private sector",
+      "small_finance": "Small finance",
+      "payments": "Payments bank",
+      "regional_rural": "Regional rural",
+      "urban_cooperative": "Urban co-operative",
+      "state_cooperative": "State co-operative",
+      "district_cooperative": "District co-operative",
+      "foreign": "Foreign",
+      "custom": "Custom"
+    },
     "add": "नया बैंक जोड़ें",
     "name": "बैंक का नाम",
     "create": "कस्टम बैंक जोड़ें",

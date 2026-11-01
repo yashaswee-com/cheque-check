@@ -71,6 +71,25 @@
     "pendingNetHelp": "Pending receivables minus pending payables. This is not your bank balance."
   },
   "BankCatalog": {
+    "abbreviation": "Abbreviation (optional)",
+    "abbreviationPlaceholder": "e.g. SBI",
+    "invalidAbbreviation": "Use 2 to 10 letters or digits for the abbreviation.",
+    "bankType": "Bank type (optional)",
+    "country": "Country",
+    "countrySearch": "Search countries",
+    "countryEmpty": "No country found",
+    "types": {
+      "public": "Public sector",
+      "private": "Private sector",
+      "small_finance": "Small finance",
+      "payments": "Payments bank",
+      "regional_rural": "Regional rural",
+      "urban_cooperative": "Urban co-operative",
+      "state_cooperative": "State co-operative",
+      "district_cooperative": "District co-operative",
+      "foreign": "Foreign",
+      "custom": "Custom"
+    },
     "add": "Add New Bank",
     "name": "Bank name",
     "create": "Add Custom Bank",

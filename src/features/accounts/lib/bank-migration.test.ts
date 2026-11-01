@@ -177,6 +177,74 @@ describe('bank catalog SQL', () => {
     ).toHaveLength(1)
   })
 
+  it('stores optional custom bank details and defaults the country to India', async () => {
+    await db.exec(
+      readFileSync(
+        join(
+          'supabase',
+          'migrations',
+          '20261101090000_custom_bank_details.sql',
+        ),
+        'utf8',
+      ),
+    )
+    const shared = await db.query<{ country_code: string }>(
+      "SELECT country_code FROM banks WHERE name = 'HDFC Bank'",
+    )
+    expect(shared.rows).toEqual([{ country_code: 'IN' }])
+    await asUser(A, async () => {
+      const { rows } = await db.query<{
+        abbreviation: string
+        bank_type: string
+        country_code: string
+        category: string
+      }>(
+        `INSERT INTO banks(name, owner_id, category, abbreviation, bank_type, country_code)
+         VALUES ('Detailed Payments Bank', $1, 'custom', 'DPB', 'payments', 'NP')
+         RETURNING abbreviation, bank_type, country_code, category`,
+        [A],
+      )
+      expect(rows).toEqual([
+        {
+          abbreviation: 'DPB',
+          bank_type: 'payments',
+          country_code: 'NP',
+          category: 'custom',
+        },
+      ])
+      const plain = await db.query<{
+        abbreviation: string | null
+        country_code: string
+      }>(
+        "INSERT INTO banks(name, owner_id, category) VALUES ('Plain Private Bank', $1, 'custom') RETURNING abbreviation, country_code",
+        [A],
+      )
+      expect(plain.rows).toEqual([{ abbreviation: null, country_code: 'IN' }])
+    })
+  })
+
+  it.each([
+    ['abbreviation', "'X'"],
+    ['abbreviation', "'ABCDEFGHIJK'"],
+    ['abbreviation', "'123'"],
+    ['abbreviation', "' SB '"],
+    ['abbreviation', "'S$B'"],
+    ['bank_type', "'custom'"],
+    ['bank_type', "'savings'"],
+    ['country_code', "'india'"],
+    ['country_code', "'IND'"],
+  ])('rejects an invalid %s of %s', async (column, value) => {
+    await asUser(A, async () => {
+      await expect(
+        db.query(
+          `INSERT INTO banks(name, owner_id, category, ${column})
+           VALUES ('Invalid Detail Bank', $1, 'custom', ${value})`,
+          [A],
+        ),
+      ).rejects.toThrow()
+    })
+  })
+
   it('denies custom bank creation for deactivated users', async () => {
     await db.query(
       'UPDATE profiles SET deleted_at = now() WHERE user_id = $1',

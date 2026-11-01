@@ -505,19 +505,22 @@ describe('production CRUD repositories at the Supabase boundary', () => {
   it('creates an owner-scoped private bank and rejects auth failures', async () => {
     const repository = new SupabaseBankRepository()
     boundary.result.data = { id: 'bank-1', name: 'Private Bank' }
-    await expect(repository.create('Private Bank')).resolves.toEqual(
-      boundary.result.data,
-    )
+    await expect(
+      repository.create({ name: 'Private Bank', country_code: 'IN' }),
+    ).resolves.toEqual(boundary.result.data)
     expect(boundary.query.insert).toHaveBeenCalledWith({
       name: 'Private Bank',
+      country_code: 'IN',
       owner_id: 'user-1',
       category: 'custom',
     })
     const error = new Error('Auth unavailable')
     boundary.getUser.mockResolvedValue({ data: { user: null }, error })
-    await expect(repository.create('Private Bank')).rejects.toBe(error)
+    await expect(repository.create({ name: 'Private Bank' })).rejects.toBe(
+      error,
+    )
     boundary.getUser.mockResolvedValue({ data: { user: null }, error: null })
-    await expect(repository.create('Private Bank')).rejects.toThrow(
+    await expect(repository.create({ name: 'Private Bank' })).rejects.toThrow(
       'Authentication required',
     )
   })

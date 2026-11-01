@@ -316,6 +316,9 @@ export interface Database {
           category: Database['public']['Enums']['bank_category'] | null
           source_url: string | null
           verified_on: string | null
+          abbreviation: string | null
+          bank_type: Database['public']['Enums']['bank_category'] | null
+          country_code: string
           id: string
           name: string
           logo_url: string | null
@@ -1095,6 +1098,7 @@ export interface Database {
         | 'state_cooperative'
         | 'district_cooperative'
         | 'custom'
+        | 'payments'
       profile_currency: '₹' | '$' | '€' | '£'
       profile_date_format: 'dd/MM/yyyy' | 'MM/dd/yyyy' | 'yyyy-MM-dd'
       profile_time_format: '12h' | '24h'

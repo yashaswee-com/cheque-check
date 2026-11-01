@@ -1,10 +1,17 @@
-import { Bank } from '@/types'
+import { Bank, BankType } from '@/types'
 import { TABLES } from '@/lib/supabase/tables'
 import { SupabaseRepository } from '@/repositories/base.repository'
 
+export interface CustomBankInput {
+  name: string
+  abbreviation?: string | null
+  bank_type?: BankType | null
+  country_code?: string
+}
+
 export interface IBankRepository {
   getAll(): Promise<Bank[]>
-  create(name: string): Promise<Bank>
+  create(input: CustomBankInput): Promise<Bank>
   delete(id: string): Promise<void>
 }
 
@@ -29,14 +36,14 @@ export class SupabaseBankRepository
     }
   }
 
-  async create(name: string): Promise<Bank> {
+  async create(input: CustomBankInput): Promise<Bank> {
     const { data, error } = await this.supabase.auth.getUser()
     if (error) throw error
     if (!data.user) throw new Error('Authentication required')
     return this.handle(
       this.supabase
         .from(TABLES.BANKS)
-        .insert({ name, owner_id: data.user.id, category: 'custom' })
+        .insert({ ...input, owner_id: data.user.id, category: 'custom' })
         .select()
         .single(),
     ) as Promise<Bank>

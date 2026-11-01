@@ -84,7 +84,13 @@ export interface Bank {
   category?: ClosedChoice['bank_category'] | null
   source_url?: string | null
   verified_on?: string | null
+  abbreviation?: string | null
+  bank_type?: BankCategory | null
+  country_code?: string
 }
+
+export type BankCategory = ClosedChoice['bank_category']
+export type BankType = Exclude<BankCategory, 'custom'>
 
 export type TagEntityType = ClosedChoice['tag_entity_type']
 

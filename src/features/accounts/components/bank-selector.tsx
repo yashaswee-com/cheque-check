@@ -39,11 +39,22 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toast'
 import { DeleteConfirmationDialog } from '@/components/ui/delete-dialog'
 import { bankNameKey, isValidBankName } from '../lib/bank-name'
+import {
+  BANK_TYPES,
+  bankSearchLabel,
+  isValidBankAbbreviation,
+  normalizeBankAbbreviation,
+} from '../lib/bank-details'
 import { usePagedOptions } from '@/hooks/use-paged-options'
 import { OptionPagination } from '@/components/ui/option-pagination'
-import type { Bank } from '@/types'
+import { Combobox } from '@/components/ui/combobox'
+import {
+  FilterPillSection,
+  filterPillClassName,
+} from '@/components/ui/pill-scroller'
+import { countryOptions, DEFAULT_COUNTRY_CODE } from '@/lib/countries'
+import type { Bank, BankType } from '@/types'
 
-const bankLabel = (bank: Bank) => bank.name
 const emptyBanks: Bank[] = []
 
 interface BankSelectorProps {
@@ -63,15 +74,36 @@ export function BankSelector({
   const [adding, setAdding] = React.useState(false)
   const [name, setName] = React.useState('')
   const [nameError, setNameError] = React.useState<string | null>(null)
+  const [abbreviation, setAbbreviation] = React.useState('')
+  const [abbreviationError, setAbbreviationError] = React.useState<
+    string | null
+  >(null)
+  const [bankType, setBankType] = React.useState<BankType | null>(null)
+  const [countryCode, setCountryCode] = React.useState(DEFAULT_COUNTRY_CODE)
   const nameId = React.useId()
+  const abbreviationId = React.useId()
+  const countries = React.useMemo(
+    () =>
+      countryOptions().map((country) => ({
+        label: country.name,
+        value: country.code,
+      })),
+    [],
+  )
 
   const { data: banks, isPending, error, refetch } = useBanks()
   const { create, remove } = useBankMutations()
-  const paged = usePagedOptions(banks ?? emptyBanks, bankLabel)
+  const paged = usePagedOptions(banks ?? emptyBanks, bankSearchLabel)
 
   const selectedBank = banks?.find((bank) => bank.id === value)
   const trimmedQuery = paged.query.trim()
   const addLabel = trimmedQuery ? `${tb('add')} "${trimmedQuery}"` : tb('add')
+  const resetDetails = () => {
+    setAbbreviation('')
+    setAbbreviationError(null)
+    setBankType(null)
+    setCountryCode(DEFAULT_COUNTRY_CODE)
+  }
   const addBank = async (event: React.FormEvent) => {
     event.preventDefault()
     event.stopPropagation()
@@ -85,11 +117,22 @@ export function BankSelector({
       return
     }
     setNameError(null)
+    if (!isValidBankAbbreviation(abbreviation)) {
+      setAbbreviationError(tb('invalidAbbreviation'))
+      return
+    }
+    setAbbreviationError(null)
     try {
-      const bank = await create.mutateAsync(name)
+      const bank = await create.mutateAsync({
+        name,
+        abbreviation: normalizeBankAbbreviation(abbreviation) || null,
+        bank_type: bankType,
+        country_code: countryCode,
+      })
       onValueChange(bank.id)
       setAdding(false)
       setName('')
+      resetDetails()
     } catch (error) {
       toast.add({
         title: tb('saveFailed'),
@@ -203,6 +246,11 @@ export function BankSelector({
                         size="sm"
                       />
                       <span className="truncate font-medium">{bank.name}</span>
+                      {bank.abbreviation && (
+                        <span className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          {bank.abbreviation}
+                        </span>
+                      )}
                     </div>
                     <HugeiconsIcon
                       icon={Check}
@@ -226,6 +274,7 @@ export function BankSelector({
               onClick={() => {
                 setName(trimmedQuery)
                 setNameError(null)
+                resetDetails()
                 setOpen(false)
                 paged.setQuery('')
                 setAdding(true)
@@ -295,6 +344,61 @@ export function BankSelector({
                 {nameError}
               </p>
             )}
+            <Label htmlFor={abbreviationId}>{tb('abbreviation')}</Label>
+            <Input
+              id={abbreviationId}
+              value={abbreviation}
+              maxLength={10}
+              placeholder={tb('abbreviationPlaceholder')}
+              className="uppercase"
+              onChange={(event) => {
+                setAbbreviation(event.target.value)
+                setAbbreviationError(null)
+              }}
+              aria-invalid={!!abbreviationError}
+              aria-describedby={
+                abbreviationError ? `${abbreviationId}-error` : undefined
+              }
+              disabled={create.isPending}
+            />
+            {abbreviationError && (
+              <p
+                id={`${abbreviationId}-error`}
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {abbreviationError}
+              </p>
+            )}
+            <FilterPillSection title={tb('bankType')}>
+              {BANK_TYPES.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  aria-pressed={bankType === type}
+                  disabled={create.isPending}
+                  onClick={() => setBankType(bankType === type ? null : type)}
+                  className={filterPillClassName(bankType === type)}
+                >
+                  <span className="text-sm font-bold">
+                    {tb(`types.${type}`)}
+                  </span>
+                </button>
+              ))}
+            </FilterPillSection>
+            <div className="space-y-2">
+              <Label required>{tb('country')}</Label>
+              <Combobox
+                options={countries}
+                value={countryCode}
+                onValueChange={(code) =>
+                  setCountryCode(code || DEFAULT_COUNTRY_CODE)
+                }
+                placeholder={tb('countrySearch')}
+                emptyMessage={tb('countryEmpty')}
+                testId="custom-bank-country"
+              />
+            </div>
             <Button
               type="submit"
               className="w-full"

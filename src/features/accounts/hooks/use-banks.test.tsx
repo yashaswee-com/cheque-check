@@ -52,8 +52,10 @@ describe('bank hooks', () => {
     const invalidate = vi.spyOn(client, 'invalidateQueries')
     const { result } = renderHook(() => useBankMutations(), { wrapper })
 
-    await act(async () => result.current.create.mutateAsync('New Bank'))
-    expect(mocks.create).toHaveBeenCalledWith('New Bank')
+    await act(async () =>
+      result.current.create.mutateAsync({ name: 'New Bank' }),
+    )
+    expect(mocks.create).toHaveBeenCalledWith({ name: 'New Bank' })
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: queryKeys.banks.list(),
     })
@@ -78,7 +80,7 @@ describe('bank hooks', () => {
     mocks.create.mockRejectedValueOnce(new Error('Create failed'))
     await act(async () => {
       await expect(
-        mutation.result.current.create.mutateAsync('Bad Bank'),
+        mutation.result.current.create.mutateAsync({ name: 'Bad Bank' }),
       ).rejects.toThrow('Create failed')
     })
     expect(mutation.result.current.create.isPending).toBe(false)
