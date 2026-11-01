@@ -89,15 +89,18 @@ quotas; checkout success alone is not treated as confirmed feature activation.
 | Voice Reminders enabled | `profiles.voice_call_enabled`                                                                             | Scheduler only considers profiles with this `= true`                                                                                                                                 |
 | Time zone               | `profiles.time_zone`                                                                                      | Scheduler computes the profile's **local** wall-clock time via `Intl.DateTimeFormat` — every user gets reminders at their own 9am/1pm/6pm, not a fixed UTC time                      |
 | Reminders per day       | `profiles.reminders_per_day` (1/2/3)                                                                      | Maps to 1, 2, or 3 slot times per day (`REMINDER_SLOTS` in `_shared/notifications.ts`) — repeats the reminder at each slot on the due day until the cheque is marked Cleared/Bounced |
-| Voice language          | `profiles.language` (`en`/`hi`)                                                                           | Both the real reminder message and the sample test-call message are generated in the user's language via Twilio's `Polly.Aditi` bilingual voice                                      |
+| Voice language          | `profiles.language` (`en`/`hi`/`hi-en`)                                                                   | Reminder and sample-call text use the selected language; `hi-en` uses mixed Hindi-English text and the Hindi-capable voice                                                           |
+| Display currency        | `profiles.currency` (`₹`/`$`/`€`/`£`)                                                                     | Reminder totals are formatted using the profile's display currency; payment transaction currencies remain their actual recorded currencies                                           |
 | X-days-before           | `cheques.remind_before_days` (set from `profiles.default_reminder_days` at creation, editable per cheque) | Scheduler computes `daysUntilDue = deposit_date - today`; fires once `0 <= daysUntilDue <= remind_before_days`                                                                       |
 | Due date                | `cheques.deposit_date` (falls back to `cheques.cheque_date` if no deposit date set)                       | The countdown target. If `deposit_date` is null, the system falls back to same-day-only on `cheque_date` (no "before" reference exists in that case)                                 |
 | Cheque status           | `cheques.status`, `is_draft`                                                                              | Only `status = 'Issued'` and `is_draft = false` cheques are considered — Received (inward) cheques don't need a "fund your account" call                                             |
 
-**Preferences explicitly NOT used by Voice Reminders** (by design): `reduce_motion`,
-`received_cheques_enabled`, `party_sms_enabled`, `date_format`, `currency`,
-`time_format` — these are UI/other-feature preferences, unrelated to this
-channel.
+**Preferences not used to render Voice Reminders** (by design): `reduce_motion`,
+`received_cheques_enabled`, `party_sms_enabled`, `date_format`, and
+`time_format`. Calls contain no rendered calendar date or clock time; the
+scheduler uses `time_zone` to determine each user's local date and reminder
+slots. Report exports are machine-readable: CSV/JSON preserve ISO date values
+and raw numeric cheque amounts rather than applying profile display formats.
 
 ## 4. Scheduler logic in detail
 

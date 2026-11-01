@@ -22,6 +22,7 @@ const rows: ExportRow[] = Array.from({ length: 1001 }, (_, position) => ({
   payload: {
     cheque_number: `000${position}`,
     amount: position,
+    cheque_date: '2026-03-04',
     party: { name: 'a,"b"\nline' },
     notes: '=HYPERLINK("x")',
   },
@@ -47,6 +48,24 @@ describe('bounded deterministic export worker', () => {
     expect(content).toContain(`"'=HYPERLINK(""x"")"`)
     expect(content).toContain('"0000"')
     expect(content).toContain('"0"')
+  })
+  it('keeps export dates ISO-formatted and cheque amounts numeric without applying display preferences', () => {
+    const csv = formatExportPart(
+      { ...job, format: 'csv', row_count: 1, part_count: 1 },
+      rows.slice(0, 1),
+    )
+    const json = formatExportPart(
+      { ...job, row_count: 1, part_count: 1 },
+      rows.slice(0, 1),
+    )
+
+    expect(csv).toContain('"2026-03-04"')
+    expect(csv).toContain('"0"')
+    expect(csv).not.toContain('₹')
+    expect(JSON.parse(json)[0]).toMatchObject({
+      amount: 0,
+      cheque_date: '2026-03-04',
+    })
   })
   it('rejects missing, out-of-order or duplicate snapshot rows rather than producing partial exports', () => {
     expect(() => formatExportPart(job, [])).toThrow('Invalid export snapshot')

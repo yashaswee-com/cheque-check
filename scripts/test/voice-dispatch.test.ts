@@ -39,6 +39,11 @@ type OrchestratorCtor = new (
 // Edge code uses Deno-style imports; load it dynamically so the root
 // TypeScript project never follows them.
 let DispatcherOrchestrator: OrchestratorCtor
+let TwilioVoiceService: new (config: {
+  accountSid: string
+  authToken: string
+  fromNumber: string
+}) => { generateTwiML(message: string, language?: string): string }
 beforeAll(async () => {
   const url = pathToFileURL(
     resolve(
@@ -47,6 +52,12 @@ beforeAll(async () => {
   ).href
   ;({ DispatcherOrchestrator } = (await import(/* @vite-ignore */ url)) as {
     DispatcherOrchestrator: OrchestratorCtor
+  })
+  const twilioUrl = pathToFileURL(
+    resolve('supabase', 'functions', '_shared', 'twilio-voice.service.ts'),
+  ).href
+  ;({ TwilioVoiceService } = (await import(/* @vite-ignore */ twilioUrl)) as {
+    TwilioVoiceService: typeof TwilioVoiceService
   })
 })
 
@@ -180,6 +191,7 @@ function makeOrchestrator(
       name: 'Asha',
       phone: '+919800000000',
       language: 'en',
+      currency: '₹',
       voice_call_enabled: true,
       deleted_at: null,
     })),
@@ -217,6 +229,66 @@ const reminder: Job = {
 }
 
 describe('dispatcher eligibility', () => {
+  it('resolves reminder dates and slots from the profile time zone', async () => {
+    const url = pathToFileURL(
+      resolve('supabase', 'functions', '_shared', 'notifications.ts'),
+    ).href
+    const { getLocalTime } = (await import(/* @vite-ignore */ url)) as {
+      getLocalTime: (
+        instant: Date,
+        timeZone: string,
+      ) => { date: string; minutesOfDay: number }
+    }
+
+    expect(
+      getLocalTime(new Date('2026-03-01T18:45:00.000Z'), 'Asia/Kolkata'),
+    ).toEqual({ date: '2026-03-02', minutesOfDay: 15 })
+  })
+
+  it('formats reminder totals using profile currency and speaks the selected mixed language', async () => {
+    const { orchestrator, twilio } = makeOrchestrator(reminder, {
+      fetchProfile: async () => ({
+        user_id: USER,
+        name: 'Asha',
+        phone: '+919800000000',
+        language: 'hi-en',
+        currency: '€',
+        voice_call_enabled: true,
+        deleted_at: null,
+      }),
+      fetchCheques: async () => [
+        { id: 'c1', amount: 10, account: { bank: { name: 'HDFC' } } },
+        { id: 'c2', amount: 4.5, account: { bank: { name: 'HDFC' } } },
+      ],
+    })
+
+    await orchestrator.run(1)
+
+    expect(twilio.generateTwiML).toHaveBeenCalledWith(
+      expect.stringContaining('total 14.50 euros'),
+      'hi-en',
+    )
+    expect(twilio.generateTwiML).toHaveBeenCalledWith(
+      expect.stringContaining('Namaste Asha'),
+      'hi-en',
+    )
+  })
+
+  it('uses the bilingual Hindi voice for the hi-en preference', () => {
+    const voice = new TwilioVoiceService({
+      accountSid: 'test',
+      authToken: 'test',
+      fromNumber: '+919800000000',
+    })
+
+    expect(voice.generateTwiML('Namaste Asha', 'hi-en')).toContain(
+      'language="hi-IN">Namaste Asha</Say>',
+    )
+    expect(voice.generateTwiML('Namaste Asha', 'hi-en')).toContain(
+      'Dhanyavaad.',
+    )
+  })
+
   it('passes the scope to the claim and reports the provider id', async () => {
     const { orchestrator, db } = makeOrchestrator(reminder)
     const scope = { userId: USER, jobIds: [JOB] }

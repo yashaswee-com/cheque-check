@@ -69,8 +69,14 @@ export class TwilioVoiceService {
 
   generateTwiML(message: string, language: string = 'en'): string {
     // 'Polly.Aditi' is an Indian English/Hindi bilingual voice, perfect for both.
-    const twilioLang = language === 'hi' ? 'hi-IN' : 'en-IN'
-    const goodbye = language === 'hi' ? 'धन्यवाद।' : 'Goodbye.'
+    const usesHindi = language === 'hi' || language === 'hi-en'
+    const twilioLang = usesHindi ? 'hi-IN' : 'en-IN'
+    const goodbye =
+      language === 'hi'
+        ? 'धन्यवाद।'
+        : language === 'hi-en'
+          ? 'Dhanyavaad.'
+          : 'Goodbye.'
 
     const escapedMessage = this.escapeXml(message)
     const escapedGoodbye = this.escapeXml(goodbye)

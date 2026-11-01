@@ -27,7 +27,9 @@ export class DispatcherDatabaseService {
   async fetchProfile(userId: string): Promise<DispatchProfile | null> {
     const { data, error } = await this.supabase
       .from(TABLES.PROFILES)
-      .select('user_id, name, phone, language, voice_call_enabled, deleted_at')
+      .select(
+        'user_id, name, phone, language, currency, voice_call_enabled, deleted_at',
+      )
       .eq('user_id', userId)
       .maybeSingle()
 

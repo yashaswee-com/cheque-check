@@ -10,6 +10,24 @@ import {
 } from '../types.ts'
 
 const E164_PATTERN = /^\+[1-9]\d{6,14}$/
+const CURRENCY_CODES: Record<string, string> = {
+  '₹': 'INR',
+  $: 'USD',
+  '€': 'EUR',
+  '£': 'GBP',
+}
+
+function formatCurrency(
+  amount: number,
+  currency: string | null,
+  language: string,
+) {
+  return new Intl.NumberFormat(language === 'hi' ? 'hi-IN' : 'en-IN', {
+    style: 'currency',
+    currency: CURRENCY_CODES[currency ?? '₹'] ?? 'INR',
+    currencyDisplay: 'name',
+  }).format(amount)
+}
 
 export interface TestModeConfig {
   enabled: boolean
@@ -198,7 +216,12 @@ export class DispatcherOrchestrator {
     const language = profile.language || 'en'
     const message = isSample
       ? this.buildSampleMessage(profile.name || 'User', language)
-      : this.buildMessage(profile.name || 'User', cheques, language)
+      : this.buildMessage(
+          profile.name || 'User',
+          cheques,
+          language,
+          profile.currency,
+        )
     const twiml = this.twilio.generateTwiML(message, language)
     const to = this.testMode.enabled ? this.testMode.phone : recipient
     // Set before awaiting: a lost database response may already have reserved a credit.
@@ -286,6 +309,7 @@ export class DispatcherOrchestrator {
     name: string,
     cheques: DispatchCheque[],
     language: string,
+    currency: string | null,
   ): string {
     const banks: Record<string, { count: number; total: number }> = {}
     cheques.forEach((cheque) => {
@@ -299,17 +323,28 @@ export class DispatcherOrchestrator {
       const bankSummaries = Object.entries(banks)
         .map(
           ([bank, data]) =>
-            `${bank} में ${data.total} रुपये के ${data.count} चेक`,
+            `${bank} में ${data.count} चेक, कुल ${formatCurrency(data.total, currency, language)}`,
         )
         .join(', और ')
 
       return `नमस्ते ${name}, यह चेक चेक की तरफ से एक रिमाइंडर है। आज आपके ${bankSummaries} आ रहे हैं। कृपया सुनिश्चित करें कि आपके बैंक खाते में पर्याप्त बैलेंस है।`
     }
 
+    if (language === 'hi-en') {
+      const bankSummaries = Object.entries(banks)
+        .map(
+          ([bank, data]) =>
+            `${data.count} cheque${data.count > 1 ? 's' : ''} ${bank} mein, total ${formatCurrency(data.total, currency, language)}`,
+        )
+        .join(', aur ')
+
+      return `Namaste ${name}, Cheque Check ki taraf se reminder. Aaj ${bankSummaries} aa rahe hain. Please ensure aapke bank account mein sufficient balance hai.`
+    }
+
     const bankSummaries = Object.entries(banks)
       .map(
         ([bank, data]) =>
-          `${data.count} cheque${data.count > 1 ? 's' : ''} hitting ${bank} for a total of ${data.total}`,
+          `${data.count} cheque${data.count > 1 ? 's' : ''} hitting ${bank} for a total of ${formatCurrency(data.total, currency, language)}`,
       )
       .join(', and ')
 
@@ -319,6 +354,10 @@ export class DispatcherOrchestrator {
   private buildSampleMessage(name: string, language: string): string {
     if (language === 'hi') {
       return `नमस्ते ${name}, यह चेक चेक की तरफ से एक टेस्ट कॉल है। अगर आपने यह कॉल सुनी, तो आपकी वॉइस रिमाइंडर सेटिंग सही से काम कर रही है।`
+    }
+
+    if (language === 'hi-en') {
+      return `Namaste ${name}, yeh Cheque Check ki taraf se ek test call hai. Agar aapko yeh call sunai de rahi hai, to aapka Voice Reminder setup sahi kaam kar raha hai.`
     }
 
     return `Hello ${name}, this is a test call from Cheque Check. If you can hear this, your Voice Reminder setup is working correctly.`

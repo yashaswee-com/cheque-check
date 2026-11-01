@@ -26,6 +26,7 @@ export interface DispatchProfile {
   name: string | null
   phone: string | null
   language: string | null
+  currency: string | null
   voice_call_enabled: boolean
   deleted_at: string | null
 }
