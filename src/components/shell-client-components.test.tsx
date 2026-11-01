@@ -35,6 +35,9 @@ const mocks = vi.hoisted(() => ({
 }))
 let pathname = '/cheques/cheque-id'
 let keyboard = false
+vi.mock('@/features/notifications/hooks/use-inbox', () => ({
+  useUnreadCount: () => ({ data: 0, error: null }),
+}))
 let activeBusiness: {
   id: string
   name: string

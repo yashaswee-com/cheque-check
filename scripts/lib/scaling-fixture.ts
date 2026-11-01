@@ -41,7 +41,7 @@ export async function createScalingFixture(): Promise<PGlite> {
       channel notification_channel, purpose notification_purpose, recipient text, status notification_log_status, provider text,
       provider_message_id text, error text);
     CREATE FUNCTION lifecycle_user_active(requested_user uuid DEFAULT auth.uid())
-      RETURNS boolean LANGUAGE sql STABLE AS
+      RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,pg_temp AS
       $$ SELECT EXISTS (SELECT 1 FROM profiles WHERE user_id = requested_user AND deleted_at IS NULL) $$;
     -- Unlimited by default; the benchmark sets fixture.free_plan = 'on' to exercise caps.
     CREATE FUNCTION has_lifetime_premium() RETURNS boolean LANGUAGE sql STABLE AS
@@ -67,6 +67,7 @@ export async function createScalingFixture(): Promise<PGlite> {
       '20261101120000_reminder_times.sql',
       '20261102070000_extended_cheque_filters.sql',
       '20261102090000_cheque_analytics.sql',
+      '20261103000000_notification_inbox.sql',
     ]) {
       await db.exec(
         readFileSync(

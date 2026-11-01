@@ -1,4 +1,26 @@
 {
+  "Inbox": {
+    "title": "Notifications",
+    "bell": "Notifications, {count} unread",
+    "countError": "Notifications, unread count unavailable",
+    "allBusinesses": "All businesses",
+    "activeBusiness": "Active business",
+    "allScope": "Showing all your businesses. Mark all read applies to this scope.",
+    "activeScope": "Showing the selected business. Mark all read applies to this scope.",
+    "unreadOnly": "Unread only",
+    "unread": "Unread",
+    "refresh": "Refresh",
+    "markAll": "Mark all read",
+    "actionError": "Could not complete this action. Please try again.",
+    "empty": "No notifications match.",
+    "previous": "Previous",
+    "next": "Next",
+    "events": {
+      "cheque_reminder": "Cheques need your attention",
+      "export_ready": "Your report export is ready",
+      "export_failed": "Your report export could not be completed"
+    }
+  },
   "PWA": {
     "title": "Install ChequeCheck",
     "description": "Add the app to your home screen for easier access.",

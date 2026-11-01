@@ -151,6 +151,10 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
     )
     assert.equal(count.rows[0].total, expectedCheques, 'Seeded cheque count')
     const seedMs = performance.now() - started
+    await db.query(`INSERT INTO notification_inbox(user_id,business_id,kind,event_key)
+      SELECT user_id,user_id,'cheque_reminder','benchmark:'||user_id||':'||i
+      FROM profiles CROSS JOIN generate_series(1,100) i WHERE voice_call_enabled`)
+    await db.exec('ANALYZE notification_inbox')
     await db.query("SELECT set_config('request.jwt.claim.sub',$1,false)", [
       hotBusiness,
     ])
@@ -173,6 +177,41 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
       assert.equal(new Set(rows.map((row) => row.cheque_id)).size, rows.length)
     }
     const scenarios = [
+      {
+        name: 'inbox_page',
+        async run() {
+          const { rows } = await db.query<{
+            data: { items: { id: string }[]; next_cursor: string | null }
+          }>('SELECT list_notification_inbox() AS data')
+          assert.equal(rows[0].data.items.length, 50)
+          assert(rows[0].data.next_cursor)
+          assert.equal(
+            new Set(rows[0].data.items.map((item) => item.id)).size,
+            50,
+          )
+        },
+      },
+      {
+        name: 'inbox_unread',
+        async run() {
+          const { rows } = await db.query<{ count: number }>(
+            'SELECT count_unread_notifications() AS count',
+          )
+          assert.equal(Number(rows[0].count), 100)
+        },
+      },
+      {
+        name: 'inbox_mark_all',
+        async run() {
+          await db.transaction(async (tx) => {
+            const { rows } = await tx.query<{ changed: number }>(
+              'SELECT mark_notifications_read(requested_snapshot:=9223372036854775807) AS changed',
+            )
+            assert.equal(rows[0].changed, 100)
+            await tx.rollback()
+          })
+        },
+      },
       { name: 'first_page', run: () => page(0) },
       { name: 'last_page', run: () => page(lastOffset) },
       {
@@ -339,7 +378,7 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
       enqueued += rows[0].enqueued
       batches++
       assert(
-        batches <= Math.floor(options.activeUsers / 200) + 1,
+        batches <= Math.floor(options.users / 200) + 1,
         'Scheduler must terminate within the expected bounded batches',
       )
       if (rows[0].completed) break

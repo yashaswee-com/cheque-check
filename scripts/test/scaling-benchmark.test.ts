@@ -89,13 +89,16 @@ describe('local benchmark input and measurements', () => {
       settled: 3,
       accounting_verified: true,
     })
-    expect(report.reads).toHaveLength(9)
+    expect(report.reads).toHaveLength(12)
     expect(report.reads.map((read) => read.name)).toEqual(
       expect.arrayContaining([
         'free_plan_usage',
         'free_cap_check',
         'extended_filters',
         'analytics',
+        'inbox_page',
+        'inbox_unread',
+        'inbox_mark_all',
       ]),
     )
     expect(report.reads.every((read) => read.samples === 2)).toBe(true)

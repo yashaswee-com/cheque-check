@@ -1,5 +1,14 @@
 /** Central registry of React Query keys. */
 export const queryKeys = {
+  inbox: {
+    all: () => ['notification-inbox'] as const,
+    page: (
+      userId: string | undefined,
+      request: import('@/validators/notification-inbox').InboxRequest,
+    ) => ['notification-inbox', userId, 'page', request] as const,
+    count: (userId: string | undefined, businessId?: string) =>
+      ['notification-inbox', userId, 'count', businessId] as const,
+  },
   reportExports: {
     page: (
       businessId: string | undefined,

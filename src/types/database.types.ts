@@ -835,6 +835,27 @@ export interface Database {
           invalid_timezones: number
         }[]
       }
+      list_notification_inbox: {
+        Args: {
+          requested_business?: string
+          requested_unread?: boolean
+          requested_before?: string
+          requested_snapshot?: string
+        }
+        Returns: Json
+      }
+      count_unread_notifications: {
+        Args: { requested_business?: string }
+        Returns: number
+      }
+      mark_notifications_read: {
+        Args: {
+          requested_id?: string
+          requested_snapshot?: string
+          requested_business?: string
+        }
+        Returns: number
+      }
       start_notification_delivery: {
         Args: {
           requested_job: string

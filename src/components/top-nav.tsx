@@ -28,6 +28,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
 import { BusinessSwitcher } from '@/components/business-switcher'
+import { NotificationBell } from '@/features/notifications/components/notification-bell'
 import { useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -65,6 +66,8 @@ export function TopNav() {
       return { title: t('Navigation.dashboard'), icon: null }
     if (path === '/settings')
       return { title: t('Navigation.settings'), icon: Settings }
+    if (path === '/notifications')
+      return { title: t('Inbox.title'), icon: null }
     if (path === '/features')
       return { title: t('Navigation.features'), icon: Star }
     if (path === '/profile') return { title: t('Settings.profile'), icon: User }
@@ -219,6 +222,7 @@ export function TopNav() {
         </div>
 
         <div className="flex items-center gap-2">
+          <NotificationBell />
           <Button
             variant="ghost"
             size="icon"

@@ -9,6 +9,9 @@ import { AppFab } from './app-fab'
 
 let pathname = '/cheques/cheque-id'
 let keyboard = false
+vi.mock('@/features/notifications/hooks/use-inbox', () => ({
+  useUnreadCount: () => ({ data: 0, error: null }),
+}))
 const back = vi.fn()
 vi.mock('next/navigation', () => ({
   usePathname: () => pathname,
