@@ -361,6 +361,13 @@ Tests that read repository files or launch scripts use `node:path` helpers
 instead of hard-coded Windows separators so `npm test` works on Windows and
 the Ubuntu GitHub Actions runners.
 
+Negative-path tests simulate application failures; a logged error does not mean
+the test failed. Capture expected error logs with test-scoped spies, assert their
+exact arguments and call counts, and restore the spies after each test. Use
+one-shot mock implementations so additional unexpected errors still reach the
+real logger. Do not globally silence console output or disable runtime logging
+to make tests quiet.
+
 The dependency lockfile pins patched production packages. Targeted npm overrides
 make Sentry's bundler packages use the same patched glob version as the app;
 their older glob 13 ranges otherwise retain vulnerable glob/minimatch copies.

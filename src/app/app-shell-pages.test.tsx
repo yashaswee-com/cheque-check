@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -188,19 +189,29 @@ describe('application shell routes', () => {
     )
 
     cleanup()
-    render(<GlobalError error={error} reset={reset} />)
-    expect(
-      screen.getByRole('heading', { name: messages.Common.criticalError }),
-    ).toBeVisible()
-    expect(screen.getByText(error.message)).toBeVisible()
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
-    expect(reset).toHaveBeenCalledTimes(2)
-    await waitFor(() =>
-      expect(mocks.logFatal).toHaveBeenCalledWith(
-        'Critical global error caught',
-        error,
-      ),
-    )
+    const frame = document.createElement('iframe')
+    document.body.append(frame)
+    try {
+      const root = frame.contentDocument
+      if (!root) throw new Error('Unable to create global error test document')
+      render(<GlobalError error={error} reset={reset} />, { container: root })
+      const content = within(root.body)
+      expect(
+        content.getByRole('heading', { name: messages.Common.criticalError }),
+      ).toBeVisible()
+      expect(content.getByText(error.message)).toBeVisible()
+      fireEvent.click(content.getByRole('button', { name: 'Try again' }))
+      expect(reset).toHaveBeenCalledTimes(2)
+      await waitFor(() =>
+        expect(mocks.logFatal).toHaveBeenCalledWith(
+          'Critical global error caught',
+          error,
+        ),
+      )
+    } finally {
+      cleanup()
+      frame.remove()
+    }
   })
 
   it('composes dashboard content and provides a loading skeleton', () => {

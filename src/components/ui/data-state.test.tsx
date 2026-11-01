@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DataState } from './data-state'
+import { stubWindowReload } from '@/test/browser'
 const push = vi.hoisted(() => vi.fn())
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))
@@ -37,8 +38,7 @@ describe('DataState', () => {
   })
 
   it('offers reload after a data-load error', () => {
-    const reload = vi.fn()
-    vi.stubGlobal('location', { reload })
+    const reload = stubWindowReload()
     render(<DataState isError>Records</DataState>)
     fireEvent.click(screen.getByRole('button', { name: 'reloadPage' }))
     expect(reload).toHaveBeenCalledOnce()

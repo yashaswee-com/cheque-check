@@ -11,6 +11,8 @@ import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../messages/en.json'
 import { expectHorizontalPillRows } from '@/test/pill-rows'
+import { logger } from '@/lib/logger'
+import { stubWindowReload } from '@/test/browser'
 import DashboardPage from './dashboard/page'
 import ReportsPage from './reports/page'
 import ProfilePage from './profile/page'
@@ -344,6 +346,7 @@ afterEach(() => {
   Reflect.deleteProperty(window, 'caches')
   Reflect.deleteProperty(navigator, 'serviceWorker')
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('dashboard page', () => {
@@ -545,7 +548,11 @@ describe('reports page', () => {
     expect(mocks.requestExport).not.toHaveBeenCalled()
   })
   it('reports export exceptions and leaves format selection available for retry', async () => {
-    mocks.requestExport.mockRejectedValueOnce(new Error('Export failed'))
+    const log = vi
+      .spyOn(logger, 'error')
+      .mockImplementationOnce(() => 'test-reference')
+    const error = new Error('Export failed')
+    mocks.requestExport.mockRejectedValueOnce(error)
     renderPage(<ReportsPage />)
     fireEvent.click(screen.getByTestId('reports-export-trigger'))
     fireEvent.click(await screen.findByTestId('reports-export-csv'))
@@ -558,8 +565,12 @@ describe('reports page', () => {
       ),
     )
     expect(screen.getByTestId('reports-export-csv')).toBeVisible()
+    expect(log).toHaveBeenCalledExactlyOnceWith('Report export failed', error)
   })
   it('uses the generic export error message for non-Error failures', async () => {
+    const log = vi
+      .spyOn(logger, 'error')
+      .mockImplementationOnce(() => 'test-reference')
     mocks.requestExport.mockRejectedValueOnce('offline')
     renderPage(<ReportsPage />)
     fireEvent.click(screen.getByTestId('reports-export-trigger'))
@@ -573,9 +584,16 @@ describe('reports page', () => {
         }),
       ),
     )
+    expect(log).toHaveBeenCalledExactlyOnceWith(
+      'Report export failed',
+      'offline',
+    )
   })
 
   it('uses the generic cancellation error message for non-Error failures', async () => {
+    const log = vi
+      .spyOn(logger, 'error')
+      .mockImplementationOnce(() => 'test-reference')
     exportJobs = [
       {
         id: 'queued',
@@ -603,6 +621,10 @@ describe('reports page', () => {
           type: 'error',
         }),
       ),
+    )
+    expect(log).toHaveBeenCalledExactlyOnceWith(
+      'Export cancellation failed',
+      'offline',
     )
   })
 
@@ -695,6 +717,10 @@ describe('reports page', () => {
     expect(mocks.loadExport).toHaveBeenCalledOnce()
   })
   it('shows persistent progress, private downloads and cancellation failures', async () => {
+    const log = vi
+      .spyOn(logger, 'error')
+      .mockImplementationOnce(() => 'test-reference')
+    const error = new Error('Cancellation unavailable')
     exportJobs = [
       {
         id: 'job',
@@ -719,9 +745,7 @@ describe('reports page', () => {
         error_code: null,
       },
     ]
-    mocks.cancelExport.mockRejectedValueOnce(
-      new Error('Cancellation unavailable'),
-    )
+    mocks.cancelExport.mockRejectedValueOnce(error)
     renderPage(<ReportsPage />)
     expect(screen.getByText('500 of 501 cheques prepared')).toBeVisible()
     expect(
@@ -739,6 +763,10 @@ describe('reports page', () => {
       ),
     )
     expect(mocks.cancelExport).toHaveBeenCalledWith('job')
+    expect(log).toHaveBeenCalledExactlyOnceWith(
+      'Export cancellation failed',
+      error,
+    )
   })
   it('limits recent records to ten and explains the total count', () => {
     cheques = Array.from({ length: 12 }, (_, index) => ({
@@ -875,8 +903,7 @@ describe('profile page', () => {
   })
 
   it('reloads even when cache and service-worker APIs are unavailable', async () => {
-    const reload = vi.fn()
-    vi.stubGlobal('location', { reload })
+    const reload = stubWindowReload()
     renderPage(<ProfilePage />)
 
     fireEvent.click(

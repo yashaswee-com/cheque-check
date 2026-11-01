@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Add01Icon, Delete02Icon } from '@hugeicons/core-free-icons'
 import messages from '../../messages/en.json'
 import { version } from '../../package.json'
+import { stubWindowReload } from '@/test/browser'
 import { TopNav } from './top-nav'
 import { BottomNav } from './bottom-nav'
 import { SpeedDialFab } from './speed-dial-fab'
@@ -137,6 +138,10 @@ describe('navigation components', () => {
   it('updates optimistic active tabs and resets them when the real route changes', () => {
     const view = renderIntl(<BottomNav />)
     const parties = screen.getByTestId('bottom-nav-parties')
+    expect(parties).toHaveAttribute('href', '/parties')
+    parties.addEventListener('click', (event) => event.preventDefault(), {
+      once: true,
+    })
     fireEvent.click(parties)
     expect(parties).toHaveAttribute('aria-current', 'page')
     expect(screen.getByTestId('bottom-nav-cheques')).not.toHaveAttribute(
@@ -308,20 +313,23 @@ describe('navigation components', () => {
     const settings = screen.getByRole('link', {
       name: messages.Navigation.settings,
     })
+    expect(settings).toHaveAttribute('href', '/settings')
+    settings.addEventListener('click', (event) => event.preventDefault(), {
+      once: true,
+    })
     await user.click(settings)
     expect(settings).not.toBeVisible()
   })
 
   it('reloads from the More menu on routes that expose the reload action', async () => {
     const user = userEvent.setup()
-    const reload = vi.fn()
-    vi.stubGlobal('location', { reload })
     pathname = '/cheques'
     renderIntl(<TopNav />)
 
     await user.click(
       screen.getByRole('button', { name: messages.SharedUI.more }),
     )
+    const reload = stubWindowReload()
     await user.click(
       screen.getByRole('button', { name: messages.SharedUI.reload }),
     )

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook } from '@testing-library/react'
 import { useForm } from 'react-hook-form'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { logger } from '@/lib/logger'
 import { toPartyDraftFields } from '../lib/draft-fields'
 import { useDraftAutosave } from './use-draft-autosave'
 
@@ -94,8 +95,12 @@ describe('useDraftAutosave', () => {
   })
 
   it('catches debounced save failures, cancels pending timers on unmount and unsubscribes the form', async () => {
+    const log = vi
+      .spyOn(logger, 'error')
+      .mockImplementationOnce(() => 'test-reference')
+    const error = new Error('offline')
     const { result, unmount } = renderAutosave()
-    service.create.mockRejectedValueOnce(new Error('offline'))
+    service.create.mockRejectedValueOnce(error)
     await typeName(result, 'Unsaved')
     await act(() => vi.advanceTimersByTimeAsync(1500))
     expect(result.current.autosave.status).toBe('error')
@@ -103,6 +108,7 @@ describe('useDraftAutosave', () => {
     unmount()
     await act(() => vi.advanceTimersByTimeAsync(1500))
     expect(service.create).toHaveBeenCalledOnce()
+    expect(log).toHaveBeenCalledExactlyOnceWith('Draft autosave failed', error)
     await typeName(result, 'After unmount')
     await act(() => vi.advanceTimersByTimeAsync(1500))
     expect(service.create).toHaveBeenCalledOnce()
@@ -117,6 +123,7 @@ describe('useDraftAutosave', () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.clearAllMocks()
+    vi.restoreAllMocks()
   })
 
   it('ignores programmatic values such as OCR prefill', async () => {
@@ -283,8 +290,12 @@ describe('useDraftAutosave', () => {
   })
 
   it('reports a failed save and permits a retry', async () => {
+    const log = vi
+      .spyOn(logger, 'error')
+      .mockImplementationOnce(() => 'test-reference')
+    const error = new Error('Storage unavailable')
     const { result } = renderAutosave()
-    service.create.mockRejectedValueOnce(new Error('Storage unavailable'))
+    service.create.mockRejectedValueOnce(error)
 
     await act(async () => {
       await expect(result.current.autosave.save()).rejects.toThrow(
@@ -298,6 +309,7 @@ describe('useDraftAutosave', () => {
     })
     expect(service.create).toHaveBeenCalledTimes(2)
     expect(result.current.autosave.status).toBe('saved')
+    expect(log).toHaveBeenCalledExactlyOnceWith('Draft autosave failed', error)
   })
 
   it('discards unsaved state without deleting a draft row', async () => {

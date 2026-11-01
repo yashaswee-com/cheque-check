@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { logger } from '@/lib/logger'
 import { useReportCheques } from './use-report-cheques'
 
 const mocks = vi.hoisted(() => ({
@@ -67,6 +68,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   clients.splice(0).forEach((client) => client.clear())
+  vi.restoreAllMocks()
 })
 
 describe('bounded report reads and on-demand export', () => {
@@ -115,7 +117,11 @@ describe('bounded report reads and on-demand export', () => {
     expect(mocks.getAll).not.toHaveBeenCalled()
   })
   it('exposes read failures and propagates export-read failures rather than exporting stale previews', async () => {
-    mocks.getPage.mockRejectedValue(new Error('Preview unavailable'))
+    const log = vi
+      .spyOn(logger, 'error')
+      .mockImplementationOnce(() => 'test-reference')
+    const error = new Error('Preview unavailable')
+    mocks.getPage.mockRejectedValue(error)
     const { result } = renderHook(() => useReportCheques('b1'), {
       wrapper: setup(),
     })
@@ -125,6 +131,10 @@ describe('bounded report reads and on-demand export', () => {
     mocks.getAll.mockRejectedValueOnce(new Error('Export read failed'))
     await expect(result.current.loadExportCheques()).rejects.toThrow(
       'Export read failed',
+    )
+    expect(log).toHaveBeenCalledExactlyOnceWith(
+      'Report data could not be loaded',
+      error,
     )
   })
 })

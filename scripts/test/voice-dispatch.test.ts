@@ -1,7 +1,15 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import {
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from 'vitest'
 import {
   describeJobOutcome,
   planReminderCalls,
@@ -46,7 +54,32 @@ const credentials = { url: 'https://example.test', serviceRoleKey: 'test-key' }
 const USER = '11111111-1111-4111-8111-111111111111'
 const JOB = '22222222-2222-4222-8222-222222222222'
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+})
+
+function expectErrorLogs(...calls: [message: string, error: unknown][]) {
+  const log = vi.spyOn(console, 'error')
+  calls.forEach(() => log.mockImplementationOnce(() => {}))
+  onTestFinished(() => {
+    expect(log.mock.calls).toEqual(
+      calls.map(([message, error]) => [
+        expect.stringContaining(message),
+        error,
+      ]),
+    )
+  })
+}
+
+function expectFinalizationErrors(error: Error) {
+  expectErrorLogs(
+    [`Delivery finalization failed for ${JOB}`, error],
+    [`Delivery finalization failed for ${JOB}`, error],
+    [`Delivery finalization failed for ${JOB}`, error],
+    [`Dispatch crashed for job ${JOB}`, error.message],
+  )
+}
 
 function stubFetch(body: unknown) {
   const fetchMock = vi.fn(async () => Response.json(body))
@@ -209,12 +242,12 @@ describe('dispatcher eligibility', () => {
       return JSON.parse(String(json))
     }
     it('reports provider acceptance separately from durable settlement without private data', async () => {
+      const error = new Error('database failure')
+      expectFinalizationErrors(error)
       const log = vi.spyOn(console, 'log').mockImplementation(() => {})
       try {
         const { orchestrator } = makeOrchestrator(reminder, {
-          finishDelivery: vi
-            .fn()
-            .mockRejectedValue(new Error('database failure')),
+          finishDelivery: vi.fn().mockRejectedValue(error),
         })
         await orchestrator.run(50)
         const metric = summary(log)
@@ -238,6 +271,7 @@ describe('dispatcher eligibility', () => {
       }
     })
     it('counts uncertain outcomes and skipped work without claiming sent delivery', async () => {
+      expectErrorLogs([`Voice call failed for job ${JOB}`, 'timeout'])
       const log = vi.spyOn(console, 'log').mockImplementation(() => {})
       try {
         const { orchestrator } = makeOrchestrator(
@@ -340,6 +374,7 @@ describe('dispatcher eligibility', () => {
   })
 
   it('retries via markFailedOrRetry when the provider rejects', async () => {
+    expectErrorLogs([`Voice call failed for job ${JOB}`, 'bad number'])
     const { orchestrator, db } = makeOrchestrator(
       reminder,
       {},
@@ -357,6 +392,7 @@ describe('dispatcher eligibility', () => {
   })
 
   it('never leaves a claimed job in processing when something throws', async () => {
+    expectErrorLogs([`Dispatch crashed for job ${JOB}`, 'db down'])
     const { orchestrator, db } = makeOrchestrator(reminder, {
       fetchProfile: async () => {
         throw new Error('db down')
@@ -368,9 +404,9 @@ describe('dispatcher eligibility', () => {
   })
 
   it('never calls the provider again when acceptance finalization fails', async () => {
-    const finishDelivery = vi
-      .fn()
-      .mockRejectedValue(new Error('audit unavailable'))
+    const error = new Error('audit unavailable')
+    expectFinalizationErrors(error)
+    const finishDelivery = vi.fn().mockRejectedValue(error)
     const { orchestrator, db, twilio } = makeOrchestrator(reminder, {
       finishDelivery,
     })
@@ -382,6 +418,7 @@ describe('dispatcher eligibility', () => {
   })
 
   it('does not redeliver an uncertain provider response', async () => {
+    expectErrorLogs([`Voice call failed for job ${JOB}`, 'request timed out'])
     const { orchestrator, db } = makeOrchestrator(
       reminder,
       {},
@@ -402,6 +439,10 @@ describe('dispatcher eligibility', () => {
   })
 
   it('holds an ambiguous reservation response without contacting the provider', async () => {
+    expectErrorLogs([
+      `Dispatch crashed for job ${JOB}`,
+      'database response lost',
+    ])
     const { orchestrator, db, twilio } = makeOrchestrator(reminder, {
       startDelivery: vi
         .fn()

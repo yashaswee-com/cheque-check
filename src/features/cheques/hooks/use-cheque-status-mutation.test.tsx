@@ -4,6 +4,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { queryKeys } from '@/lib/query-keys'
+import { logger } from '@/lib/logger'
 import { useChequeStatusMutation } from './use-cheque-status-mutation'
 import { useChequeNumberConflict } from './use-cheque-number-conflict'
 import { useRelatedCheques } from './use-related-cheques'
@@ -52,10 +53,15 @@ function setup() {
 afterEach(() => {
   clients.splice(0).forEach((client) => client.clear())
   vi.resetAllMocks()
+  vi.restoreAllMocks()
 })
 
 describe('canonical cheque hooks', () => {
   it('updates and rolls back both cache surfaces through the shared mutation', async () => {
+    const log = vi
+      .spyOn(logger, 'error')
+      .mockImplementationOnce(() => 'test-reference')
+    const error = new Error('Database unavailable')
     const { client, wrapper } = setup()
     client.setQueryData(queryKeys.cheques.list('b1'), [original])
     client.setQueryData(queryKeys.cheques.detail('c1'), original)
@@ -91,7 +97,7 @@ describe('canonical cheque hooks', () => {
       expect(detail).toBeInstanceOf(ChequeEntity)
     })
     await act(async () => {
-      reject(new Error('Database unavailable'))
+      reject(error)
       await expect(pending).rejects.toThrow('Database unavailable')
     })
     expect(client.getQueryData(queryKeys.cheques.list('b1'))).toEqual([
@@ -105,6 +111,10 @@ describe('canonical cheque hooks', () => {
       client.getQueryState(queryKeys.businesses.summaries('2026-10-31'))
         ?.isInvalidated,
     ).toBe(true)
+    expect(log).toHaveBeenCalledExactlyOnceWith(
+      'Cheque status update failed',
+      error,
+    )
   })
 
   it('uses the same mutation when only a detail cache exists', async () => {

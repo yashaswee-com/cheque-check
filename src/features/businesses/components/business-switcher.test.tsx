@@ -46,7 +46,14 @@ describe('BusinessSwitcher', () => {
     })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     fireEvent.click(screen.getByTestId('business-switcher-trigger'))
-    fireEvent.click(await screen.findByTestId('business-switcher-add-business'))
+    const addBusiness = await screen.findByTestId(
+      'business-switcher-add-business',
+    )
+    expect(addBusiness).toHaveAttribute('href', '/businesses/create')
+    addBusiness.addEventListener('click', (event) => event.preventDefault(), {
+      once: true,
+    })
+    fireEvent.click(addBusiness)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
   it('offers to create a business when the search has no matches', async () => {

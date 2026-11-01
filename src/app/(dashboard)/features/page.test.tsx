@@ -15,6 +15,7 @@ import type { Quota } from '@/features/monetization/repositories/monetization.re
 import type { PhoneInputProps } from '@/components/ui/phone-input'
 import { FEATURE_IDS, PRODUCT_IDS } from '@/features/monetization/constants'
 import { queryKeys } from '@/lib/query-keys'
+import { stubWindowReload } from '@/test/browser'
 import messages from '../../../../messages/en.json'
 import hindi from '../../../../messages/hi.json'
 import hinglish from '../../../../messages/hi-en.json'
@@ -650,8 +651,7 @@ describe('Features page', () => {
 
   it('does not offer purchases when access failed to load', async () => {
     accessError = new Error('Unavailable')
-    const reload = vi.fn()
-    vi.stubGlobal('location', { reload })
+    const reload = stubWindowReload()
     renderPage()
     expect(
       await screen.findByText(messages.Features.loadFailed),
