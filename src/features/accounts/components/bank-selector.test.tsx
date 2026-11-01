@@ -25,7 +25,10 @@ const state = vi.hoisted(() => ({
   remove: { mutateAsync: vi.fn() },
   toast: vi.fn(),
 }))
-vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) =>
+    key === 'add' ? 'Add New Bank' : key,
+}))
 vi.mock('../hooks/use-banks', () => ({
   useBanks: () => ({
     data: state.hasData ? state.banks : undefined,
@@ -91,7 +94,7 @@ function open() {
 }
 async function addForm() {
   open()
-  fireEvent.click(await screen.findByRole('button', { name: 'add' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Add New Bank' }))
   return screen.findByRole('textbox', { name: 'name' })
 }
 function submit() {
@@ -126,10 +129,13 @@ describe('BankSelector', () => {
     fireEvent.click(option)
     expect(change).toHaveBeenCalledWith('bank4999')
   })
-  it('removes a selected private bank only after name confirmation', async () => {
+  it('right-aligns the custom bank delete action with an icon and requires confirmation', async () => {
     state.banks[0].owner_id = 'user'
     const change = mount('bank1')
-    fireEvent.click(screen.getByRole('button', { name: 'remove' }))
+    const removeButton = screen.getByRole('button', { name: 'remove' })
+    expect(removeButton.parentElement).toHaveClass('flex', 'justify-end')
+    expect(removeButton.querySelector('svg')).toBeInTheDocument()
+    fireEvent.click(removeButton)
     const dialog = await screen.findByRole('dialog')
     const input = dialog.querySelector('input')!
     fireEvent.change(input, { target: { value: 'Example Bank' } })
@@ -143,14 +149,61 @@ describe('BankSelector', () => {
     expect(change).toHaveBeenCalledWith('')
   })
 
-  it('closes the create dialog without saving', async () => {
+  it('opens a bottom sheet with a plus-icon add action and closes without saving', async () => {
     mount()
-    await addForm()
+    open()
+    const addButton = await screen.findByRole('button', {
+      name: 'Add New Bank',
+    })
+    expect(addButton.querySelector('svg')).toBeInTheDocument()
+    fireEvent.click(addButton)
+    const sheet = await screen.findByRole('dialog', { name: 'create' })
+    expect(sheet).toHaveAttribute('data-slot', 'sheet-content')
+    expect(sheet).toHaveClass('bottom-0')
     fireEvent.click(screen.getByRole('button', { name: 'close' }))
     await waitFor(() =>
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
     )
     expect(state.create.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('quotes an unmatched search and prefills the custom bank sheet', async () => {
+    const change = mount()
+    open()
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: '  Zzz Local Credit Bank  ' },
+    })
+    expect(await screen.findByText('noBankFound')).toBeInTheDocument()
+    const addButton = screen.getByRole('button', {
+      name: 'Add New Bank "Zzz Local Credit Bank"',
+    })
+    fireEvent.click(addButton)
+    expect(await screen.findByRole('textbox', { name: 'name' })).toHaveValue(
+      'Zzz Local Credit Bank',
+    )
+    submit()
+    await waitFor(() => expect(change).toHaveBeenCalledWith('new-bank'))
+    expect(state.create.mutateAsync).toHaveBeenCalledWith(
+      'Zzz Local Credit Bank',
+    )
+  })
+
+  it('does not reuse an abandoned name when adding without a search', async () => {
+    mount()
+    const input = await addForm()
+    fireEvent.change(input, { target: { value: 'Abandoned Bank' } })
+    fireEvent.click(screen.getByRole('button', { name: 'close' }))
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    )
+    expect(await addForm()).toHaveValue('')
+  })
+
+  it('does not offer deletion for a shared catalog bank', () => {
+    mount('bank1')
+    expect(
+      screen.queryByRole('button', { name: 'remove' }),
+    ).not.toBeInTheDocument()
   })
   it('shows the selected bank and selects another catalog entry', async () => {
     const onValueChange = mount('bank1')
@@ -174,7 +227,7 @@ describe('BankSelector', () => {
     mount()
     open()
     expect(await screen.findByRole('status')).toHaveTextContent('load')
-    expect(screen.getByRole('button', { name: 'add' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Add New Bank' })).toBeDisabled()
   })
 
   it('creates a bank when the catalog has not returned data', async () => {
@@ -206,6 +259,7 @@ describe('BankSelector', () => {
     mount()
     open()
     expect(await screen.findByRole('alert')).toHaveTextContent('error')
+    expect(screen.getByRole('button', { name: 'Add New Bank' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: 'retry' }))
     expect(state.refetch).toHaveBeenCalledOnce()
   })

@@ -40,8 +40,13 @@ Payments banks are deliberately excluded from the cheque-account catalog.
 Inclusion records RBI list membership, not a guarantee that a particular
 institution, branch or account product currently issues/accepts cheques.
 Lists are snapshots, not a real-time licensing service. For missing or renamed
-institutions, use Other / Add bank; never guess an IFSC or silently substitute
+institutions, use **Add New Bank**; never guess an IFSC or silently substitute
 another bank.
+
+The add action includes a plus icon and the quoted search text, which prefills
+the **Add Custom Bank** bottom sheet. For a selected custom bank, **Delete Custom
+Bank** appears right-aligned below the selector with a delete icon. Custom banks
+remain private to their owner; the label does not change ownership or visibility.
 
 ## Reproducible seed
 

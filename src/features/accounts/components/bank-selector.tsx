@@ -6,6 +6,8 @@ import {
   Tick02Icon as Check,
   ArrowUpDownIcon as ChevronsUpDown,
   BankIcon as Landmark,
+  PlusSignCircleIcon as PlusCircle,
+  Delete02Icon as Trash,
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -26,12 +28,12 @@ import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { useBanks, useBankMutations } from '../hooks/use-banks'
 import { useTranslations } from 'next-intl'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toast'
@@ -68,6 +70,8 @@ export function BankSelector({
   const paged = usePagedOptions(banks ?? emptyBanks, bankLabel)
 
   const selectedBank = banks?.find((bank) => bank.id === value)
+  const trimmedQuery = paged.query.trim()
+  const addLabel = trimmedQuery ? `${tb('add')} "${trimmedQuery}"` : tb('add')
   const addBank = async (event: React.FormEvent) => {
     event.preventDefault()
     event.stopPropagation()
@@ -217,36 +221,42 @@ export function BankSelector({
             <Button
               type="button"
               variant="ghost"
-              className="w-full"
+              className="w-full justify-start gap-2 text-primary font-semibold"
               disabled={!!error || isPending}
               onClick={() => {
+                setName(trimmedQuery)
+                setNameError(null)
                 setOpen(false)
                 paged.setQuery('')
                 setAdding(true)
               }}
             >
-              {tb('add')}
+              <HugeiconsIcon icon={PlusCircle} className="h-4 w-4" />
+              {addLabel}
             </Button>
           </div>
         </PopoverContent>
       </Popover>
       {selectedBank?.owner_id && (
-        <DeleteConfirmationDialog
-          title={tb('remove')}
-          description={tb('removeConfirm')}
-          confirmName={selectedBank.name}
-          trigger={
-            <Button type="button" variant="link" size="sm">
-              {tb('remove')}
-            </Button>
-          }
-          onDelete={async () => {
-            await remove.mutateAsync(selectedBank.id)
-            onValueChange('')
-          }}
-        />
+        <div className="flex justify-end">
+          <DeleteConfirmationDialog
+            title={tb('remove')}
+            description={tb('removeConfirm')}
+            confirmName={selectedBank.name}
+            trigger={
+              <Button type="button" variant="link" size="sm" className="gap-2">
+                <HugeiconsIcon icon={Trash} className="h-4 w-4" />
+                {tb('remove')}
+              </Button>
+            }
+            onDelete={async () => {
+              await remove.mutateAsync(selectedBank.id)
+              onValueChange('')
+            }}
+          />
+        </div>
       )}
-      <Dialog
+      <Sheet
         open={adding}
         onOpenChange={(open) => {
           if (!create.isPending) {
@@ -255,11 +265,11 @@ export function BankSelector({
           }
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{tb('create')}</DialogTitle>
-            <DialogDescription>{tb('privateHelp')}</DialogDescription>
-          </DialogHeader>
+        <SheetContent className="max-h-[85dvh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{tb('create')}</SheetTitle>
+            <SheetDescription>{tb('privateHelp')}</SheetDescription>
+          </SheetHeader>
           <form className="space-y-4" onSubmit={addBank}>
             <Label required htmlFor={nameId}>
               {tb('name')}
@@ -294,8 +304,8 @@ export function BankSelector({
               {tb('create')}
             </Button>
           </form>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
