@@ -6,6 +6,7 @@ import {
   waitFor,
   act,
 } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { NextIntlClientProvider } from 'next-intl'
@@ -96,6 +97,18 @@ async function unlock() {
   await screen.findByText('Financial records')
 }
 describe('PIN shell gating', () => {
+  it('traps keyboard focus and never dismisses the lock on Escape', async () => {
+    mount()
+    await screen.findByLabelText('Enter six-digit PIN')
+    const user = userEvent.setup()
+    await user.tab()
+    expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(
+      true,
+    )
+    await user.keyboard('{Escape}')
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(mocks.mounted).not.toHaveBeenCalled()
+  })
   it('never mounts financial children until online verification succeeds and reload locks again', async () => {
     const view = mount()
     await screen.findByLabelText('Enter six-digit PIN')
