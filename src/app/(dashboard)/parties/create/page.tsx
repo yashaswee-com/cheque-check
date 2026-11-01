@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
+  ArrowLeft01Icon as ArrowLeft,
+  ArrowRight01Icon as ArrowRight,
   Tick02Icon as Check,
   UserIcon as User,
   Location01Icon as MapPin,
@@ -32,6 +34,14 @@ import { usePremiumAction } from '@/features/monetization/components/premium-gat
 import { useParties } from '@/features/parties/hooks/use-parties'
 import { findPossiblePartyDuplicates } from '@/features/parties/lib/party-duplicates'
 import { usePartyDraftTags } from '@/features/parties/hooks/use-party-draft-tags'
+import {
+  Stepper,
+  StepperIndicator,
+  StepperItem,
+  StepperNav,
+  StepperSeparator,
+  StepperTrigger,
+} from '@/components/reui/stepper'
 
 export default function CreatePartyPage() {
   const t = useTranslations('Parties')
@@ -49,14 +59,23 @@ export default function CreatePartyPage() {
     null,
   )
 
-  const { form, isSaving, isSuccess, continueAfterSuccess, onSubmit, draft } =
-    useCreateParty(activeBusiness?.id, {
-      returnTo,
-      draftId: initialDraftId,
-      onCreated: async (party) => {
-        await partyDraftTagsRef.current?.flush(party.id)
-      },
-    })
+  const {
+    form,
+    step,
+    nextStep,
+    prevStep,
+    isSaving,
+    isSuccess,
+    continueAfterSuccess,
+    onSubmit,
+    draft,
+  } = useCreateParty(activeBusiness?.id, {
+    returnTo,
+    draftId: initialDraftId,
+    onCreated: async (party) => {
+      await partyDraftTagsRef.current?.flush(party.id)
+    },
+  })
   const partyDraftTags = usePartyDraftTags(draft.draftId)
   useEffect(() => {
     partyDraftTagsRef.current = partyDraftTags
@@ -175,6 +194,10 @@ export default function CreatePartyPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (step < 3) {
+      await nextStep()
+      return
+    }
     try {
       await partyDraftTags.flush(draft.draftId)
     } catch {
@@ -231,6 +254,63 @@ export default function CreatePartyPage() {
 
   return (
     <div className="max-w-2xl space-y-8 pb-20">
+      <Stepper
+        value={step}
+        className="w-full max-w-xl mx-auto space-y-8"
+        indicators={{
+          completed: <HugeiconsIcon icon={Check} className="size-3.5" />,
+        }}
+      >
+        <div className="flex items-start gap-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={prevStep}
+            disabled={step === 1 || isSaving || isAvatarUploading}
+            aria-label={t('previousStep')}
+            className="rounded-full h-8 w-8 shrink-0"
+          >
+            <HugeiconsIcon icon={ArrowLeft} className="h-4 w-4" />
+          </Button>
+          <StepperNav className="gap-3 flex-1">
+            {[
+              { title: t('basicDetails'), icon: User },
+              { title: t('contactInfo'), icon: Mail },
+              { title: t('locationNotes'), icon: Note },
+            ].map((item, index) => (
+              <StepperItem
+                key={item.title}
+                step={index + 1}
+                className="relative flex-1 items-center"
+              >
+                <StepperTrigger
+                  aria-label={item.title}
+                  className="flex grow flex-col items-center justify-center gap-2.5"
+                >
+                  <StepperIndicator className="data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=completed]:bg-success size-8 border-2 data-[state=completed]:text-white data-[state=inactive]:bg-background z-10">
+                    <HugeiconsIcon icon={item.icon} className="size-4" />
+                  </StepperIndicator>
+                </StepperTrigger>
+                {index < 2 && (
+                  <StepperSeparator className="group-data-[state=completed]/step:bg-success absolute inset-x-0 left-[50%] top-4 m-0 w-full z-0" />
+                )}
+              </StepperItem>
+            ))}
+          </StepperNav>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => void nextStep()}
+            disabled={step === 3 || isSaving || isAvatarUploading}
+            aria-label={t('continue')}
+            className="rounded-full h-8 w-8 shrink-0"
+          >
+            <HugeiconsIcon icon={ArrowRight} className="h-4 w-4" />
+          </Button>
+        </div>
+      </Stepper>
       <DraftLeaveDialog
         {...draft.leaveDialogProps}
         onSave={async () => {
@@ -244,241 +324,283 @@ export default function CreatePartyPage() {
       />
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label
-              required
-              htmlFor="name"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
-            >
-              {t('partyName')}
-            </Label>
-            <div className="relative">
-              <HugeiconsIcon
-                icon={User}
-                className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground opacity-50"
-              />
-              <Input
-                leftIcon={User}
-                id="name"
-                {...register('name')}
-                placeholder={t('enterFullName')}
-                className="h-14 bg-canvas-parchment border-none text-lg font-semibold rounded-sm pr-12"
-              />
-              <button
-                type="button"
-                onClick={importContact}
-                aria-label={t('importFromContacts')}
-                className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10"
+        {step === 1 && (
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+            <div className="space-y-2">
+              <Label
+                required
+                htmlFor="name"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
               >
-                <HugeiconsIcon icon={User} className="h-5 w-5" />
-              </button>
-            </div>
-            {errors.name && (
-              <p className="text-xs text-destructive ml-1">
-                {errors.name.message as string}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {t('contactImportHelp')}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label
-              required
-              htmlFor="contact"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
-            >
-              {t('contactNumber')}
-            </Label>
-            <Controller
-              control={control}
-              name="contact"
-              render={({ field }) => (
-                <PhoneInput
-                  id="contact"
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  placeholder={t('phoneNumber')}
-                  aria-invalid={!!errors.contact}
-                />
-              )}
-            />
-            {errors.contact && (
-              <p className="text-xs text-destructive ml-1">
-                {errors.contact.message as string}
-              </p>
-            )}
-          </div>
-
-          {duplicateNames.length > 0 && (
-            <p
-              role="status"
-              className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm"
-            >
-              {t('possibleDuplicateWarning', {
-                names: duplicateNames.join(', '),
-              })}
-            </p>
-          )}
-
-          <details className="rounded-lg border p-4">
-            <summary className="min-h-11 cursor-pointer content-center font-medium">
-              {t('optionalDetails')}
-            </summary>
-            <div className="mt-4 space-y-5">
-              <div className="flex justify-center">
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => avatarInputRef.current?.click()}
-                    aria-label={t('addPhoto')}
-                    className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary ring-2 ring-white shadow-sm transition-transform active:scale-95"
-                  >
-                    {avatarPreview || watch('avatar_url') ? (
-                      <img
-                        src={avatarPreview ?? watch('avatar_url') ?? undefined}
-                        alt={t('partyAvatar')}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <HugeiconsIcon icon={User} className="h-8 w-8" />
-                    )}
-                  </button>
-                  <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white ring-2 ring-white">
-                    <HugeiconsIcon icon={Camera} className="h-3.5 w-3.5" />
-                  </span>
-                  <input
-                    ref={avatarInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => void handleAvatarChange(e)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="email"
-                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
-                >
-                  {tCommon('email')}
-                </Label>
-                <Input
-                  leftIcon={Mail}
-                  id="email"
-                  {...register('email')}
-                  placeholder={t('emailPlaceholder')}
-                  className="h-12 bg-canvas-parchment border-none rounded-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="address"
-                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
-                >
-                  {tCommon('address')}
-                </Label>
-                <Input
-                  leftIcon={MapPin}
-                  id="address"
-                  {...register('address')}
-                  placeholder={t('locationDetails')}
-                  className="h-12 bg-canvas-parchment border-none rounded-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="notes"
-                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
-                >
-                  {tCommon('notes')}
-                </Label>
-                <Input
-                  leftIcon={Note}
-                  id="notes"
-                  {...register('notes')}
-                  placeholder={t('anyAdditionalNotes')}
-                  className="h-14 bg-canvas-parchment border-none rounded-sm"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
-                  {tCommon('tags')}
-                </Label>
-                <TagSelector
-                  businessId={activeBusiness?.id}
-                  value={tagIds}
-                  onChange={setTagIds}
-                  placeholder={tCommon('addTags')}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
-                  {tCommon('themeColor')}
-                </Label>
-                <div className="flex flex-wrap gap-3 p-1">
-                  {colors.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setUserValue('color', color)}
-                      aria-label={color}
-                      aria-pressed={watch('color') === color}
-                      className={cn(
-                        'h-10 w-10 rounded-full transition-all active:scale-95 ring-offset-2',
-                        watch('color') === color
-                          ? 'ring-2 ring-primary scale-110'
-                          : 'hover:scale-105',
-                      )}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </details>
-
-          <div className="rounded-lg bg-primary/5 p-5 space-y-3 border border-primary/10">
-            <div className="flex items-center gap-2">
-              <HugeiconsIcon
-                icon={User}
-                className="h-3 w-3 text-primary opacity-80"
-              />
-              <h3 className="font-semibold text-primary uppercase tracking-wider text-[10px]">
-                {t('reviewInformation')}
-              </h3>
-            </div>
-            <div className="flex items-center gap-3">
+                {t('partyName')}
+              </Label>
               <div
-                className="h-10 w-10 rounded-full"
-                style={{ backgroundColor: watch('color') || '#34C759' }}
-              />
-              <div className="min-w-0">
-                <p className="font-semibold">{watch('name')}</p>
-                <p className="text-xs text-muted-foreground">
-                  {watch('contact')}
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"
+                data-testid="party-name-field"
+              >
+                <Input
+                  leftIcon={User}
+                  id="name"
+                  {...register('name')}
+                  placeholder={t('enterFullName')}
+                  className="min-w-0 flex-1 h-14 bg-canvas-parchment border-none text-lg font-semibold rounded-sm"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={importContact}
+                  aria-label={t('importFromContacts')}
+                  className="h-14 w-14 shrink-0 rounded-sm text-primary"
+                >
+                  <HugeiconsIcon icon={User} className="h-5 w-5" />
+                </Button>
+              </div>
+              {errors.name && (
+                <p className="text-xs text-destructive ml-1">
+                  {errors.name.message as string}
                 </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {t('contactImportHelp')}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                required
+                htmlFor="contact"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              >
+                {t('contactNumber')}
+              </Label>
+              <Controller
+                control={control}
+                name="contact"
+                render={({ field }) => (
+                  <PhoneInput
+                    id="contact"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    placeholder={t('phoneNumber')}
+                    aria-invalid={!!errors.contact}
+                  />
+                )}
+              />
+              {errors.contact && (
+                <p className="text-xs text-destructive ml-1">
+                  {errors.contact.message as string}
+                </p>
+              )}
+            </div>
+
+            {duplicateNames.length > 0 && (
+              <p
+                role="status"
+                className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm"
+              >
+                {t('possibleDuplicateWarning', {
+                  names: duplicateNames.join(', '),
+                })}
+              </p>
+            )}
+
+            <Button
+              type="button"
+              data-testid="party-step1-continue"
+              onClick={() => void nextStep()}
+              className="w-full rounded-full h-14 text-lg"
+            >
+              {t('continue')}
+              <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+            <h2 className="font-semibold">{t('optionalDetails')}</h2>
+            <div className="flex justify-center">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  aria-label={t('addPhoto')}
+                  className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary ring-2 ring-white shadow-sm transition-transform active:scale-95"
+                >
+                  {avatarPreview || watch('avatar_url') ? (
+                    <img
+                      src={avatarPreview ?? watch('avatar_url') ?? undefined}
+                      alt={t('partyAvatar')}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <HugeiconsIcon icon={User} className="h-8 w-8" />
+                  )}
+                </button>
+                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white ring-2 ring-white">
+                  <HugeiconsIcon icon={Camera} className="h-3.5 w-3.5" />
+                </span>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => void handleAvatarChange(e)}
+                />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label
+                htmlFor="email"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              >
+                {tCommon('email')}
+              </Label>
+              <Input
+                leftIcon={Mail}
+                id="email"
+                {...register('email')}
+                placeholder={t('emailPlaceholder')}
+                className="h-12 bg-canvas-parchment border-none rounded-sm"
+              />
+              {errors.email && (
+                <p className="text-xs text-destructive ml-1">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label
+                htmlFor="address"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              >
+                {tCommon('address')}
+              </Label>
+              <Input
+                leftIcon={MapPin}
+                id="address"
+                {...register('address')}
+                placeholder={t('locationDetails')}
+                className="h-12 bg-canvas-parchment border-none rounded-sm"
+              />
+            </div>
+            <Button
+              type="button"
+              data-testid="party-step2-continue"
+              onClick={() => void nextStep()}
+              disabled={isAvatarUploading}
+              className="w-full rounded-full h-14 text-lg"
+            >
+              {t('continue')}
+              <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              data-testid="party-step2-skip"
+              onClick={() => void nextStep()}
+              disabled={isAvatarUploading}
+              className="w-full rounded-full"
+            >
+              {t('skipOptionalDetails')}
+            </Button>
           </div>
+        )}
 
-          <Button
-            type="submit"
-            data-testid="party-submit-button"
-            className="w-full rounded-full h-14 text-lg"
-            disabled={isSaving || isAvatarUploading}
-            loading={isSaving || isAvatarUploading}
-            loadingText={tCommon('saving')}
-          >
-            {t('createParty')}
-            <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
-          </Button>
-        </div>
+        {step === 3 && (
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+            <h2 className="font-semibold">{t('optionalDetails')}</h2>
+            <div className="space-y-2">
+              <Label
+                htmlFor="notes"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              >
+                {tCommon('notes')}
+              </Label>
+              <Input
+                leftIcon={Note}
+                id="notes"
+                {...register('notes')}
+                placeholder={t('anyAdditionalNotes')}
+                className="h-14 bg-canvas-parchment border-none rounded-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+                {tCommon('tags')}
+              </Label>
+              <TagSelector
+                businessId={activeBusiness?.id}
+                value={tagIds}
+                onChange={setTagIds}
+                placeholder={tCommon('addTags')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+                {tCommon('themeColor')}
+              </Label>
+              <div className="flex flex-wrap gap-3 p-1">
+                {colors.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setUserValue('color', color)}
+                    aria-label={color}
+                    aria-pressed={watch('color') === color}
+                    className={cn(
+                      'h-10 w-10 rounded-full transition-all active:scale-95 ring-offset-2',
+                      watch('color') === color
+                        ? 'ring-2 ring-primary scale-110'
+                        : 'hover:scale-105',
+                    )}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-primary/5 p-5 space-y-3 border border-primary/10">
+              <div className="flex items-center gap-2">
+                <HugeiconsIcon
+                  icon={User}
+                  className="h-3 w-3 text-primary opacity-80"
+                />
+                <h3 className="font-semibold text-primary uppercase tracking-wider text-[10px]">
+                  {t('reviewInformation')}
+                </h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <div
+                  className="h-10 w-10 rounded-full"
+                  style={{ backgroundColor: watch('color') || '#34C759' }}
+                />
+                <div className="min-w-0">
+                  <p className="font-semibold">{watch('name')}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {watch('contact')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              data-testid="party-submit-button"
+              className="w-full rounded-full h-14 text-lg"
+              disabled={isSaving || isAvatarUploading}
+              loading={isSaving || isAvatarUploading}
+              loadingText={tCommon('saving')}
+            >
+              {t('createParty')}
+              <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        )}
       </form>
     </div>
   )

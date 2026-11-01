@@ -183,14 +183,21 @@ describe('first incomplete step', () => {
   it('points parties at the first step with missing required data', () => {
     const empty = toPartyDraftFields({})
     expect(firstIncompletePartyStep(empty)).toBe(1)
-    expect(firstIncompletePartyStep({ ...empty, name: 'Acme' })).toBe(2)
+    expect(firstIncompletePartyStep({ ...empty, name: 'Acme' })).toBe(1)
     expect(
       firstIncompletePartyStep({
         ...empty,
         name: 'Acme',
-        contact: '9876543210',
+        contact: '+919876543210',
       }),
-    ).toBe(3)
+    ).toBe(2)
+    expect(
+      firstIncompletePartyStep({
+        ...empty,
+        name: 'Acme',
+        contact: '1234567890',
+      }),
+    ).toBe(1)
   })
 
   it('points accounts at the first step with missing required data', () => {

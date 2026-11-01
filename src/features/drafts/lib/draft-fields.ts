@@ -4,7 +4,7 @@ import type {
   ChequeType,
   PartyDraftFields,
 } from '@/types'
-import { chequeSchema } from '@/validators'
+import { chequeSchema, partySchema } from '@/validators'
 
 import type { DraftEntity } from '@/types'
 export type { DraftEntity } from '@/types'
@@ -134,9 +134,9 @@ export function firstIncompleteChequeStep(draft: ChequeDraftFields) {
 }
 
 export function firstIncompletePartyStep(draft: PartyDraftFields) {
-  if (!draft.name) return 1
-  if ((draft.contact ?? '').length < 10) return 2
-  return 3
+  if (!partySchema.pick({ name: true, contact: true }).safeParse(draft).success)
+    return 1
+  return 2
 }
 
 export function firstIncompleteAccountStep(draft: AccountDraftFields) {

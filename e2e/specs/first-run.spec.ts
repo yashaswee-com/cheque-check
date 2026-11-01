@@ -42,6 +42,8 @@ test.describe('first day with ChequeCheck', () => {
     await expect(page).toHaveURL(/\/parties\/create\?.*returnTo=/)
     await expect(page.locator('#name')).toHaveValue(partyName)
     await page.locator('#contact').fill(E2E_PHONE)
+    await page.getByTestId('party-step1-continue').click()
+    await page.getByTestId('party-step2-skip').click()
     await page.getByTestId('party-submit-button').click()
     await page.getByTestId('creation-success-continue').click()
 

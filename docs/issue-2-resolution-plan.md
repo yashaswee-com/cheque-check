@@ -121,9 +121,11 @@ Primary implementation references:
   Settings > Transactions remains the history destination.
 - Premium tools become native actions/panels in existing screens. Preserve
   access rules, contextual locked actions, saved data and old deep links.
-- New Party becomes a single-page mobile-first form with editable contact
-  import, manual fallback, primary name/phone fields, collapsed optional
-  details, duplicate warnings, drafts and existing Premium contact gating.
+- New Party uses a three-page mobile-first wizard: required name/phone first,
+  optional photo/email/address second, then optional notes/tags/colour and
+  review. Optional details can be left blank; the second page has a Skip
+  action. Contact import sits beside the name input, with editable results,
+  manual fallback, duplicate warnings, drafts and existing Premium gating.
 - Bottom nav appears on authenticated viewing/list/detail/settings/report
   screens; exclude auth, onboarding, create/edit and deliberate full-screen
   workflows. Hide it while the software keyboard is open.

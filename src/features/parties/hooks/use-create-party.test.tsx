@@ -105,18 +105,21 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('useCreateParty', () => {
-  it('validates the name and contact steps and clamps navigation', async () => {
+  it('requires both name and contact on the first step and clamps navigation', async () => {
     const { result } = setup()
 
     await act(async () => result.current.nextStep())
     expect(result.current.step).toBe(1)
     act(() => result.current.form.setValue('name', 'Acme Traders'))
     await act(async () => result.current.nextStep())
-    expect(result.current.step).toBe(2)
+    expect(result.current.step).toBe(1)
 
+    act(() => result.current.form.setValue('contact', '123'))
+    await act(async () => result.current.nextStep())
+    expect(result.current.step).toBe(1)
+    act(() => result.current.form.setValue('contact', '+919876543210'))
     await act(async () => result.current.nextStep())
     expect(result.current.step).toBe(2)
-    act(() => result.current.form.setValue('contact', '+919876543210'))
     await act(async () => result.current.nextStep())
     expect(result.current.step).toBe(3)
     await act(async () => result.current.nextStep())
@@ -124,6 +127,43 @@ describe('useCreateParty', () => {
     act(() => result.current.prevStep())
     expect(result.current.step).toBe(2)
   })
+
+  it('validates optional email only when supplied and retains values when going back', async () => {
+    const { result } = setup()
+    setValidParty(result)
+    await act(async () => result.current.nextStep())
+    act(() => result.current.form.setValue('email', 'invalid'))
+    await act(async () => result.current.nextStep())
+    expect(result.current.step).toBe(2)
+    expect(result.current.form.getFieldState('email').error).toBeDefined()
+    act(() => result.current.form.setValue('email', 'customer@example.com'))
+    await act(async () => result.current.nextStep())
+    expect(result.current.step).toBe(3)
+    act(() => result.current.prevStep())
+    expect(result.current.form.getValues('email')).toBe('customer@example.com')
+    act(() => result.current.prevStep())
+    expect(result.current.form.getValues('name')).toBe('Acme Traders')
+    expect(result.current.form.getValues('contact')).toBe('+919876543210')
+  })
+
+  it.each([
+    { field: 'contact' as const, value: '123', expectedStep: 1 },
+    { field: 'email' as const, value: 'invalid', expectedStep: 2 },
+  ])(
+    'returns to the invalid $field page on final submission',
+    async ({ field, value, expectedStep }) => {
+      const { result } = setup()
+      setValidParty(result)
+      act(() => {
+        result.current.setStep(3)
+        result.current.form.setValue(field, value)
+      })
+      await act(async () => result.current.onSubmit())
+      expect(result.current.step).toBe(expectedStep)
+      expect(mocks.create).not.toHaveBeenCalled()
+      expect(mocks.draft.beginPublish).not.toHaveBeenCalled()
+    },
+  )
 
   it('creates a party with empty optional fields normalized and invokes onCreated', async () => {
     const onCreated = vi.fn()

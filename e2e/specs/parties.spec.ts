@@ -23,11 +23,25 @@ test.describe('parties', () => {
     const chequesPage = new ChequesPage(page)
 
     await page.goto('/parties/create')
+    await page.setViewportSize({ width: 390, height: 844 })
+    const nameInput = await page.locator('#name').boundingBox()
+    const importButton = await page
+      .getByRole('button', { name: 'Import from contacts', exact: true })
+      .boundingBox()
+    expect(nameInput).not.toBeNull()
+    expect(importButton).not.toBeNull()
+    expect(importButton!.x).toBeGreaterThanOrEqual(
+      nameInput!.x + nameInput!.width,
+    )
+    expect(importButton!.y).toBe(nameInput!.y)
+    expect(importButton!.x + importButton!.width).toBeLessThanOrEqual(390)
     await page.locator('#name').fill(partyName)
     await page.locator('#contact').fill(E2E_PHONE)
-    await page.getByText('Optional details', { exact: true }).click()
+    await expect(page.locator('#email')).toHaveCount(0)
+    await page.getByTestId('party-step1-continue').click()
     await page.locator('#email').fill(`${partyName}@example.com`)
     await page.locator('#address').fill(address)
+    await page.getByTestId('party-step2-continue').click()
     await page.getByTestId('tag-selector-trigger').click()
     await page.getByTestId('tag-selector-create-input').fill(tagName)
     await page.getByTestId('tag-selector-create-button').click()
@@ -121,7 +135,7 @@ test.describe('parties', () => {
     await page.locator('#name').fill(uniqueE2eName('party'))
 
     await page.locator('#contact').fill('123')
-    await page.getByTestId('party-submit-button').click()
+    await page.getByTestId('party-step1-continue').click()
     await expect(page.getByText('Enter a valid phone number')).toBeVisible()
     await expect(page.getByTestId('creation-success-continue')).toHaveCount(0)
     await expect(page).toHaveURL(/\/parties\/create/)

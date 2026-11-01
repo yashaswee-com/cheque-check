@@ -341,7 +341,7 @@ afterEach(() => {
 
 describe.each([
   { entity: 'account', Page: CreateAccountPage, steps: [1, 2, 3] },
-  { entity: 'party', Page: CreatePartyPage, steps: [1] },
+  { entity: 'party', Page: CreatePartyPage, steps: [1, 2, 3] },
 ])('$entity draft status presentation', ({ Page, steps }) => {
   it.each(
     steps.flatMap((step) =>
@@ -735,6 +735,55 @@ describe.each([
 })
 
 describe('party creation page', () => {
+  it('places import beside the name input and separates required and optional pages', async () => {
+    const { container } = renderPage(<CreatePartyPage />)
+    const nameField = screen.getByTestId('party-name-field')
+    const input = screen.getByPlaceholderText(messages.Parties.enterFullName)
+    const importButton = screen.getByRole('button', {
+      name: messages.Parties.importFromContacts,
+    })
+    expect(input.parentElement?.parentElement).toBe(nameField)
+    expect(importButton.parentElement).toBe(nameField)
+    expect(input.parentElement?.nextElementSibling).toBe(importButton)
+    expect(importButton).not.toHaveClass('absolute')
+    expect(document.getElementById('contact')).toBeVisible()
+    expect(document.getElementById('email')).toBeNull()
+    expect(document.getElementById('notes')).toBeNull()
+    expect(screen.queryByTestId('party-submit-button')).not.toBeInTheDocument()
+    change('name', 'New Customer')
+    change('contact', '+919876543210')
+    fireEvent.submit(container.querySelector('form')!)
+    await waitFor(() => expect(document.getElementById('email')).toBeVisible())
+    expect(mocks.submit).not.toHaveBeenCalled()
+    expect(document.getElementById('name')).toBeNull()
+    expect(document.getElementById('address')).toBeVisible()
+    expect(document.getElementById('notes')).toBeNull()
+    fireEvent.click(screen.getByTestId('party-step2-skip'))
+    expect(document.getElementById('notes')).toBeVisible()
+    expect(document.getElementById('email')).toBeNull()
+    expect(screen.getByText('New Customer')).toBeVisible()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Parties.previousStep }),
+    )
+    expect(document.getElementById('email')).toBeVisible()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Parties.previousStep }),
+    )
+    expect(document.getElementById('name')).toHaveValue('New Customer')
+    expect(document.getElementById('contact')).toHaveValue('+919876543210')
+    fireEvent.click(screen.getByTestId('party-step1-continue'))
+    fireEvent.click(screen.getByTestId('party-step2-skip'))
+    fireEvent.click(screen.getByTestId('party-submit-button'))
+    await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
+  })
+
+  it('displays optional email validation errors on the second page', () => {
+    initialStep = 2
+    errors = { email: { message: 'Invalid email' } }
+    renderPage(<CreatePartyPage />)
+    expect(screen.getByText('Invalid email')).toBeVisible()
+  })
+
   it('shows party name and contact validation errors', () => {
     errors = {
       name: { message: 'Party name required' },
@@ -754,6 +803,8 @@ describe('party creation page', () => {
     expect(document.getElementById('name')).toHaveValue('Existing Customer')
     expect(screen.getByRole('status')).toHaveTextContent('Existing Customer')
     change('contact', '+919876543210')
+    fireEvent.click(screen.getByTestId('party-step1-continue'))
+    fireEvent.click(screen.getByTestId('party-step2-skip'))
     fireEvent.click(
       screen.getByRole('button', { name: '#FF9500', hidden: true }),
     )
@@ -772,6 +823,8 @@ describe('party creation page', () => {
     mocks.flush.mockRejectedValueOnce(new Error('Offline'))
     const { container } = renderPage(<CreatePartyPage />)
     expect(document.getElementById('name')).toHaveValue('Restored name')
+    fireEvent.click(screen.getByTestId('party-step1-continue'))
+    fireEvent.click(screen.getByTestId('party-step2-skip'))
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() =>
       expect(mocks.toast).toHaveBeenCalledWith(
@@ -868,6 +921,7 @@ describe('party creation page', () => {
     },
   )
   it('validates then uploads an avatar and replaces its temporary preview', async () => {
+    initialStep = 2
     let finishUpload!: (url: string) => void
     mocks.upload.mockImplementationOnce(
       () =>
@@ -907,8 +961,8 @@ describe('party creation page', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview')
   })
   it('opens the optional avatar picker and ignores an empty file selection', () => {
+    initialStep = 2
     const { container } = renderPage(<CreatePartyPage />)
-    fireEvent.click(screen.getByText(messages.Parties.optionalDetails))
     const input =
       container.querySelector<HTMLInputElement>('input[type="file"]')!
     const click = vi.spyOn(input, 'click')
@@ -923,6 +977,7 @@ describe('party creation page', () => {
   it.each(['validation', 'upload'])(
     'reports avatar %s failures without assigning an image',
     async (stage) => {
+      initialStep = 2
       if (stage === 'validation')
         mocks.validateImage.mockRejectedValueOnce(new Error('Invalid image'))
       else mocks.upload.mockRejectedValueOnce(new Error('Upload failed'))

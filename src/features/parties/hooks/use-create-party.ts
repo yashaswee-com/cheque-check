@@ -98,9 +98,9 @@ export function useCreateParty(
   const nextStep = async () => {
     let isValid = false
     if (step === 1) {
-      isValid = await trigger(['name'])
+      isValid = await trigger(['name', 'contact'])
     } else if (step === 2) {
-      isValid = await trigger(['contact'])
+      isValid = await trigger(['email', 'address'])
     }
 
     if (isValid) setStep((s) => Math.min(s + 1, 3))
@@ -119,56 +119,62 @@ export function useCreateParty(
     isSuccess,
     continueAfterSuccess: () =>
       successRedirect ? router.replace(successRedirect) : draft.goBack(),
-    onSubmit: form.handleSubmit(async (data) => {
-      const publishedDraftId = await draft.beginPublish()
-      if (!publishedDraftId && !returnTo) {
-        draft.finishPublish()
-        const created = await mutation.mutateAsync(data)
-        await onCreated?.(created)
-        setSuccessRedirect(null)
-        setIsSuccess(true)
-        return
-      }
-
-      setIsPublishing(true)
-      try {
-        const created = publishedDraftId
-          ? await partyDraftService.publish(publishedDraftId, data)
-          : await mutation.mutateAsync(data)
-        draft.finishPublish()
-        await onCreated?.(created)
-        if (publishedDraftId) {
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.parties.list(businessId),
-          })
-          queryClient.invalidateQueries({
-            queryKey: draftKeys.list('party', businessId),
-          })
-        }
-
-        if (!returnTo) {
+    onSubmit: form.handleSubmit(
+      async (data) => {
+        const publishedDraftId = await draft.beginPublish()
+        if (!publishedDraftId && !returnTo) {
+          draft.finishPublish()
+          const created = await mutation.mutateAsync(data)
+          await onCreated?.(created)
           setSuccessRedirect(null)
           setIsSuccess(true)
           return
         }
-        const chequeDraftId = getChequeDraftIdFromReturnTo(returnTo)
-        if (chequeDraftId) {
-          await chequeDraftService.update(chequeDraftId, {
-            party_id: created.id,
+
+        setIsPublishing(true)
+        try {
+          const created = publishedDraftId
+            ? await partyDraftService.publish(publishedDraftId, data)
+            : await mutation.mutateAsync(data)
+          draft.finishPublish()
+          await onCreated?.(created)
+          if (publishedDraftId) {
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.parties.list(businessId),
+            })
+            queryClient.invalidateQueries({
+              queryKey: draftKeys.list('party', businessId),
+            })
+          }
+
+          if (!returnTo) {
+            setSuccessRedirect(null)
+            setIsSuccess(true)
+            return
+          }
+          const chequeDraftId = getChequeDraftIdFromReturnTo(returnTo)
+          if (chequeDraftId) {
+            await chequeDraftService.update(chequeDraftId, {
+              party_id: created.id,
+            })
+          }
+          setSuccessRedirect(returnTo)
+          setIsSuccess(true)
+        } catch (error) {
+          draft.failPublish()
+          toast.add({
+            title: tc('error'),
+            description: error instanceof Error ? error.message : tc('error'),
+            type: 'error',
           })
+        } finally {
+          setIsPublishing(false)
         }
-        setSuccessRedirect(returnTo)
-        setIsSuccess(true)
-      } catch (error) {
-        draft.failPublish()
-        toast.add({
-          title: tc('error'),
-          description: error instanceof Error ? error.message : tc('error'),
-          type: 'error',
-        })
-      } finally {
-        setIsPublishing(false)
-      }
-    }),
+      },
+      (errors) => {
+        if (errors.name || errors.contact) setStep(1)
+        else if (errors.email || errors.address) setStep(2)
+      },
+    ),
   }
 }

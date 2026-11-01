@@ -7,11 +7,12 @@ export class PartiesPage {
     await this.page.goto('/parties')
   }
 
-  /** Single-page form; contact must be a valid E.164 phone number per `partySchema`. */
   async createParty(name: string, contact: string) {
     await this.page.goto('/parties/create')
     await this.page.locator('#name').fill(name)
     await this.page.locator('#contact').fill(contact)
+    await this.page.getByTestId('party-step1-continue').click()
+    await this.page.getByTestId('party-step2-skip').click()
     await this.page.getByTestId('party-submit-button').click()
     const successButton = this.page.getByTestId('creation-success-continue')
     await expect(successButton).toBeVisible()
