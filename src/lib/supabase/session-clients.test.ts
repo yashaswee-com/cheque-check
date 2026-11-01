@@ -62,13 +62,15 @@ describe('session middleware', () => {
     expect(response.headers.get('location')).toBeNull()
   })
 
-  it('redirects anonymous private routes to login while preserving the URL query', async () => {
+  it('redirects anonymous private routes to login with a safe return target', async () => {
     const response = await updateSession(
       new NextRequest('https://app.example/cheques?view=all'),
     )
-    expect(response.headers.get('location')).toBe(
-      'https://app.example/login?view=all',
-    )
+    const location = new URL(response.headers.get('location') ?? '')
+    expect(location.origin).toBe('https://app.example')
+    expect(location.pathname).toBe('/login')
+    expect(location.searchParams.get('next')).toBe('/cheques?view=all')
+    expect(location.searchParams.has('view')).toBe(false)
   })
 
   it.each(['/login', '/signup', '/forgot-password'])(
