@@ -70,7 +70,8 @@ const account = {
   account_name: 'Operating',
   account_number: '12345678',
   is_default: true,
-  bank: { name: 'Example Bank' },
+  logo_url: 'account-logo',
+  bank: { name: 'Example Bank', logo_url: 'bank-logo' },
 }
 const cheque = {
   id: 'cheque',
@@ -370,6 +371,9 @@ vi.mock('@/features/monetization/components/premium-gate', () => ({
     accessRequiredMessage: 'Premium required',
   }),
 }))
+vi.mock('@/features/monetization/components/premium-mark', () => ({
+  PremiumMark: () => null,
+}))
 vi.mock('@/components/ui/toast', () => ({ toast: { add: mocks.toast } }))
 vi.mock('@/features/drafts', async () => {
   const { DraftSaveFab } =
@@ -414,7 +418,7 @@ vi.mock('@/components/ui/combobox', () => ({
     placeholder,
     onCreateClick,
   }: {
-    options: Array<{ label: string; value: string }>
+    options: Array<{ label: string; value: string; imageUrl?: string | null }>
     value?: string
     onValueChange: (value: string) => void
     placeholder: string
@@ -428,7 +432,11 @@ vi.mock('@/components/ui/combobox', () => ({
       >
         <option value="">Select</option>
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option
+            key={option.value}
+            value={option.value}
+            data-image-url={option.imageUrl}
+          >
             {option.label}
           </option>
         ))}
@@ -559,6 +567,26 @@ beforeEach(() => {
   mocks.layout.mockResolvedValue({ remote: true })
 })
 afterEach(cleanup)
+
+describe('account logos in cheque surfaces', () => {
+  it.each([CreateChequePage, EditChequePage])(
+    'passes the saved account logo to account selectors',
+    (Page) => {
+      initialStep = 2
+      renderPage(<Page />)
+      expect(
+        screen.getByRole('option', { name: /Example Bank/ }),
+      ).toHaveAttribute('data-image-url', 'account-logo')
+    },
+  )
+  it('shows the saved account logo on cheque detail', () => {
+    renderPage(<ChequeDetailPage />)
+    expect(screen.getByRole('img', { name: 'Example Bank' })).toHaveAttribute(
+      'src',
+      'account-logo',
+    )
+  })
+})
 
 describe('cheque draft status presentation', () => {
   it.each(

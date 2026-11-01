@@ -25,6 +25,9 @@ vi.mock('@/features/monetization/components/premium-gate', () => ({
     accessRequiredMessage: 'Premium required',
   }),
 }))
+vi.mock('@/features/monetization/components/premium-mark', () => ({
+  PremiumMark: () => null,
+}))
 vi.mock('../lib/notify-party', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/notify-party')>()),
   preparePartySms: state.prepareSms,
@@ -53,6 +56,29 @@ const baseCheque: ChequeWithRelations = {
 }
 
 describe('shared cheque cards', () => {
+  it.each(['avatars/account.png', null])(
+    'prefers the account logo with bank fallback: %s',
+    (logo) => {
+      render(
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <ChequeCard
+            cheque={{
+              ...baseCheque,
+              account: {
+                account_name: 'Main',
+                logo_url: logo,
+                bank: { name: 'Bank', logo_url: 'avatars/bank.png' },
+              },
+            }}
+          />
+        </NextIntlClientProvider>,
+      )
+      expect(screen.getByRole('img', { name: 'Bank' })).toHaveAttribute(
+        'src',
+        logo ?? 'avatars/bank.png',
+      )
+    },
+  )
   it('requests premium authorization before notifying the cheque party', () => {
     state.smsEnabled = true
     const cheque: ChequeWithRelations = {

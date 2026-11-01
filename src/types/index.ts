@@ -170,6 +170,7 @@ export interface ChequeWithRelations extends Cheque {
   }
   account?: {
     account_name: string
+    logo_url?: string | null
     color?: string
     icon?: string
     bank?: { name: string; logo_url?: string | null }

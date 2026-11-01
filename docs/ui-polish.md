@@ -5,6 +5,8 @@ the existing center-crop uploader, with an accessible camera badge for touch.
 Account logos persist through draft creation, restore, publication and editing.
 Apply `20261105000000_account_logos.sql`. Existing storage policy and account RLS
 remain in effect; read-only avatars never become upload controls.
+Cheque cards, details, creation previews and account selectors prefer the account
+logo, falling back to the bank logo when no account logo has been saved.
 
 Tag selectors use the shared 50-option paging/search helper. Inline creation opens
 a name/color sheet, selects the saved tag without losing prior selection, and

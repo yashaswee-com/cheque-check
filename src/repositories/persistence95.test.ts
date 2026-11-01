@@ -137,6 +137,17 @@ beforeEach(() => {
 })
 
 describe('production CRUD repositories at the Supabase boundary', () => {
+  it('requests and preserves the account logo when loading cheque relations', async () => {
+    boundary.result.data = {
+      ...cheque,
+      account: { account_name: 'Main', logo_url: 'avatars/account.png' },
+    }
+    const result = await new SupabaseChequeRepository().getById(cheque.id)
+    expect(result.account?.logo_url).toBe('avatars/account.png')
+    expect(boundary.query.select).toHaveBeenCalledWith(
+      expect.stringContaining('account_name, logo_url'),
+    )
+  })
   it('rejects absent cheque page metadata and preserves counts for empty result pages', async () => {
     const repository = new SupabaseChequeRepository()
     await expect(

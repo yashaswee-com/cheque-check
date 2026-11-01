@@ -44,6 +44,7 @@ export const relatedChequeSchema = persistedChequeSchema.extend({
   account: z
     .object({
       account_name: z.string(),
+      logo_url: z.string().nullable().optional(),
       color: optionalText,
       icon: optionalText,
       bank: z

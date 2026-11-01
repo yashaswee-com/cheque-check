@@ -191,11 +191,11 @@ export default function CreateChequePage() {
 
   const accountOptions =
     accounts?.map((b: Account) => ({
-      label: `${(b as any).bank?.name || tCommon('bank')} (${b.account_number.slice(-4)})`,
+      label: `${b.bank?.name || tCommon('bank')} (${b.account_number.slice(-4)})`,
       value: b.id,
-      color: (b as any).color,
-      icon: (b as any).icon,
-      imageUrl: (b as any).bank?.logo_url,
+      color: b.color,
+      icon: b.icon,
+      imageUrl: b.logo_url ?? b.bank?.logo_url,
     })) || []
 
   const selectedParty = parties?.find((p: Party) => p.id === watch('party_id'))
@@ -736,12 +736,13 @@ export default function CreateChequePage() {
                   </span>
                   {selectedAccount && (
                     <EntityAvatar
-                      name={
-                        (selectedAccount as any).bank?.name || tCommon('bank')
+                      name={selectedAccount.bank?.name || tCommon('bank')}
+                      color={selectedAccount.color}
+                      icon={selectedAccount.icon}
+                      imageUrl={
+                        selectedAccount.logo_url ??
+                        selectedAccount.bank?.logo_url
                       }
-                      color={(selectedAccount as any).color}
-                      icon={(selectedAccount as any).icon}
-                      imageUrl={(selectedAccount as any).bank?.logo_url}
                       size="sm"
                     />
                   )}

@@ -18,7 +18,7 @@ import type { ChequeDateRange } from '../lib/date-range'
 import { DatabaseError } from '@/lib/errors'
 
 const RELATIONS =
-  '*, party:parties(name, contact, color, icon, avatar_url), account:accounts(account_name, color, icon, bank:banks(name, logo_url))'
+  '*, party:parties(name, contact, color, icon, avatar_url), account:accounts(account_name, logo_url, color, icon, bank:banks(name, logo_url))'
 
 export interface IChequeRepository {
   getAll(businessId: string): Promise<ChequeWithRelations[]>

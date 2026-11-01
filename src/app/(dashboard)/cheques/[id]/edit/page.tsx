@@ -136,7 +136,7 @@ export default function EditChequePage() {
       value: b.id,
       color: b.color,
       icon: b.icon,
-      imageUrl: b.bank?.logo_url,
+      imageUrl: b.logo_url ?? b.bank?.logo_url,
     })) || []
 
   if (isLoading) {

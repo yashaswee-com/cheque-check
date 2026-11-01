@@ -58,6 +58,7 @@ describe('validated persistence contracts', () => {
         },
         account: {
           account_name: 'Main',
+          logo_url: 'avatars/account.png',
           color: null,
           icon: null,
           bank: { name: 'Bank', logo_url: null },
@@ -68,6 +69,7 @@ describe('validated persistence contracts', () => {
     )
     expect(related.party?.color).toBeUndefined()
     expect(related.account?.bank?.name).toBe('Bank')
+    expect(related.account?.logo_url).toBe('avatars/account.png')
   })
   it('handles absent relations and rejects an unexpected relation array', () => {
     const row = parseDatabaseValue(

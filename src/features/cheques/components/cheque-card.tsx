@@ -191,7 +191,9 @@ export function ChequeCard({ cheque, onStatusUpdate, tags }: ChequeCardProps) {
                 name={cheque.account?.bank?.name || tc('bank')}
                 color={cheque.account?.color}
                 icon={cheque.account?.icon}
-                imageUrl={cheque.account?.bank?.logo_url}
+                imageUrl={
+                  cheque.account?.logo_url ?? cheque.account?.bank?.logo_url
+                }
                 size="sm"
               />
             </div>

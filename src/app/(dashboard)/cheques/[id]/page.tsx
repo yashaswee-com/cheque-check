@@ -310,7 +310,9 @@ export default function ChequeDetailPage() {
                   name={cheque.account?.bank?.name || tc('bank')}
                   color={cheque.account?.color}
                   icon={cheque.account?.icon}
-                  imageUrl={cheque.account?.bank?.logo_url}
+                  imageUrl={
+                    cheque.account?.logo_url ?? cheque.account?.bank?.logo_url
+                  }
                 />
                 <div className="flex-1 min-w-0 flex flex-col">
                   <TextTruncate
