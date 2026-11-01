@@ -154,7 +154,7 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
     await db.query("SELECT set_config('request.jwt.claim.sub',$1,false)", [
       hotBusiness,
     ])
-    await db.exec('SET ROLE authenticated')
+    await db.exec("SET fixture.free_plan = 'on'; SET ROLE authenticated")
     const limit = 50
     const lastOffset =
       Math.floor((options.hotBusinessCheques - 1) / limit) * limit
@@ -221,7 +221,42 @@ export async function runScalingBenchmark(options: BenchmarkOptions) {
           assert.equal(rows[0].business_id, hotBusiness)
         },
       },
-    ]
+      {
+        name: 'free_plan_usage',
+        async run() {
+          const { rows } = await db.query<{
+            cheques_used: number
+            cheques_limit: number
+          }>('SELECT * FROM free_plan_usage()')
+          assert.equal(rows.length, 1)
+          // Bounded by the cap even for a tenant with far more cheques.
+          assert.equal(
+            rows[0].cheques_used,
+            Math.min(options.hotBusinessCheques, rows[0].cheques_limit),
+          )
+        },
+      },
+      {
+        name: 'free_cap_check',
+        skip: options.hotBusinessCheques < 50,
+        async run() {
+          const error = await db
+            .query(
+              "INSERT INTO cheques(id,business_id,cheque_number,amount) VALUES(gen_random_uuid(),$1,'999999',1)",
+              [hotBusiness],
+            )
+            .then(
+              () => null,
+              (rejection: { code?: string }) => rejection,
+            )
+          assert.equal(
+            error?.code,
+            '53400',
+            'A free tenant above the cap must be rejected without scanning its history',
+          )
+        },
+      },
+    ].filter((scenario) => !('skip' in scenario && scenario.skip))
     for (const scenario of scenarios) await scenario.run()
     const latencies = scenarios.map(() => [] as number[])
     let next = 0

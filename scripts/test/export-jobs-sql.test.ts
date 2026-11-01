@@ -27,7 +27,7 @@ beforeAll(async () => {
     CREATE TABLE accounts(id uuid PRIMARY KEY,business_id uuid,account_name text,color text,icon text,bank_id uuid,deleted_at timestamptz);
     ALTER TABLE cheques ADD COLUMN account_id uuid;
     ALTER TABLE cheques ADD COLUMN image_url text,ADD COLUMN created_at timestamptz DEFAULT now(),ADD COLUMN updated_at timestamptz DEFAULT now();
-    CREATE FUNCTION public.has_lifetime_premium() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS
+    CREATE OR REPLACE FUNCTION public.has_lifetime_premium() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS
       $$ SELECT premium FROM profiles WHERE user_id = auth.uid() $$;
     CREATE FUNCTION public.premium_workspace_assert_owner(requested_business uuid) RETURNS void
       LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN

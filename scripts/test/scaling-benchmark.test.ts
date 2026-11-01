@@ -89,7 +89,10 @@ describe('local benchmark input and measurements', () => {
       settled: 3,
       accounting_verified: true,
     })
-    expect(report.reads).toHaveLength(5)
+    expect(report.reads).toHaveLength(7)
+    expect(report.reads.map((read) => read.name)).toEqual(
+      expect.arrayContaining(['free_plan_usage', 'free_cap_check']),
+    )
     expect(report.reads.every((read) => read.samples === 2)).toBe(true)
     expect(report.scope).toContain('no HTTP')
     expect(report.health).toMatchObject({ pending_due: 0, sent_in_window: 3 })

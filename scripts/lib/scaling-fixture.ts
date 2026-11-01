@@ -40,6 +40,9 @@ export async function createScalingFixture(): Promise<PGlite> {
     CREATE FUNCTION lifecycle_user_active(requested_user uuid DEFAULT auth.uid())
       RETURNS boolean LANGUAGE sql STABLE AS
       $$ SELECT EXISTS (SELECT 1 FROM profiles WHERE user_id = requested_user AND deleted_at IS NULL) $$;
+    -- Unlimited by default; the benchmark sets fixture.free_plan = 'on' to exercise caps.
+    CREATE FUNCTION has_lifetime_premium() RETURNS boolean LANGUAGE sql STABLE AS
+      $$ SELECT coalesce(current_setting('fixture.free_plan', true), '') <> 'on' $$;
     CREATE SCHEMA cron;
     CREATE TABLE cron.job(jobid bigint, jobname text);
     CREATE FUNCTION cron.alter_job(job_id bigint, schedule text) RETURNS void LANGUAGE sql AS $$ SELECT $$;
@@ -50,12 +53,14 @@ export async function createScalingFixture(): Promise<PGlite> {
       (SELECT 1 FROM businesses b WHERE b.id = business_id AND b.user_id = auth.uid()));
     GRANT USAGE ON SCHEMA public,auth TO authenticated,service_role;
     GRANT SELECT ON businesses,cheques,parties TO authenticated;
+    GRANT INSERT ON cheques TO authenticated;
     `)
     for (const migration of [
       '20261031000000_bounded_cheque_reads.sql',
       '20261031010000_notification_delivery_leases.sql',
       '20261031020000_bounded_notification_scheduler.sql',
       '20261031030000_notification_health.sql',
+      '20261101110000_free_plan_limits.sql',
       '20261101120000_reminder_times.sql',
     ]) {
       await db.exec(
