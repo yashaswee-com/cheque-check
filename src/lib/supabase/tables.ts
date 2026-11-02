@@ -7,7 +7,6 @@ type PublicTableName = keyof Database['public']['Tables']
 export const TABLES = {
   APPLICATION_PINS: 'application_pins',
   CONTACT_MESSAGES: 'contact_messages',
-  CONTACT_MESSAGE_RATE_LIMITS: 'contact_message_rate_limits',
   FEEDBACK_ITEMS: 'feedback_items',
   FEEDBACK_VOTES: 'feedback_votes',
   REPORT_EXPORT_JOBS: 'report_export_jobs',

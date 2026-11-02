@@ -28,8 +28,13 @@ app retains its existing device frame and providers.
 
 ## Contact data and rate limit
 
-`20261106030000_contact_messages.sql` creates a private contact-message table
-and an indexed per-address rate-limit table. The submission RPC accepts up to
+`20261106030000_contact_messages.sql` creates private contact storage.
+`20261107000000_shared_contact_rate_limits.sql` moves existing address buckets
+into `api_rate_limits` and removes the separate contact limiter. User UUIDs
+and anonymous address hashes occupy separate, constrained namespaces with
+independent unique indexes. Anonymous buckets may only use the contact endpoint;
+clients cannot read or write limiter rows. The authenticated limiter RPC remains
+user-scoped and the contact RPC remains service-only. The submission RPC accepts up to
 three messages per client address per hour and inserts the rate-limit record
 and message atomically. RLS has no user-facing policies; only the service role
 can execute the RPC or access the stored data.

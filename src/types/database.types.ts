@@ -45,24 +45,6 @@ export interface Database {
         Update: never
         Relationships: []
       }
-      contact_message_rate_limits: {
-        Row: {
-          address_hash: string
-          window_started_at: string
-          request_count: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          address_hash: string
-          window_started_at: string
-          request_count: number
-          created_at?: string
-          updated_at?: string
-        }
-        Update: never
-        Relationships: []
-      }
       feedback_items: {
         Row: {
           id: string
@@ -701,7 +683,9 @@ export interface Database {
       }
       api_rate_limits: {
         Row: {
-          user_id: string
+          user_id: string | null
+          address_hash: string | null
+          subject_key: string
           endpoint: string
           window_started_at: string
           request_count: number
@@ -711,11 +695,16 @@ export interface Database {
         Insert: Partial<
           Database['public']['Tables']['api_rate_limits']['Row']
         > & {
-          user_id: string
           endpoint: string
           window_started_at: string
+          subject_key?: never
         }
-        Update: Partial<Database['public']['Tables']['api_rate_limits']['Row']>
+        Update: Partial<
+          Omit<
+            Database['public']['Tables']['api_rate_limits']['Row'],
+            'subject_key'
+          >
+        > & { subject_key?: never }
         Relationships: []
       }
       nps_responses: {
