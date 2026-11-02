@@ -13,6 +13,7 @@ import {
   Camera01Icon as Camera,
   Building03Icon,
   Calendar01Icon,
+  Tag01Icon,
 } from '@hugeicons/core-free-icons'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import {
@@ -328,6 +329,19 @@ export default function HomePage() {
                   </span>
                 </div>
               </PremiumLink>
+              <Link
+                href="/tags"
+                className="w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
+              >
+                <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-4 transition-transform active:scale-95 border border-primary/5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary/10 text-primary">
+                    <HugeiconsIcon icon={Tag01Icon} className="h-6 w-6" />
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    {tCommon('tags')}
+                  </span>
+                </div>
+              </Link>
             </div>
           </div>
 

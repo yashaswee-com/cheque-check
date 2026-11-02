@@ -381,6 +381,9 @@ describe('dashboard page', () => {
     )
     renderPage(<DashboardPage />)
     const actions = screen.getByTestId('dashboard-quick-actions')
+    expect(actions.querySelector('a[href="/tags"]')).toHaveAccessibleName(
+      messages.Common.tags,
+    )
     Object.defineProperties(actions, {
       scrollWidth: { configurable: true, value: 460 },
       clientWidth: { configurable: true, value: 320 },

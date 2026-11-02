@@ -52,6 +52,7 @@ The existing application frame remains the fixed-position containing block.
 Top navigation retains back/title/search; secondary actions are named controls
 inside the More popover. Dashboard quick actions scroll within their own
 equal-size, keyboard-focusable horizontal row.
+The row includes Tags and links to the existing `/tags` entity page.
 
 Global search does not display loading text while fetching results. Existing
 results remain usable, no-results feedback waits for loading to finish, and
