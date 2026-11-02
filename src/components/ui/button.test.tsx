@@ -2,10 +2,57 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createRef } from 'react'
 import { Button } from './button'
+import userEvent from '@testing-library/user-event'
 
 afterEach(cleanup)
 
 describe('Button pending state', () => {
+  it('replays a non-interactive shimmer on pointer and keyboard activation without changing labels', async () => {
+    const click = vi.fn()
+    render(<Button onClick={click}>Save</Button>)
+    const button = screen.getByRole('button', { name: 'Save' })
+    expect(button.querySelector('[data-slot="button-shimmer"]')).toBeNull()
+    fireEvent.click(button)
+    const first = button.querySelector('[data-slot="button-shimmer"]')!
+    expect(first).toHaveAttribute('aria-hidden', 'true')
+    expect(first).toHaveClass(
+      'pointer-events-none',
+      'absolute',
+      'overflow-hidden',
+    )
+    button.focus()
+    await userEvent.setup().keyboard('{Enter}')
+    expect(click).toHaveBeenCalledTimes(2)
+    expect(button.querySelector('[data-slot="button-shimmer"]')).not.toBe(first)
+    expect(button).toHaveAccessibleName('Save')
+  })
+  it('cleans up the shimmer even when reduced motion prevents animation events', () => {
+    vi.useFakeTimers()
+    try {
+      render(<Button>Save</Button>)
+      fireEvent.click(screen.getByRole('button'))
+      expect(
+        document.querySelector('[data-slot="button-shimmer"]'),
+      ).not.toBeNull()
+      act(() => vi.advanceTimersByTime(600))
+      expect(document.querySelector('[data-slot="button-shimmer"]')).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it('does not shimmer or activate disabled buttons', () => {
+    const click = vi.fn()
+    render(
+      <Button disabled onClick={click}>
+        Save
+      </Button>,
+    )
+    fireEvent.click(screen.getByRole('button'))
+    expect(click).not.toHaveBeenCalled()
+    expect(
+      screen.getByRole('button').querySelector('[data-slot="button-shimmer"]'),
+    ).toBeNull()
+  })
   it('retains labels for measurement, marks busy and prevents repeated form submission', () => {
     const submit = vi.fn((event) => event.preventDefault())
     const { rerender } = render(

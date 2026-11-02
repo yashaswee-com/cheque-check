@@ -51,6 +51,18 @@ it('prevents activation from custom rendered elements during loading', () => {
   expect(click).toHaveBeenCalledOnce()
 })
 
+it('does not shimmer or activate disabled custom elements', () => {
+  const click = vi.fn()
+  render(
+    <Button disabled onClick={click}>
+      Download
+    </Button>,
+  )
+  expect(fireEvent.click(screen.getByRole('button'))).toBe(false)
+  expect(click).not.toHaveBeenCalled()
+  expect(document.querySelector('[data-slot="button-shimmer"]')).toBeNull()
+})
+
 it('releases the pending state without swallowing action failures', async () => {
   const task = Promise.withResolvers<void>()
   const click = vi.fn(() => task.promise)

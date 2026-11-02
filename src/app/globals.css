@@ -4,6 +4,32 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.button-click-shimmer > span {
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    #ffffff66 50%,
+    transparent 80%
+  );
+  animation: button-click-sweep 550ms ease-out both;
+}
+@keyframes button-click-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .button-click-shimmer {
+    display: none;
+  }
+}
+html[data-reduce-motion] .button-click-shimmer {
+  display: none;
+}
+
 @layer components {
   .app-shell-frame {
     width: 100%;

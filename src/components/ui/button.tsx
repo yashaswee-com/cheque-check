@@ -59,6 +59,12 @@ function Button({
     ) => unknown
   }) {
   const [isPending, setIsPending] = React.useState(false)
+  const [shimmer, setShimmer] = React.useState(0)
+  React.useEffect(() => {
+    if (!shimmer) return
+    const timer = window.setTimeout(() => setShimmer(0), 600)
+    return () => window.clearTimeout(timer)
+  }, [shimmer])
   const isPendingRef = React.useRef(false)
   const isNativeButton =
     nativeButton ??
@@ -77,10 +83,11 @@ function Button({
       disabled={disabled || isLoading}
       aria-busy={isLoading || undefined}
       onClick={(event) => {
-        if (isLoading || isPendingRef.current) {
+        if (disabled || isLoading || isPendingRef.current) {
           event.preventDefault()
           return
         }
+        setShimmer((count) => count + 1)
         const result = onClick?.(event)
         if (
           result !== null &&
@@ -112,6 +119,16 @@ function Button({
           aria-hidden="true"
         >
           <Spinner />
+        </span>
+      )}
+      {shimmer > 0 && (
+        <span
+          key={shimmer}
+          data-slot="button-shimmer"
+          aria-hidden="true"
+          className="button-click-shimmer pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]"
+        >
+          <span className="block h-full w-full" />
         </span>
       )}
     </ButtonPrimitive>

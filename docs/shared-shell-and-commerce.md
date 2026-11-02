@@ -10,6 +10,10 @@ centered in place of the label and icons, never ellipses or alternate text.
 The ordinary content stays measurable and accessible while transparent,
 so pending preserves the button's dimensions and accessible name.
 Synchronous navigation and toggles do not enter a loading state.
+Accepted pointer and keyboard clicks replay a 550ms decorative shimmer without
+replacing labels or pending spinners. Disabled/pending clicks do not replay it.
+OS and profile reduced-motion preferences hide it; cleanup does not depend on
+animation events.
 
 Keep the shared `loading` prop consistent. Name boolean state with an `is`
 prefix and its setter with `setIs`: `isPending` for tracked async clicks,
