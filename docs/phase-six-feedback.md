@@ -1,10 +1,13 @@
 # Feedback, roadmap, and help
 
-The signed-in Help & Support page contains searchable FAQs in the Getting
+The signed-in `/help` page contains searchable FAQ cards in the Getting
 started, Cheques/scanning, Plans/payments, Notifications, and Privacy/security
 categories. Each answer can branch to related questions; every answer includes
 a Report issue route, while the existing WhatsApp support link remains
-available.
+available below the answers. Search precedes horizontal category pills.
+Related questions clear the search so the destination answer remains visible.
+Settings and support destinations link to `/help`; old
+`/settings/help-and-support` bookmarks redirect there.
 
 Feedback at `/feedback` accepts a category, title, and description only; file
 attachments are not accepted. Bug

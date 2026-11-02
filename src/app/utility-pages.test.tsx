@@ -16,7 +16,8 @@ import ChequeDraftsPage from './(dashboard)/cheques/drafts/page'
 import PartiesDraftsPage from './(dashboard)/parties/drafts/page'
 import LegacyTagsPage from './(dashboard)/settings/tags/page'
 import AboutPage from './(dashboard)/settings/about/page'
-import HelpPage from './(dashboard)/settings/help-and-support/page'
+import HelpPage from './(dashboard)/help/page'
+import LegacyHelpPage from './(dashboard)/settings/help-and-support/page'
 import PrivacyPolicyPage from './(dashboard)/settings/privacy-policy/page'
 import RefundPolicyPage from './(dashboard)/settings/refund-policy/page'
 import TermsPage from './(dashboard)/settings/terms-and-conditions/page'
@@ -80,6 +81,10 @@ describe('settings and draft routes', () => {
   it('redirects the legacy settings tags URL to the current list', () => {
     expect(() => LegacyTagsPage()).toThrow('NEXT_REDIRECT:/tags')
     expect(mocks.redirect).toHaveBeenCalledWith('/tags')
+  })
+  it('redirects the legacy help URL to the dedicated page', () => {
+    expect(() => LegacyHelpPage()).toThrow('NEXT_REDIRECT:/help')
+    expect(mocks.redirect).toHaveBeenCalledWith('/help')
   })
 
   it.each(locales)(
@@ -180,6 +185,48 @@ describe('settings and draft routes', () => {
       screen.getByRole('link', { name: messages.FAQ.reportIssue }),
     ).toHaveAttribute('href', '/feedback?category=bug')
   })
+
+  it.each(locales)(
+    'clears search for related answers and puts FAQ cards before support in $locale',
+    ({ locale, translations }) => {
+      renderPage(<HelpPage />, locale, translations)
+      const search = screen.getByRole('searchbox', {
+        name: translations.FAQ.searchLabel,
+      })
+      fireEvent.change(search, {
+        target: { value: translations.FAQ.questions.scan_cheque.question },
+      })
+      const question = screen.getByRole('button', {
+        name: translations.FAQ.questions.scan_cheque.question,
+      })
+      expect(question.closest('article')).toHaveClass(
+        'rounded-xl',
+        'border',
+        'bg-card',
+      )
+      fireEvent.click(question)
+      expect(
+        document.getElementById(question.getAttribute('aria-controls')!),
+      ).toHaveTextContent(translations.FAQ.questions.scan_cheque.answer)
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: translations.FAQ.questions.add_cheque.question,
+        }),
+      )
+      expect(search).toHaveValue('')
+      expect(
+        screen.getByText(translations.FAQ.questions.add_cheque.answer),
+      ).toBeVisible()
+      const section = search.closest('section')!
+      const support = screen.getByRole('link', {
+        name: new RegExp(translations.Settings.emailUs, 'i'),
+      })
+      expect(
+        section.compareDocumentPosition(support) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy()
+    },
+  )
 
   it('renders the complete privacy, refund, and terms disclosures', () => {
     const { rerender } = renderPage(<PrivacyPolicyPage />)

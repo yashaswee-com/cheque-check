@@ -5,6 +5,9 @@ import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PillScroller } from '@/components/ui/pill-scroller'
+import { Search01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { getFaq, FAQ_CATEGORIES, FAQ_ENTRIES, type FaqId } from '../lib/faqs'
 
 export function FaqExplorer() {
@@ -32,13 +35,14 @@ export function FaqExplorer() {
   const related = (id: FaqId) => {
     const faq = getFaq(id)
     if (!faq) return
+    setSearch('')
     setCategory(faq.category)
     setOpenId(id)
   }
 
   return (
     <section aria-labelledby="faq-title" className="space-y-4">
-      <div>
+      <div className="sr-only">
         <h2 id="faq-title" className="text-lg font-semibold">
           {t('title')}
         </h2>
@@ -52,19 +56,18 @@ export function FaqExplorer() {
         id="faq-search"
         type="search"
         enableMic={false}
+        leftIcon={Search01Icon}
+        className="h-11 rounded-full border-none bg-canvas-parchment"
         value={search}
         placeholder={t('searchPlaceholder')}
         onChange={(event) => setSearch(event.target.value)}
       />
 
-      <div
-        className="scroll-fade-x scroll-fade-4 flex gap-2 overflow-x-auto pb-1"
-        role="group"
-        aria-label={t('categoriesLabel')}
-      >
+      <PillScroller aria-label={t('categoriesLabel')}>
         <Button
           type="button"
           size="sm"
+          className="rounded-full"
           variant={category === 'all' ? 'default' : 'outline'}
           aria-pressed={category === 'all'}
           onClick={() => setCategory('all')}
@@ -75,6 +78,7 @@ export function FaqExplorer() {
           <Button
             type="button"
             size="sm"
+            className="rounded-full"
             key={item}
             variant={category === item ? 'default' : 'outline'}
             aria-pressed={category === item}
@@ -83,30 +87,39 @@ export function FaqExplorer() {
             {t(`categories.${item}`)}
           </Button>
         ))}
-      </div>
+      </PillScroller>
 
       <p className="text-sm text-muted-foreground" aria-live="polite">
         {t('resultCount', { count: filtered.length })}
       </p>
 
       {filtered.length ? (
-        <div className="divide-y rounded-lg border bg-card">
+        <div className="space-y-3">
           {filtered.map((faq) => {
             const isOpen = openId === faq.id
             return (
-              <article key={faq.id} className="p-4">
+              <article
+                key={faq.id}
+                className="rounded-xl border border-primary/10 bg-card p-4 shadow-sm"
+              >
                 <h3>
                   <button
                     type="button"
-                    className="w-full text-left font-semibold"
+                    className="flex w-full items-center justify-between gap-3 text-left font-semibold"
                     aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${faq.id}`}
                     onClick={() => setOpenId(isOpen ? null : faq.id)}
                   >
                     {t(`questions.${faq.id}.question`)}
+                    <HugeiconsIcon
+                      icon={ArrowDown01Icon}
+                      aria-hidden="true"
+                      className={`size-4 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                    />
                   </button>
                 </h3>
                 {isOpen && (
-                  <div className="mt-3 space-y-4">
+                  <div id={`faq-answer-${faq.id}`} className="mt-3 space-y-4">
                     <p className="text-sm leading-relaxed text-muted-foreground">
                       {t(`questions.${faq.id}.answer`)}
                     </p>

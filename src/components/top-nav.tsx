@@ -66,6 +66,7 @@ export function TopNav() {
       return { title: t('Navigation.dashboard'), icon: null }
     if (path === '/feedback')
       return { title: t('Feedback.submitTitle'), icon: Help }
+    if (path === '/help') return { title: t('FAQ.title'), icon: Help }
     if (path === '/roadmap')
       return { title: t('Feedback.roadmapTitle'), icon: Star }
     if (path === '/settings')

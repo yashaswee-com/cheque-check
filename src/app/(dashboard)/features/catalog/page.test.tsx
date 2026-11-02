@@ -207,7 +207,7 @@ describe('Features page', () => {
       await screen.findByRole('link', {
         name: messages.Premium.contactSupport,
       }),
-    ).toHaveAttribute('href', '/settings/help-and-support')
+    ).toHaveAttribute('href', '/help')
     expect(
       screen.queryByRole('button', {
         name: messages.Features.getLifetimePremium,

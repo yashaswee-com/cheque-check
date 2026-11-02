@@ -288,7 +288,7 @@ export default function FeaturesPage() {
                   </p>
                 ) : premium.state === 'paused' || premium.state === 'active' ? (
                   <Link
-                    href="/settings/help-and-support"
+                    href="/help"
                     className="inline-flex min-h-11 items-center text-sm text-primary"
                   >
                     {tp('contactSupport')}

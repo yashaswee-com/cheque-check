@@ -61,8 +61,8 @@ const destinations: Destination[] = [
   { href: '/tags', url: '/tags', ready: heading },
   { href: '/settings/whats-new', url: '/settings/whats-new', ready: heading },
   {
-    href: '/settings/help-and-support',
-    url: '/settings/help-and-support',
+    href: '/help',
+    url: '/help',
     ready: heading,
   },
   { href: '/settings/about', url: '/settings/about', ready: heading },

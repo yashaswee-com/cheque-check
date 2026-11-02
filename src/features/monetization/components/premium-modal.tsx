@@ -150,11 +150,7 @@ function PremiumAccessActions({
           className="w-full h-12 text-base font-semibold"
           onClick={() => {
             onClose()
-            router.push(
-              state === 'paused'
-                ? '/settings/help-and-support'
-                : '/features/catalog',
-            )
+            router.push(state === 'paused' ? '/help' : '/features/catalog')
           }}
         >
           {state === 'paused' ? t('contactSupport') : t('viewPlan')}

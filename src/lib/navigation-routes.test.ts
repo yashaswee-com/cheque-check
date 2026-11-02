@@ -19,6 +19,7 @@ describe('shell route classification', () => {
     '/profile',
     '/feedback',
     '/roadmap',
+    '/help',
     '/cheques/id-containing-create',
     '/parties/credit-edit',
   ])('shows bottom navigation on viewing route %s', (path) => {

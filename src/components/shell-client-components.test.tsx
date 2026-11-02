@@ -184,6 +184,7 @@ describe('navigation components', () => {
     ['/settings/refund-policy', messages.Settings.refundPolicy],
     ['/settings/about', messages.Settings.aboutApp],
     ['/settings/help-and-support', messages.Settings.helpAndSupport],
+    ['/help', messages.FAQ.title],
     ['/settings/whats-new', messages.Settings.whatsNew],
     ['/settings/preferences', messages.Settings.preferences],
     ['/settings/notifications', messages.Settings.notifications],
@@ -226,6 +227,7 @@ describe('navigation components', () => {
           '/tags',
           '/feedback',
           '/roadmap',
+          '/help',
         ].includes(route)
       ) {
         expect(

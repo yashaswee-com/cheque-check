@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 const staticPages = [
   '/settings/about',
-  '/settings/help-and-support',
+  '/help',
   '/settings/privacy-policy',
   '/settings/terms-and-conditions',
   '/settings/whats-new',
@@ -15,4 +15,12 @@ test('static settings pages render', async ({ page }) => {
     await expect(page).toHaveURL(path)
     await expect(page.getByRole('heading').first()).toBeVisible()
   }
+})
+
+test('legacy help bookmarks redirect to the standalone FAQ page', async ({
+  page,
+}) => {
+  await page.goto('/settings/help-and-support')
+  await expect(page).toHaveURL('/help')
+  await expect(page.getByRole('searchbox')).toBeVisible()
 })

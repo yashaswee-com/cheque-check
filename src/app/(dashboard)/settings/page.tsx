@@ -159,7 +159,7 @@ export default function SettingsPage() {
           name: t('helpAndSupport'),
           description: t('helpAndSupportDesc'),
           icon: Help,
-          href: '/settings/help-and-support',
+          href: '/help',
         },
         {
           name: t('aboutApp'),

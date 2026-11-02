@@ -80,7 +80,7 @@ describe('settings page', () => {
       '/reports',
       '/tags',
       '/settings/whats-new',
-      '/settings/help-and-support',
+      '/help',
       '/settings/about',
       '/settings/privacy-policy',
       '/settings/terms-and-conditions',

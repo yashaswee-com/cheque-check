@@ -168,7 +168,7 @@ describe('Premium controls', () => {
         fireEvent.click(
           screen.getByRole('button', { name: english.Premium.contactSupport }),
         )
-        expect(mocks.push).toHaveBeenCalledWith('/settings/help-and-support')
+        expect(mocks.push).toHaveBeenCalledWith('/help')
       }
     },
   )
