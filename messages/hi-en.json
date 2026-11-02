@@ -7,6 +7,9 @@
     "disabled": "PIN lock disabled",
     "freshAuth": "PIN set, change ya remove se pehle account dobara verify karein. Data delete nahi hoga.",
     "password": "Account password",
+    "chooseVerification": "Account verify karne ka tareeka chunein",
+    "usePassword": "Iske badle app password use karein",
+    "passwordlessHelp": "Phone login: verified-phone code use karein. Google login: verified-email code use karein. Naya app password zaroori nahi. Optional password method sirf existing app password ke liye hai, Google password ke liye nahi.",
     "authenticate": "Account verify karein",
     "emailCode": "Verified email code bhejein",
     "phoneCode": "Verified phone code bhejein",
@@ -90,6 +93,7 @@
     "send_failed": "Verification email nahi bheji gayi. Dobara try karein."
   },
   "Appearance": {
+    "help": "Light, Dark ya System chunein. System aapke device ki appearance follow karta hai.",
     "title": "Appearance",
     "light": "Light",
     "dark": "Dark",
@@ -136,6 +140,7 @@
     "saveError": "Aapki acknowledgement save nahi hui. Dobara try karein."
   },
   "FreeUsage": {
+    "help": "Green: 80% se kam used. Yellow: 80% ya zyada. Red: limit poori. Har circle usage dikhata hai; remaining count neeche hai.",
     "title": "Aapke free plan ka usage",
     "cheques": "Active cheques",
     "scans": "AI scans",
@@ -218,6 +223,7 @@
     "invalidValue": "Sahi value daalein"
   },
   "SharedUI": {
+    "moreInfo": "{title} ke baare mein",
     "scrollLeft": "Baayin taraf scroll karein",
     "scrollRight": "Daayin taraf scroll karein",
     "previousPage": "Pichhla page",

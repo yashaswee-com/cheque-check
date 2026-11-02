@@ -7,6 +7,9 @@
     "disabled": "PIN lock disabled",
     "freshAuth": "Verify your current account again before setting, changing or removing the PIN. Your data is not deleted.",
     "password": "Account password",
+    "chooseVerification": "Choose how to verify your account",
+    "usePassword": "Use an app password instead",
+    "passwordlessHelp": "Phone sign-in: use a verified-phone code. Google sign-in: use a verified-email code. No new app password is required. The optional password method is only for an existing app password, never your Google password.",
     "authenticate": "Verify account",
     "emailCode": "Send verified-email code",
     "phoneCode": "Send verified-phone code",
@@ -91,6 +94,7 @@
   },
   "Appearance": {
     "title": "Appearance",
+    "help": "Choose Light, Dark or System. System follows your device appearance.",
     "light": "Light",
     "dark": "Dark",
     "system": "System",
@@ -137,6 +141,7 @@
   },
   "FreeUsage": {
     "title": "Your free plan usage",
+    "help": "Green means under 80% used, yellow means 80% or more, and red means the limit is reached. Each circle shows used allowance; the remaining count is shown below.",
     "cheques": "Active cheques",
     "scans": "AI scans",
     "voice": "Voice reminders",
@@ -218,6 +223,7 @@
     "invalidValue": "Enter a valid value"
   },
   "SharedUI": {
+    "moreInfo": "More about {title}",
     "scrollLeft": "Scroll left",
     "scrollRight": "Scroll right",
     "previousPage": "Previous page",
