@@ -165,7 +165,7 @@ export function TagSelector({
                 </Button>
               </div>
             )}
-            <div className="h-48 space-y-1 overflow-y-auto">
+            <div className="scroll-fade-y scroll-fade-4 h-48 space-y-1 overflow-y-auto">
               {isLoading &&
                 Array.from({ length: 4 }, (_, index) => (
                   <div
@@ -224,7 +224,7 @@ export function TagSelector({
           if (!creating.current) setAdding(next)
         }}
       >
-        <SheetContent className="max-h-[85dvh] overflow-y-auto">
+        <SheetContent className="max-h-[85dvh]">
           <SheetHeader>
             <SheetTitle>{t('createTag')}</SheetTitle>
             <SheetDescription>{t('newTag')}</SheetDescription>

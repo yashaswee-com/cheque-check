@@ -275,7 +275,7 @@ export default function HomePage() {
             <div
               ref={actionsRef}
               onScroll={(event) => updateActionsOverflow(event.currentTarget)}
-              className="flex max-w-full gap-3 overflow-x-auto overscroll-x-contain snap-x snap-proximity px-1 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="scroll-fade-x scroll-fade-4 flex max-w-full gap-3 overflow-x-auto overscroll-x-contain snap-x snap-proximity px-1 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               data-testid="dashboard-quick-actions"
             >
               <input

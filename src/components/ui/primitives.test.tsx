@@ -112,6 +112,9 @@ it('renders complete cards, badges and scrollable page content', () => {
       </Card>
     </PageTransition>,
   )
+  expect(
+    container.querySelector('[data-slot="scroll-area-viewport"]'),
+  ).toHaveClass('scroll-fade-y')
   expect(screen.getByText('Balance')).toHaveAttribute('data-slot', 'card-title')
   expect(screen.getByRole('link', { name: 'Active' })).toHaveAttribute(
     'href',
@@ -190,9 +193,13 @@ it('opens and closes a sheet using its footer action', async () => {
     </Sheet>,
   )
   fireEvent.click(screen.getByRole('button', { name: 'Open sheet' }))
-  expect(await screen.findByRole('dialog')).toHaveTextContent(
-    'Update preferences',
-  )
+  const sheet = await screen.findByRole('dialog')
+  expect(sheet).toHaveTextContent('Update preferences')
+  expect(sheet).toHaveClass('overflow-hidden')
+  expect(sheet).not.toHaveClass('scroll-fade-y')
+  expect(
+    sheet.querySelector('[data-slot="sheet-scroll-viewport"]'),
+  ).toHaveClass('scroll-fade-y', 'overflow-y-auto', 'min-h-0')
   fireEvent.click(screen.getByRole('button', { name: 'Close' }))
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })

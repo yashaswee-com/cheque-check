@@ -113,7 +113,7 @@ export default function TagsPage() {
               </SheetTitle>
             </SheetHeader>
 
-            <div className="space-y-6 overflow-y-auto py-4">
+            <div className="space-y-6 py-4">
               <FilterPillSection title={tCommon('sortBy')}>
                 {sortOptions.map((option) => (
                   <button

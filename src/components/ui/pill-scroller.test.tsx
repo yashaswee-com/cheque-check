@@ -63,6 +63,7 @@ describe('PillScroller', () => {
       'flex',
       'flex-nowrap',
       'overflow-x-auto',
+      'scroll-fade-x',
       'snap-x',
       'gap-3',
     )

@@ -318,7 +318,7 @@ export function BankSelector({
           }
         }}
       >
-        <SheetContent className="max-h-[85dvh] overflow-y-auto">
+        <SheetContent className="max-h-[85dvh]">
           <SheetHeader>
             <SheetTitle>{tb('create')}</SheetTitle>
             <SheetDescription>{tb('privateHelp')}</SheetDescription>

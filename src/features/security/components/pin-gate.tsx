@@ -22,8 +22,9 @@ export function PinGate({ children }: { children: React.ReactNode }) {
     <Dialog open disablePointerDismissal>
       <DialogContent
         showCloseButton={false}
+        scrollable
         overlayClassName="z-[2147483645] bg-background supports-backdrop-filter:backdrop-blur-none"
-        className="z-[2147483646] max-h-[90dvh] overflow-y-auto"
+        className="z-[2147483646] max-h-[90dvh]"
         data-sentry-mask
         data-clarity-mask="true"
       >

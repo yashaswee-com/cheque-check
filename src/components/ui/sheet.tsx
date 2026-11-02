@@ -88,14 +88,19 @@ function SheetContent({
       <DialogPrimitive.Popup
         data-slot="sheet-content"
         className={cn(
-          'fixed bottom-0 left-0 right-0 z-50 flex flex-col gap-4 rounded-t-3xl bg-popover p-6 text-sm text-popover-foreground shadow-2xl ring-1 ring-foreground/5 duration-300 outline-none data-open:animate-in data-open:slide-in-from-bottom-full data-closed:animate-out data-closed:slide-out-to-bottom-full',
+          'fixed bottom-0 left-0 right-0 z-50 flex max-h-[90dvh] flex-col gap-4 overflow-hidden rounded-t-3xl bg-popover p-6 text-sm text-popover-foreground shadow-2xl ring-1 ring-foreground/5 duration-300 outline-none data-open:animate-in data-open:slide-in-from-bottom-full data-closed:animate-out data-closed:slide-out-to-bottom-full',
           'sm:left-1/2 sm:right-auto sm:w-full sm:max-w-[430px] sm:-translate-x-1/2',
           className,
         )}
         {...props}
       >
         <div className="mx-auto h-1.5 w-12 rounded-full bg-muted/30 shrink-0" />
-        {children}
+        <div
+          data-slot="sheet-scroll-viewport"
+          className="scroll-fade-y scroll-fade-4 no-scrollbar flex min-h-0 flex-col gap-4 overflow-y-auto overscroll-contain"
+        >
+          {children}
+        </div>
         {showCloseButton && (
           <SheetClose
             data-slot="sheet-close"

@@ -49,7 +49,7 @@ export function PremiumModal({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="max-h-[90dvh] overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <SheetContent className="max-h-[90dvh] pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <SheetHeader className="space-y-4">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <HugeiconsIcon icon={StarIcon} className="h-6 w-6 text-primary" />

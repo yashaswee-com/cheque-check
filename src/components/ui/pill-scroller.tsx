@@ -55,7 +55,7 @@ function PillScroller({
         role="group"
         data-slot="pill-scroller"
         className={cn(
-          'flex snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          'scroll-fade-x scroll-fade-4 flex snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           className,
         )}
         {...props}

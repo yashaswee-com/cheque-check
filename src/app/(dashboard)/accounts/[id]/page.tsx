@@ -299,7 +299,7 @@ export default function AccountDetailPage() {
                 </Button>
               }
             />
-            <SheetContent className="max-h-[85dvh] overflow-y-auto">
+            <SheetContent className="max-h-[85dvh]">
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-2">
                   <HugeiconsIcon

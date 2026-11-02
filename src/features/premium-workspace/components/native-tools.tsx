@@ -208,7 +208,7 @@ export function NativeTools(props: NativeToolsProps) {
           </Button>
         }
       />
-      <SheetContent keepMounted className="max-h-[80dvh] overflow-y-auto">
+      <SheetContent keepMounted className="max-h-[80dvh]">
         {content}
       </SheetContent>
     </Sheet>

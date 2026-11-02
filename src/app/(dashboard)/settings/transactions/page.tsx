@@ -206,7 +206,7 @@ export default function TransactionsPage() {
               </Button>
             }
           />
-          <SheetContent className="rounded-t-2xl max-h-[90vh] overflow-y-auto">
+          <SheetContent className="rounded-t-2xl max-h-[90vh]">
             <SheetHeader>
               <SheetTitle className="flex items-center gap-2 text-lg">
                 <HugeiconsIcon icon={Filter} className="h-5 w-5 text-primary" />

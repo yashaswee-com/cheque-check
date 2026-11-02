@@ -137,9 +137,10 @@ function TourDialog({
           document.body,
         )}
       <DialogContent
+        scrollable
         showCloseButton={false}
         overlayClassName="bg-transparent supports-backdrop-filter:backdrop-blur-none"
-        className="z-[70] max-h-[45dvh] overflow-y-auto"
+        className="z-[70] max-h-[45dvh]"
         style={
           activeBox && activeBox.top < window.innerHeight / 2
             ? { top: 'auto', bottom: '1rem', transform: 'translateX(-50%)' }

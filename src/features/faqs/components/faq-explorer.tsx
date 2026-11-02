@@ -58,7 +58,7 @@ export function FaqExplorer() {
       />
 
       <div
-        className="flex gap-2 overflow-x-auto pb-1"
+        className="scroll-fade-x scroll-fade-4 flex gap-2 overflow-x-auto pb-1"
         role="group"
         aria-label={t('categoriesLabel')}
       >
