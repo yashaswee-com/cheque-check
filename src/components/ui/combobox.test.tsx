@@ -90,6 +90,29 @@ it('selects and clears existing options', async () => {
   expect(change).toHaveBeenLastCalledWith('')
 })
 
+it('keeps required preference selections and bounds the trigger content without clearing', async () => {
+  const change = vi.fn()
+  render(
+    <Combobox
+      id="preference"
+      options={options}
+      value="main"
+      allowDeselect={false}
+      onValueChange={change}
+      testId="preference"
+    />,
+  )
+  expect(screen.getByTestId('preference')).toHaveClass(
+    'min-w-0',
+    'w-full',
+    'h-12',
+  )
+  fireEvent.click(screen.getByTestId('preference'))
+  fireEvent.click(await screen.findByTestId('preference-option-main'))
+  expect(change).toHaveBeenCalledWith('main')
+  expect(screen.getByTestId('preference')).toHaveAttribute('id', 'preference')
+})
+
 it('works without an optional test identifier', async () => {
   const change = vi.fn()
   render(<Combobox options={options} onValueChange={change} />)

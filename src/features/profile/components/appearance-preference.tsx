@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Label } from '@/components/ui/label'
 import { Combobox } from '@/components/ui/combobox'
@@ -7,25 +7,36 @@ import { useProfile } from '../hooks/use-profile'
 import { appearanceSchema } from '@/validators/profile'
 import { persistAppearance } from '../lib/appearance'
 import { logger } from '@/lib/logger'
+import { InfoPopover } from '@/components/ui/info-popover'
+import type { Appearance } from '../lib/appearance'
 export function AppearancePreference() {
   const { profile, updateProfile } = useProfile()
   const t = useTranslations('Appearance')
+  const id = useId()
+  const [pending, setPending] = useState<Appearance | null>(null)
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(false)
   return (
-    <section className="space-y-2">
-      <Label>{t('title')}</Label>
+    <section className="min-w-0 space-y-2" aria-busy={busy}>
+      <div className="flex items-center gap-1">
+        <Label htmlFor={id}>{t('title')}</Label>
+        <InfoPopover title={t('title')}>{t('help')}</InfoPopover>
+      </div>
       <Combobox
-        value={profile?.appearance ?? 'system'}
-        disabled={busy}
+        id={id}
+        value={pending ?? profile?.appearance ?? 'system'}
+        allowDeselect={false}
+        className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
         testId="preferences-appearance"
         options={['light', 'dark', 'system'].map((value) => ({
           value,
           label: t(value),
         }))}
         onValueChange={async (value) => {
+          if (busy || value === (profile?.appearance ?? 'system')) return
           const appearance = appearanceSchema.parse(value)
           setBusy(true)
+          setPending(appearance)
           setError(false)
           persistAppearance(appearance)
           try {
@@ -36,6 +47,7 @@ export function AppearancePreference() {
             setError(true)
           } finally {
             setBusy(false)
+            setPending(null)
           }
         }}
       />

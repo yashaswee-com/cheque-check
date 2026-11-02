@@ -48,6 +48,8 @@ interface ComboboxProps {
   onCreateClick?: (query: string) => void
   testId?: string
   disabled?: boolean
+  id?: string
+  allowDeselect?: boolean
 }
 
 export function Combobox({
@@ -62,6 +64,8 @@ export function Combobox({
   onCreateClick,
   testId,
   disabled = false,
+  id,
+  allowDeselect = true,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const paged = usePagedOptions(options, optionLabel)
@@ -125,18 +129,19 @@ export function Combobox({
       }}
     >
       <PopoverTrigger
+        id={id}
         disabled={disabled}
         data-testid={testId}
         className={cn(
           buttonVariants({
             variant: className?.includes('bg-') ? 'ghost' : 'outline',
           }),
-          'w-full justify-between h-12 rounded-sm',
+          'min-w-0 w-full justify-between h-12 rounded-sm',
           !className?.includes('border-none') && 'border-primary/10',
           className,
         )}
       >
-        <div className="flex items-center gap-2 overflow-hidden">
+        <div className="flex min-w-0 items-center gap-2 overflow-hidden">
           {selectedOption && (
             <EntityAvatar
               name={selectedOption.label}
@@ -188,9 +193,13 @@ export function Combobox({
                     testId ? `${testId}-option-${option.value}` : undefined
                   }
                   onSelect={() => {
-                    onValueChange(option.value === value ? '' : option.value)
                     setOpen(false)
                     setQuery('')
+                    onValueChange(
+                      allowDeselect && option.value === value
+                        ? ''
+                        : option.value,
+                    )
                   }}
                   className="flex items-center justify-between py-3 px-4"
                 >

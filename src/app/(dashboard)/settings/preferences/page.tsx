@@ -21,6 +21,7 @@ import { ReminderTimesEditor } from '@/features/profile/components/reminder-time
 import { DEFAULT_REMINDER_TIMES } from '@/features/profile/lib/reminder-times'
 import { AppearancePreference } from '@/features/profile/components/appearance-preference'
 import { PrivacyPreference } from '@/features/security/components/privacy-preference'
+import { InfoPopover } from '@/components/ui/info-popover'
 
 export default function PreferencesPage() {
   const t = useTranslations('Onboarding')
@@ -126,9 +127,14 @@ export default function PreferencesPage() {
         <h3 className="text-lg font-medium">{t('notifications')}</h3>
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-              {t('dailyFrequency')}
-            </Label>
+            <div className="flex items-center gap-1">
+              <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
+                {t('dailyFrequency')}
+              </Label>
+              <InfoPopover title={t('dailyFrequency')}>
+                {t('dailyFrequencyHelp')}
+              </InfoPopover>
+            </div>
             <Combobox
               options={REMINDERS_PER_DAY_OPTIONS}
               value={profile.reminders_per_day.toString()}
@@ -137,15 +143,17 @@ export default function PreferencesPage() {
               }
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
-            <p className="text-[11px] text-muted-foreground px-1">
-              {t('dailyFrequencyHelp')}
-            </p>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-              {t('advancedWarning')}
-            </Label>
+            <div className="flex items-center gap-1">
+              <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
+                {t('advancedWarning')}
+              </Label>
+              <InfoPopover title={t('advancedWarning')}>
+                {t('advancedWarningHelp')}
+              </InfoPopover>
+            </div>
             <Combobox
               options={REMINDER_FREQUENCY_OPTIONS}
               value={profile.default_reminder_days.toString()}
@@ -154,9 +162,6 @@ export default function PreferencesPage() {
               }
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
-            <p className="text-[11px] text-muted-foreground px-1">
-              {t('advancedWarningHelp')}
-            </p>
           </div>
 
           <ReminderTimesEditor

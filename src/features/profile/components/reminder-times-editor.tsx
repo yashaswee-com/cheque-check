@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { Label } from '@/components/ui/label'
 import { Combobox } from '@/components/ui/combobox'
+import { InfoPopover } from '@/components/ui/info-popover'
 import {
   formatReminderTime,
   normalizeReminderTimes,
@@ -30,10 +31,15 @@ export function ReminderTimesEditor({
 
   return (
     <div className="space-y-3" data-testid="reminder-times-editor">
-      <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-        {ts('reminderTimes')}
-      </Label>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="flex items-center gap-1">
+        <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
+          {ts('reminderTimes')}
+        </Label>
+        <InfoPopover title={ts('reminderTimes')}>
+          {ts('reminderTimesHelp')}
+        </InfoPopover>
+      </div>
+      <div className="grid grid-cols-1 gap-3">
         {current.map((time, index) => {
           const taken = new Set(current.filter((_, other) => other !== index))
           const options = REMINDER_TIME_OPTIONS.filter(
@@ -44,11 +50,17 @@ export function ReminderTimesEditor({
           }))
           return (
             <div key={`${index}-${time}`} className="space-y-1">
-              <p className="text-[11px] text-muted-foreground ml-1">
+              <Label
+                htmlFor={`reminder-time-${index + 1}`}
+                className="text-[11px] text-muted-foreground ml-1"
+              >
                 {ts('reminderTimeLabel', { number: index + 1 })}
-              </p>
+              </Label>
               <Combobox
+                id={`reminder-time-${index + 1}`}
                 options={options}
+                allowDeselect={false}
+                disabled={disabled}
                 value={toReminderTime(time)}
                 testId={`reminder-time-${index + 1}`}
                 onValueChange={(value) => {
@@ -61,9 +73,6 @@ export function ReminderTimesEditor({
           )
         })}
       </div>
-      <p className="text-[11px] text-muted-foreground px-1">
-        {ts('reminderTimesHelp')}
-      </p>
     </div>
   )
 }
