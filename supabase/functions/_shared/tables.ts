@@ -1,6 +1,7 @@
 // Deno cannot import from src/, so table names are mirrored here.
 // Keep in sync with src/lib/supabase/tables.ts.
 export const TABLES = {
+  AI_MODEL_POLICIES: 'ai_model_policies',
   PROFILES: 'profiles',
   BUSINESSES: 'businesses',
   PARTIES: 'parties',

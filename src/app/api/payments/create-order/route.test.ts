@@ -147,6 +147,26 @@ beforeEach(() => {
 })
 
 describe('payment order route', () => {
+  it.each([
+    { is_free: true, amount: 0 },
+    { is_free: false, amount: 0 },
+  ])('rejects a non-purchasable catalog result: %j', async (product) => {
+    mocks.from.mockReturnValue(
+      makeQuery({ ...(mocks.product as object), ...product }, () => null),
+    )
+    const response = await POST(
+      request(JSON.stringify({ productId: 'lifetime_premium' })),
+    )
+    expect(response.status).toBe(404)
+    expect(mocks.adminRpc).not.toHaveBeenCalled()
+    expect(mocks.createOrder).not.toHaveBeenCalled()
+  })
+  it('does not expose the free catalog reference as a purchasable product ID', async () => {
+    const response = await POST(request(JSON.stringify({ productId: 'free' })))
+    expect(response.status).toBe(400)
+    expect(mocks.adminRpc).not.toHaveBeenCalled()
+    expect(mocks.createOrder).not.toHaveBeenCalled()
+  })
   it('creates the locked discounted quote rather than a client or current-catalog amount', async () => {
     mocks.adminRpc.mockImplementation(async (name: string) =>
       name === 'prepare_payment_checkout'

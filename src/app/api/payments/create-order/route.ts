@@ -57,13 +57,18 @@ async function createPaymentOrder(request: Request) {
     const { data: productData, error: productError } = await admin
       .from(TABLES.PAYMENT_PRODUCTS)
       .select(
-        'id, name, transaction_type, feature_id, amount, currency, required_entitlement_id',
+        'id, name, transaction_type, feature_id, amount, currency, required_entitlement_id, is_free',
       )
       .eq('id', requestResult.data.productId)
       .eq('active', true)
       .single()
 
-    if (productError || !productData) {
+    if (
+      productError ||
+      !productData ||
+      productData.is_free ||
+      productData.amount <= 0
+    ) {
       return NextResponse.json(
         { error: 'Payment product is unavailable' },
         { status: 404 },

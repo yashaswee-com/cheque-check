@@ -13,7 +13,7 @@ const ocrProvider = new OpenAiOcrProvider()
 
 type ServerClient = Awaited<ReturnType<typeof createClient>>
 
-/** Plan-based model; a lookup failure must not fail a scan whose quota is already consumed. */
+/** Product policy; a lookup failure must not fail a scan whose quota is already consumed. */
 async function resolveScanModel(supabase: ServerClient) {
   const { data, error } = await supabase.rpc('resolve_ai_scan_model')
   const resolved = Array.isArray(data) ? data[0] : null
@@ -21,7 +21,7 @@ async function resolveScanModel(supabase: ServerClient) {
     logger.warn('[OcrController] Falling back to the default OCR model', {
       error: error?.message ?? 'no model resolved',
     })
-    return { plan: 'unknown', model: DEFAULT_OCR_MODEL }
+    return { product_id: 'unknown', model: DEFAULT_OCR_MODEL }
   }
   return resolved
 }
@@ -85,9 +85,9 @@ async function extractCheque(req: Request): Promise<Response> {
         ensureProviderConfigured: getOpenAiEnv,
         provider: {
           processImage: async (imageUrl) => {
-            const { plan, model } = await resolveScanModel(supabase)
+            const { product_id, model } = await resolveScanModel(supabase)
             logger.info(
-              `[OcrController] Processing request for user ${user.id} (plan ${plan}, model ${model})`,
+              `[OcrController] Processing request for user ${user.id} (product ${product_id}, model ${model})`,
             )
             return ocrProvider.processImage(imageUrl, model)
           },

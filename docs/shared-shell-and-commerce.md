@@ -137,3 +137,30 @@ pairs may resolve to their exact product.
 Created, authorized, captured, failed and refunded remain distinct. Neither a
 history badge nor client checkout completion authorizes Premium activation;
 webhook/database fulfillment and refreshed entitlements remain authoritative.
+
+### Product-specific AI models
+
+Apply `20261107010000_product_ai_model_policies.sql` after the existing AI policy
+migration. `ai_model_policies.product_id` references `payment_products.id`;
+each product has a model and an explicit priority (1–10,000 for paid products).
+The highest-priority eligible owned product wins, with product ID breaking ties.
+Existing custom models are preserved: scanner defaults to priority 20, Lifetime
+to 10. Only service-role operators manage policies.
+
+The inactive `free` catalog reference (`is_free=true`, amount zero, priority zero)
+is not a sale or Premium entitlement. Existing free pricing presentation is
+unchanged. Catalog checks and payment/checkout triggers prevent buying it,
+including through admin grant transaction helpers.
+
+`user_entitlements.product_id` records one current product per feature, matching
+the existing entitlement model. Migration backfills captured purchases first,
+then matching catalog products for legacy/admin trials. Subsequent captured
+purchases record their exact SKU atomically. Top-ups add quota only and cannot
+have model policies. Retiring a product from sale does not remove existing access.
+Expired, paused, canceled, unbounded subscription and inactive-account access
+do not qualify; finite valid trials continue to qualify.
+
+Operators configure model/priority on the product policy row, not a plan label.
+Missing paid policies use the eligible free policy; a completely missing policy
+raises an explicit database error. OCR retains its existing logged default-model
+fallback if policy lookup fails after quota consumption.

@@ -11,6 +11,24 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      ai_model_policies: {
+        Row: {
+          product_id: string
+          model: string
+          priority: number
+          updated_at: string
+        }
+        Insert: {
+          product_id: string
+          model: string
+          priority?: number
+          updated_at?: string
+        }
+        Update: Partial<
+          Database['public']['Tables']['ai_model_policies']['Row']
+        >
+        Relationships: []
+      }
       application_pins: {
         Row: {
           user_id: string
@@ -591,6 +609,7 @@ export interface Database {
           id: string
           user_id: string
           feature_id: Database['public']['Enums']['feature_type']
+          product_id: string | null
           status: Database['public']['Enums']['entitlement_status']
           valid_until: string | null
           razorpay_subscription_id: string | null
@@ -666,6 +685,7 @@ export interface Database {
           required_entitlement_id:
             Database['public']['Enums']['feature_type'] | null
           active: boolean
+          is_free: boolean
           created_at: string
           updated_at: string
         }
@@ -1354,7 +1374,7 @@ export interface Database {
       }
       resolve_ai_scan_model: {
         Args: Record<PropertyKey, never>
-        Returns: { plan: string; model: string }[]
+        Returns: { product_id: string; model: string }[]
       }
       claim_notification_jobs: {
         Args: {

@@ -61,7 +61,7 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
   mocks.rpc.mockImplementation(async (name: string) =>
     name === 'resolve_ai_scan_model'
-      ? { data: [{ plan: 'free', model: 'gpt-4o-mini' }], error: null }
+      ? { data: [{ product_id: 'free', model: 'gpt-4o-mini' }], error: null }
       : { data: true, error: null },
   )
   mocks.processImage.mockResolvedValue(details)
@@ -178,13 +178,13 @@ describe('OCR shared contracts and client', () => {
   })
 
   it.each([
-    ['ai_scanner', 'gpt-4o'],
-    ['lifetime', 'gpt-4o'],
+    ['ai_scanner_30d', 'gpt-4o'],
+    ['lifetime_premium', 'gpt-4o'],
     ['free', 'gpt-4o-mini'],
-  ])('scans with the %s plan model %s', async (plan, model) => {
+  ])('scans with the %s product model %s', async (product_id, model) => {
     mocks.rpc.mockImplementation(async (name: string) =>
       name === 'resolve_ai_scan_model'
-        ? { data: [{ plan, model }], error: null }
+        ? { data: [{ product_id, model }], error: null }
         : { data: true, error: null },
     )
     expect(
@@ -200,7 +200,7 @@ describe('OCR shared contracts and client', () => {
     { data: null, error: new Error('policy lookup failed') },
     { data: [], error: null },
   ])(
-    'falls back to the default model when the plan lookup fails: %j',
+    'falls back with a warning when the product policy lookup fails: %j',
     async (lookup) => {
       mocks.rpc.mockImplementation(async (name: string) =>
         name === 'resolve_ai_scan_model' ? lookup : { data: true, error: null },
