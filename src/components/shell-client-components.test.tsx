@@ -445,6 +445,7 @@ describe('shell state components', () => {
       configurable: true,
       value: mocks.scrollTo,
     })
+
     const view = renderIntl(<ScrollToTop />)
     expect(mocks.scrollTo).toHaveBeenCalledWith(0, 0)
     mocks.scrollTo.mockClear()
@@ -455,6 +456,44 @@ describe('shell state components', () => {
       </NextIntlClientProvider>,
     )
     expect(mocks.scrollTo).toHaveBeenCalledWith(0, 0)
+  })
+
+  it('resets the inner page scroller instead of moving the fixed header or window', () => {
+    const pageScroll = vi.fn()
+    const rootScroll = vi.fn()
+    renderIntl(
+      <div
+        id="app-scroll-container"
+        ref={(node) => {
+          if (node) node.scrollTo = rootScroll
+        }}
+      >
+        <main
+          data-page-scroll
+          ref={(node) => {
+            if (node) node.scrollTo = pageScroll
+          }}
+        />
+        <ScrollToTop />
+      </div>,
+    )
+    expect(pageScroll).toHaveBeenCalledWith({ top: 0, left: 0 })
+    expect(rootScroll).not.toHaveBeenCalled()
+  })
+
+  it('resets the outer shell on routes without a dashboard page scroller', () => {
+    const scroll = vi.fn()
+    renderIntl(
+      <div
+        id="app-scroll-container"
+        ref={(node) => {
+          if (node) node.scrollTo = scroll
+        }}
+      >
+        <ScrollToTop />
+      </div>,
+    )
+    expect(scroll).toHaveBeenCalledWith({ top: 0, left: 0 })
   })
 
   it('registers a service worker and logs registration failures', async () => {

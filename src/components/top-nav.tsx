@@ -189,7 +189,7 @@ export function TopNav() {
   const hideBusinessSwitcher = !route.showBusinessSwitcher
 
   return (
-    <div className="sticky top-0 z-40 w-full flex flex-col">
+    <div className="sticky top-0 z-40 w-full shrink-0 flex flex-col">
       <header className="relative flex h-[52px] items-center justify-between bg-canvas-parchment/80 px-4 backdrop-blur-md dark:bg-black/80 border-b border-primary/5">
         <div
           id="progress-bar-nav-container"

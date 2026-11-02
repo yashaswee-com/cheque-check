@@ -81,12 +81,38 @@ describe('best-effort viewport privacy', () => {
   it('persists only a user-requested preference and explicitly reports failed saves', async () => {
     state.update.mockRejectedValue(new Error('Offline'))
     mount(<PrivacyPreference />)
-    expect(screen.getByText(/Browsers cannot prevent OS/)).toBeInTheDocument()
+    expect(
+      screen.queryByText(messages.Security.privacyLimit),
+    ).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'More about Hide app when out of focus',
+      }),
+    )
+    expect(
+      await screen.findByText(messages.Security.privacyLimit),
+    ).toBeVisible()
     fireEvent.click(screen.getByRole('switch'))
     await waitFor(() =>
       expect(state.update).toHaveBeenCalledWith({ privacy_cover: false }),
     )
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not save')
     expect(screen.getByRole('switch')).toBeChecked()
+  })
+  it('uses the same responsive frame as the shell rather than painting the blue surround', () => {
+    mount()
+    expect(screen.getByTestId('privacy-cover')).toHaveClass('bg-primary')
+    expect(screen.getByTestId('privacy-cover-frame')).toHaveClass(
+      'app-shell-frame',
+      'overflow-hidden',
+      'bg-white',
+      'dark:bg-black',
+    )
+    expect(screen.getByTestId('privacy-cover')).not.toHaveClass(
+      'bg-white',
+      'dark:bg-black',
+    )
+    fireEvent(window, new Event('blur'))
+    expect(screen.getByTestId('privacy-cover-frame')).toBeVisible()
   })
 })

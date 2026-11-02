@@ -4,6 +4,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@layer components {
+  .app-shell-frame {
+    width: 100%;
+    height: 100dvh;
+  }
+  @media (min-width: 40rem) {
+    .app-shell-frame {
+      height: 90dvh;
+      max-height: 932px;
+      max-width: 430px;
+      border: 4px solid white;
+      border-radius: var(--radius-xl);
+    }
+  }
+}
+
 .premium-crown-shine::after {
   content: '';
   position: absolute;

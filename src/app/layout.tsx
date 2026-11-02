@@ -84,7 +84,10 @@ export default async function RootLayout({
           {isPublicSite ? (
             <div className="min-h-screen">{children}</div>
           ) : (
-            <div className="relative w-full h-[100dvh] bg-background sm:h-[90dvh] sm:max-h-[932px] sm:max-w-[430px] sm:rounded-xl sm:border-[4px] sm:border-white sm: overflow-hidden flex flex-col [transform:translateZ(0)]">
+            <div
+              id="app-shell"
+              className="app-shell-frame relative bg-background overflow-hidden flex flex-col [transform:translateZ(0)]"
+            >
               <div
                 id="progress-bar-container"
                 className="absolute top-0 left-0 right-0 z-[100]"
@@ -94,9 +97,10 @@ export default async function RootLayout({
               </Suspense>
               <Providers>
                 <div
+                  id="app-scroll-container"
                   data-clarity-mask="true"
                   data-sentry-mask
-                  className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden overscroll-contain relative flex flex-col"
+                  className="no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain relative flex flex-col"
                 >
                   {children}
                 </div>

@@ -14,10 +14,13 @@ export default function DashboardLayout({
   return (
     <OnboardingCheck>
       <PinGate>
-        <div className="flex min-h-full min-w-0 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))]">
+        <div className="flex h-full min-h-0 min-w-0 shrink-0 flex-col">
           <ScrollToTop />
           <TopNav />
-          <main className="min-w-0 flex-1 px-4 pt-6 flex flex-col">
+          <main
+            data-page-scroll
+            className="scroll-fade-y scroll-fade-4 no-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] flex flex-col"
+          >
             <PageTransition>{children}</PageTransition>
           </main>
           <AppFab />

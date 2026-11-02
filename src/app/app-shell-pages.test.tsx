@@ -269,6 +269,10 @@ describe('application shell routes', () => {
     )
     expect(screen.getByText('Dashboard child')).toBeVisible()
     expect(screen.getByText('Top nav')).toBeVisible()
+    const main = screen.getByRole('main')
+    expect(main).toHaveAttribute('data-page-scroll')
+    expect(main).toHaveClass('overflow-y-auto', 'min-h-0', 'scroll-fade-y')
+    expect(main).not.toContainElement(screen.getByText('Top nav'))
     expect(screen.getByText('Bottom nav')).toBeVisible()
     expect(screen.getByText('Compatibility redirect')).toBeVisible()
     expect(

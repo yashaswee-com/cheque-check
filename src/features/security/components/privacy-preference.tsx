@@ -5,6 +5,7 @@ import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { logger } from '@/lib/logger'
+import { InfoPopover } from '@/components/ui/info-popover'
 export function PrivacyPreference() {
   const { profile, updateProfile } = useProfile()
   const t = useTranslations('Security')
@@ -13,7 +14,12 @@ export function PrivacyPreference() {
   return (
     <section className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <Label htmlFor="privacy-cover">{t('privacyTitle')}</Label>
+        <div className="flex items-center gap-1">
+          <Label htmlFor="privacy-cover">{t('privacyTitle')}</Label>
+          <InfoPopover title={t('privacyTitle')}>
+            {t('privacyLimit')}
+          </InfoPopover>
+        </div>
         <Switch
           id="privacy-cover"
           checked={profile?.privacy_cover !== false}
@@ -32,7 +38,6 @@ export function PrivacyPreference() {
           }}
         />
       </div>
-      <p className="text-sm text-muted-foreground">{t('privacyLimit')}</p>
       {error && <p role="alert">{t('saveError')}</p>}
     </section>
   )

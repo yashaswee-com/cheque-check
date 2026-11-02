@@ -66,20 +66,25 @@ export function PrivacyShield() {
           data-testid="privacy-cover"
           data-sentry-mask
           data-clarity-mask="true"
-          className="fixed inset-0 z-[2147483647] bg-white text-black dark:bg-black dark:text-white"
+          className="fixed inset-0 z-[2147483647] bg-primary"
         >
           <div
-            role="status"
-            className="flex h-full flex-col items-center justify-center gap-3"
+            data-testid="privacy-cover-frame"
+            className="app-shell-frame absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white text-black dark:bg-black dark:text-white"
           >
-            <img
-              src="/android-chrome-192x192.png"
-              alt=""
-              width={64}
-              height={64}
-            />
-            <p className="font-bold">ChequeCheck</p>
-            <p>{t('covered')}</p>
+            <div
+              role="status"
+              className="flex h-full flex-col items-center justify-center gap-3"
+            >
+              <img
+                src="/android-chrome-192x192.png"
+                alt=""
+                width={64}
+                height={64}
+              />
+              <p className="font-bold">ChequeCheck</p>
+              <p>{t('covered')}</p>
+            </div>
           </div>
         </div>,
         document.body,

@@ -1,8 +1,10 @@
 # App privacy and PIN security
 
 Apply `20261106000000_privacy_cover.sql`. The profile-backed preview cover defaults
-on, uses solid white/black according to appearance, and covers the full browser
-viewport on focus loss or hidden visibility. PrintScreen detection briefly covers
+on, uses solid white/black according to appearance, and covers the application
+frame on focus loss or hidden visibility. The cover shares the shell's responsive
+dimensions, border and corner radius, leaving the blue surround unchanged.
+PrintScreen detection briefly covers
 the view where the browser delivers that key. It does not access the clipboard.
 
 This is **best effort**, not screenshot prevention: operating systems may capture
@@ -37,6 +39,15 @@ A person controlling the browser or its existing Auth token can bypass client UI
 use Auth-authorized APIs. PIN protection is not a claim of at-rest encryption,
 offline protection, or protection against browser compromise. Configure hosted Auth
 OTP delivery before enabling PINs for accounts without passwords.
+
+PIN management offers codes only for the confirmed Auth contacts returned by the
+server. Phone-only accounts use SMS (when phone authentication is enabled);
+Google accounts use their confirmed email. An existing app password is an
+optional, explicitly selected alternative, never a request for a Google password.
+No new password, provider-specific recovery system, or extra identity is created.
+All methods still require fresh verification and the same single-use proof.
+The deployment's email OTP template must deliver a usable code, not just a
+magic link; verify email/SMS delivery in staging.
 
 The existing scaling runner includes 10,000 owner-scoped privacy profiles,
 PBKDF2 PIN verification at the full 600,000-iteration work factor, and transactional
