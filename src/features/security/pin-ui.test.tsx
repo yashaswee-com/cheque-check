@@ -247,6 +247,11 @@ describe('PIN shell gating', () => {
 })
 describe('fresh-auth PIN management', () => {
   async function password() {
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Use an app password instead',
+      }),
+    )
     await waitFor(() =>
       expect(
         screen.getByRole('button', { name: 'Verify account' }),
@@ -289,14 +294,93 @@ describe('fresh-auth PIN management', () => {
     fireEvent.change(await screen.findByLabelText('Authentication code'), {
       target: { value: '123456' },
     })
-    fireEvent.click(
-      screen.getAllByRole('button', { name: 'Verify account' })[1],
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Verify account' }))
     await screen.findByLabelText('New six-digit PIN')
     fireEvent.click(screen.getByRole('button', { name: 'Remove PIN' }))
     await waitFor(() =>
       expect(mocks.remove).toHaveBeenCalledWith('a'.repeat(64)),
     )
+    expect(mocks.set).not.toHaveBeenCalled()
+  })
+  it.each([
+    ['phone', false, true, 'Send verified-phone code'],
+    ['email', true, false, 'Send verified-email code'],
+  ] as const)(
+    'supports passwordless %s setup without asking for an app or Google password',
+    async (channel, emailOtp, phoneOtp, name) => {
+      mocks.status.mockResolvedValue({
+        ...enabled,
+        emailOtp,
+        phoneOtp,
+        enabled: false,
+      })
+      mount(<PinSettings />)
+      fireEvent.click(await screen.findByRole('button', { name }))
+      expect(
+        screen.queryByLabelText('Account password'),
+      ).not.toBeInTheDocument()
+      fireEvent.change(await screen.findByLabelText('Authentication code'), {
+        target: { value: '123456' },
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'Verify account' }))
+      fireEvent.change(await screen.findByLabelText('New six-digit PIN'), {
+        target: { value: '654321' },
+      })
+      fireEvent.change(screen.getByLabelText('Confirm PIN'), {
+        target: { value: '654321' },
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'Save PIN' }))
+      await waitFor(() =>
+        expect(mocks.set).toHaveBeenCalledWith('a'.repeat(64), '654321'),
+      )
+      expect(mocks.sendOtp).toHaveBeenCalledWith(channel)
+      expect(mocks.otp).toHaveBeenCalledWith(channel, '123456')
+      expect(mocks.password).not.toHaveBeenCalled()
+    },
+  )
+  it('does not expose unsupported verification choices', async () => {
+    mocks.status.mockResolvedValue({
+      ...enabled,
+      emailOtp: false,
+      phoneOtp: false,
+    })
+    mount(<PinSettings />)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'No supported verified identity',
+    )
+    expect(
+      screen.queryByRole('button', { name: /Send verified/ }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Use an app password instead' }),
+    ).not.toBeInTheDocument()
+  })
+  it('reports failed OTP delivery and verification without granting a mutation proof', async () => {
+    mocks.sendOtp.mockRejectedValueOnce(
+      new SecurityError('verification_failed'),
+    )
+    mount(<PinSettings />)
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Send verified-email code' }),
+    )
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Account verification failed',
+    )
+    expect(
+      screen.queryByLabelText('Authentication code'),
+    ).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Send verified-email code' }),
+    )
+    fireEvent.change(await screen.findByLabelText('Authentication code'), {
+      target: { value: '123456' },
+    })
+    mocks.otp.mockRejectedValueOnce(new SecurityError('verification_failed'))
+    fireEvent.click(screen.getByRole('button', { name: 'Verify account' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Account verification failed',
+    )
+    expect(screen.queryByLabelText('New six-digit PIN')).not.toBeInTheDocument()
     expect(mocks.set).not.toHaveBeenCalled()
   })
   it('expired fresh proof requires new verification instead of optimistic success', async () => {

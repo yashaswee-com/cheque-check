@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { logger } from '@/lib/logger'
+import { InfoPopover } from '@/components/ui/info-popover'
 
 export function PinSettings({
   recovery = false,
@@ -21,6 +22,7 @@ export function PinSettings({
   const getStatus = actions.status
   const [status, setStatus] = useState<SecurityStatus | null>(null)
   const [proof, setProof] = useState<string | null>(null)
+  const [usePassword, setUsePassword] = useState(false)
   const [password, setPassword] = useState(''),
     [token, setToken] = useState(''),
     [pin, setPin] = useState(''),
@@ -73,44 +75,61 @@ export function PinSettings({
   }
   return (
     <section className="space-y-4" data-sentry-mask data-clarity-mask="true">
-      <h2 className="text-lg font-semibold">
-        {t(recovery ? 'resetTitle' : 'pinTitle')}
-      </h2>
-      <p className="text-sm text-muted-foreground">{t('pinLimit')}</p>
+      <div className="flex items-center gap-1">
+        <h2 className="text-lg font-semibold">
+          {t(recovery ? 'resetTitle' : 'pinTitle')}
+        </h2>
+        <InfoPopover
+          title={t('pinTitle')}
+          positionerClassName={recovery ? 'z-[2147483646]' : undefined}
+        >
+          {t('pinLimit')}
+        </InfoPopover>
+      </div>
       {status && <p>{t(status.enabled ? 'enabled' : 'disabled')}</p>}
       {!proof && (
         <div className="space-y-3">
-          <p>{t('freshAuth')}</p>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault()
-              void perform(async () => {
-                const result = await actions.password(password)
-                setProof(result.proof)
-                setPassword('')
-              })
-            }}
-            className="space-y-2"
-          >
-            <Label htmlFor="pin-password">{t('password')}</Label>
-            <Input
-              id="pin-password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              disabled={busy}
-              required
-            />
-            <Button
-              type="submit"
-              disabled={
-                busy || !status || (!status.emailOtp && !status.phoneOtp)
-              }
+          <div className="flex items-center gap-1">
+            <p className="text-sm">{t('chooseVerification')}</p>
+            <InfoPopover
+              title={t('chooseVerification')}
+              positionerClassName={recovery ? 'z-[2147483646]' : undefined}
             >
-              {t('authenticate')}
-            </Button>
-          </form>
+              {t('freshAuth')} {t('passwordlessHelp')}
+            </InfoPopover>
+          </div>
+          {usePassword && (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault()
+                void perform(async () => {
+                  const result = await actions.password(password)
+                  setProof(result.proof)
+                  setPassword('')
+                })
+              }}
+              className="space-y-2"
+            >
+              <Label htmlFor="pin-password">{t('password')}</Label>
+              <Input
+                id="pin-password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                disabled={busy}
+                required
+              />
+              <Button
+                type="submit"
+                disabled={
+                  busy || !status || (!status.emailOtp && !status.phoneOtp)
+                }
+              >
+                {t('authenticate')}
+              </Button>
+            </form>
+          )}
           {(['email', 'phone'] as const).map(
             (channel) =>
               status?.[channel === 'email' ? 'emailOtp' : 'phoneOtp'] && (
@@ -122,6 +141,8 @@ export function PinSettings({
                     void perform(async () => {
                       await actions.sendOtp(channel)
                       setSent(channel)
+                      setUsePassword(false)
+                      setPassword('')
                       setToken('')
                     })
                   }
@@ -129,6 +150,19 @@ export function PinSettings({
                   {t(channel === 'email' ? 'emailCode' : 'phoneCode')}
                 </Button>
               ),
+          )}
+          {status && (status.emailOtp || status.phoneOtp) && !usePassword && (
+            <Button
+              variant="ghost"
+              disabled={busy}
+              onClick={() => {
+                setUsePassword(true)
+                setSent(null)
+                setToken('')
+              }}
+            >
+              {t('usePassword')}
+            </Button>
           )}
           {status && !status.emailOtp && !status.phoneOtp && (
             <p role="alert">{t('identity_unavailable')}</p>

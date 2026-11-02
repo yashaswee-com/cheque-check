@@ -93,6 +93,52 @@ beforeEach(() => {
   mocks.signInWithOtp.mockResolvedValue({ error: null })
 })
 describe('authenticated PIN verification and recovery API', () => {
+  it.each([
+    [
+      'phone',
+      {
+        phone: '919876543210',
+        phone_confirmed_at: '2026-01-01',
+        app_metadata: { providers: ['phone'] },
+      },
+    ],
+    [
+      'email',
+      {
+        email: 'google@test.invalid',
+        email_confirmed_at: '2026-01-01',
+        app_metadata: { providers: ['google'] },
+      },
+    ],
+  ] as const)(
+    'mints the same fresh proof for passwordless %s accounts using only confirmed contacts',
+    async (channel, identity) => {
+      mocks.phoneEnabled = 'true'
+      mocks.getUser.mockResolvedValue({
+        data: { user: { id: 'user', ...identity } },
+        error: null,
+      })
+      const status = await (await handleSecurity(request())).json()
+      expect(status.emailOtp).toBe(channel === 'email')
+      expect(status.phoneOtp).toBe(channel === 'phone')
+      expect(
+        (await handleSecurity(request({ action: 'sendOtp', channel }))).status,
+      ).toBe(200)
+      expect(mocks.signInWithOtp).toHaveBeenCalledWith({
+        [channel]: channel === 'email' ? 'google@test.invalid' : '919876543210',
+        options: { shouldCreateUser: false },
+      })
+      const proof = await handleSecurity(
+        request({ action: 'otp', channel, token: '123456' }),
+      )
+      expect(await proof.json()).toEqual({ proof: 'c'.repeat(64) })
+      expect(mocks.rpc).toHaveBeenCalledWith('security_pin_proof', {
+        requested_user: 'user',
+        requested_proof: 'd'.repeat(64),
+      })
+      expect(mocks.signInWithPassword).not.toHaveBeenCalled()
+    },
+  )
   it('returns no secrets in status, with no-store cache policy', async () => {
     const response = await handleSecurity(request())
     expect(await response.json()).toEqual({
