@@ -159,6 +159,7 @@ describe('public site pages', () => {
   it('renders an accessible, responsive public navigation with a locale control', async () => {
     const layout = await PublicSiteLayout({ children: <p>Page content</p> })
     renderPage(layout)
+    expect(screen.getByRole('banner')).toHaveClass('sticky', 'top-0', 'z-40')
     const nav = screen.getByRole('navigation', {
       name: english.PublicSite.nav.navigation,
     })

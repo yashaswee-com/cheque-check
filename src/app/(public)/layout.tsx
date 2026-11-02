@@ -17,7 +17,7 @@ export default async function PublicSiteLayout({
       data-public-site
       className="flex min-h-screen flex-col bg-background text-foreground"
     >
-      <header className="border-b bg-card">
+      <header className="sticky top-0 z-40 shrink-0 border-b bg-card">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <Link
             href="/"

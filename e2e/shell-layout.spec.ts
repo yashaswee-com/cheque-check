@@ -2,6 +2,17 @@ import { expect, test } from '@playwright/test'
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
+test('public navigation stays visible while its page scrolls', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/features')
+  await page.evaluate(() => window.scrollTo(0, 600))
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+  expect((await page.getByRole('banner').boundingBox())?.y).toBe(0)
+  await expect(page.getByRole('navigation')).toBeVisible()
+})
+
 for (const viewport of [
   { width: 390, height: 900 },
   { width: 1280, height: 900 },
