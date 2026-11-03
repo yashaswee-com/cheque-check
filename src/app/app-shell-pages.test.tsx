@@ -276,8 +276,11 @@ describe('application shell routes', () => {
     expect(main).toHaveClass('overflow-y-auto', 'min-h-0', 'scroll-fade-y')
     expect(document.documentElement).toHaveAttribute('data-clipboard-guard')
     expect(main.className).not.toMatch(/pb-\[calc\(6rem/)
-    expect(main.nextElementSibling?.nextElementSibling).toHaveTextContent(
-      'Bottom nav',
+    const slot = screen.getByTestId('shell-bottom-slot')
+    expect(main.nextElementSibling?.nextElementSibling).toBe(slot)
+    expect(slot.nextElementSibling).toHaveTextContent('Bottom nav')
+    expect(slot.parentElement?.className).toContain(
+      '[--shell-bottom-extra:3rem]',
     )
     expect(main).not.toContainElement(screen.getByText('Top nav'))
     expect(screen.getByText('Bottom nav')).toBeVisible()

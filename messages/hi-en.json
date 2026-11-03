@@ -228,6 +228,8 @@
     "invalidValue": "Sahi value daalein"
   },
   "SharedUI": {
+    "pagination": "Pagination",
+    "pageStatus": "Page {page} of {total}",
     "moreInfo": "{title} ke baare mein",
     "scrollLeft": "Baayin taraf scroll karein",
     "scrollRight": "Daayin taraf scroll karein",

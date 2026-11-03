@@ -228,6 +228,8 @@
     "invalidValue": "सही मान दर्ज करें"
   },
   "SharedUI": {
+    "pagination": "पेज नेविगेशन",
+    "pageStatus": "पेज {page} / {total}",
     "moreInfo": "{title} के बारे में जानें",
     "scrollLeft": "बाईं ओर स्क्रॉल करें",
     "scrollRight": "दाईं ओर स्क्रॉल करें",

@@ -228,6 +228,8 @@
     "invalidValue": "Enter a valid value"
   },
   "SharedUI": {
+    "pagination": "Pagination",
+    "pageStatus": "Page {page} of {total}",
     "moreInfo": "More about {title}",
     "scrollLeft": "Scroll left",
     "scrollRight": "Scroll right",

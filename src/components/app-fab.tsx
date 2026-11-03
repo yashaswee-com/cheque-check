@@ -23,7 +23,7 @@ export function AppFab() {
       aria-label={t('add')}
       data-testid="app-fab-create"
       data-tour={createHref === '/cheques/create' ? 'add' : undefined}
-      className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-6 h-16 w-16 rounded-full z-40 border-4 border-white dark:border-zinc-900"
+      className="fixed bottom-[calc(5rem+var(--shell-bottom-extra,0px)+env(safe-area-inset-bottom))] right-6 h-16 w-16 rounded-full z-40 border-4 border-white dark:border-zinc-900"
       size="icon"
     >
       <HugeiconsIcon icon={Plus} className="h-8 w-8" />

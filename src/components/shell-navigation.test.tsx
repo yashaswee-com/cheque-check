@@ -113,7 +113,7 @@ describe('shared navigation shell', () => {
       '/tags/create',
     )
     expect(screen.getByTestId('app-fab-create')).toHaveClass(
-      'bottom-[calc(5rem+env(safe-area-inset-bottom))]',
+      'bottom-[calc(5rem+var(--shell-bottom-extra,0px)+env(safe-area-inset-bottom))]',
     )
   })
 })

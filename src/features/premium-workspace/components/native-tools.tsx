@@ -201,7 +201,7 @@ export function NativeTools(props: NativeToolsProps) {
             size="icon"
             aria-label={t('title')}
             data-testid="native-tools-fab"
-            className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-24 z-40 size-12 rounded-full shadow-lg ring-1 ring-border"
+            className="fixed bottom-[calc(5rem+var(--shell-bottom-extra,0px)+env(safe-area-inset-bottom))] right-24 z-40 size-12 rounded-full shadow-lg ring-1 ring-border"
           >
             <HugeiconsIcon icon={More} className="size-5" />
             <PremiumMark className="absolute right-0 top-0" />
