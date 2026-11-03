@@ -25,7 +25,9 @@ beforeEach(() => {
   mocks.list.mockResolvedValue({
     items: [],
     snapshot: '100',
-    next_cursor: null,
+    total: 0,
+    page: 0,
+    page_size: 50,
   })
   mocks.markAll.mockResolvedValue(undefined)
 })
@@ -59,6 +61,36 @@ describe('inbox query lifecycle', () => {
       businessId: 'business',
       unread: true,
     })
+  })
+  it('derives total pages from the server total and caps them at the page limit', async () => {
+    mocks.list.mockResolvedValueOnce({
+      items: [],
+      snapshot: '100',
+      total: 101,
+      page: 0,
+      page_size: 50,
+    })
+    const hook = renderHook(() => useInbox({ ascending: true }), { wrapper })
+    await waitFor(() => expect(hook.result.current.totalPages).toBe(3))
+    mocks.list.mockResolvedValueOnce({
+      items: [],
+      snapshot: '100',
+      total: 1_000_000,
+      page: 1,
+      page_size: 50,
+    })
+    const capped = renderHook(() => useInbox({ page: 1 }), { wrapper })
+    await waitFor(() => expect(capped.result.current.totalPages).toBe(200))
+  })
+  it('keeps the previous page visible while the next page loads', async () => {
+    let page = 0
+    const hook = renderHook(() => useInbox({ page }), { wrapper })
+    await waitFor(() => expect(hook.result.current.data?.snapshot).toBe('100'))
+    mocks.list.mockReturnValueOnce(new Promise(() => {}))
+    page = 1
+    hook.rerender()
+    expect(hook.result.current.data?.snapshot).toBe('100')
+    expect(hook.result.current.isPlaceholderData).toBe(true)
   })
   it('propagates failed read mutations without optimistic success', async () => {
     mocks.markRead.mockRejectedValueOnce(new Error('failed'))

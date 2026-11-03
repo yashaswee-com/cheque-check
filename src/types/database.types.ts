@@ -1070,6 +1070,18 @@ export interface Database {
         }
         Returns: Json
       }
+      list_notification_inbox_page: {
+        Args: {
+          requested_business?: string
+          requested_unread?: boolean
+          requested_ascending?: boolean
+          requested_page?: number
+          requested_snapshot?: string
+          requested_match_kinds?: string[]
+          requested_match_businesses?: string[]
+        }
+        Returns: Json
+      }
       register_push_subscription: {
         Args: {
           requested_endpoint: string

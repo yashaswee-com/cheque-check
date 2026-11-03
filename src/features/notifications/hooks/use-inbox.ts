@@ -1,10 +1,17 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { queryKeys } from '@/lib/query-keys'
 import { logger } from '@/lib/logger'
 import { inboxService } from '../services/inbox.service'
-import type { InboxRequest } from '@/validators/notification-inbox'
+import {
+  INBOX_MAX_PAGES,
+  type InboxRequest,
+} from '@/validators/notification-inbox'
 
 export function useUnreadCount(businessId?: string) {
   const { profile } = useProfile()
@@ -40,14 +47,22 @@ export function useInbox(request: InboxRequest) {
     queryKey: queryKeys.inbox.page(profile?.user_id, request),
     queryFn: () => inboxService.list(request),
     enabled: !!profile,
+    placeholderData: keepPreviousData,
     refetchOnWindowFocus: true,
   })
   useEffect(() => {
     if (query.error)
       logger.error('Notification inbox failed to load', query.error)
   }, [query.error])
+  const totalPages = query.data
+    ? Math.min(
+        INBOX_MAX_PAGES,
+        Math.ceil(query.data.total / query.data.page_size),
+      )
+    : 0
   return {
     ...query,
+    totalPages,
     async markRead(id: string) {
       await inboxService.markRead(id)
       await client.invalidateQueries({ queryKey: queryKeys.inbox.all() })

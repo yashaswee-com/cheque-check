@@ -5,7 +5,7 @@ import {
 } from '@/repositories/base.repository'
 import {
   inboxIdSchema,
-  inboxPageSchema,
+  inboxListSchema,
   inboxRequestSchema,
   type InboxRequest,
 } from '@/validators/notification-inbox'
@@ -18,14 +18,17 @@ export const inboxRepository = {
       throw new ValidationError('Invalid notification filters')
     return parseDatabaseValue(
       unwrapSupabaseResult(
-        await createClient().rpc('list_notification_inbox', {
+        await createClient().rpc('list_notification_inbox_page', {
           requested_business: request.businessId,
           requested_unread: request.unread,
-          requested_before: request.before,
+          requested_ascending: request.ascending,
+          requested_page: request.page ?? 0,
           requested_snapshot: request.snapshot,
+          requested_match_kinds: request.match?.kinds,
+          requested_match_businesses: request.match?.businessIds,
         }),
       ),
-      inboxPageSchema,
+      inboxListSchema,
       'notification inbox',
     )
   },

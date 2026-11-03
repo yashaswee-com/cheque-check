@@ -7,6 +7,7 @@ import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useInbox } from '@/features/notifications/hooks/use-inbox'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Button } from '@/components/ui/button'
+import { StickyPagination } from '@/components/ui/sticky-pagination'
 import { PushSettings } from '@/features/notifications/components/push-settings'
 import { logger } from '@/lib/logger'
 import type { InboxItem, InboxRequest } from '@/validators/notification-inbox'
@@ -18,15 +19,11 @@ export default function NotificationsPage() {
   const router = useRouter()
   const display = useDisplayFormat()
   const [request, setRequest] = useState<InboxRequest>({})
-  const [history, setHistory] = useState<InboxRequest[]>([])
   const inbox = useInbox(request)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(false)
   const lock = useRef(false)
-  const reset = (next: InboxRequest = {}) => {
-    setRequest(next)
-    setHistory([])
-  }
+  const reset = (next: InboxRequest = {}) => setRequest(next)
   const perform = async (operation: () => Promise<unknown>) => {
     if (lock.current) return
     lock.current = true
@@ -142,33 +139,24 @@ export default function NotificationsPage() {
           ))}
         </ul>
       )}
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          disabled={!history.length || busy}
-          onClick={() => {
-            setRequest(history[history.length - 1])
-            setHistory(history.slice(0, -1))
-          }}
-        >
-          {t('previous')}
-        </Button>
-        <Button
-          variant="outline"
-          disabled={!inbox.data?.next_cursor || busy}
-          onClick={() => {
-            if (!inbox.data?.next_cursor) return
-            setHistory([...history, request])
+      {!inbox.isLoading && !inbox.error && (
+        <StickyPagination
+          testId="notifications-pagination"
+          page={request.page ?? 0}
+          totalPages={inbox.totalPages}
+          disabled={busy || inbox.isFetching}
+          onPrevious={() =>
+            setRequest({ ...request, page: (request.page ?? 0) - 1 })
+          }
+          onNext={() =>
             setRequest({
               ...request,
-              before: inbox.data.next_cursor,
-              snapshot: inbox.data.snapshot,
+              page: (request.page ?? 0) + 1,
+              snapshot: inbox.data?.snapshot,
             })
-          }}
-        >
-          {t('next')}
-        </Button>
-      </div>
+          }
+        />
+      )}
     </div>
   )
 }
