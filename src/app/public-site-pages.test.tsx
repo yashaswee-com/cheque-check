@@ -140,6 +140,9 @@ describe('public site pages', () => {
       screen.getByRole('link', { name: english.PublicSite.pricing.purchase }),
     ).toHaveAttribute('href', '/features/catalog?purchase=lifetime_premium')
     expect(
+      screen.getByRole('link', { name: english.PublicSite.pricing.purchase }),
+    ).toHaveAttribute('data-app-entry')
+    expect(
       screen.getByText(english.PublicSite.pricing.catalogNote),
     ).toBeVisible()
   })
@@ -168,6 +171,14 @@ describe('public site pages', () => {
         name: english.PublicSite.nav.features,
       }),
     ).toHaveAttribute('href', '/features')
+    expect(nav).toHaveClass('order-last', 'w-full', 'overflow-x-auto')
+    expect(nav).toHaveClass('md:order-none', 'md:w-auto')
+    expect(within(nav).getAllByRole('link')).toHaveLength(4)
+    const signIn = screen.getByRole('link', {
+      name: english.PublicSite.nav.signIn,
+    })
+    expect(signIn).toHaveAttribute('href', '/login')
+    expect(signIn).toHaveAttribute('data-app-entry')
     expect(
       screen.getByRole('combobox', {
         name: english.PublicSite.nav.language,

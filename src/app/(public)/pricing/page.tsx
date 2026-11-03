@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { logger } from '@/lib/logger'
+import { AppEntryLink } from '@/components/public-site/app-entry-link'
 import { publicPricingService } from '@/features/public-site/services/public-pricing.service'
 import type { PublicProduct } from '@/features/public-site/repositories/public-pricing.repository'
 
@@ -66,12 +66,12 @@ export default async function PublicPricingPage() {
                   {price(product)}
                 </p>
               </div>
-              <Link
+              <AppEntryLink
                 href={`/features/catalog?purchase=${encodeURIComponent(product.id)}`}
                 className="mt-auto inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-center font-semibold text-primary-foreground hover:opacity-90"
               >
                 {t('pricing.purchase')}
-              </Link>
+              </AppEntryLink>
             </article>
           ))}
         </section>

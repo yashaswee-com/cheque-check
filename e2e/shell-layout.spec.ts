@@ -14,6 +14,28 @@ test('public navigation stays visible while its page scrolls', async ({
 })
 
 for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 1280, height: 900 },
+]) {
+  test(`landing sign in opens inside the app shell at ${viewport.width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport)
+    await page.goto('/')
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth,
+      ),
+    ).toBe(false)
+    await expect(page.getByTestId('landing-preview')).toBeVisible()
+    await page.getByTestId('public-sign-in').click()
+    await expect(page).toHaveURL(/\/login$/)
+    await expect(page.locator('#app-shell')).toBeVisible()
+    await expect(page.locator('[data-public-site]')).toHaveCount(0)
+  })
+}
+
+for (const viewport of [
   { width: 390, height: 900 },
   { width: 1280, height: 900 },
   { width: 1280, height: 1400 },
