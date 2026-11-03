@@ -131,7 +131,12 @@ describe('ThemeColorRow', () => {
     const swatches = screen.getAllByRole('button')
     expect(swatches).toHaveLength(PARTY_THEME_COLORS.length)
     for (const swatch of swatches)
-      expect(swatch).toHaveClass('shrink-0', 'size-10')
+      expect(swatch).toHaveClass(
+        'min-w-0',
+        'flex-1',
+        'aspect-square',
+        'sm:size-10',
+      )
     expect(screen.getByRole('button', { name: '#007AFF' })).toHaveAttribute(
       'aria-pressed',
       'true',

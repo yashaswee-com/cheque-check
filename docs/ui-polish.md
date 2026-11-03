@@ -63,3 +63,20 @@ over any URL value. `20261108000000_cheque_list_account_filter.sql` adds the
 carry icons. Amounts use a two-thumb slider scaled to the business's highest
 active cheque (about 100 stops, one indexed query cached for 60s) next to
 min/max inputs. Thumbs never cross, so each drag commits only one bound.
+
+## Entity editors
+
+Party, account, business, cheque, and tag editors remain single-page forms with
+section cards matching their creation flows. Create and edit pages share avatar,
+party type, default-account, tag, date, and theme-color controls. Theme swatches
+stay in one row and shrink to fit narrow mobile layouts.
+
+The Save action docks above the app's bottom navigation and stays disabled until
+fields or tags change. Link clicks, browser Back, and tab close are guarded while
+there are unsaved changes; users can discard or keep editing. Successful saves
+skip the guard's extra history entry. Invalid fields and failed saves keep the
+editor open. Tag edits also reject blank names and ignore whitespace-only changes.
+
+Party edits exclude themselves from possible-duplicate checks. Cheque edits show
+the same number-conflict warning as creation and exclude their own record from
+the account/number check. These warnings are advisory, not uniqueness constraints.

@@ -68,7 +68,7 @@ export function ThemeColorRow({
             aria-pressed={value === color}
             onClick={() => onChange(color)}
             className={cn(
-              'size-10 shrink-0 rounded-full transition-all active:scale-95 ring-offset-2 ring-offset-background',
+              'aspect-square min-w-0 max-w-10 flex-1 rounded-full transition-all active:scale-95 ring-offset-2 ring-offset-background sm:size-10 sm:flex-none',
               value === color
                 ? 'ring-2 ring-primary scale-110'
                 : 'hover:scale-105',

@@ -362,6 +362,41 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+it.each([
+  { Page: CreateBusinessPage, step: 1, testId: 'business-theme-color-field' },
+  { Page: CreateAccountPage, step: 1, testId: 'account-theme-color' },
+  { Page: CreatePartyPage, step: 2, testId: 'party-theme-color' },
+])(
+  'uses the shared theme picker in creation ($testId)',
+  ({ Page, step, testId }) => {
+    initialStep = step
+    defaults = { color: '#007AFF' }
+    renderPage(<Page />)
+    const picker = screen.getByTestId(testId)
+    expect(within(picker).getByRole('group')).toHaveClass('flex-nowrap')
+    fireEvent.click(within(picker).getByRole('button', { name: '#FF3B30' }))
+    expect(values.color).toBe('#FF3B30')
+    expect(
+      within(picker).getByRole('button', { name: '#FF3B30' }),
+    ).toHaveAttribute('aria-pressed', 'true')
+  },
+)
+
+it('excludes the edited party from duplicate warnings but warns about other matches', () => {
+  defaults = { name: 'Original', contact: '+919876543210' }
+  parties = [{ id: 'entity', name: 'Original', contact: '+919876543210' }]
+  renderPage(<EditPartyPage />)
+  expect(
+    screen.queryByTestId('party-duplicate-warning'),
+  ).not.toBeInTheDocument()
+  cleanup()
+  parties.push({ id: 'other', name: 'Another', contact: '+919876543210' })
+  renderPage(<EditPartyPage />)
+  expect(screen.getByTestId('party-duplicate-warning')).toHaveTextContent(
+    'Another',
+  )
+})
+
 describe.each([
   { entity: 'account', Page: CreateAccountPage, steps: [1, 2, 3] },
   { entity: 'party', Page: CreatePartyPage, steps: [1, 2, 3] },

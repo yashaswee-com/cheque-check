@@ -19,7 +19,10 @@ import {
   Invoice01Icon as ReceiptText,
   TextFontIcon as TextIcon,
 } from '@hugeicons/core-free-icons'
-import { cn } from '@/lib/utils'
+import {
+  ACCOUNT_THEME_COLORS,
+  ThemeColorRow,
+} from '@/components/ui/theme-color-row'
 import { Skeleton } from '@/components/ui/skeleton'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
@@ -111,16 +114,6 @@ export default function CreateAccountPage() {
     if (prefill.auto)
       setValue('notes', 'Automatically Generated from Cheque Scan')
   }, [initialDraftId, prefill, setValue])
-
-  const colors = [
-    '#007AFF',
-    '#5856D6',
-    '#AF52DE',
-    '#FF2D55',
-    '#FF3B30',
-    '#FF9500',
-    '#34C759',
-  ]
 
   if (isSuccess) {
     return (
@@ -256,27 +249,13 @@ export default function CreateAccountPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
-                  {tc('themeColor')}
-                </Label>
-                <div className="flex flex-wrap gap-3 p-1">
-                  {colors.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setUserValue('color', c)}
-                      className={cn(
-                        'h-10 w-10 rounded-full transition-all active:scale-95 ring-offset-2',
-                        (watch as any)('color') === c
-                          ? 'ring-2 ring-primary scale-110'
-                          : 'hover:scale-105',
-                      )}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
-              </div>
+              <ThemeColorRow
+                label={tc('themeColor')}
+                colors={ACCOUNT_THEME_COLORS}
+                value={watch('color')}
+                onChange={(color) => setUserValue('color', color)}
+                testId="account-theme-color"
+              />
             </div>
 
             <Button

@@ -17,7 +17,10 @@ import {
   Note01Icon as Note,
   Camera01Icon as Camera,
 } from '@hugeicons/core-free-icons'
-import { cn } from '@/lib/utils'
+import {
+  PARTY_THEME_COLORS,
+  ThemeColorRow,
+} from '@/components/ui/theme-color-row'
 import { useTranslations } from 'next-intl'
 import { useValidationMessage } from '@/hooks/use-validation-message'
 import { getSafeChequeReturnTo } from '@/lib/cheque-draft'
@@ -232,16 +235,6 @@ export default function CreatePartyPage() {
     }
     return true
   }
-
-  const colors = [
-    '#FF3B30',
-    '#FF9500',
-    '#FFCC00',
-    '#34C759',
-    '#007AFF',
-    '#5856D6',
-    '#AF52DE',
-  ]
 
   if (isSuccess) {
     return (
@@ -458,29 +451,13 @@ export default function CreatePartyPage() {
                 />
               </div>
             </div>
-            <div className="space-y-2" data-testid="party-theme-color">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
-                {tCommon('themeColor')}
-              </Label>
-              <div className="flex flex-wrap gap-3 p-1">
-                {colors.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setUserValue('color', color)}
-                    aria-label={color}
-                    aria-pressed={watch('color') === color}
-                    className={cn(
-                      'h-10 w-10 rounded-full transition-all active:scale-95 ring-offset-2',
-                      watch('color') === color
-                        ? 'ring-2 ring-primary scale-110'
-                        : 'hover:scale-105',
-                    )}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
+            <ThemeColorRow
+              label={tCommon('themeColor')}
+              colors={PARTY_THEME_COLORS}
+              value={watch('color')}
+              onChange={(color) => setUserValue('color', color)}
+              testId="party-theme-color"
+            />
 
             <div className="space-y-2">
               <Label

@@ -25,7 +25,10 @@ import {
   Location01Icon as MapPin,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { cn } from '@/lib/utils'
+import {
+  BUSINESS_THEME_COLORS,
+  ThemeColorRow,
+} from '@/components/ui/theme-color-row'
 import {
   Stepper,
   StepperIndicator,
@@ -65,16 +68,6 @@ export default function CreateBusinessPage() {
     setValue,
     formState: { errors },
   } = form
-
-  const colors = [
-    '#007AFF',
-    '#34C759',
-    '#FF9500',
-    '#FF3B30',
-    '#AF52DE',
-    '#5856D6',
-    '#8E8E93',
-  ]
 
   if (isSuccess) {
     return (
@@ -201,30 +194,15 @@ export default function CreateBusinessPage() {
                 )}
               </div>
 
-              <div
-                className="space-y-2"
-                data-testid="business-theme-color-field"
-              >
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
-                  {tc('themeColor')}
-                </Label>
-                <div className="flex flex-wrap gap-3 p-1">
-                  {colors.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setValue('color', c)}
-                      className={cn(
-                        'h-10 w-10 rounded-full transition-all active:scale-95 ring-offset-2',
-                        (watch as any)('color') === c
-                          ? 'ring-2 ring-primary scale-110'
-                          : 'hover:scale-105',
-                      )}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
-              </div>
+              <ThemeColorRow
+                label={tc('themeColor')}
+                colors={BUSINESS_THEME_COLORS}
+                value={watch('color')}
+                onChange={(color) =>
+                  setValue('color', color, { shouldDirty: true })
+                }
+                testId="business-theme-color-field"
+              />
             </div>
 
             <Button
