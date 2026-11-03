@@ -83,6 +83,9 @@ let profile: {
   currency: '$',
 }
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }))
+vi.mock('@/features/monetization/hooks/use-premium-avatar-ring', () => ({
+  usePremiumAvatarRing: () => 'ring-[#D4AF37]',
+}))
 vi.mock('next/dynamic', () => ({
   default: (
     load: () => Promise<React.ComponentType>,

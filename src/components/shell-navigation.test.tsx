@@ -9,6 +9,9 @@ import { AppFab } from './app-fab'
 
 let pathname = '/cheques/cheque-id'
 let keyboard = false
+vi.mock('@/features/monetization/hooks/use-premium-avatar-ring', () => ({
+  usePremiumAvatarRing: () => undefined,
+}))
 vi.mock('@/features/notifications/hooks/use-inbox', () => ({
   useUnreadCount: () => ({ data: 0, error: null }),
 }))

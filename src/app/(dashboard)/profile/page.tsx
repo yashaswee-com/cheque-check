@@ -21,6 +21,7 @@ import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useSettings } from '@/features/settings/hooks/use-settings'
 import { LoginPhoneSection } from '@/features/auth/components/login-phone-section'
 import { EmailLinkSection } from '@/features/auth/components/email-link-section'
+import { usePremiumAvatarRing } from '@/features/monetization/hooks/use-premium-avatar-ring'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -51,6 +52,7 @@ export default function ProfilePage() {
   const t = useTranslations('Settings')
   const { profile, updateProfile, isLoading } = useProfile()
   const { handleDeleteProfile } = useSettings()
+  const premiumRing = usePremiumAvatarRing()
   const [draftName, setDraftName] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const name = draftName ?? profile?.name ?? ''
@@ -93,6 +95,7 @@ export default function ProfilePage() {
           name={profile?.name || t('user')}
           imageUrl={profile?.avatar_url}
           size="xl"
+          className={premiumRing}
           onUpload={async (url) => {
             await updateProfile({ avatar_url: url })
           }}

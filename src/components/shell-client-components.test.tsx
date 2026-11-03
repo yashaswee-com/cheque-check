@@ -35,6 +35,10 @@ const mocks = vi.hoisted(() => ({
 }))
 let pathname = '/cheques/cheque-id'
 let keyboard = false
+let premiumRing: string | undefined
+vi.mock('@/features/monetization/hooks/use-premium-avatar-ring', () => ({
+  usePremiumAvatarRing: () => premiumRing,
+}))
 vi.mock('@/features/notifications/components/push-account-guard', () => ({
   PushAccountGuard: () => null,
 }))
@@ -312,6 +316,25 @@ describe('navigation components', () => {
     expect(screen.getByTestId('business-switcher-trigger')).toHaveTextContent(
       'A',
     )
+    expect(screen.getByTestId('top-nav-user-avatar')).not.toHaveClass(
+      'ring-[#D4AF37]',
+    )
+  })
+
+  it('draws a gold ring around the user photo for premium members', () => {
+    pathname = '/cheques'
+    premiumRing = 'ring-[3px] ring-[#D4AF37]'
+    try {
+      renderIntl(<TopNav />)
+      fireEvent.click(
+        screen.getByRole('button', { name: messages.SharedUI.more }),
+      )
+      expect(screen.getByTestId('top-nav-user-avatar')).toHaveClass(
+        'ring-[#D4AF37]',
+      )
+    } finally {
+      premiumRing = undefined
+    }
   })
 
   it('uses the back button and closes the More menu after navigating to settings', async () => {

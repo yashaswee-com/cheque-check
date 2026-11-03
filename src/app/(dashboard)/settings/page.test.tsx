@@ -8,6 +8,7 @@ import { PremiumPromptProvider } from '@/features/monetization/components/premiu
 const mocks = vi.hoisted(() => ({ logout: vi.fn() }))
 let profileLoading = false
 let monetizationLoading = false
+let hasPremium = false
 let profile: {
   name: string | null
   email: string | null
@@ -26,6 +27,7 @@ vi.mock('@/features/monetization/hooks/use-monetization', () => ({
 vi.mock('@/features/monetization/hooks/use-premium-access', () => ({
   usePremiumAccess: () => ({
     state: 'free',
+    hasAccess: hasPremium,
     canUse: () => false,
     isLoading: false,
   }),
@@ -54,6 +56,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   profileLoading = false
   monetizationLoading = false
+  hasPremium = false
   profile = {
     name: 'Riya Sharma',
     email: 'riya@example.test',
@@ -123,5 +126,16 @@ describe('settings page', () => {
     renderPage()
     expect(screen.getAllByText(messages.Settings.user)).not.toHaveLength(0)
     expect(screen.getByText(messages.PhoneAuth.noEmail)).toBeVisible()
+  })
+
+  it('rings the profile photo in gold only while premium is active', () => {
+    renderPage()
+    expect(document.querySelector('[class*="ring-[#D4AF37]"]')).toBeNull()
+    cleanup()
+    hasPremium = true
+    renderPage()
+    expect(
+      document.querySelector('[class*="ring-[#D4AF37]"]'),
+    ).toBeInTheDocument()
   })
 })

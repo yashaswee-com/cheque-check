@@ -34,6 +34,7 @@ import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
 import { version } from '../../../../package.json'
 import { ReplayTour } from '@/features/tour/components/replay-tour'
 import { UsageCard } from '@/features/monetization/components/free-usage-banner'
+import { usePremiumAvatarRing } from '@/features/monetization/hooks/use-premium-avatar-ring'
 
 interface SettingsItem {
   name: string
@@ -57,6 +58,7 @@ export default function SettingsPage() {
   const tpa = useTranslations('PhoneAuth')
   const security = useTranslations('Security')
   const { profile, isLoading: profileLoading } = useProfile()
+  const premiumRing = usePremiumAvatarRing()
   const display = useDisplayFormat(profile)
   const { handleLogout } = useSettings()
   const { isLoading: monetizationLoading } = useMonetization()
@@ -207,7 +209,7 @@ export default function SettingsPage() {
           name={profile?.name || t('user')}
           imageUrl={profile?.avatar_url}
           size="lg"
-          className="h-14 w-14"
+          className={cn('h-14 w-14', premiumRing)}
         />
         <div className="flex-1">
           <p className="font-semibold text-lg leading-tight">

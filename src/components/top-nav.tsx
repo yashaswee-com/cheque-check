@@ -36,6 +36,8 @@ import { useTranslations } from 'next-intl'
 import { getWhatsAppSupportLink } from '@/lib/whatsapp'
 import { Calculator } from '@/components/calculator'
 import { getShellRoute } from '@/lib/navigation-routes'
+import { cn } from '@/lib/utils'
+import { usePremiumAvatarRing } from '@/features/monetization/hooks/use-premium-avatar-ring'
 import {
   Popover,
   PopoverContent,
@@ -54,6 +56,7 @@ export function TopNav() {
   const router = useRouter()
   const { activeBusiness } = useBusiness()
   const { profile } = useProfile()
+  const premiumRing = usePremiumAvatarRing()
   const [searchOpen, setSearchOpen] = useState(false)
   const [calculatorOpen, setCalculatorOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -321,7 +324,13 @@ export function TopNav() {
                 className="flex min-h-10 items-center gap-2 rounded-sm px-4 text-sm hover:bg-muted"
                 aria-label={t('Navigation.settings')}
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-all active:scale-95 overflow-hidden ring-2 ring-white shadow-sm">
+                <div
+                  data-testid="top-nav-user-avatar"
+                  className={cn(
+                    'flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-all active:scale-95 overflow-hidden ring-2 ring-white shadow-sm',
+                    premiumRing,
+                  )}
+                >
                   {profile?.avatar_url ? (
                     <SkeletonImage
                       src={profile.avatar_url}
