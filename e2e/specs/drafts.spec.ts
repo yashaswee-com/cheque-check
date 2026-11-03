@@ -49,10 +49,10 @@ test.describe('drafts', () => {
     const accountNumber = uniqueChequeNumber() + uniqueChequeNumber()
 
     await page.goto('/accounts/create')
+    await page.locator('#account_name').fill(accountName)
+    await page.getByTestId('account-step1-continue').click()
     await page.getByTestId('bank-selector-trigger').click()
     await page.getByTestId('bank-option').first().click()
-    await page.getByTestId('account-step1-continue').click()
-    await page.locator('#account_name').fill(accountName)
     await page.getByTestId('draft-save-button').click()
     await expect(page).toHaveURL(/draftId=/)
 
@@ -62,8 +62,8 @@ test.describe('drafts', () => {
     await expect(draft).toBeVisible()
     await draft.click()
     await expect(page).toHaveURL(/\/accounts\/create\?draftId=/)
-    await expect(page.locator('#account_name')).toHaveValue(accountName)
     await expect(page.getByTestId('account-step2-continue')).toBeVisible()
+    await expect(page.getByTestId('bank-selector-trigger')).not.toHaveText('')
 
     await page.locator('#account_number').fill(accountNumber)
     await page.getByTestId('account-step2-continue').click()

@@ -57,9 +57,9 @@ export class AccountsPage {
     details: AccountDetails = {},
   ) {
     await this.page.goto('/accounts/create')
-    await this.chooseBank(details)
-    await this.page.getByTestId('account-step1-continue').click()
     await this.page.locator('#account_name').fill(accountName)
+    await this.page.getByTestId('account-step1-continue').click()
+    await this.chooseBank(details)
     await this.page.locator('#account_number').fill(accountNumber)
     if (details.openingBalance !== undefined) {
       await this.page

@@ -112,9 +112,9 @@ export function useCreateAccount(
   const nextStep = async () => {
     let isValid = false
     if (step === 1) {
-      isValid = await trigger(['bank_id'])
+      isValid = await trigger(['account_name'])
     } else if (step === 2) {
-      isValid = await trigger(['account_name', 'account_number'])
+      isValid = await trigger(['bank_id', 'account_number'])
     }
 
     if (isValid) setStep((s) => Math.min(s + 1, 3))

@@ -153,7 +153,7 @@ export function firstIncompletePartyStep(draft: PartyDraftFields) {
 }
 
 export function firstIncompleteAccountStep(draft: AccountDraftFields) {
-  if (!draft.bank_id) return 1
-  if (!draft.account_name || !draft.account_number) return 2
+  if (!draft.account_name) return 1
+  if (!draft.bank_id || !draft.account_number) return 2
   return 3
 }

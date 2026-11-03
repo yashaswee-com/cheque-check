@@ -214,7 +214,17 @@ describe('first incomplete step', () => {
   it('points accounts at the first step with missing required data', () => {
     const empty = toAccountDraftFields({})
     expect(firstIncompleteAccountStep(empty)).toBe(1)
-    expect(firstIncompleteAccountStep({ ...empty, bank_id: 'b1' })).toBe(2)
+    expect(firstIncompleteAccountStep({ ...empty, bank_id: 'b1' })).toBe(1)
+    expect(firstIncompleteAccountStep({ ...empty, account_name: 'Main' })).toBe(
+      2,
+    )
+    expect(
+      firstIncompleteAccountStep({
+        ...empty,
+        account_name: 'Main',
+        account_number: '0001',
+      }),
+    ).toBe(2)
     expect(
       firstIncompleteAccountStep({
         ...empty,

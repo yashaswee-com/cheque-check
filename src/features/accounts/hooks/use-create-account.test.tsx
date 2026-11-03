@@ -157,7 +157,7 @@ describe('useCreateAccount', () => {
     await act(async () => result.current.nextStep())
     expect(result.current.step).toBe(1)
 
-    act(() => result.current.form.setValue('bank_id', 'bank-1'))
+    act(() => result.current.form.setValue('account_name', 'Primary'))
     await act(async () => result.current.nextStep())
     expect(result.current.step).toBe(2)
 
@@ -165,7 +165,7 @@ describe('useCreateAccount', () => {
     expect(result.current.step).toBe(2)
 
     act(() => {
-      result.current.form.setValue('account_name', 'Primary')
+      result.current.form.setValue('bank_id', 'bank-1')
       result.current.form.setValue('account_number', '123456789')
     })
     await act(async () => result.current.nextStep())

@@ -200,7 +200,7 @@ export default function CreateAccountPage() {
             variant="ghost"
             size="icon"
             onClick={nextStep}
-            disabled={step === 3 || (step === 1 && !watch('bank_id'))}
+            disabled={step === 3 || (step === 1 && !watch('account_name'))}
             className="rounded-full h-8 w-8 shrink-0 hover:bg-canvas-parchment"
           >
             <HugeiconsIcon icon={ArrowRight} className="h-4 w-4" />
@@ -231,18 +231,27 @@ export default function CreateAccountPage() {
               <div className="space-y-2">
                 <Label
                   required
+                  htmlFor="account_name"
                   className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
                 >
-                  {t('selectBank')}
+                  {t('accountName')}
                 </Label>
-                <BankSelector
-                  value={watch('bank_id')}
-                  onValueChange={(val) => setUserValue('bank_id', val)}
-                  className="rounded-sm"
-                />
-                {errors.bank_id && (
+                <div className="relative">
+                  <HugeiconsIcon
+                    icon={User}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground opacity-50"
+                  />
+                  <Input
+                    leftIcon={TextIcon}
+                    id="account_name"
+                    {...register('account_name')}
+                    placeholder={t('accountNamePlaceholder')}
+                    className="h-14  bg-canvas-parchment border-none rounded-sm"
+                  />
+                </div>
+                {errors.account_name && (
                   <p className="text-xs text-destructive ml-1">
-                    {validationMessage(errors.bank_id.message)}
+                    {validationMessage(errors.account_name.message)}
                   </p>
                 )}
               </div>
@@ -275,7 +284,7 @@ export default function CreateAccountPage() {
               data-testid="account-step1-continue"
               className="w-full rounded-full h-14 text-lg"
               onClick={nextStep}
-              disabled={!watch('bank_id')}
+              disabled={!watch('account_name')}
             >
               {tc('continue')}{' '}
               <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
@@ -288,27 +297,18 @@ export default function CreateAccountPage() {
             <div className="space-y-2">
               <Label
                 required
-                htmlFor="account_name"
                 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
               >
-                {t('accountName')}
+                {t('selectBank')}
               </Label>
-              <div className="relative">
-                <HugeiconsIcon
-                  icon={User}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground opacity-50"
-                />
-                <Input
-                  leftIcon={TextIcon}
-                  id="account_name"
-                  {...register('account_name')}
-                  placeholder={t('accountNamePlaceholder')}
-                  className="h-14  bg-canvas-parchment border-none rounded-sm"
-                />
-              </div>
-              {errors.account_name && (
+              <BankSelector
+                value={watch('bank_id')}
+                onValueChange={(val) => setUserValue('bank_id', val)}
+                className="rounded-sm"
+              />
+              {errors.bank_id && (
                 <p className="text-xs text-destructive ml-1">
-                  {validationMessage(errors.account_name.message)}
+                  {validationMessage(errors.bank_id.message)}
                 </p>
               )}
             </div>
@@ -377,7 +377,7 @@ export default function CreateAccountPage() {
               data-testid="account-step2-continue"
               className="w-full rounded-full h-14 text-lg"
               onClick={nextStep}
-              disabled={!watch('account_name') || !watch('account_number')}
+              disabled={!watch('bank_id') || !watch('account_number')}
             >
               {tc('continue')}{' '}
               <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />

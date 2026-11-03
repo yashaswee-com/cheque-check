@@ -59,9 +59,9 @@ test.describe('first day with ChequeCheck', () => {
     await expect(page).toHaveURL(/\/accounts\/create\?.*returnTo=/)
 
     const accountsPage = new AccountsPage(page)
-    await accountsPage.chooseBank()
-    await page.getByTestId('account-step1-continue').click()
     await expect(page.locator('#account_name')).toHaveValue(accountName)
+    await page.getByTestId('account-step1-continue').click()
+    await accountsPage.chooseBank()
     await page.locator('#account_number').fill(accountNumber)
     await page.locator('#opening_balance').fill('50000')
     await page.getByTestId('account-step2-continue').click()

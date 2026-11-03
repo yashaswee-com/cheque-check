@@ -489,24 +489,26 @@ describe('account creation page', () => {
 
   it('uses the bank selector loading placeholder while the dynamic widget loads', () => {
     deferDynamic = true
+    initialStep = 2
     renderPage(<CreateAccountPage />)
     expect(document.querySelector('[data-slot="skeleton"]')).toBeInTheDocument()
     deferDynamic = false
   })
 
-  it('requires bank and account identity, captures balance/default status, and attaches selected tags', async () => {
+  it('requires account holder first, then bank and number, captures balance/default status, and attaches selected tags', async () => {
     renderPage(<CreateAccountPage />)
     fireEvent.click(
       document.querySelector('button[style*="background-color"]')!,
     )
     expect(values.color).toBeTruthy()
+    expect(screen.queryByRole('combobox', { name: 'Bank' })).toBeNull()
     expect(screen.getByTestId('account-step1-continue')).toBeDisabled()
+    change('account_name', 'Operating')
+    fireEvent.click(screen.getByTestId('account-step1-continue'))
+    expect(screen.getByTestId('account-step2-continue')).toBeDisabled()
     fireEvent.change(await screen.findByRole('combobox', { name: 'Bank' }), {
       target: { value: 'bank' },
     })
-    fireEvent.click(screen.getByTestId('account-step1-continue'))
-    expect(screen.getByTestId('account-step2-continue')).toBeDisabled()
-    change('account_name', 'Operating')
     change('account_number', '12345678')
     change('opening_balance', '1250.50')
     await waitFor(() =>
@@ -544,12 +546,11 @@ describe('account creation page', () => {
       ifsc: 'BANK0000001',
       auto: 'true',
     })
-    initialStep = 2
     renderPage(<CreateAccountPage />)
     expect(document.getElementById('account_name')).toHaveValue(
       'Scanned account',
     )
-    expect(document.getElementById('account_number')).toHaveValue('987654')
+    expect(values.account_number).toBe('987654')
     expect(values.ifsc_code).toBe('BANK0000001')
     expect(values.notes).toBe('Automatically Generated from Cheque Scan')
     fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
@@ -574,12 +575,13 @@ describe('account creation page', () => {
       opening_balance: { message: 'Balance invalid' },
     }
     renderPage(<CreateAccountPage />)
-    expect(screen.getByText('Select a bank first')).toBeVisible()
+    expect(screen.getByText('Account name invalid')).toBeVisible()
+    expect(screen.queryByText('Select a bank first')).toBeNull()
     cleanup()
     initialStep = 2
     renderPage(<CreateAccountPage />)
     for (const message of [
-      'Account name invalid',
+      'Select a bank first',
       'Number invalid',
       'Balance invalid',
     ])
