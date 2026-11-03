@@ -298,13 +298,25 @@ vi.mock('@/components/speed-dial-fab', () => ({
   ),
 }))
 vi.mock('@/components/ui/sheet', () => ({
-  Sheet: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Sheet: ({ children, open }: { children: ReactNode; open?: boolean }) =>
+    open === false ? null : <div>{children}</div>,
   SheetTrigger: () => <span>Filter controls</span>,
-  SheetContent: ({ children }: { children: ReactNode }) => (
-    <section aria-label="Filters">{children}</section>
+  SheetContent: ({
+    children,
+    ...props
+  }: {
+    children: ReactNode
+    'data-testid'?: string
+  }) => (
+    <section aria-label="Filters" {...props}>
+      {children}
+    </section>
   ),
   SheetHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SheetTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
+  SheetDescription: ({ children }: { children: ReactNode }) => (
+    <p>{children}</p>
+  ),
 }))
 vi.mock('@/features/cheques/components/cheque-filter-bar', () => ({
   ChequeFilterBar: ({
@@ -755,7 +767,38 @@ describe('tag create and edit pages', () => {
       container.querySelector('[data-slot="skeleton"]'),
     ).toBeInTheDocument()
   })
+  it('keeps the docked save disabled until the tag changes and asks before leaving', () => {
+    renderPage(<EditTagPage />)
+    const input = screen.getByRole('textbox', {
+      name: new RegExp(messages.Tags.tagName),
+    })
+    const save = screen.getByTestId('tag-form-submit-button')
+    expect(screen.getByTestId('edit-save-bar')).toContainElement(save)
+    expect(save).toHaveAttribute('form', 'tag-edit-form')
+    expect(save).toBeDisabled()
+    fireEvent.change(input, { target: { value: ' Urgent ' } })
+    expect(save).toBeDisabled()
+    fireEvent.change(input, { target: { value: '   ' } })
+    expect(save).toBeDisabled()
+    const link = document.createElement('a')
+    link.href = '/tags'
+    document.body.append(link)
+    fireEvent.click(link)
+    expect(screen.getByTestId('unsaved-changes-dialog')).toBeVisible()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.SharedUI.keepEditing }),
+    )
+    expect(
+      screen.queryByTestId('unsaved-changes-dialog'),
+    ).not.toBeInTheDocument()
+    link.remove()
+    fireEvent.change(input, { target: { value: 'Urgent' } })
+    expect(save).toBeDisabled()
+    fireEvent.change(input, { target: { value: 'Later' } })
+    expect(save).toBeEnabled()
+  })
   it('prefills the existing tag, saves its update, and returns only after success', async () => {
+    const go = vi.spyOn(window.history, 'go').mockImplementation(() => {})
     renderPage(<EditTagPage />)
     expect(
       screen.getByRole('textbox', { name: new RegExp(messages.Tags.tagName) }),
@@ -766,8 +809,9 @@ describe('tag create and edit pages', () => {
         target: { value: ' Revised ' },
       },
     )
-    fireEvent.click(screen.getByTestId('tag-form-submit-button'))
-    await waitFor(() => expect(mocks.back).toHaveBeenCalledOnce())
+    fireEvent.submit(document.getElementById('tag-edit-form')!)
+    await waitFor(() => expect(go).toHaveBeenCalledWith(-2))
+    go.mockRestore()
     expect(mocks.update).toHaveBeenCalledWith({
       id: 'tag',
       input: { name: 'Revised', color: '#007AFF' },

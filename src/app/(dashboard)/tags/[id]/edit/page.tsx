@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -11,6 +12,9 @@ import { toast } from '@/components/ui/toast'
 import { useTags } from '@/features/tags/hooks/use-tags'
 import { useTagDetail } from '@/features/tags/hooks/use-tag-list'
 import { TagForm } from '@/features/tags/components/tag-form'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog'
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -29,6 +33,15 @@ export default function EditTagPage() {
   const { id } = useParams() as { id: string }
   const { tag, isLoading } = useTagDetail(id)
   const { updateTag, isUpdating, deleteTag } = useTags(tag?.business_id)
+  const [formState, setFormState] = useState({
+    isDirty: false,
+    canSubmit: false,
+  })
+  const onStateChange = useCallback(
+    (next: { isDirty: boolean; canSubmit: boolean }) => setFormState(next),
+    [],
+  )
+  const guard = useUnsavedChangesGuard(formState.isDirty)
 
   if (isLoading) {
     return (
@@ -49,9 +62,12 @@ export default function EditTagPage() {
   }
 
   return (
-    <div className="max-w-2xl pb-20">
+    <div className="max-w-2xl space-y-8 pb-6">
       <TagForm
         key={tag.id}
+        formId="tag-edit-form"
+        hideSubmit
+        onStateChange={onStateChange}
         defaultValues={{ name: tag.name, color: tag.color }}
         submitLabel={t('updateTag')}
         isSaving={isUpdating}
@@ -59,33 +75,40 @@ export default function EditTagPage() {
           try {
             await updateTag({ id: tag.id, input: values })
             toast.add({ title: t('tagUpdated'), type: 'success' })
-            router.back()
+            guard.leave()
           } catch {
             toast.add({ title: t('saveFailed'), type: 'error' })
           }
         }}
-      >
-        <DeleteConfirmationDialog
-          title={t('deleteConfirmTitle')}
-          description={t('deleteConfirmDesc')}
-          confirmName={tag.name}
-          onDelete={async () => {
-            await deleteTag(tag.id)
-            router.push('/tags')
-          }}
-          trigger={
-            <Button
-              type="button"
-              variant="ghost"
-              data-testid="tag-delete-trigger"
-              className="h-14 w-full rounded-full text-muted-foreground transition-colors hover:text-destructive"
-            >
-              <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />
-              {t('deleteTag')}
-            </Button>
-          }
-        />
-      </TagForm>
+      />
+      <DeleteConfirmationDialog
+        title={t('deleteConfirmTitle')}
+        description={t('deleteConfirmDesc')}
+        confirmName={tag.name}
+        onDelete={async () => {
+          await deleteTag(tag.id)
+          guard.bypass(() => router.push('/tags'))
+        }}
+        trigger={
+          <Button
+            type="button"
+            variant="ghost"
+            data-testid="tag-delete-trigger"
+            className="h-14 w-full rounded-full text-muted-foreground transition-colors hover:text-destructive"
+          >
+            <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />
+            {t('deleteTag')}
+          </Button>
+        }
+      />
+      <EditSaveBar
+        formId="tag-edit-form"
+        label={t('updateTag')}
+        isDirty={formState.canSubmit}
+        isSaving={isUpdating}
+        testId="tag-form-submit-button"
+      />
+      <UnsavedChangesDialog {...guard.dialogProps} />
     </div>
   )
 }
