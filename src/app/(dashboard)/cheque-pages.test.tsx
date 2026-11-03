@@ -64,6 +64,7 @@ let unmatched: Record<string, string> | null = null
 let listedCheques: Array<typeof cheque> = []
 let filteredCheques: Array<typeof cheque> | null = null
 let listError: Error | null = null
+let listPages = 1
 const party = { id: 'party', name: 'Customer', contact: '+919876543210' }
 const account = {
   id: 'account',
@@ -224,7 +225,8 @@ vi.mock('@/features/cheques/hooks/use-cheque-list', () => ({
       setSortOrder: mocks.filterSortOrder,
       updateStatus: mocks.status,
       pageIndex: 0,
-      hasNextPage: false,
+      totalPages: listPages,
+      hasNextPage: listPages > 1,
       nextPage: vi.fn(),
       previousPage: vi.fn(),
     }
@@ -559,6 +561,7 @@ beforeEach(() => {
   errors = {}
   unmatched = null
   listError = null
+  listPages = 1
   listedCheques = [cheque]
   filteredCheques = listedCheques
   mocks.trigger.mockResolvedValue(true)
@@ -686,6 +689,14 @@ describe('cheque list page', () => {
     renderPage(<ChequesPage />)
     fireEvent.click(screen.getByRole('button', { name: '100123 (0 tags)' }))
     expect(mocks.status).toHaveBeenCalledWith('cheque', 'Cleared')
+    expect(screen.queryByTestId('cheques-pagination')).toBeNull()
+  })
+  it('shows sticky page / total pagination when results span pages', () => {
+    listPages = 4
+    renderPage(<ChequesPage />)
+    expect(screen.getByTestId('cheques-pagination-status')).toHaveTextContent(
+      '1 / 4',
+    )
   })
 
   it('shows loading, failure, and no-cheques states', () => {

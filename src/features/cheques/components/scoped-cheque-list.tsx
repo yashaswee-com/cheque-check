@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
-import { Button } from '@/components/ui/button'
+import { StickyPagination } from '@/components/ui/sticky-pagination'
 import { ChequeCard } from '@/components/cheque-card'
 import { DataState } from '@/components/ui/data-state'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -29,7 +29,6 @@ export function ScopedChequeList({
   emptyState: ReactNode
 }) {
   const t = useTranslations('Cheques')
-  const shared = useTranslations('SharedUI')
   const state = useChequeListFilterState()
   const list = useChequeList(
     state.invalidFilters ? undefined : businessId,
@@ -85,26 +84,15 @@ export function ScopedChequeList({
               ))}
             </div>
           </DataState>
-          {!list.isLoading &&
-            !list.error &&
-            (list.pageIndex > 0 || list.hasNextPage) && (
-              <div className="flex justify-between gap-4">
-                <Button
-                  variant="outline"
-                  disabled={list.pageIndex === 0}
-                  onClick={list.previousPage}
-                >
-                  {shared('previousPage')}
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={!list.hasNextPage}
-                  onClick={list.nextPage}
-                >
-                  {shared('nextPage')}
-                </Button>
-              </div>
-            )}
+          {!list.isLoading && !list.error && (
+            <StickyPagination
+              page={list.pageIndex}
+              totalPages={list.totalPages}
+              onPrevious={list.previousPage}
+              onNext={list.nextPage}
+              testId="scoped-cheques-pagination"
+            />
+          )}
         </>
       )}
     </div>

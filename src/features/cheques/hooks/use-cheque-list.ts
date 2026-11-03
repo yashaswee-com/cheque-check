@@ -94,6 +94,7 @@ export function useChequeList(
     updateStatus: (id: string, status: ChequeStatus) =>
       mutation.mutate({ id, status }),
     pageIndex,
+    totalPages: Math.max(1, Math.ceil(matchingCount / 50)),
     hasNextPage: (pageIndex + 1) * 50 < matchingCount,
     nextPage: () => setPageIndex((page) => page + 1),
     previousPage: () => setPageIndex((page) => Math.max(0, page - 1)),

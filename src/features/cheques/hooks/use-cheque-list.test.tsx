@@ -82,6 +82,7 @@ describe('bounded cheque hooks', () => {
       },
     )
     await waitFor(() => expect(result.current.hasNextPage).toBe(true))
+    expect(result.current.totalPages).toBe(200)
     expect(mocks.getPage).toHaveBeenCalledWith(
       expect.objectContaining({
         businessId: 'b1',

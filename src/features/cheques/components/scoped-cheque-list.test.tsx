@@ -15,6 +15,7 @@ let page = {
   cheques: [{ id: 'c1', cheque_number: '000111' }],
   pageIndex: 0,
   hasNextPage: true,
+  totalPages: 3,
 }
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams('party_id=spoofed&type=Outward'),
@@ -74,6 +75,7 @@ beforeEach(() => {
     cheques: [{ id: 'c1', cheque_number: '000111' }],
     pageIndex: 0,
     hasNextPage: true,
+    totalPages: 3,
   }
 })
 afterEach(cleanup)
@@ -87,6 +89,9 @@ it('pins the entity scope over URL filters and pages through server results', ()
   )
   expect(screen.getByText('Cheque 000111')).toBeVisible()
   expect(
+    screen.getByTestId('scoped-cheques-pagination-status'),
+  ).toHaveTextContent('1 / 3')
+  expect(
     screen.getByRole('button', { name: messages.SharedUI.previousPage }),
   ).toBeDisabled()
   fireEvent.click(
@@ -96,7 +101,7 @@ it('pins the entity scope over URL filters and pages through server results', ()
 })
 
 it('hides pagination for a single page and separates empty from no-match states', () => {
-  page = { cheques: [], pageIndex: 0, hasNextPage: false }
+  page = { cheques: [], pageIndex: 0, hasNextPage: false, totalPages: 1 }
   renderList(0)
   expect(screen.getByText('Nothing yet')).toBeVisible()
   expect(

@@ -2,6 +2,7 @@
 
 import { useChequeList } from '@/features/cheques/hooks/use-cheque-list'
 import { Button } from '@/components/ui/button'
+import { StickyPagination } from '@/components/ui/sticky-pagination'
 import { ChequeCard } from '@/components/cheque-card'
 import { ChequeListFilterControls } from '@/features/cheques/components/cheque-list-filter-controls'
 import { useChequeListFilterState } from '@/features/cheques/hooks/use-cheque-list-filter-state'
@@ -26,7 +27,6 @@ import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 function ChequesContent() {
   const display = useDisplayFormat()
   const t = useTranslations('Cheques')
-  const tc = useTranslations('SharedUI')
   const searchParams = useSearchParams()
   const filterState = useChequeListFilterState()
   const requestedDate = searchParams.get('date')
@@ -53,7 +53,7 @@ function ChequesContent() {
     setFilter,
     updateStatus,
     pageIndex,
-    hasNextPage,
+    totalPages,
     nextPage,
     previousPage,
   } = list
@@ -162,23 +162,14 @@ function ChequesContent() {
               />
             ))}
           </DataState>
-          {!isLoading && !error && activeCount > 0 && (
-            <div className="flex justify-between gap-4">
-              <Button
-                variant="outline"
-                disabled={pageIndex === 0}
-                onClick={previousPage}
-              >
-                {tc('previousPage')}
-              </Button>
-              <Button
-                variant="outline"
-                disabled={!hasNextPage}
-                onClick={nextPage}
-              >
-                {tc('nextPage')}
-              </Button>
-            </div>
+          {!isLoading && !error && (
+            <StickyPagination
+              page={pageIndex}
+              totalPages={totalPages}
+              onPrevious={previousPage}
+              onNext={nextPage}
+              testId="cheques-pagination"
+            />
           )}
         </div>
       )}
