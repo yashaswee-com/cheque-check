@@ -132,7 +132,8 @@ describe('application shell routes', () => {
     expect(
       screen.getByRole('heading', { name: 'public:landing.title' }),
     ).toBeVisible()
-    expect(screen.getByText('public:landing.primaryCta')).toBeVisible()
+    for (const cta of screen.getAllByText('public:landing.primaryCta'))
+      expect(cta).toBeVisible()
     expect(screen.getByText('public:landing.secondaryCta')).toBeVisible()
   })
 
@@ -147,7 +148,8 @@ describe('application shell routes', () => {
       error,
     )
     renderIntl(page)
-    expect(screen.getByText('public:landing.primaryCta')).toBeVisible()
+    for (const cta of screen.getAllByText('public:landing.primaryCta'))
+      expect(cta).toBeVisible()
     log.mockRestore()
   })
 
