@@ -13,6 +13,7 @@ import {
 } from '@/validators/export-job'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { StickyPagination } from '@/components/ui/sticky-pagination'
 import { toast } from '@/components/ui/toast'
 import { logger } from '@/lib/logger'
 
@@ -27,7 +28,6 @@ export default function JobsPage() {
 function JobsContent() {
   const t = useTranslations('Reports')
   const common = useTranslations('Common')
-  const shared = useTranslations('SharedUI')
   const display = useDisplayFormat()
   const { activeBusiness } = useBusiness()
   const [request, setRequest] = useState<ExportJobPageRequest>({
@@ -174,35 +174,27 @@ function JobsContent() {
           ))}
         </ul>
       )}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          disabled={request.offset === 0 || jobs.isFetching}
-          onClick={() =>
-            setRequest((previous) => ({
-              ...previous,
-              offset: Math.max(0, previous.offset - previous.limit),
-            }))
-          }
-        >
-          {shared('previousPage')}
-        </Button>
-        <Button
-          variant="outline"
-          disabled={
-            jobs.isFetching ||
-            request.offset + request.limit >= (jobs.matchingCount ?? 0)
-          }
-          onClick={() =>
-            setRequest((previous) => ({
-              ...previous,
-              offset: previous.offset + previous.limit,
-            }))
-          }
-        >
-          {shared('nextPage')}
-        </Button>
-      </div>
+      <StickyPagination
+        page={Math.floor(request.offset / request.limit)}
+        totalPages={Math.max(
+          1,
+          Math.ceil((jobs.matchingCount ?? 0) / request.limit),
+        )}
+        disabled={jobs.isFetching}
+        onPrevious={() =>
+          setRequest((previous) => ({
+            ...previous,
+            offset: Math.max(0, previous.offset - previous.limit),
+          }))
+        }
+        onNext={() =>
+          setRequest((previous) => ({
+            ...previous,
+            offset: previous.offset + previous.limit,
+          }))
+        }
+        testId="export-jobs-pagination"
+      />
     </div>
   )
 }

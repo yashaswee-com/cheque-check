@@ -78,8 +78,14 @@ function mount() {
 }
 it('pages and filters only the active business history, resetting the page on changes', () => {
   const { rerender } = mount()
+  expect(screen.getByTestId('export-jobs-pagination-status')).toHaveTextContent(
+    '1 / 3',
+  )
   fireEvent.click(
     screen.getByRole('button', { name: messages.SharedUI.nextPage }),
+  )
+  expect(screen.getByTestId('export-jobs-pagination-status')).toHaveTextContent(
+    '2 / 3',
   )
   expect(mocks.hook).toHaveBeenLastCalledWith('business', {
     offset: 50,
