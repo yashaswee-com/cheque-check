@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Combobox } from '@/components/ui/combobox'
 import { useTranslations } from 'next-intl'
 import { useProfile } from '@/features/profile/hooks/use-profile'
-import { Switch } from '@/components/ui/switch'
+import { SettingSwitchRow } from '@/components/ui/setting-switch-row'
 import { MonitoringPreferences } from '@/components/monitoring-preferences'
 import {
   CURRENCY_OPTIONS,
@@ -176,21 +176,15 @@ export default function PreferencesPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4 border-t border-border/50 pt-6">
-        <div className="space-y-1">
-          <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-            {ts('reduceMotion')}
-          </Label>
-          <p className="text-[11px] text-muted-foreground">
-            {ts('reduceMotionDesc')}
-          </p>
-        </div>
-        <Switch
+      <div className="border-t border-border/50 pt-6">
+        <SettingSwitchRow
+          id="reduce-motion"
+          label={ts('reduceMotion')}
+          description={ts('reduceMotionDesc')}
           checked={profile.reduce_motion}
           onCheckedChange={(checked) =>
             savePreference({ reduce_motion: checked })
           }
-          aria-label={ts('reduceMotion')}
         />
       </div>
 

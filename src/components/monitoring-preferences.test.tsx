@@ -33,6 +33,18 @@ describe('MonitoringPreferences', () => {
     )
   })
 
+  it('uses the shared preference row typography', () => {
+    render(<MonitoringPreferences />)
+    expect(screen.getByText('trackingLabel')).toHaveAttribute(
+      'data-slot',
+      'setting-switch-label',
+    )
+    expect(screen.getByText('trackingDescription')).toHaveAttribute(
+      'data-slot',
+      'setting-switch-description',
+    )
+  })
+
   it('synchronizes local events and relevant cross-tab storage changes', () => {
     render(<MonitoringPreferences />)
     state.allowed = false

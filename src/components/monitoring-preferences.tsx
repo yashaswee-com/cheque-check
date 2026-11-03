@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Switch } from '@/components/ui/switch'
+import { SettingSwitchRow } from '@/components/ui/setting-switch-row'
 import { monitoringConfig } from '@/lib/monitoring/config'
 import {
   readTrackingPreference,
@@ -28,34 +28,20 @@ export function MonitoringPreferences() {
     }
   }, [])
   return (
-    <section className="space-y-2 px-1">
-      <div className="flex items-center justify-between gap-4">
-        <label
-          htmlFor="monitoring-preference"
-          className="text-sm font-semibold"
-        >
-          {t('trackingLabel')}
-        </label>
-        <Switch
-          id="monitoring-preference"
-          data-testid="monitoring-preference"
-          checked={
-            allowed &&
-            monitoringConfig.enabled &&
-            monitoringConfig.policyApproved
-          }
-          disabled={
-            !monitoringConfig.enabled || !monitoringConfig.policyApproved
-          }
-          onCheckedChange={setTrackingPreference}
-        />
-      </div>
-      <p className="text-xs leading-relaxed text-muted-foreground">
-        {t('trackingDescription')}
-      </p>
+    <SettingSwitchRow
+      id="monitoring-preference"
+      data-testid="monitoring-preference"
+      label={t('trackingLabel')}
+      description={t('trackingDescription')}
+      checked={
+        allowed && monitoringConfig.enabled && monitoringConfig.policyApproved
+      }
+      disabled={!monitoringConfig.enabled || !monitoringConfig.policyApproved}
+      onCheckedChange={setTrackingPreference}
+    >
       {(!monitoringConfig.enabled || !monitoringConfig.policyApproved) && (
         <p className="text-xs text-muted-foreground">{t('unavailable')}</p>
       )}
-    </section>
+    </SettingSwitchRow>
   )
 }
