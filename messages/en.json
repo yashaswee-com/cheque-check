@@ -177,6 +177,12 @@
     }
   },
   "Inbox": {
+    "searchPlaceholder": "Search by type or business",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "business": "Business",
+    "readStatus": "Read status",
+    "readAll": "All",
     "title": "Notifications",
     "bell": "Notifications, {count} unread",
     "countError": "Notifications, unread count unavailable",
@@ -184,14 +190,11 @@
     "activeBusiness": "Active business",
     "allScope": "Showing all your businesses. Mark all read applies to this scope.",
     "activeScope": "Showing the selected business. Mark all read applies to this scope.",
-    "unreadOnly": "Unread only",
     "unread": "Unread",
     "refresh": "Refresh",
     "markAll": "Mark all read",
     "actionError": "Could not complete this action. Please try again.",
     "empty": "No notifications match.",
-    "previous": "Previous",
-    "next": "Next",
     "events": {
       "cheque_reminder": "Cheques need your attention",
       "export_ready": "Your report export is ready",

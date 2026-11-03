@@ -177,6 +177,12 @@
     }
   },
   "Inbox": {
+    "searchPlaceholder": "Type ya business se search karein",
+    "sortNewest": "Naye pehle",
+    "sortOldest": "Purane pehle",
+    "business": "Business",
+    "readStatus": "Read status",
+    "readAll": "Sabhi",
     "title": "Notifications",
     "bell": "Notifications, {count} unread",
     "countError": "Notifications, unread count uplabdh nahi hai",
@@ -184,14 +190,11 @@
     "activeBusiness": "Active business",
     "allScope": "Aapke sabhi businesses dikh rahe hain. Mark all read isi scope par lagega.",
     "activeScope": "Chuna hua business dikh raha hai. Mark all read isi scope par lagega.",
-    "unreadOnly": "Sirf unread",
     "unread": "Unread",
     "refresh": "Refresh karein",
     "markAll": "Sabhi read mark karein",
     "actionError": "Yeh action poora nahi hua. Dobara try karein.",
     "empty": "Koi matching notification nahi hai.",
-    "previous": "Pichhla",
-    "next": "Agla",
     "events": {
       "cheque_reminder": "Cheques par aapka dhyan chahiye",
       "export_ready": "Aapka report export taiyaar hai",

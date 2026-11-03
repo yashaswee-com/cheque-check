@@ -1,9 +1,11 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -19,6 +21,8 @@ const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   switch: vi.fn(),
   refetch: vi.fn(),
+  requests: [] as Record<string, unknown>[],
+  totalPages: 1,
   items: [] as {
     id: string
     business_id: string
@@ -29,21 +33,34 @@ const mocks = vi.hoisted(() => ({
 }))
 vi.mock('../hooks/use-inbox', () => ({
   useUnreadCount: () => mocks.count,
-  useInbox: () => ({
-    data: { items: mocks.items, snapshot: '120', next_cursor: null },
-    isFetching: false,
-    isLoading: false,
-    error: null,
-    markRead: mocks.markRead,
-    markAll: mocks.markAll,
-    refetch: mocks.refetch,
-  }),
+  useInbox: (request: Record<string, unknown>) => {
+    mocks.requests.push(request)
+    return {
+      data: {
+        items: mocks.items,
+        snapshot: '120',
+        total: mocks.items.length,
+        page: 0,
+        page_size: 50,
+      },
+      totalPages: mocks.totalPages,
+      isFetching: false,
+      isLoading: false,
+      error: null,
+      markRead: mocks.markRead,
+      markAll: mocks.markAll,
+      refetch: mocks.refetch,
+    }
+  },
 }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }))
 vi.mock('@/features/businesses/hooks/use-business', () => ({
   useBusiness: () => ({
     activeBusiness: { id: 'b', name: 'Business' },
-    businesses: [{ id: 'b', name: 'Business' }],
+    businesses: [
+      { id: 'b', name: 'Business' },
+      { id: 'c', name: 'Corner Store' },
+    ],
     setActiveBusiness: mocks.switch,
   }),
 }))
@@ -61,6 +78,8 @@ function mount(node: React.ReactNode) {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.count = { data: 120, error: null }
+  mocks.requests = []
+  mocks.totalPages = 1
   mocks.items = [
     {
       id: '1',
@@ -101,7 +120,9 @@ describe('inbox and header bell', () => {
   it('mark all is explicit and action failure prevents navigation', async () => {
     mocks.markRead.mockRejectedValue(new Error('failed'))
     mount(<NotificationsPage />)
-    fireEvent.click(screen.getByRole('button', { name: 'Mark all read' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Inbox.markAll }),
+    )
     await waitFor(() => expect(mocks.markAll).toHaveBeenCalledOnce())
     fireEvent.click(
       screen.getByRole('button', { name: /Cheques need your attention/ }),
@@ -117,5 +138,117 @@ describe('inbox and header bell', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       'No notifications match',
     )
+  })
+  it('keeps search, sort & filter, refresh and mark all read in one row', () => {
+    mount(<NotificationsPage />)
+    const toolbar = screen.getByTestId('inbox-toolbar')
+    expect(
+      within(toolbar).getByRole('searchbox', {
+        name: messages.Inbox.searchPlaceholder,
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(toolbar)
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('aria-label')),
+    ).toEqual([
+      messages.Common.sortAndFilter,
+      messages.Inbox.refresh,
+      messages.Inbox.markAll,
+    ])
+    expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
+  })
+  it('defaults to the active business, newest first, all read states', () => {
+    mount(<NotificationsPage />)
+    expect(mocks.requests.at(-1)).toEqual({
+      businessId: 'b',
+      unread: false,
+      ascending: false,
+      match: undefined,
+      page: 0,
+      snapshot: undefined,
+    })
+  })
+  it('switches business, read status and order from the filter sheet', async () => {
+    mount(<NotificationsPage />)
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Common.sortAndFilter }),
+    )
+    const active = await screen.findByRole('button', { name: /^Business/ })
+    expect(active).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Inbox.allBusinesses }),
+    )
+    expect(mocks.requests.at(-1)).toMatchObject({ businessId: undefined })
+    fireEvent.click(screen.getByRole('button', { name: /Corner Store/ }))
+    expect(mocks.requests.at(-1)).toMatchObject({ businessId: 'c' })
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Inbox.sortOldest }),
+    )
+    expect(mocks.requests.at(-1)).toMatchObject({ ascending: true })
+    fireEvent.click(
+      screen.getAllByRole('button', { name: messages.Inbox.unread }).at(-1)!,
+    )
+    expect(mocks.requests.at(-1)).toMatchObject({ unread: true })
+  })
+  it('debounces search into matching event kinds and business names', () => {
+    vi.useFakeTimers()
+    try {
+      mount(<NotificationsPage />)
+      fireEvent.change(
+        screen.getByRole('searchbox', {
+          name: messages.Inbox.searchPlaceholder,
+        }),
+        { target: { value: 'export' } },
+      )
+      expect(mocks.requests.at(-1)?.match).toBeUndefined()
+      act(() => vi.advanceTimersByTime(250))
+      expect(mocks.requests.at(-1)?.match).toEqual({
+        kinds: ['export_ready', 'export_failed'],
+        businessIds: [],
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it('pages with sticky page / total pagination pinned to the first snapshot, resetting on filter changes', async () => {
+    mocks.totalPages = 3
+    mount(<NotificationsPage />)
+    expect(
+      screen.getByTestId('notifications-pagination-status'),
+    ).toHaveTextContent('1 / 3')
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.SharedUI.nextPage }),
+    )
+    expect(mocks.requests.at(-1)).toMatchObject({ page: 1, snapshot: '120' })
+    expect(
+      screen.getByTestId('notifications-pagination-status'),
+    ).toHaveTextContent('2 / 3')
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Common.sortAndFilter }),
+    )
+    fireEvent.click(
+      await screen.findByRole('button', { name: messages.Inbox.sortOldest }),
+    )
+    expect(mocks.requests.at(-1)).toMatchObject({
+      ascending: true,
+      page: 0,
+      snapshot: undefined,
+    })
+  })
+  it('refresh returns to the first page and refetches', () => {
+    mocks.totalPages = 3
+    mount(<NotificationsPage />)
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.SharedUI.nextPage }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Inbox.refresh }),
+    )
+    expect(mocks.requests.at(-1)).toMatchObject({
+      page: 0,
+      snapshot: undefined,
+    })
+    expect(mocks.refetch).toHaveBeenCalledOnce()
   })
 })
