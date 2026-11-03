@@ -72,6 +72,18 @@ export function useLeaveGuard(enabled: boolean) {
     }
   }, [enabled, router])
 
+  // Once changes are reverted, a back gesture onto the leftover sentinel copy continues to the real previous page.
+  useEffect(() => {
+    if (enabled || !hasSentinelRef.current) return
+    const onPopState = () => {
+      if (bypassRef.current || !hasSentinelRef.current) return
+      hasSentinelRef.current = false
+      window.history.back()
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [enabled])
+
   const bypass = useCallback((navigate: () => void) => {
     bypassRef.current = true
     navigate()

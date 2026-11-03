@@ -152,6 +152,27 @@ describe('useLeaveGuard', () => {
     expect(window.history.pushState).toHaveBeenCalledOnce()
   })
 
+  it('skips the leftover sentinel on back after changes are reverted', () => {
+    vi.spyOn(window.history, 'back').mockImplementation(() => {})
+    const { result, rerender } = renderHook(
+      (enabled) => useLeaveGuard(enabled),
+      {
+        initialProps: true,
+      },
+    )
+    rerender(false)
+    act(() => window.dispatchEvent(new PopStateEvent('popstate')))
+    expect(window.history.back).toHaveBeenCalledOnce()
+    expect(result.current.isLeavePending).toBe(false)
+
+    act(() => window.dispatchEvent(new PopStateEvent('popstate')))
+    expect(window.history.back).toHaveBeenCalledOnce()
+    rerender(true)
+    expect(window.history.pushState).toHaveBeenCalledTimes(2)
+    act(() => result.current.goBack())
+    expect(window.history.go).toHaveBeenCalledExactlyOnceWith(-2)
+  })
+
   it.each([true, false])(
     'explicit goBack skips the sentinel only when present (%s)',
     (enabled) => {
