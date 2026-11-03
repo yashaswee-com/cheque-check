@@ -398,7 +398,10 @@ export default function OnboardingPage() {
                     <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
                       {t('brandColor')}
                     </Label>
-                    <div className="flex flex-wrap gap-4 p-1">
+                    <div
+                      className="flex flex-nowrap items-center justify-between gap-2 p-1 sm:justify-start sm:gap-3"
+                      data-testid="onboarding-brand-colors"
+                    >
                       {COLORS.map((c) => (
                         <button
                           key={c}
@@ -409,7 +412,7 @@ export default function OnboardingPage() {
                             setFormData({ ...formData, businessColor: c })
                           }
                           className={cn(
-                            'h-12 w-12 rounded-full transition-all active:scale-95 ring-offset-4 dark:ring-offset-black',
+                            'size-10 shrink-0 rounded-full transition-all active:scale-95 ring-offset-2 dark:ring-offset-black',
                             formData.businessColor === c
                               ? 'ring-2 ring-primary scale-110'
                               : 'hover:scale-105 opacity-80 hover:opacity-100',

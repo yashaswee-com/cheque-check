@@ -176,6 +176,19 @@ describe('onboarding page', () => {
     )
     fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
   }
+  it('keeps every brand color swatch on a single non-wrapping row', () => {
+    renderPage(<OnboardingPage />)
+    const row = screen.getByTestId('onboarding-brand-colors')
+    expect(row).toHaveClass('flex-nowrap')
+    expect(row).not.toHaveClass('flex-wrap')
+    const swatches = row.querySelectorAll('button')
+    expect(swatches).toHaveLength(7)
+    swatches.forEach((swatch) =>
+      expect(swatch).toHaveClass('size-10', 'shrink-0'),
+    )
+    fireEvent.click(swatches[1])
+    expect(swatches[1]).toHaveAttribute('aria-pressed', 'true')
+  })
   it('requires a business name and valid optional phone, while preserving values on back navigation', () => {
     renderPage(<OnboardingPage />)
     expect(screen.getByTestId('onboarding-step1-continue')).toBeDisabled()
