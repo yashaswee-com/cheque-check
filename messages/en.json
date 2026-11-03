@@ -142,12 +142,11 @@
   },
   "FreeUsage": {
     "title": "Your free plan usage",
-    "help": "Green means under 80% used, yellow means 80% or more, and red means the limit is reached. Each circle shows used allowance; the remaining count is shown below.",
+    "help": "Green means under 80% used, yellow means 80% or more, and red means the limit is reached. Each circle shows how much of the allowance is used.",
     "cheques": "Active cheques",
     "scans": "AI scans",
     "voice": "Voice reminders",
     "used": "{used} / {limit} used",
-    "remaining": "{count} remaining",
     "warning": "Almost used up",
     "exhausted": "Limit reached",
     "upgrade": "View plans and top-ups",

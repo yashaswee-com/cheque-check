@@ -79,6 +79,14 @@ describe('free usage thresholds', () => {
     expect(screen.getByText(/Limit reached/)).toBeVisible()
     expect(screen.getByText(/Almost used up/)).toBeVisible()
   })
+  it('omits the remaining count and status line for comfortably unused quotas', async () => {
+    mount()
+    const cheques = await screen.findByRole('progressbar', {
+      name: 'Active cheques',
+    })
+    expect(screen.queryByText(/remaining/i)).not.toBeInTheDocument()
+    expect(cheques.parentElement!.querySelectorAll('p')).toHaveLength(2)
+  })
   it.each([
     [0, 0],
     [60, 50],
@@ -98,7 +106,7 @@ describe('free usage thresholds', () => {
       )
       expect(progress.parentElement).toHaveAttribute('data-state', 'exhausted')
       expect(
-        within(progress.parentElement!).getByText(/0 remaining/),
+        within(progress.parentElement!).getByText('Limit reached'),
       ).toBeVisible()
     },
   )

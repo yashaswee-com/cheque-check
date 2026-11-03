@@ -127,16 +127,11 @@ export function FreeUsageBanner() {
               <p className="mt-1 text-xs tabular-nums">
                 {t('used', { used: counter.used, limit: counter.limit })}
               </p>
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                {t('remaining', {
-                  count: Math.max(0, counter.limit - counter.used),
-                })}
-                {exhausted
-                  ? ` - ${t('exhausted')}`
-                  : warning
-                    ? ` - ${t('warning')}`
-                    : ''}
-              </p>
+              {state !== 'normal' && (
+                <p className="mt-1 text-[10px] font-medium text-muted-foreground">
+                  {t(state === 'exhausted' ? 'exhausted' : 'warning')}
+                </p>
+              )}
             </div>
           )
         })}

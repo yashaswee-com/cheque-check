@@ -141,13 +141,12 @@
     "saveError": "Aapki acknowledgement save nahi hui. Dobara try karein."
   },
   "FreeUsage": {
-    "help": "Green: 80% se kam used. Yellow: 80% ya zyada. Red: limit poori. Har circle usage dikhata hai; remaining count neeche hai.",
+    "help": "Green: 80% se kam used. Yellow: 80% ya zyada. Red: limit poori.",
     "title": "Aapke free plan ka usage",
     "cheques": "Active cheques",
     "scans": "AI scans",
     "voice": "Voice reminders",
     "used": "{used} / {limit} use hue",
-    "remaining": "{count} bache hain",
     "warning": "Lagbhag use ho gaya",
     "exhausted": "Limit poori hui",
     "upgrade": "Plans aur top-ups dekhein",
