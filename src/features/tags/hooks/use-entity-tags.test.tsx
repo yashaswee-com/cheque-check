@@ -108,6 +108,24 @@ describe('useEntityTagsDraft', () => {
       ['tag-b'],
     )
   })
+
+  it('reports dirty only when the selection differs from the saved tags', async () => {
+    const { result } = setup(() => useEntityTagsDraft('party', 'party-1'))
+    await waitFor(() =>
+      expect(result.current.tagIds).toEqual(['tag-a', 'tag-b']),
+    )
+    expect(result.current.isDirty).toBe(false)
+
+    act(() => result.current.setTagIds(['tag-b', 'tag-a']))
+    expect(result.current.isDirty).toBe(false)
+    await act(() => result.current.commit())
+    expect(service.syncForEntity).not.toHaveBeenCalled()
+
+    act(() => result.current.setTagIds(['tag-a']))
+    expect(result.current.isDirty).toBe(true)
+    act(() => result.current.setTagIds(['tag-a', 'tag-c']))
+    expect(result.current.isDirty).toBe(true)
+  })
 })
 
 describe('useEntityTagMap', () => {

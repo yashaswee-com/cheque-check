@@ -56,13 +56,18 @@ export function useEntityTagsDraft(
     saveTags,
   } = useEntityTags(entityType, entityId)
   const [draft, setDraft] = useState<string[] | null>(null)
+  const isDirty =
+    draft !== null &&
+    (draft.length !== savedIds.length ||
+      draft.some((tagId) => !savedIds.includes(tagId)))
 
   return {
     tagIds: draft ?? savedIds,
     setTagIds: setDraft,
     isLoading,
+    isDirty,
     commit: async () => {
-      if (draft) await saveTags(draft)
+      if (isDirty && draft) await saveTags(draft)
     },
   }
 }
