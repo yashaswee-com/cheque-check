@@ -4,12 +4,16 @@ Apply `20261106000000_privacy_cover.sql`. The profile-backed preview cover defau
 on, uses solid white/black according to appearance, and covers the application
 frame on focus loss or hidden visibility. The cover shares the shell's responsive
 dimensions, border and corner radius, leaving the blue surround unchanged.
-PrintScreen detection briefly covers
-the view where the browser delivers that key. It does not access the clipboard.
+PrintScreen, and the Meta+Shift prefix of Win+Shift+S and Cmd+Shift+3/4/5,
+briefly cover the view where the browser delivers those keys. Ctrl/Cmd+P is
+blocked, and `beforeprint` plus `@media print` replace printed output with the
+cover. It does not access the clipboard.
 
 This is **best effort**, not screenshot prevention: operating systems may capture
 before browser events, and screen recording, external cameras and task-switcher
-thumbnails cannot be reliably blocked by a web app. The preference text states
+thumbnails cannot be reliably blocked by a web app. Android and iOS hardware
+screenshot buttons deliver no browser event at all; blocking them requires a
+native wrapper (Android `FLAG_SECURE`, iOS secure text-field layering). The preference text states
 these limits. The cover also runs on public/auth routes; it never replaces Auth.
 
 ## Account-wide online PIN

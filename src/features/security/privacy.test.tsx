@@ -69,11 +69,55 @@ describe('best-effort viewport privacy', () => {
     act(() => vi.advanceTimersByTime(1500))
     expect(screen.getByTestId('privacy-cover')).not.toBeVisible()
   })
+  it.each([
+    ['Windows snipping', { key: 'Shift', metaKey: true, shiftKey: true }],
+    ['macOS capture', { key: '4', metaKey: true, shiftKey: true }],
+  ])('covers as soon as a %s shortcut begins', (_label, init) => {
+    vi.useFakeTimers()
+    mount()
+    fireEvent.keyDown(window, init)
+    expect(screen.getByTestId('privacy-cover')).toBeVisible()
+    act(() => vi.advanceTimersByTime(1500))
+    expect(screen.getByTestId('privacy-cover')).not.toBeVisible()
+  })
+  it('ignores ordinary shortcuts that are not capture paths', () => {
+    mount()
+    fireEvent.keyDown(window, { key: 'S', metaKey: true })
+    fireEvent.keyDown(window, { key: 'C', ctrlKey: true, shiftKey: true })
+    expect(screen.getByTestId('privacy-cover')).not.toBeVisible()
+  })
+  it('blocks the print shortcut and covers content while printing', () => {
+    const view = mount()
+    expect(document.documentElement).toHaveAttribute('data-privacy-cover')
+    const event = new KeyboardEvent('keydown', {
+      key: 'p',
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    })
+    window.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(true)
+    fireEvent(window, new Event('beforeprint'))
+    expect(screen.getByTestId('privacy-cover')).toBeVisible()
+    fireEvent(window, new Event('afterprint'))
+    expect(screen.getByTestId('privacy-cover')).not.toBeVisible()
+    view.unmount()
+    expect(document.documentElement).not.toHaveAttribute('data-privacy-cover')
+  })
   it('respects a disabled profile preference and removes event listeners', () => {
     state.enabled = false
     const view = mount()
     fireEvent(window, new Event('blur'))
     fireEvent.keyDown(window, { key: 'PrintScreen' })
+    fireEvent(window, new Event('beforeprint'))
+    const print = new KeyboardEvent('keydown', {
+      key: 'p',
+      ctrlKey: true,
+      cancelable: true,
+    })
+    window.dispatchEvent(print)
+    expect(print.defaultPrevented).toBe(false)
+    expect(document.documentElement).not.toHaveAttribute('data-privacy-cover')
     expect(screen.getByTestId('privacy-cover')).not.toBeVisible()
     view.unmount()
     expect(screen.queryByTestId('privacy-cover')).not.toBeInTheDocument()

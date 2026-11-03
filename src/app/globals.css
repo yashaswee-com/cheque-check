@@ -291,3 +291,13 @@ html[data-reduce-motion] *::after {
     letter-spacing: -0.374px;
   }
 }
+
+/* Printing is a capture path; the privacy cover replaces app content. */
+@media print {
+  html[data-privacy-cover] body > *:not([data-testid='privacy-cover']) {
+    display: none !important;
+  }
+  html[data-privacy-cover] [data-testid='privacy-cover'] {
+    display: block !important;
+  }
+}

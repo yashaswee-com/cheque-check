@@ -5,6 +5,24 @@ import { createPortal } from 'react-dom'
 import { useTranslations } from 'next-intl'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 const subscribe = () => () => {}
+const COVER_MS = 1500
+
+/** Win+Shift+S and Cmd+Shift+3/4/5 begin with Meta+Shift; cover before the final key. */
+function isCaptureShortcut(event: KeyboardEvent) {
+  return (
+    event.key === 'PrintScreen' ||
+    (event.type === 'keydown' && event.metaKey && event.shiftKey)
+  )
+}
+
+function isPrintShortcut(event: KeyboardEvent) {
+  return (
+    event.type === 'keydown' &&
+    (event.ctrlKey || event.metaKey) &&
+    !event.shiftKey &&
+    event.key.toLowerCase() === 'p'
+  )
+}
 
 export function PrivacyShield() {
   const { profile } = useProfile()
@@ -28,16 +46,33 @@ export function PrivacyShield() {
             document.visibilityState !== 'hidden' &&
             document.hasFocus())
     }
-    const key = (event: KeyboardEvent) => {
-      if (!enabled || event.key !== 'PrintScreen') return
-      event.preventDefault()
+    const coverBriefly = () => {
       screenshot = true
       refresh()
       clearTimeout(timer)
       timer = setTimeout(() => {
         screenshot = false
         refresh()
-      }, 1500)
+      }, COVER_MS)
+    }
+    const key = (event: KeyboardEvent) => {
+      if (!enabled) return
+      if (isPrintShortcut(event)) {
+        event.preventDefault()
+        return
+      }
+      if (!isCaptureShortcut(event)) return
+      event.preventDefault()
+      coverBriefly()
+    }
+    const beforePrint = () => {
+      if (!enabled) return
+      screenshot = true
+      refresh()
+    }
+    const afterPrint = () => {
+      screenshot = false
+      refresh()
     }
     // Mutate visibility synchronously: waiting for a React render can expose a preview frame.
     const blur = () => {
@@ -49,7 +84,13 @@ export function PrivacyShield() {
     document.addEventListener('visibilitychange', refresh)
     window.addEventListener('keydown', key, true)
     window.addEventListener('keyup', key, true)
+    window.addEventListener('beforeprint', beforePrint)
+    window.addEventListener('afterprint', afterPrint)
+    document.documentElement.toggleAttribute('data-privacy-cover', enabled)
     return () => {
+      document.documentElement.removeAttribute('data-privacy-cover')
+      window.removeEventListener('beforeprint', beforePrint)
+      window.removeEventListener('afterprint', afterPrint)
       clearTimeout(timer)
       window.removeEventListener('blur', blur)
       window.removeEventListener('focus', refresh)
