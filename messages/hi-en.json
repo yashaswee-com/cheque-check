@@ -141,6 +141,8 @@
     "saveError": "Aapki acknowledgement save nahi hui. Dobara try karein."
   },
   "FreeUsage": {
+    "usageTitle": "Aapka usage",
+    "unlimited": "Unlimited",
     "help": "Green: 80% se kam used. Yellow: 80% ya zyada. Red: limit poori.",
     "title": "Aapke free plan ka usage",
     "cheques": "Active cheques",

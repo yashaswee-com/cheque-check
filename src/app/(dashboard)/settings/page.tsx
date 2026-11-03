@@ -33,6 +33,7 @@ import { PremiumMark } from '@/features/monetization/components/premium-mark'
 import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
 import { version } from '../../../../package.json'
 import { ReplayTour } from '@/features/tour/components/replay-tour'
+import { UsageCard } from '@/features/monetization/components/free-usage-banner'
 
 interface SettingsItem {
   name: string
@@ -221,6 +222,8 @@ export default function SettingsPage() {
           className="h-4 w-4 text-muted-foreground opacity-30"
         />
       </Link>
+
+      <UsageCard alwaysShow />
 
       <div className="space-y-8">
         {sections.map((section: SettingsSection) => (

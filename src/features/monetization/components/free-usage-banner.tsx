@@ -12,7 +12,13 @@ import {
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 
-export function FreeUsageBanner() {
+interface UsageCardProps {
+  /** Keep the card for unlimited plans; cheques then read as unlimited. */
+  alwaysShow?: boolean
+}
+
+/** Plan, subscription and top-up allowances share `user_quotas` limits. */
+export function UsageCard({ alwaysShow = false }: UsageCardProps) {
   const t = useTranslations('FreeUsage')
   const query = useFreeUsage()
   if (query.error)
@@ -25,43 +31,53 @@ export function FreeUsageBanner() {
       </aside>
     )
   if (!query.data) return <p role="status">{t('loading')}</p>
-  if (query.data.unlimited) return null
+  if (query.data.unlimited && !alwaysShow) return null
   const data = query.data
+  const title = alwaysShow ? t('usageTitle') : t('title')
   const counters = [
     {
       label: t('cheques'),
       used: data.cheques_used,
       limit: data.cheques_limit,
       icon: Invoice01Icon,
+      unlimited: data.unlimited,
     },
     {
       label: t('scans'),
       used: data.ai_scans_used,
       limit: data.ai_scans_limit,
       icon: Camera01Icon,
+      unlimited: false,
     },
     {
       label: t('voice'),
       used: data.voice_used,
       limit: data.voice_limit,
       icon: Mic01Icon,
+      unlimited: false,
     },
   ]
   return (
     <aside
       className="space-y-4 rounded-2xl border border-primary/10 bg-card p-4 shadow-sm"
-      aria-label={t('title')}
+      aria-label={title}
+      data-testid={alwaysShow ? 'usage-card' : 'free-usage-banner'}
     >
       <div className="flex items-center justify-between gap-2">
-        <h2 className="font-semibold">{t('title')}</h2>
-        <InfoPopover title={t('title')}>{t('help')}</InfoPopover>
+        <h2 className="font-semibold">{title}</h2>
+        <InfoPopover title={title}>{t('help')}</InfoPopover>
       </div>
       <div className="grid grid-cols-3 gap-2">
         {counters.map((counter) => {
-          const exhausted = counter.used >= counter.limit
-          const warning = counter.used * 5 >= counter.limit * 4
-          const percent =
-            counter.limit === 0
+          const exhausted = !counter.unlimited && counter.used >= counter.limit
+          const warning =
+            !counter.unlimited && counter.used * 5 >= counter.limit * 4
+          const usedText = counter.unlimited
+            ? t('unlimited')
+            : t('used', { used: counter.used, limit: counter.limit })
+          const percent = counter.unlimited
+            ? 0
+            : counter.limit === 0
               ? 100
               : Math.min(100, Math.max(0, (counter.used / counter.limit) * 100))
           const state = exhausted ? 'exhausted' : warning ? 'warning' : 'normal'
@@ -77,10 +93,7 @@ export function FreeUsageBanner() {
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={percent}
-                aria-valuetext={t('used', {
-                  used: counter.used,
-                  limit: counter.limit,
-                })}
+                aria-valuetext={usedText}
                 className={cn(
                   'relative mx-auto mb-2 size-14',
                   exhausted
@@ -124,9 +137,7 @@ export function FreeUsageBanner() {
                 />
               </div>
               <p className="text-xs font-semibold">{counter.label}</p>
-              <p className="mt-1 text-xs tabular-nums">
-                {t('used', { used: counter.used, limit: counter.limit })}
-              </p>
+              <p className="mt-1 text-xs tabular-nums">{usedText}</p>
               {state !== 'normal' && (
                 <p className="mt-1 text-[10px] font-medium text-muted-foreground">
                   {t(state === 'exhausted' ? 'exhausted' : 'warning')}
@@ -144,4 +155,8 @@ export function FreeUsageBanner() {
       </Link>
     </aside>
   )
+}
+
+export function FreeUsageBanner() {
+  return <UsageCard />
 }

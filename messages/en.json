@@ -141,6 +141,8 @@
     "saveError": "Could not save your acknowledgement. Please try again."
   },
   "FreeUsage": {
+    "usageTitle": "Your usage",
+    "unlimited": "Unlimited",
     "title": "Your free plan usage",
     "help": "Green means under 80% used, yellow means 80% or more, and red means the limit is reached. Each circle shows how much of the allowance is used.",
     "cheques": "Active cheques",

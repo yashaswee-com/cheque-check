@@ -30,6 +30,11 @@ vi.mock('@/features/monetization/hooks/use-premium-access', () => ({
     isLoading: false,
   }),
 }))
+vi.mock('@/features/monetization/components/free-usage-banner', () => ({
+  UsageCard: ({ alwaysShow }: { alwaysShow?: boolean }) => (
+    <section data-testid="usage-card" data-always-show={String(!!alwaysShow)} />
+  ),
+}))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/components/monitoring-preferences', () => ({
   MonitoringPreferences: () => <div>Monitoring preferences</div>,
@@ -59,6 +64,14 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('settings page', () => {
+  it('places the always-visible usage card directly under the profile card', () => {
+    renderPage()
+    const profileLink = document.querySelector('a[href="/profile"]')!
+    const usage = screen.getByTestId('usage-card')
+    expect(usage).toHaveAttribute('data-always-show', 'true')
+    expect(profileLink.nextElementSibling).toBe(usage)
+  })
+
   it('renders every settings section, its links, and the logout action', () => {
     renderPage()
     expect(screen.getByText('Riya Sharma')).toBeVisible()

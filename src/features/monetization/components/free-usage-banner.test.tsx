@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
-import { FreeUsageBanner } from './free-usage-banner'
+import { FreeUsageBanner, UsageCard } from './free-usage-banner'
 const mocks = vi.hoisted(() => ({ rpc: vi.fn() }))
 vi.mock('@/lib/supabase/client', () => ({ createClient: () => mocks }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
@@ -30,7 +30,7 @@ beforeEach(() => {
   mocks.rpc.mockImplementation(async () => ({ data: [data], error: null }))
 })
 afterEach(cleanup)
-function mount() {
+function mount(ui: React.ReactNode = <FreeUsageBanner />) {
   render(
     <QueryClientProvider
       client={
@@ -38,7 +38,7 @@ function mount() {
       }
     >
       <NextIntlClientProvider locale="en" messages={messages}>
-        <FreeUsageBanner />
+        {ui}
       </NextIntlClientProvider>
     </QueryClientProvider>,
   )
@@ -133,5 +133,39 @@ describe('free usage thresholds', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Usage could not be loaded',
     )
+  })
+  it('keeps the settings usage card for unlimited plans and shows cheques as unlimited', async () => {
+    data = {
+      ...data,
+      unlimited: true,
+      cheques_used: 50,
+      ai_scans_used: 12,
+      ai_scans_limit: 260,
+      voice_used: 3,
+      voice_limit: 110,
+    }
+    mount(<UsageCard alwaysShow />)
+    const card = await screen.findByTestId('usage-card')
+    expect(card).toHaveAccessibleName('Your usage')
+    const cheques = screen.getByRole('progressbar', { name: 'Active cheques' })
+    expect(cheques).toHaveAttribute('aria-valuetext', 'Unlimited')
+    expect(cheques).toHaveAttribute('aria-valuenow', '0')
+    expect(cheques.parentElement).toHaveAttribute('data-state', 'normal')
+    expect(
+      screen.getByRole('progressbar', { name: 'AI scans' }),
+    ).toHaveAttribute('aria-valuetext', '12 / 260 used')
+    expect(
+      screen.getByRole('progressbar', { name: 'Voice reminders' }),
+    ).toHaveAttribute('aria-valuetext', '3 / 110 used')
+  })
+  it('includes top-up allowances for free users on the settings card', async () => {
+    data.ai_scans_limit = 260
+    mount(<UsageCard alwaysShow />)
+    const scans = await screen.findByRole('progressbar', { name: 'AI scans' })
+    expect(scans).toHaveAttribute('aria-valuetext', '10 / 260 used')
+    expect(scans.parentElement).toHaveAttribute('data-state', 'normal')
+    expect(
+      screen.getByRole('progressbar', { name: 'Active cheques' }),
+    ).toHaveAttribute('aria-valuetext', '39 / 50 used')
   })
 })
