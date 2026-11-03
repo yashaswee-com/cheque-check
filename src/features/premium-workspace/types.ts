@@ -25,6 +25,7 @@ export interface ChequeFilters {
   status?: NonNullable<ChequeRow['status']>
   type?: NonNullable<ChequeRow['type']>
   party_id?: string
+  account_id?: string
   from?: string
   to?: string
   statuses?: NonNullable<ChequeRow['status']>[]

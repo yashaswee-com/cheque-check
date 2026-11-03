@@ -23,6 +23,7 @@ const RELATIONS =
 export interface IChequeRepository {
   getAll(businessId: string): Promise<ChequeWithRelations[]>
   getPage(request: ChequeListRequest): Promise<ChequePage<ChequeWithRelations>>
+  getAmountCeiling(businessId: string): Promise<number>
   getBusinessSummaries(
     today: string,
   ): Promise<{ business_id: string; upcoming_total: number }[]>
@@ -81,6 +82,21 @@ export class SupabaseChequeRepository
     )
   }
 
+  async getAmountCeiling(businessId: string): Promise<number> {
+    const rows = await this.handle(
+      this.supabase
+        .from(TABLES.CHEQUES)
+        .select('amount')
+        .eq('business_id', businessId)
+        .is('deleted_at', null)
+        .eq('is_draft', false)
+        .order('amount', { ascending: false })
+        .limit(1),
+    )
+    const amount = Number(rows[0]?.amount ?? 0)
+    return Number.isFinite(amount) && amount > 0 ? amount : 0
+  }
+
   async getPage(
     request: ChequeListRequest,
   ): Promise<ChequePage<ChequeWithRelations>> {
@@ -99,6 +115,7 @@ export class SupabaseChequeRepository
         requested_native_status: native.status,
         requested_type: native.type,
         requested_party: native.party_id,
+        requested_account: native.account_id,
         requested_from: native.from,
         requested_to: native.to,
         requested_statuses: native.statuses,

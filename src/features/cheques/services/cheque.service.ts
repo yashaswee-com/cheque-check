@@ -41,6 +41,10 @@ export class ChequeService {
     return { ...page, rows: page.rows.map((row) => ChequeEntity.fromRow(row)) }
   }
 
+  getAmountCeiling(businessId: string) {
+    return this.repository.getAmountCeiling(businessId)
+  }
+
   getBusinessSummaries(today: string) {
     return this.repository.getBusinessSummaries(today)
   }

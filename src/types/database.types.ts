@@ -1026,6 +1026,7 @@ export interface Database {
           requested_unknown_bank?: boolean
           requested_type?: string
           requested_party?: string
+          requested_account?: string
           requested_from?: string
           requested_to?: string
         }

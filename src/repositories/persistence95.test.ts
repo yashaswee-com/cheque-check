@@ -317,6 +317,38 @@ describe('production CRUD repositories at the Supabase boundary', () => {
     expect(boundary.query.limit).toHaveBeenCalledWith(500)
   })
 
+  it('reads the active amount ceiling with one indexed row and scopes pages to an account', async () => {
+    boundary.result.data = [{ amount: 250000.5 }]
+    const repository = new SupabaseChequeRepository()
+    expect(await repository.getAmountCeiling('business-1')).toBe(250000.5)
+    expect(boundary.query.select).toHaveBeenLastCalledWith('amount')
+    expect(boundary.query.eq).toHaveBeenCalledWith('business_id', 'business-1')
+    expect(boundary.query.eq).toHaveBeenCalledWith('is_draft', false)
+    expect(boundary.query.is).toHaveBeenCalledWith('deleted_at', null)
+    expect(boundary.query.order).toHaveBeenLastCalledWith('amount', {
+      ascending: false,
+    })
+    expect(boundary.query.limit).toHaveBeenLastCalledWith(1)
+    boundary.result.data = []
+    expect(await repository.getAmountCeiling('business-1')).toBe(0)
+    boundary.query.then.mockImplementationOnce((resolve) =>
+      Promise.resolve(
+        resolve({
+          data: [{ cheque_id: null, matching_count: 0, active_count: 0 }],
+          error: null,
+        }),
+      ),
+    )
+    await repository.getPage({
+      businessId: 'business-1',
+      nativeFilters: { account_id: 'account-1' },
+    })
+    expect(boundary.rpc).toHaveBeenLastCalledWith(
+      'cheque_list_page',
+      expect.objectContaining({ requested_account: 'account-1' }),
+    )
+  })
+
   it('fetches only selected page relations in server order and preserves complete metadata', async () => {
     boundary.query.then.mockImplementationOnce((resolve) =>
       Promise.resolve(

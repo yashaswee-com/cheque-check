@@ -70,6 +70,8 @@ export const queryKeys = {
     ) => ['cheque-summaries', businessId, today, includeInward, range] as const,
     pages: (businessId: string | undefined) =>
       ['cheque-pages', businessId] as const,
+    amountCeiling: (businessId: string | undefined) =>
+      ['cheque-pages', businessId, 'amount-ceiling'] as const,
     page: (request: import('@/types/cheque-list').ChequeListRequest) =>
       ['cheque-pages', request.businessId, request] as const,
     list: (businessId: string | undefined) => ['cheques', businessId] as const,

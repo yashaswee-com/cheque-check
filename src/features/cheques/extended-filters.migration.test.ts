@@ -11,6 +11,7 @@ const party = '30000000-0000-4000-8000-000000000001'
 const legacy = '30000000-0000-4000-8000-000000000002'
 const account = '40000000-0000-4000-8000-000000000001'
 const bank = '50000000-0000-4000-8000-000000000001'
+const savings = '40000000-0000-4000-8000-000000000002'
 let db: PGlite
 
 beforeAll(async () => {
@@ -21,6 +22,7 @@ beforeAll(async () => {
     '20261101080000_six_digit_cheque_numbers.sql',
     '20261102070000_extended_cheque_filters.sql',
     '20261102090000_cheque_analytics.sql',
+    '20261108000000_cheque_list_account_filter.sql',
   ])
   await db.exec(`
     INSERT INTO auth.users(id,email) VALUES('${owner}','filter@x.test'),('${other}','other@x.test');
@@ -30,11 +32,13 @@ beforeAll(async () => {
       ('${legacy}','${business}','Legacy','+919876543210',NULL);
     INSERT INTO banks(id,name,category) VALUES('${bank}','Test bank','public');
     INSERT INTO accounts(id,business_id,bank_id,account_name,account_number)
-      VALUES('${account}','${business}','${bank}','Main','1234');
+      VALUES('${account}','${business}','${bank}','Main','1234'),
+      ('${savings}','${business}','${bank}','Savings','5678');
     INSERT INTO cheques(business_id,party_id,account_id,cheque_number,amount,type,status,cheque_date,deposit_date)
       VALUES('${business}','${party}','${account}','100001',100.25,'Outward','Issued','2026-01-01','2026-02-01'),
       ('${business}','${party}','${account}','100002',200,'Outward','Cleared','2026-01-31','2026-02-28'),
-      ('${business}','${legacy}','${account}','100003',0,'Outward','Bounced','2025-12-31',NULL);
+      ('${business}','${legacy}','${account}','100003',0,'Outward','Bounced','2025-12-31',NULL),
+      ('${business}','${party}','${savings}','100004',50,'Outward','Issued','2026-03-01',NULL);
   `)
 }, 60_000)
 afterAll(async () => {
@@ -62,7 +66,7 @@ describe('extended server filters', () => {
       requested_banks := ARRAY['${bank}']::uuid[], requested_limit := 1`)
     expect(result.rows).toHaveLength(1)
     expect(Number(result.rows[0].matching_count)).toBe(2)
-    expect(Number(result.rows[0].active_count)).toBe(3)
+    expect(Number(result.rows[0].active_count)).toBe(4)
     const next = await page(
       `requested_min_amount := 100.25, requested_limit := 1, requested_offset := 1`,
     )
@@ -154,10 +158,10 @@ describe('extended server filters', () => {
     })
     it('supports the Unknown bank drilldown rather than opening unfiltered cheques', async () => {
       await db.exec(
-        `UPDATE accounts SET bank_id = NULL WHERE id = '${account}'`,
+        `UPDATE accounts SET bank_id = NULL WHERE business_id = '${business}'`,
       )
       expect((await page('requested_unknown_bank := true')).rows).toHaveLength(
-        3,
+        4,
       )
       expect(
         Number(
@@ -169,6 +173,24 @@ describe('extended server filters', () => {
       expect(result.banks[0].id).toBeNull()
     })
   })
+  it('scopes entity pages to one account and combines it with the shared filters', async () => {
+    const scoped = await page(`requested_account := '${savings}'`)
+    expect(scoped.rows).toHaveLength(1)
+    expect(Number(scoped.rows[0].matching_count)).toBe(1)
+    expect(Number(scoped.rows[0].active_count)).toBe(4)
+    const main = await page(
+      `requested_account := '${account}', requested_party := '${party}'`,
+    )
+    expect(Number(main.rows[0].matching_count)).toBe(2)
+    const none = await page(
+      `requested_account := '${savings}', requested_statuses := ARRAY['Cleared']`,
+    )
+    expect(none.rows[0].cheque_id).toBeNull()
+    expect(
+      (await page(`requested_account := '${savings}'`, other)).rows[0]
+        .cheque_id,
+    ).toBeNull()
+  })
   it('supports unclassified parties, zero amounts, open bounds and no-match metadata', async () => {
     const zero = await page(
       `requested_party_type := 'unclassified', requested_max_amount := 0`,
@@ -179,7 +201,7 @@ describe('extended server filters', () => {
     const empty = await page(`requested_min_amount := 201`)
     expect(empty.rows[0].cheque_id).toBeNull()
     expect(Number(empty.rows[0].matching_count)).toBe(0)
-    expect(Number(empty.rows[0].active_count)).toBe(3)
+    expect(Number(empty.rows[0].active_count)).toBe(4)
   })
   it('retains RLS and rejects malformed requests at the database boundary', async () => {
     expect((await page('', other)).rows[0].cheque_id).toBeNull()

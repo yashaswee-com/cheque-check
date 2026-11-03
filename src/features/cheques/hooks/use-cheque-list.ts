@@ -100,6 +100,16 @@ export function useChequeList(
   }
 }
 
+/** Highest active cheque amount in a business; the amount slider's maximum. */
+export function useChequeAmountCeiling(businessId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.cheques.amountCeiling(businessId),
+    queryFn: () => chequeService.getAmountCeiling(businessId!),
+    enabled: !!businessId,
+    staleTime: 60_000,
+  })
+}
+
 export function useChequeSearch(
   businessId: string | undefined,
   search: string,
