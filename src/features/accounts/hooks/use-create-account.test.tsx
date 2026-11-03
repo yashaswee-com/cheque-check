@@ -41,6 +41,7 @@ vi.mock('@/features/drafts', () => ({
   firstIncompleteAccountStep: mocks.firstIncompleteAccountStep,
   toAccountDraftFields: vi.fn(),
   draftKeys: {
+    all: () => ['drafts'],
     list: (entity: string, businessId: string) => [
       'drafts',
       entity,
@@ -223,7 +224,7 @@ describe('useCreateAccount', () => {
       queryKey: queryKeys.accounts.list('business-1'),
     })
     expect(invalidate).toHaveBeenCalledWith({
-      queryKey: ['drafts', 'account', 'business-1'],
+      queryKey: ['drafts'],
     })
     expect(result.current.isSuccess).toBe(true)
 

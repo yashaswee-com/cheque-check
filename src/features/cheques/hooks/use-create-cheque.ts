@@ -217,7 +217,7 @@ export function useCreateCheque(
         queryKey: queryKeys.premiumWorkspace.all(),
       })
       queryClient.invalidateQueries({
-        queryKey: draftKeys.list('cheque', businessId),
+        queryKey: draftKeys.all(),
       })
       const actionProps = await buildNotifyPartyAction(
         published,

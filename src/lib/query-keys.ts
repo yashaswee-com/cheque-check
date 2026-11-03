@@ -126,6 +126,18 @@ export const queryKeys = {
         : (['entity-tag-map', businessId, entityType] as const),
   },
   drafts: {
+    all: () => ['drafts'] as const,
+    page: (
+      businessId: string | undefined,
+      request: {
+        types: readonly DraftEntity[]
+        search: string
+        ascending: boolean
+        page: number
+      },
+    ) => ['drafts', 'page', businessId, request] as const,
+    counts: (businessId: string | undefined) =>
+      ['drafts', 'counts', businessId] as const,
     list: (entity: DraftEntity, businessId: string | undefined) =>
       ['drafts', entity, businessId] as const,
     detail: (entity: DraftEntity, id: string | null | undefined) =>

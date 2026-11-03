@@ -16,6 +16,7 @@ const service = vi.hoisted(() => ({
 vi.mock('./use-drafts', () => ({
   draftServices: { party: service },
   draftKeys: {
+    all: () => ['drafts'],
     list: (entity: string, businessId: string) => [
       'drafts',
       entity,

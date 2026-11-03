@@ -1071,6 +1071,20 @@ export interface Database {
         }
         Returns: Json
       }
+      list_drafts_page: {
+        Args: {
+          requested_business: string
+          requested_types?: string[]
+          requested_search?: string
+          requested_ascending?: boolean
+          requested_page?: number
+        }
+        Returns: Json
+      }
+      draft_counts: {
+        Args: { requested_business: string }
+        Returns: Json
+      }
       list_notification_inbox_page: {
         Args: {
           requested_business?: string

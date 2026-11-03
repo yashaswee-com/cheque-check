@@ -40,6 +40,7 @@ vi.mock('@/features/drafts', () => ({
   firstIncompletePartyStep: mocks.firstIncompletePartyStep,
   toPartyDraftFields: vi.fn(),
   draftKeys: {
+    all: () => ['drafts'],
     list: (entity: string, businessId: string) => [
       'drafts',
       entity,
@@ -214,7 +215,7 @@ describe('useCreateParty', () => {
       queryKey: queryKeys.parties.list('business-1'),
     })
     expect(invalidate).toHaveBeenCalledWith({
-      queryKey: ['drafts', 'party', 'business-1'],
+      queryKey: ['drafts'],
     })
     expect(result.current.isSuccess).toBe(true)
 

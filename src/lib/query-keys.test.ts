@@ -79,6 +79,13 @@ describe('query key contracts', () => {
       'party',
       'b1',
     ])
+    const request = { types: [], search: '', ascending: false, page: 0 }
+    expect(queryKeys.drafts.page('b1', request).slice(0, 3)).toEqual([
+      'drafts',
+      'page',
+      'b1',
+    ])
+    expect(queryKeys.drafts.counts('b1')).toEqual(['drafts', 'counts', 'b1'])
     expect(queryKeys.drafts.detail('account', null)).toEqual([
       'draft',
       'account',

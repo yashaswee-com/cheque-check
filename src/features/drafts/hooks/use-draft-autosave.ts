@@ -76,9 +76,7 @@ export function useDraftAutosave<TValues extends FieldValues>({
           writeDraftIdToUrl(saved.id)
         }
         queryClient.setQueryData(draftKeys.detail(entity, saved.id), saved)
-        queryClient.invalidateQueries({
-          queryKey: draftKeys.list(entity, currentBusinessId),
-        })
+        queryClient.invalidateQueries({ queryKey: draftKeys.all() })
         setStatus('saved')
         return saved.id
       } catch (error) {
@@ -132,9 +130,7 @@ export function useDraftAutosave<TValues extends FieldValues>({
     setDraftId(null)
     writeDraftIdToUrl(null)
     queryClient.removeQueries({ queryKey: draftKeys.detail(entity, id) })
-    queryClient.invalidateQueries({
-      queryKey: draftKeys.list(entity, optionsRef.current.businessId),
-    })
+    queryClient.invalidateQueries({ queryKey: draftKeys.all() })
   }, [entity, queryClient])
 
   // Waits for in-flight saves, then prevents further autosaves (used before publishing).

@@ -146,7 +146,7 @@ export function useCreateParty(
               queryKey: queryKeys.parties.list(businessId),
             })
             queryClient.invalidateQueries({
-              queryKey: draftKeys.list('party', businessId),
+              queryKey: draftKeys.all(),
             })
           }
 

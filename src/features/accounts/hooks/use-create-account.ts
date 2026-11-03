@@ -156,7 +156,7 @@ export function useCreateAccount(
             queryKey: queryKeys.accounts.list(businessId),
           })
           queryClient.invalidateQueries({
-            queryKey: draftKeys.list('account', businessId),
+            queryKey: draftKeys.all(),
           })
           if (data.is_default) {
             await queryClient.invalidateQueries({

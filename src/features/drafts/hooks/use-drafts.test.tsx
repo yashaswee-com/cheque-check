@@ -2,12 +2,23 @@ import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { draftKeys, useDraft, useDrafts, useDeleteDraft } from './use-drafts'
+import {
+  draftKeys,
+  useDraft,
+  useDraftCounts,
+  useDrafts,
+  useDraftsPage,
+  useDeleteDraft,
+} from './use-drafts'
 import { useRedirectIfDraft } from './use-redirect-if-draft'
 
 const mocks = vi.hoisted(() => ({
   service: { list: vi.fn(), getById: vi.fn(), delete: vi.fn() },
   replace: vi.fn(),
+  pages: { list: vi.fn(), counts: vi.fn() },
+}))
+vi.mock('../repositories/draft-page.repository', () => ({
+  draftPageRepository: mocks.pages,
 }))
 vi.mock('../services/draft.service', () => ({
   chequeDraftService: mocks.service,
@@ -97,6 +108,95 @@ describe('draft query hooks', () => {
     expect(client.getQueryData(draftKeys.list('party', 'b1'))).toEqual([
       { id: 'd2' },
     ])
+  })
+  it('loads a draft page and counts for the business', async () => {
+    mocks.pages.list.mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      page_size: 50,
+    })
+    mocks.pages.counts.mockResolvedValue({ cheque: 1, party: 2, account: 0 })
+    const request = {
+      types: ['party' as const],
+      search: 'a',
+      ascending: true,
+      page: 1,
+    }
+    const { wrapper } = setup()
+    const { result } = renderHook(
+      () => ({
+        page: useDraftsPage('b1', request),
+        counts: useDraftCounts('b1'),
+        idle: useDraftsPage(undefined, request),
+      }),
+      { wrapper },
+    )
+    await waitFor(() => expect(result.current.page.data?.page).toBe(1))
+    await waitFor(() => expect(result.current.counts.data?.party).toBe(2))
+    expect(mocks.pages.list).toHaveBeenCalledTimes(1)
+    expect(mocks.pages.list).toHaveBeenCalledWith({
+      ...request,
+      businessId: 'b1',
+    })
+    expect(mocks.pages.counts).toHaveBeenCalledWith('b1')
+  })
+  it('optimistically removes a deleted draft from cached pages and restores it on failure', async () => {
+    const { client, wrapper } = setup()
+    const key = draftKeys.page('b1', {
+      types: [],
+      search: '',
+      ascending: false,
+      page: 0,
+    })
+    const page = {
+      items: [
+        { entity: 'party', draft: { id: 'd1' } },
+        { entity: 'cheque', draft: { id: 'd2' } },
+      ],
+      total: 2,
+      page: 0,
+      page_size: 50,
+    }
+    client.setQueryData(key, page)
+    mocks.service.delete.mockRejectedValueOnce(new Error('nope'))
+    const { result } = renderHook(() => useDeleteDraft('party', 'b1'), {
+      wrapper,
+    })
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
+    await act(async () => {
+      await result.current.mutateAsync('d1').catch(() => undefined)
+    })
+    expect(client.getQueryData(key)).toEqual(page)
+    await act(async () => result.current.mutateAsync('d1'))
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['drafts'] })
+  })
+  it('removes the draft from the page cache while the delete is pending', async () => {
+    const { client, wrapper } = setup()
+    const key = draftKeys.page('b1', {
+      types: [],
+      search: '',
+      ascending: false,
+      page: 0,
+    })
+    client.setQueryData(key, {
+      items: [{ entity: 'party', draft: { id: 'd1' } }],
+      total: 1,
+      page: 0,
+      page_size: 50,
+    })
+    mocks.service.delete.mockImplementationOnce(
+      () => new Promise(() => undefined),
+    )
+    const { result } = renderHook(() => useDeleteDraft('party', 'b1'), {
+      wrapper,
+    })
+    act(() => {
+      void result.current.mutateAsync('d1')
+    })
+    await waitFor(() =>
+      expect(client.getQueryData(key)).toMatchObject({ items: [], total: 0 }),
+    )
   })
   it.each([
     ['cheque', '/cheques/create'],

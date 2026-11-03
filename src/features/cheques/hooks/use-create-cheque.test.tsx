@@ -53,6 +53,7 @@ vi.mock('@/features/drafts', () => ({
   firstIncompleteChequeStep: mocks.firstIncompleteChequeStep,
   toChequeDraftFields: vi.fn(),
   draftKeys: {
+    all: () => ['drafts'],
     list: (entity: string, businessId: string) => [
       'drafts',
       entity,
@@ -308,7 +309,7 @@ describe('useCreateCheque', () => {
       queryKey: queryKeys.cheques.list('business-1'),
     })
     expect(invalidate).toHaveBeenCalledWith({
-      queryKey: ['drafts', 'cheque', 'business-1'],
+      queryKey: ['drafts'],
     })
     expect(onCreated).toHaveBeenCalledWith(createdCheque)
     expect(result.current.isSuccess).toBe(true)
