@@ -7,18 +7,21 @@ export function useChequeNumberConflict(
   businessId: string | undefined,
   accountId: string | undefined,
   chequeNumber: string,
+  excludeId?: string,
 ) {
   return useQuery({
     queryKey: queryKeys.cheques.numberConflict(
       businessId,
       accountId,
       chequeNumber,
+      excludeId,
     ),
     queryFn: () =>
       chequeDraftService.hasNumberConflict(
         businessId!,
         accountId!,
         chequeNumber,
+        excludeId,
       ),
     enabled:
       !!businessId &&

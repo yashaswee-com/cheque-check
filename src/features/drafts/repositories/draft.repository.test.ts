@@ -13,6 +13,7 @@ const query = {
   select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
   is: vi.fn().mockReturnThis(),
+  neq: vi.fn().mockReturnThis(),
   order: vi.fn().mockReturnThis(),
   insert: vi.fn().mockReturnThis(),
   update: vi.fn().mockReturnThis(),
@@ -139,6 +140,21 @@ describe('draft repositories', () => {
         ['is_draft', false],
       ])
       expect(query.limit).toHaveBeenCalledWith(1)
+      expect(query.neq).not.toHaveBeenCalled()
     },
   )
+
+  it('excludes the cheque being edited from number conflicts', async () => {
+    data = []
+    await expect(
+      new SupabaseChequeDraftRepository().hasNumberConflict(
+        'b1',
+        'a1',
+        '000001',
+        'c1',
+      ),
+    ).resolves.toBe(false)
+    expect(query.neq).toHaveBeenCalledExactlyOnceWith('id', 'c1')
+    expect(query.limit).toHaveBeenCalledWith(1)
+  })
 })

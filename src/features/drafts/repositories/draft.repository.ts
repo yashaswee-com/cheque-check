@@ -121,6 +121,7 @@ export interface IChequeDraftRepository extends IDraftRepository<
     businessId: string,
     accountId: string,
     chequeNumber: string,
+    excludeId?: string,
   ): Promise<boolean>
 }
 
@@ -147,17 +148,17 @@ export class SupabaseChequeDraftRepository
     businessId: string,
     accountId: string,
     chequeNumber: string,
+    excludeId?: string,
   ): Promise<boolean> {
-    const rows = await this.handle(
-      this.db
-        .select('id')
-        .eq('business_id', businessId)
-        .eq('account_id', accountId)
-        .eq('cheque_number', chequeNumber)
-        .eq('is_draft', false)
-        .is('deleted_at', null)
-        .limit(1),
-    )
+    let query = this.db
+      .select('id')
+      .eq('business_id', businessId)
+      .eq('account_id', accountId)
+      .eq('cheque_number', chequeNumber)
+      .eq('is_draft', false)
+      .is('deleted_at', null)
+    if (excludeId) query = query.neq('id', excludeId)
+    const rows = await this.handle(query.limit(1))
     return (rows as unknown[]).length > 0
   }
 }

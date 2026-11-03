@@ -13,6 +13,7 @@ function setup(
   businessId: string | undefined,
   accountId: string | undefined,
   chequeNumber: string,
+  excludeId?: string,
 ) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -21,7 +22,8 @@ function setup(
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   )
   return renderHook(
-    () => useChequeNumberConflict(businessId, accountId, chequeNumber),
+    () =>
+      useChequeNumberConflict(businessId, accountId, chequeNumber, excludeId),
     { wrapper },
   )
 }
@@ -42,6 +44,19 @@ describe('useChequeNumberConflict', () => {
       'business-1',
       'account-1',
       '123456',
+      undefined,
+    )
+  })
+
+  it('excludes the cheque being edited from the conflict check', async () => {
+    vi.mocked(chequeDraftService.hasNumberConflict).mockResolvedValue(false)
+    const { result } = setup('business-1', 'account-1', '123456', 'cheque-1')
+    await waitFor(() => expect(result.current.data).toBe(false))
+    expect(chequeDraftService.hasNumberConflict).toHaveBeenCalledWith(
+      'business-1',
+      'account-1',
+      '123456',
+      'cheque-1',
     )
   })
 

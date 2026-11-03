@@ -206,6 +206,7 @@ describe('canonical cheque hooks', () => {
       'b1',
       'a1',
       '000001',
+      undefined,
     )
     expect(
       client.getQueryData(

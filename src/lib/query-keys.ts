@@ -83,8 +83,15 @@ export const queryKeys = {
       businessId: string | undefined,
       accountId: string | undefined,
       chequeNumber: string,
+      excludeId?: string,
     ) =>
-      ['cheque-number-conflict', businessId, accountId, chequeNumber] as const,
+      [
+        'cheque-number-conflict',
+        businessId,
+        accountId,
+        chequeNumber,
+        excludeId ?? null,
+      ] as const,
   },
   parties: {
     list: (businessId: string | undefined) => ['parties', businessId] as const,

@@ -106,11 +106,13 @@ export class ChequeDraftService extends DraftService<
     businessId: string,
     accountId: string,
     chequeNumber: string,
+    excludeId?: string,
   ) {
     return this.repository.hasNumberConflict(
       businessId,
       accountId,
       chequeNumber,
+      excludeId,
     )
   }
 }

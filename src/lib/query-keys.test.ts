@@ -31,7 +31,11 @@ describe('query key contracts', () => {
       'b1',
       'a1',
       '123456',
+      null,
     ])
+    expect(
+      queryKeys.cheques.numberConflict('b1', 'a1', '123456', 'c1'),
+    ).toEqual(['cheque-number-conflict', 'b1', 'a1', '123456', 'c1'])
     expect(queryKeys.parties.list('b1')).toEqual(['parties', 'b1'])
     expect(queryKeys.parties.detail('p1')).toEqual(['party', 'p1'])
     expect(queryKeys.profile.detail()).toEqual(['profile'])

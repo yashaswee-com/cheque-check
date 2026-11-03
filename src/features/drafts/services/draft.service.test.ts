@@ -113,6 +113,7 @@ describe('ChequeDraftService', () => {
       'b1',
       'a1',
       '123456',
+      undefined,
     )
   })
 
