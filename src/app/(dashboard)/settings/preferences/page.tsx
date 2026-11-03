@@ -1,8 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { Label } from '@/components/ui/label'
-import { Combobox } from '@/components/ui/combobox'
 import { useTranslations } from 'next-intl'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { SettingSwitchRow } from '@/components/ui/setting-switch-row'
@@ -17,6 +15,7 @@ import { toast } from '@/components/ui/toast'
 import type { Profile } from '@/types'
 import { useTimeFormatOptions } from '@/features/profile/hooks/use-time-format-options'
 import { AppearancePreference } from '@/features/profile/components/appearance-preference'
+import { PreferenceField } from '@/features/profile/components/preference-field'
 import { PrivacyPreference } from '@/features/security/components/privacy-preference'
 
 export default function PreferencesPage() {
@@ -47,73 +46,45 @@ export default function PreferencesPage() {
     <div className="max-w-2xl space-y-8 pb-20">
       <AppearancePreference />
       <PrivacyPreference />
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex flex-col gap-2">
-            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-              {t('currency')}
-            </Label>
-            <Combobox
-              options={CURRENCY_OPTIONS}
-              value={profile.currency}
-              testId="preferences-currency"
-              onValueChange={(v) => savePreference({ currency: v })}
-              className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-              {t('language')}
-            </Label>
-            <Combobox
-              options={LANGUAGE_OPTIONS}
-              value={profile.language}
-              testId="preferences-language"
-              onValueChange={(v) => savePreference({ language: v })}
-              className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-            {t('dateFormat')}
-          </Label>
-          <Combobox
-            options={DATE_FORMAT_OPTIONS}
-            value={profile.date_format}
-            testId="preferences-date-format"
-            onValueChange={(v) => savePreference({ date_format: v })}
-            className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex flex-col gap-2">
-            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-              {t('timeFormat')}
-            </Label>
-            <Combobox
-              options={timeFormatOptions}
-              value={profile.time_format || '12h'}
-              testId="preferences-time-format"
-              onValueChange={(v) => savePreference({ time_format: v })}
-              className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-              {t('timeZone')}
-            </Label>
-            <Combobox
-              options={TIMEZONE_OPTIONS}
-              value={profile.time_zone}
-              testId="preferences-time-zone"
-              onValueChange={(v) => savePreference({ time_zone: v })}
-              className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-            />
-          </div>
-        </div>
+      <div
+        className="grid grid-cols-1 gap-6 md:grid-cols-2"
+        data-testid="preferences-fields"
+      >
+        <PreferenceField
+          id="preferences-currency"
+          label={t('currency')}
+          options={CURRENCY_OPTIONS}
+          value={profile.currency}
+          onSave={(currency) => updateProfile({ currency })}
+        />
+        <PreferenceField
+          id="preferences-language"
+          label={t('language')}
+          options={LANGUAGE_OPTIONS}
+          value={profile.language}
+          onSave={(language) => updateProfile({ language })}
+        />
+        <PreferenceField
+          id="preferences-date-format"
+          label={t('dateFormat')}
+          options={DATE_FORMAT_OPTIONS}
+          value={profile.date_format}
+          onSave={(date_format) => updateProfile({ date_format })}
+        />
+        <PreferenceField
+          id="preferences-time-format"
+          label={t('timeFormat')}
+          options={timeFormatOptions}
+          value={profile.time_format}
+          onSave={(time_format) => updateProfile({ time_format })}
+        />
+        <PreferenceField
+          id="preferences-time-zone"
+          label={t('timeZone')}
+          options={TIMEZONE_OPTIONS}
+          value={profile.time_zone}
+          onSave={(time_zone) => updateProfile({ time_zone })}
+        />
       </div>
 
       <div className="border-t border-border/50 pt-6">

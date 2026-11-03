@@ -85,6 +85,7 @@ vi.mock('@/components/ui/combobox', () => ({
   }) => (
     <select
       data-testid={testId}
+      data-value={value ?? ''}
       value={value ?? ''}
       onChange={(event) => onValueChange(event.target.value)}
     >
@@ -599,27 +600,86 @@ describe('general preferences page', () => {
     expect(mocks.update).toHaveBeenCalledWith({ language: 'hi' })
   })
 
-  it('reports failed preference saves without changing the locale cookie', async () => {
+  it('shows a field error instead of a generic toast when a save fails', async () => {
     mocks.update.mockRejectedValueOnce(new Error('Save failed'))
     const before = document.cookie
     renderPage(<PreferencesPage />)
     fireEvent.change(screen.getByTestId('preferences-language'), {
       target: { value: 'hi' },
     })
-    await waitFor(() =>
-      expect(mocks.toast).toHaveBeenCalledWith({
-        title: messages.Common.error,
-        description: 'Save failed',
-        type: 'error',
-      }),
-    )
+    expect(
+      await screen.findByTestId('preferences-language-message'),
+    ).toHaveTextContent(messages.Settings.preferenceSaveError)
+    expect(mocks.toast).not.toHaveBeenCalled()
     expect(document.cookie).toBe(before)
+    fireEvent.change(screen.getByTestId('preferences-language'), {
+      target: { value: 'hi' },
+    })
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId('preferences-language-message'),
+      ).not.toBeInTheDocument(),
+    )
   })
 
-  it('defaults blank time formats', () => {
+  it('marks all five preferences required', () => {
+    renderPage(<PreferencesPage />)
+    const fields = screen.getByTestId('preferences-fields')
+    expect(fields.querySelectorAll('label')).toHaveLength(5)
+    for (const label of fields.querySelectorAll('label'))
+      expect(label.textContent).toContain('*')
+  })
+
+  it.each([
+    ['preferences-currency', 'currency'],
+    ['preferences-language', 'language'],
+    ['preferences-date-format', 'date_format'],
+    ['preferences-time-format', 'time_format'],
+    ['preferences-time-zone', 'time_zone'],
+  ])('never saves an empty %s', (testId, field) => {
+    renderPage(<PreferencesPage />)
+    fireEvent.change(screen.getByTestId(testId), { target: { value: '' } })
+    expect(mocks.update).not.toHaveBeenCalled()
+    expect(profile?.[field]).toBeTruthy()
+  })
+
+  it.each([
+    ['currency', '?', 'preferences-currency'],
+    ['language', 'fr', 'preferences-language'],
+    ['date_format', 'dd.MM.yyyy', 'preferences-date-format'],
+    ['time_format', '36h', 'preferences-time-format'],
+    ['time_zone', 'Mars/Olympus', 'preferences-time-zone'],
+  ])(
+    'shows an unavailable %s as unselected with a message until a supported option is chosen',
+    async (field, stored, testId) => {
+      profile = { ...profile, [field]: stored }
+      renderPage(<PreferencesPage />)
+      expect(screen.getByTestId(testId)).toHaveAttribute('data-value', '')
+      expect(screen.getByTestId(`${testId}-message`)).toHaveTextContent(
+        messages.Settings.preferenceUnsupported,
+      )
+      expect(mocks.update).not.toHaveBeenCalled()
+      const option = (screen.getByTestId(testId) as HTMLSelectElement)
+        .options[1]
+      fireEvent.change(screen.getByTestId(testId), {
+        target: { value: option.value },
+      })
+      await waitFor(() =>
+        expect(mocks.update).toHaveBeenCalledWith({ [field]: option.value }),
+      )
+    },
+  )
+
+  it('shows a required message for a blank stored value', () => {
     profile = { ...profile, time_format: '' }
     renderPage(<PreferencesPage />)
-    expect(screen.getByTestId('preferences-time-format')).toHaveValue('12h')
+    expect(screen.getByTestId('preferences-time-format')).toHaveAttribute(
+      'data-value',
+      '',
+    )
+    expect(
+      screen.getByTestId('preferences-time-format-message'),
+    ).toHaveTextContent(messages.Onboarding.fieldRequired)
   })
 
   it('no longer hosts the notification reminder schedule', () => {
