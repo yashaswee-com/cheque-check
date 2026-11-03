@@ -47,11 +47,12 @@ function shell() {
 describe('shared navigation shell', () => {
   it('keeps bottom navigation on details and exposes named back/search/More actions', () => {
     shell()
-    expect(
-      screen.getByRole('navigation', {
-        name: messages.SharedUI.mainNavigation,
-      }),
-    ).toHaveClass('fixed')
+    const nav = screen.getByRole('navigation', {
+      name: messages.SharedUI.mainNavigation,
+    })
+    // In normal flow so the page scroll fade ends directly above the nav.
+    expect(nav).not.toHaveClass('fixed')
+    expect(nav).toHaveClass('shrink-0')
     expect(
       screen.getByRole('link', { name: messages.Navigation.cheques }),
     ).toHaveAttribute('aria-current', 'page')

@@ -47,7 +47,8 @@ export function BottomNav() {
   return (
     <nav
       aria-label={ts('mainNavigation')}
-      className="fixed bottom-0 left-0 right-0 z-40 flex h-[calc(4rem+env(safe-area-inset-bottom))] items-center justify-around bg-canvas-parchment/80 px-4 pb-[env(safe-area-inset-bottom)] backdrop-blur-md dark:bg-black/80 border-t border-primary/5"
+      data-testid="bottom-nav"
+      className="relative z-40 flex h-[calc(4rem+env(safe-area-inset-bottom))] w-full shrink-0 items-center justify-around bg-canvas-parchment/80 px-4 pb-[env(safe-area-inset-bottom)] backdrop-blur-md dark:bg-black/80 border-t border-primary/5"
     >
       {navItems.map((item) => {
         const isActive = getShellRoute(currentPath).activeTab === item.href
