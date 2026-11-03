@@ -13,15 +13,11 @@ import {
   LANGUAGE_OPTIONS,
   TIMEZONE_OPTIONS,
 } from '@/features/profile/lib/preference-options'
-import { useReminderOptions } from '@/features/profile/hooks/use-reminder-options'
 import { toast } from '@/components/ui/toast'
 import type { Profile } from '@/types'
 import { useTimeFormatOptions } from '@/features/profile/hooks/use-time-format-options'
-import { ReminderTimesEditor } from '@/features/profile/components/reminder-times-editor'
-import { DEFAULT_REMINDER_TIMES } from '@/features/profile/lib/reminder-times'
 import { AppearancePreference } from '@/features/profile/components/appearance-preference'
 import { PrivacyPreference } from '@/features/security/components/privacy-preference'
-import { InfoPopover } from '@/components/ui/info-popover'
 
 export default function PreferencesPage() {
   const t = useTranslations('Onboarding')
@@ -40,9 +36,6 @@ export default function PreferencesPage() {
       })
     }
   }
-
-  const { REMINDERS_PER_DAY_OPTIONS, REMINDER_FREQUENCY_OPTIONS } =
-    useReminderOptions()
 
   if (isLoading) {
     return <div className="p-4">{ts('loadingPreferences')}</div>
@@ -120,59 +113,6 @@ export default function PreferencesPage() {
               className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
             />
           </div>
-        </div>
-      </div>
-
-      <div className="space-y-6 pt-6 border-t border-border/50">
-        <h3 className="text-lg font-medium">{t('notifications')}</h3>
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-1">
-              <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                {t('dailyFrequency')}
-              </Label>
-              <InfoPopover title={t('dailyFrequency')}>
-                {t('dailyFrequencyHelp')}
-              </InfoPopover>
-            </div>
-            <Combobox
-              options={REMINDERS_PER_DAY_OPTIONS}
-              value={profile.reminders_per_day.toString()}
-              onValueChange={(v) =>
-                savePreference({ reminders_per_day: parseInt(v) })
-              }
-              className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-1">
-              <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                {t('advancedWarning')}
-              </Label>
-              <InfoPopover title={t('advancedWarning')}>
-                {t('advancedWarningHelp')}
-              </InfoPopover>
-            </div>
-            <Combobox
-              options={REMINDER_FREQUENCY_OPTIONS}
-              value={profile.default_reminder_days.toString()}
-              onValueChange={(v) =>
-                savePreference({ default_reminder_days: parseInt(v) })
-              }
-              className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-            />
-          </div>
-
-          <ReminderTimesEditor
-            times={
-              profile.reminder_times ??
-              DEFAULT_REMINDER_TIMES[profile.reminders_per_day] ??
-              DEFAULT_REMINDER_TIMES[1]
-            }
-            timeFormat={profile.time_format}
-            onChange={(reminder_times) => savePreference({ reminder_times })}
-          />
         </div>
       </div>
 

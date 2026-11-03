@@ -502,6 +502,64 @@ describe('notification preferences page', () => {
       ),
     )
   })
+  it('edits individual reminder times and saves the sorted list', () => {
+    profile = {
+      ...profile,
+      reminders_per_day: 2,
+      reminder_times: ['09:00:00', '17:00:00'],
+    }
+    renderPage(<NotificationsPage />)
+    const first = screen.getByTestId('reminder-time-1')
+    const second = screen.getByTestId('reminder-time-2')
+    expect(first).toHaveValue('09:00')
+    expect(second).toHaveValue('17:00')
+    expect(
+      Array.from((first as HTMLSelectElement).options).map((o) => o.value),
+    ).not.toContain('17:00')
+    expect(
+      screen.getByRole('option', { name: '9:00 AM', hidden: true }),
+    ).toBeInTheDocument()
+    fireEvent.change(second, { target: { value: '07:30' } })
+    expect(mocks.update).toHaveBeenCalledWith({
+      reminder_times: ['07:30', '09:00'],
+    })
+  })
+
+  it('falls back to the historical slots before reminder times load', () => {
+    profile = { ...profile, reminders_per_day: 3, time_format: '24h' }
+    renderPage(<NotificationsPage />)
+    expect(
+      ['reminder-time-1', 'reminder-time-2', 'reminder-time-3'].map(
+        (id) => (screen.getByTestId(id) as HTMLSelectElement).value,
+      ),
+    ).toEqual(['09:00', '13:00', '18:00'])
+    expect(screen.getAllByText('13:00').length).toBeGreaterThan(0)
+  })
+
+  it('persists the daily frequency and places reminder times directly under it', () => {
+    renderPage(<NotificationsPage />)
+    const schedule = screen.getByTestId('notifications-reminder-schedule')
+    const frequency = screen.getByTestId('notifications-daily-frequency')
+    const firstTime = screen.getByTestId('reminder-time-1')
+    const warning = screen.getByTestId('notifications-reminder-days')
+    expect(schedule).toContainElement(frequency)
+    expect(
+      frequency.compareDocumentPosition(firstTime) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      firstTime.compareDocumentPosition(warning) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    fireEvent.change(frequency, { target: { value: '2' } })
+    expect(mocks.update).toHaveBeenCalledWith({ reminders_per_day: 2 })
+  })
+
+  it('defaults a zero daily frequency to once a day', () => {
+    profile = { ...profile, reminders_per_day: 0 }
+    renderPage(<NotificationsPage />)
+    expect(screen.getByTestId('notifications-daily-frequency')).toHaveValue('1')
+  })
 })
 describe('general preferences page', () => {
   it('includes the browser-local analytics and session recording preference', () => {
@@ -509,25 +567,22 @@ describe('general preferences page', () => {
     expect(screen.getByText('Monitoring preferences')).toBeVisible()
   })
 
-  it('persists currency, date/time formats, timezone, reminder counts and reduce motion', () => {
+  it('persists currency, date/time formats, timezone and reduce motion', () => {
     renderPage(<PreferencesPage />)
-    const selects = screen.getAllByRole('combobox').slice(1, 8)
+    const selects = screen.getAllByRole('combobox').slice(1, 6)
     const expectedFields = [
       'currency',
       'language',
       'date_format',
       'time_format',
       'time_zone',
-      'reminders_per_day',
-      'default_reminder_days',
     ]
     selects.forEach((select, index) => {
       if (index === 1) return
       const option = (select as HTMLSelectElement).options[1]
       fireEvent.change(select, { target: { value: option.value } })
       expect(mocks.update).toHaveBeenCalledWith({
-        [expectedFields[index]]:
-          index >= 5 ? Number(option.value) : option.value,
+        [expectedFields[index]]: option.value,
       })
     })
     fireEvent.click(
@@ -561,52 +616,15 @@ describe('general preferences page', () => {
     expect(document.cookie).toBe(before)
   })
 
-  it('defaults blank time formats and zero-valued reminder settings', () => {
-    profile = {
-      ...profile,
-      time_format: '',
-      reminders_per_day: 0,
-      default_reminder_days: 0,
-    }
-
+  it('defaults blank time formats', () => {
+    profile = { ...profile, time_format: '' }
     renderPage(<PreferencesPage />)
-
     expect(screen.getByTestId('preferences-time-format')).toHaveValue('12h')
-    expect(screen.getAllByRole('combobox')[6]).toHaveValue('1')
-    expect(screen.getAllByRole('combobox')[7]).toHaveValue('3')
   })
 
-  it('edits individual reminder times and saves the sorted list', () => {
-    profile = {
-      ...profile,
-      reminders_per_day: 2,
-      reminder_times: ['09:00:00', '17:00:00'],
-    }
+  it('no longer hosts the notification reminder schedule', () => {
     renderPage(<PreferencesPage />)
-    const first = screen.getByTestId('reminder-time-1')
-    const second = screen.getByTestId('reminder-time-2')
-    expect(first).toHaveValue('09:00')
-    expect(second).toHaveValue('17:00')
-    expect(
-      Array.from((first as HTMLSelectElement).options).map((o) => o.value),
-    ).not.toContain('17:00')
-    expect(
-      screen.getByRole('option', { name: '9:00 AM', hidden: true }),
-    ).toBeInTheDocument()
-    fireEvent.change(second, { target: { value: '07:30' } })
-    expect(mocks.update).toHaveBeenCalledWith({
-      reminder_times: ['07:30', '09:00'],
-    })
-  })
-
-  it('falls back to the historical slots before reminder times load', () => {
-    profile = { ...profile, reminders_per_day: 3, time_format: '24h' }
-    renderPage(<PreferencesPage />)
-    expect(
-      ['reminder-time-1', 'reminder-time-2', 'reminder-time-3'].map(
-        (id) => (screen.getByTestId(id) as HTMLSelectElement).value,
-      ),
-    ).toEqual(['09:00', '13:00', '18:00'])
-    expect(screen.getAllByText('13:00').length).toBeGreaterThan(0)
+    expect(screen.queryByText(messages.Onboarding.dailyFrequency)).toBeNull()
+    expect(screen.queryByTestId('reminder-time-1')).toBeNull()
   })
 })

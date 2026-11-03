@@ -10,10 +10,16 @@ import { PremiumSwitch } from '@/features/monetization/components/premium-contro
 import { toast } from '@/components/ui/toast'
 import type { Profile } from '@/types'
 import { PushSettings } from '@/features/notifications/components/push-settings'
+import { InfoPopover } from '@/components/ui/info-popover'
+import { useReminderOptions } from '@/features/profile/hooks/use-reminder-options'
+import { ReminderTimesEditor } from '@/features/profile/components/reminder-times-editor'
+import { DEFAULT_REMINDER_TIMES } from '@/features/profile/lib/reminder-times'
 
 export default function NotificationsPage() {
   const t = useTranslations('Settings')
   const tc = useTranslations('Common')
+  const to = useTranslations('Onboarding')
+  const { REMINDERS_PER_DAY_OPTIONS } = useReminderOptions()
   const { profile, updateProfile, isLoading } = useProfile()
   const [isSaving, setIsSaving] = useState(false)
   const savePreferences = async (changes: Partial<Profile>) => {
@@ -117,23 +123,58 @@ export default function NotificationsPage() {
 
       <fieldset
         disabled={isSaving}
-        className="space-y-2 border-t border-border/50 pt-6"
+        className="space-y-6 border-t border-border/50 pt-6"
+        data-testid="notifications-reminder-schedule"
       >
-        <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          {t('advancedWarning')}
-        </Label>
-        <Combobox
-          options={warningOptions}
-          value={String(profile.default_reminder_days || 3)}
-          testId="notifications-reminder-days"
-          onValueChange={(value) =>
-            void savePreferences({ default_reminder_days: Number(value) })
+        <div className="space-y-2">
+          <div className="flex items-center gap-1">
+            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              {to('dailyFrequency')}
+            </Label>
+            <InfoPopover title={to('dailyFrequency')}>
+              {to('dailyFrequencyHelp')}
+            </InfoPopover>
+          </div>
+          <Combobox
+            options={REMINDERS_PER_DAY_OPTIONS}
+            value={String(profile.reminders_per_day || 1)}
+            testId="notifications-daily-frequency"
+            onValueChange={(value) =>
+              void savePreferences({ reminders_per_day: Number(value) })
+            }
+            className="h-14 rounded-sm border-none bg-canvas-parchment text-lg dark:bg-surface-tile-1"
+          />
+        </div>
+
+        <ReminderTimesEditor
+          times={
+            profile.reminder_times ??
+            DEFAULT_REMINDER_TIMES[profile.reminders_per_day] ??
+            DEFAULT_REMINDER_TIMES[1]
           }
-          className="h-14 rounded-sm border-none bg-canvas-parchment text-lg dark:bg-surface-tile-1"
+          timeFormat={profile.time_format}
+          onChange={(reminder_times) =>
+            void savePreferences({ reminder_times })
+          }
         />
-        <p className="text-xs text-muted-foreground">
-          {t('notificationsLeadTimeDesc')}
-        </p>
+
+        <div className="space-y-2">
+          <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            {t('advancedWarning')}
+          </Label>
+          <Combobox
+            options={warningOptions}
+            value={String(profile.default_reminder_days || 3)}
+            testId="notifications-reminder-days"
+            onValueChange={(value) =>
+              void savePreferences({ default_reminder_days: Number(value) })
+            }
+            className="h-14 rounded-sm border-none bg-canvas-parchment text-lg dark:bg-surface-tile-1"
+          />
+          <p className="text-xs text-muted-foreground">
+            {t('notificationsLeadTimeDesc')}
+          </p>
+        </div>
       </fieldset>
     </div>
   )
