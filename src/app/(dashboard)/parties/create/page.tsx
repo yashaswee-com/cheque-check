@@ -458,6 +458,30 @@ export default function CreatePartyPage() {
                 />
               </div>
             </div>
+            <div className="space-y-2" data-testid="party-theme-color">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+                {tCommon('themeColor')}
+              </Label>
+              <div className="flex flex-wrap gap-3 p-1">
+                {colors.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setUserValue('color', color)}
+                    aria-label={color}
+                    aria-pressed={watch('color') === color}
+                    className={cn(
+                      'h-10 w-10 rounded-full transition-all active:scale-95 ring-offset-2',
+                      watch('color') === color
+                        ? 'ring-2 ring-primary scale-110'
+                        : 'hover:scale-105',
+                    )}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label
                 htmlFor="email"
@@ -545,30 +569,6 @@ export default function CreatePartyPage() {
                 onChange={setTagIds}
                 placeholder={tCommon('addTags')}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
-                {tCommon('themeColor')}
-              </Label>
-              <div className="flex flex-wrap gap-3 p-1">
-                {colors.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setUserValue('color', color)}
-                    aria-label={color}
-                    aria-pressed={watch('color') === color}
-                    className={cn(
-                      'h-10 w-10 rounded-full transition-all active:scale-95 ring-offset-2',
-                      watch('color') === color
-                        ? 'ring-2 ring-primary scale-110'
-                        : 'hover:scale-105',
-                    )}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
             </div>
 
             <div className="rounded-lg bg-primary/5 p-5 space-y-3 border border-primary/10">

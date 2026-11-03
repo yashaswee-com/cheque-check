@@ -7,6 +7,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../messages/en.json'
@@ -800,6 +801,20 @@ describe('party creation page', () => {
     await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
   })
 
+  it('offers the party theme color with the optional details, not the final step', () => {
+    initialStep = 2
+    renderPage(<CreatePartyPage />)
+    const theme = screen.getByTestId('party-theme-color')
+    expect(theme).toHaveTextContent(messages.Common.themeColor)
+    expect(document.getElementById('email')).toBeVisible()
+    const swatch = within(theme).getAllByRole('button')[1]
+    fireEvent.click(swatch)
+    expect(swatch).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByTestId('party-step2-skip'))
+    expect(screen.queryByTestId('party-theme-color')).not.toBeInTheDocument()
+    expect(document.getElementById('notes')).toBeVisible()
+  })
+
   it('displays optional email validation errors on the second page', () => {
     initialStep = 2
     errors = { email: { message: 'Invalid email' } }
@@ -827,11 +842,11 @@ describe('party creation page', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Existing Customer')
     change('contact', '+919876543210')
     fireEvent.click(screen.getByTestId('party-step1-continue'))
-    fireEvent.click(screen.getByTestId('party-step2-skip'))
     fireEvent.click(
       screen.getByRole('button', { name: '#FF9500', hidden: true }),
     )
     expect(values.color).toBe('#FF9500')
+    fireEvent.click(screen.getByTestId('party-step2-skip'))
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
     expect(mocks.flush).toHaveBeenCalledWith('draft')
