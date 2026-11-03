@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useEditBusiness } from '@/features/businesses/hooks/use-edit-business'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,17 +9,22 @@ import { useParams } from 'next/navigation'
 import {
   Mail01Icon as Mail,
   CallIcon as Phone,
-  Tick02Icon as Check,
   Store01Icon as Store,
   Location01Icon as MapPin,
   Delete02Icon as Trash2,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { cn } from '@/lib/utils'
 import { FormSection } from '@/components/ui/form-section'
 import { Skeleton } from '@/components/ui/skeleton'
 import dynamic from 'next/dynamic'
 import { EditableAvatar } from '@/components/ui/editable-avatar'
+import {
+  BUSINESS_THEME_COLORS,
+  ThemeColorRow,
+} from '@/components/ui/theme-color-row'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog'
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { Controller } from 'react-hook-form'
 import { useTranslations } from 'next-intl'
@@ -44,23 +49,29 @@ export default function EditBusinessPage() {
   const t = useTranslations('Businesses')
   const tc = useTranslations('Common')
   const { id } = useParams() as { id: string }
+  const leaveRef = useRef<() => void>(() => {})
 
   const { form, business, isLoading, isSaving, onSubmit, onDelete } =
-    useEditBusiness(id)
+    useEditBusiness(id, { onSaved: () => leaveRef.current() })
 
   const {
     register,
     control,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty: isFormDirty },
   } = form
   const tagsDraft = useEntityTagsDraft('business', id)
+  const isDirty = isFormDirty || tagsDraft.isDirty
+  const guard = useUnsavedChangesGuard(isDirty)
+  useEffect(() => {
+    leaveRef.current = guard.leave
+  }, [guard.leave])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (isSubmitting || isSaving) return
+    if (!isDirty || isSubmitting || isSaving) return
     setIsSubmitting(true)
     try {
       if (await form.trigger()) {
@@ -77,16 +88,6 @@ export default function EditBusinessPage() {
     }
   }
 
-  const colors = [
-    '#007AFF',
-    '#34C759',
-    '#FF9500',
-    '#FF3B30',
-    '#AF52DE',
-    '#5856D6',
-    '#8E8E93',
-  ]
-
   if (isLoading) {
     return (
       <div className="max-w-2xl space-y-8 pb-20">
@@ -102,10 +103,34 @@ export default function EditBusinessPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-8 pb-20">
-      <form onSubmit={handleSubmit} className="space-y-10">
+    <div className="max-w-2xl space-y-8 pb-6">
+      <form
+        id="business-edit-form"
+        onSubmit={handleSubmit}
+        className="space-y-10"
+      >
         <FormSection title={t('businessProfile')} icon={Store}>
-          <div className="space-y-2">
+          <div
+            data-testid="business-logo-field"
+            className="flex flex-col items-center gap-3 py-2"
+          >
+            <EditableAvatar
+              name={watch('name') || t('businessName')}
+              color={watch('color')}
+              icon={watch('icon')}
+              imageUrl={watch('logo_url')}
+              onUpload={async (url) => {
+                setValue('logo_url', url, { shouldDirty: true })
+              }}
+              onDelete={async () => {
+                setValue('logo_url', null, { shouldDirty: true })
+              }}
+              size="xl"
+            />
+            <p className="text-xs text-muted-foreground">{t('businessLogo')}</p>
+          </div>
+
+          <div className="space-y-2" data-testid="business-name-field">
             <Label
               required
               htmlFor="name"
@@ -127,45 +152,15 @@ export default function EditBusinessPage() {
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-3 py-2">
-            <EditableAvatar
-              name={watch('name') || t('businessName')}
-              color={watch('color' as any)}
-              icon={watch('icon' as any)}
-              imageUrl={watch('logo_url' as any)}
-              onUpload={async (url) => {
-                ;(setValue as any)('logo_url', url, { shouldDirty: true })
-              }}
-              onDelete={async () => {
-                ;(setValue as any)('logo_url', null, { shouldDirty: true })
-              }}
-              size="xl"
-            />
-            <p className="text-xs text-muted-foreground">{t('businessLogo')}</p>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
-              {tc('themeColor')}
-            </Label>
-            <div className="flex flex-wrap gap-3 p-1">
-              {colors.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  aria-label={c}
-                  onClick={() => setValue('color', c, { shouldDirty: true })}
-                  className={cn(
-                    'h-10 w-10 rounded-full transition-all active:scale-95 ring-offset-2',
-                    watch('color') === c
-                      ? 'ring-2 ring-primary scale-110'
-                      : 'hover:scale-105',
-                  )}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-          </div>
+          <ThemeColorRow
+            label={tc('themeColor')}
+            colors={BUSINESS_THEME_COLORS}
+            value={watch('color')}
+            onChange={(color) =>
+              setValue('color', color, { shouldDirty: true })
+            }
+            testId="business-theme-color-field"
+          />
         </FormSection>
 
         <FormSection title={t('contactInfo')} icon={Phone}>
@@ -249,40 +244,36 @@ export default function EditBusinessPage() {
             />
           </div>
         </FormSection>
-
-        <div className="pt-4 flex flex-col gap-3">
-          <Button
-            type="submit"
-            className="w-full rounded-full h-14 text-lg"
-            disabled={isSaving}
-            loading={isSaving || isSubmitting}
-            data-testid="business-edit-submit-button"
-          >
-            {t('updateBusiness')}{' '}
-            <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
-          </Button>
-
-          <DeleteConfirmationDialog
-            title={t('deleteConfirmTitle')}
-            description={t('deleteConfirmDesc')}
-            confirmName={business?.name || ''}
-            onDelete={async () => {
-              onDelete()
-            }}
-            trigger={
-              <Button
-                type="button"
-                variant="ghost"
-                data-testid="business-delete-trigger"
-                className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
-              >
-                <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
-                {t('deleteBusiness')}
-              </Button>
-            }
-          />
-        </div>
       </form>
+
+      <DeleteConfirmationDialog
+        title={t('deleteConfirmTitle')}
+        description={t('deleteConfirmDesc')}
+        confirmName={business?.name || ''}
+        onDelete={async () => {
+          guard.bypass(onDelete)
+        }}
+        trigger={
+          <Button
+            type="button"
+            variant="ghost"
+            data-testid="business-delete-trigger"
+            className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
+            {t('deleteBusiness')}
+          </Button>
+        }
+      />
+
+      <EditSaveBar
+        formId="business-edit-form"
+        label={t('updateBusiness')}
+        isDirty={isDirty}
+        isSaving={isSaving || isSubmitting}
+        testId="business-edit-submit-button"
+      />
+      <UnsavedChangesDialog {...guard.dialogProps} />
     </div>
   )
 }

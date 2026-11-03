@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useEditAccount } from '@/features/accounts/hooks/use-edit-account'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,13 +9,11 @@ import { useParams } from 'next/navigation'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  Tick02Icon as Check,
   UserIcon as User,
   CreditCardIcon as CreditCard,
   HashtagIcon as Hash,
   Delete02Icon as Trash2,
 } from '@hugeicons/core-free-icons'
-import { cn } from '@/lib/utils'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
 import { FormSection } from '@/components/ui/form-section'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -28,6 +26,13 @@ import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useEntityTagsDraft } from '@/features/tags/hooks/use-entity-tags'
 import { DefaultAccountField } from '@/features/accounts/components/default-account-field'
 import { EditableAvatar } from '@/components/ui/editable-avatar'
+import {
+  ACCOUNT_THEME_COLORS,
+  ThemeColorRow,
+} from '@/components/ui/theme-color-row'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog'
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -56,22 +61,30 @@ export default function EditAccountPage() {
   const { activeBusiness } = useBusiness()
   const { profile } = useProfile()
   const currency = profile?.currency || '₹'
+  const leaveRef = useRef<() => void>(() => {})
 
   const { form, account, isLoading, isSaving, onSubmit, onDelete } =
-    useEditAccount(id, activeBusiness?.id)
+    useEditAccount(id, activeBusiness?.id, {
+      onSaved: () => leaveRef.current(),
+    })
 
   const {
     register,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty: isFormDirty },
   } = form
   const tagsDraft = useEntityTagsDraft('account', id)
+  const isDirty = isFormDirty || tagsDraft.isDirty
+  const guard = useUnsavedChangesGuard(isDirty)
+  useEffect(() => {
+    leaveRef.current = guard.leave
+  }, [guard.leave])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (isSubmitting || isSaving) return
+    if (!isDirty || isSubmitting || isSaving) return
     setIsSubmitting(true)
     try {
       if (await form.trigger()) {
@@ -88,16 +101,6 @@ export default function EditAccountPage() {
     }
   }
 
-  const colors = [
-    '#007AFF',
-    '#5856D6',
-    '#AF52DE',
-    '#FF2D55',
-    '#FF3B30',
-    '#FF9500',
-    '#34C759',
-  ]
-
   if (isLoading) {
     return (
       <div className="max-w-2xl space-y-8 pb-20">
@@ -111,8 +114,12 @@ export default function EditAccountPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-8 pb-20">
-      <form onSubmit={handleSubmit} className="space-y-10">
+    <div className="max-w-2xl space-y-8 pb-6">
+      <form
+        id="account-edit-form"
+        onSubmit={handleSubmit}
+        className="space-y-10"
+      >
         <FormSection title={t('accountInfo')} icon={User}>
           <div className="flex justify-center">
             <EditableAvatar
@@ -127,54 +134,6 @@ export default function EditAccountPage() {
               }
             />
           </div>
-          <div className="space-y-2">
-            <Label
-              required
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
-            >
-              {t('selectBank')}
-            </Label>
-            <BankSelector
-              value={watch('bank_id')}
-              onValueChange={(val) =>
-                setValue('bank_id', val, { shouldDirty: true })
-              }
-              className="rounded-sm"
-            />
-            {errors.bank_id && (
-              <p className="text-xs text-destructive ml-1">
-                {validationMessage(errors.bank_id.message)}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
-              {tc('themeColor')}
-            </Label>
-            <div className="flex flex-wrap gap-3 p-1">
-              {colors.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  aria-label={c}
-                  onClick={() =>
-                    (setValue as any)('color', c, { shouldDirty: true })
-                  }
-                  className={cn(
-                    'h-10 w-10 rounded-full transition-all active:scale-95 ring-offset-2',
-                    (watch as any)('color') === c
-                      ? 'ring-2 ring-primary scale-110'
-                      : 'hover:scale-105',
-                  )}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-          </div>
-        </FormSection>
-
-        <FormSection title={t('bankDetails')} icon={CreditCard}>
           <div className="space-y-2">
             <Label
               required
@@ -196,7 +155,38 @@ export default function EditAccountPage() {
               </p>
             )}
           </div>
+          <ThemeColorRow
+            label={tc('themeColor')}
+            colors={ACCOUNT_THEME_COLORS}
+            value={watch('color')}
+            onChange={(color) =>
+              setValue('color', color, { shouldDirty: true })
+            }
+            testId="account-theme-color"
+          />
+        </FormSection>
 
+        <FormSection title={t('bankDetails')} icon={CreditCard}>
+          <div className="space-y-2">
+            <Label
+              required
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            >
+              {t('selectBank')}
+            </Label>
+            <BankSelector
+              value={watch('bank_id')}
+              onValueChange={(val) =>
+                setValue('bank_id', val, { shouldDirty: true })
+              }
+              className="rounded-sm"
+            />
+            {errors.bank_id && (
+              <p className="text-xs text-destructive ml-1">
+                {validationMessage(errors.bank_id.message)}
+              </p>
+            )}
+          </div>
           <div className="space-y-2">
             <Label
               required
@@ -288,40 +278,36 @@ export default function EditAccountPage() {
             />
           </div>
         </FormSection>
-
-        <div className="pt-4 flex flex-col gap-3">
-          <Button
-            type="submit"
-            className="w-full rounded-full h-14 text-lg"
-            disabled={isSaving}
-            loading={isSaving || isSubmitting}
-            data-testid="account-edit-submit-button"
-          >
-            {t('updateAccount')}{' '}
-            <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
-          </Button>
-
-          <DeleteConfirmationDialog
-            title={t('deleteConfirmTitle')}
-            description={t('deleteConfirmDesc')}
-            confirmName={account?.account_name || 'Account'}
-            onDelete={async () => {
-              onDelete()
-            }}
-            trigger={
-              <Button
-                type="button"
-                variant="ghost"
-                data-testid="account-delete-trigger"
-                className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
-              >
-                <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
-                {t('deleteAccount')}
-              </Button>
-            }
-          />
-        </div>
       </form>
+
+      <DeleteConfirmationDialog
+        title={t('deleteConfirmTitle')}
+        description={t('deleteConfirmDesc')}
+        confirmName={account?.account_name || 'Account'}
+        onDelete={async () => {
+          guard.bypass(onDelete)
+        }}
+        trigger={
+          <Button
+            type="button"
+            variant="ghost"
+            data-testid="account-delete-trigger"
+            className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
+            {t('deleteAccount')}
+          </Button>
+        }
+      />
+
+      <EditSaveBar
+        formId="account-edit-form"
+        label={t('updateAccount')}
+        isDirty={isDirty}
+        isSaving={isSaving || isSubmitting}
+        testId="account-edit-submit-button"
+      />
+      <UnsavedChangesDialog {...guard.dialogProps} />
     </div>
   )
 }

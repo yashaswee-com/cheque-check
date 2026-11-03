@@ -51,6 +51,7 @@ let parties: Array<{ id: string; name: string; contact: string }> = []
 
 function useEntityForm(options?: {
   onCreated?: (entity: { id: string }) => Promise<void>
+  onSaved?: () => void
 }) {
   const form = useForm({
     defaultValues: { name: '', is_default: false, ...defaults },
@@ -65,7 +66,11 @@ function useEntityForm(options?: {
     form: {
       ...form,
       trigger: mocks.trigger,
-      formState: { ...form.formState, errors },
+      formState: {
+        ...form.formState,
+        isDirty: form.formState.isDirty,
+        errors,
+      },
     },
     step,
     nextStep: () => setStep((current) => current + 1),
@@ -88,6 +93,7 @@ function useEntityForm(options?: {
       event.preventDefault()
       mocks.submit(form.getValues())
       await options?.onCreated?.({ id: 'created' })
+      options?.onSaved?.()
     },
     draft: {
       draftId: 'draft',
@@ -138,7 +144,10 @@ vi.mock('@/features/businesses/hooks/use-create-business', () => ({
   useCreateBusiness: () => useEntityForm(),
 }))
 vi.mock('@/features/businesses/hooks/use-edit-business', () => ({
-  useEditBusiness: () => useEntityForm(),
+  useEditBusiness: (
+    _id: string,
+    options: Parameters<typeof useEntityForm>[0],
+  ) => useEntityForm(options),
 }))
 vi.mock('@/features/accounts/hooks/use-create-account', () => ({
   useCreateAccount: (
@@ -147,7 +156,11 @@ vi.mock('@/features/accounts/hooks/use-create-account', () => ({
   ) => useEntityForm(options),
 }))
 vi.mock('@/features/accounts/hooks/use-edit-account', () => ({
-  useEditAccount: () => useEntityForm(),
+  useEditAccount: (
+    _id: string,
+    _businessId: string,
+    options: Parameters<typeof useEntityForm>[0],
+  ) => useEntityForm(options),
 }))
 vi.mock('@/features/accounts/services/account.service', () => ({
   accountService: { getAll: async () => [] },
@@ -157,7 +170,11 @@ vi.mock('@/features/parties/hooks/use-create-party', () => ({
     useEntityForm(options),
 }))
 vi.mock('@/features/parties/hooks/use-edit-party', () => ({
-  useEditParty: () => useEntityForm(),
+  useEditParty: (
+    _id: string,
+    _businessId: string,
+    options: Parameters<typeof useEntityForm>[0],
+  ) => useEntityForm(options),
 }))
 vi.mock('@/features/parties/hooks/use-parties', () => ({
   useParties: () => ({ parties }),
@@ -165,7 +182,12 @@ vi.mock('@/features/parties/hooks/use-parties', () => ({
 vi.mock('@/features/tags/hooks/use-entity-tags', () => ({
   useEntityTagsDraft: () => {
     const [tagIds, setTagIds] = useState<string[]>([])
-    return { tagIds, setTagIds, commit: mocks.commit }
+    return {
+      tagIds,
+      setTagIds,
+      commit: mocks.commit,
+      isDirty: tagIds.length > 0,
+    }
   },
 }))
 vi.mock('@/features/parties/hooks/use-party-draft-tags', () => ({
@@ -625,6 +647,92 @@ describe.each([
     submitLabel: messages.Parties.updateParty,
   },
 ])('$name edit page', ({ name, Component, avatar }) => {
+  const identityField = avatar === null ? 'account_name' : 'name'
+  const makeDirty = () => change(identityField, 'Updated')
+  const saveButton = () => screen.getByTestId(`${name}-edit-submit-button`)
+
+  it('keeps save disabled until a field or tag changes', () => {
+    defaults = { name: 'Original', account_name: 'Original' }
+    renderPage(<Component />)
+    expect(saveButton()).toBeDisabled()
+    expect(saveButton()).toHaveAttribute(
+      'title',
+      messages.SharedUI.noChangesToSave,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Choose tags (0)' }))
+    expect(saveButton()).toBeEnabled()
+    cleanup()
+    renderPage(<Component />)
+    expect(saveButton()).toBeDisabled()
+    makeDirty()
+    expect(saveButton()).toBeEnabled()
+  })
+
+  it('ignores submits while nothing has changed', async () => {
+    const { container } = renderPage(<Component />)
+    fireEvent.submit(container.querySelector('form')!)
+    await Promise.resolve()
+    expect(mocks.commit).not.toHaveBeenCalled()
+    expect(mocks.submit).not.toHaveBeenCalled()
+  })
+
+  it('docks the save action outside the form and submits it by id', () => {
+    const { container } = renderPage(<Component />)
+    const form = container.querySelector('form')!
+    expect(form.id).toBe(`${name}-edit-form`)
+    expect(saveButton()).toHaveAttribute('form', form.id)
+    expect(form).not.toContainElement(saveButton())
+    expect(screen.getByTestId('edit-save-bar')).toContainElement(saveButton())
+  })
+
+  it('asks before following a link away from unsaved changes', () => {
+    renderPage(<Component />)
+    const link = document.createElement('a')
+    link.href = '/elsewhere'
+    link.textContent = 'Elsewhere'
+    document.body.append(link)
+    fireEvent.click(link)
+    expect(
+      screen.queryByTestId('unsaved-changes-dialog'),
+    ).not.toBeInTheDocument()
+    makeDirty()
+    fireEvent.click(link)
+    expect(screen.getByTestId('unsaved-changes-dialog')).toBeVisible()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.SharedUI.keepEditing }),
+    )
+    expect(
+      screen.queryByTestId('unsaved-changes-dialog'),
+    ).not.toBeInTheDocument()
+    link.remove()
+  })
+
+  it('leaves past the unsaved-changes history entry after saving', async () => {
+    const go = vi.spyOn(window.history, 'go').mockImplementation(() => {})
+    const { container } = renderPage(<Component />)
+    makeDirty()
+    fireEvent.submit(container.querySelector('form')!)
+    await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
+    await waitFor(() => expect(go).toHaveBeenCalledWith(-2))
+    go.mockRestore()
+  })
+
+  it('places the theme color in the same section as in creation', () => {
+    renderPage(<Component />)
+    const section = screen
+      .getByRole('group', { name: messages.Common.themeColor })
+      .closest('section')!
+    const expected =
+      name === 'party'
+        ? messages.Parties.contactInfo
+        : name === 'account'
+          ? messages.Accounts.accountInfo
+          : messages.Businesses.businessProfile
+    expect(within(section).getByRole('heading')).toHaveTextContent(expected)
+    expect(
+      within(section).getByRole('group', { name: messages.Common.themeColor }),
+    ).toHaveClass('flex-nowrap')
+  })
   it('uses the dynamic control loading fallback', () => {
     deferDynamic = true
     renderPage(<Component />)
@@ -709,6 +817,7 @@ describe.each([
   it('does not save the entity when committing tags fails', async () => {
     mocks.commit.mockRejectedValueOnce(new Error('Tag persistence failed'))
     const { container } = renderPage(<Component />)
+    makeDirty()
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() =>
       expect(mocks.toast).toHaveBeenCalledWith({
@@ -726,23 +835,27 @@ describe.each([
     }
     const { container } = renderPage(<Component />)
     expect(screen.getByText('Required identity')).toBeVisible()
+    makeDirty()
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
     expect(mocks.commit).not.toHaveBeenCalled()
   })
   it('disables the save control while an update is pending', () => {
     saving = true
-    const { container } = renderPage(<Component />)
-    expect(container.querySelector('button[type="submit"]')).toBeDisabled()
+    renderPage(<Component />)
+    makeDirty()
+    expect(saveButton()).toBeDisabled()
+    expect(saveButton()).toHaveAttribute('aria-busy', 'true')
   })
   it('shows the spinner throughout tag persistence and prevents repeated form submissions', async () => {
     const task = Promise.withResolvers<void>()
     mocks.commit.mockReturnValueOnce(task.promise)
     const { container } = renderPage(<Component />)
     const form = container.querySelector('form')!
+    makeDirty()
     fireEvent.submit(form)
     await waitFor(() => expect(mocks.commit).toHaveBeenCalledOnce())
-    const button = container.querySelector('button[type="submit"]')!
+    const button = saveButton()
     expect(button).toHaveAttribute('aria-busy', 'true')
     expect(button.querySelectorAll('.animate-spin')).toHaveLength(1)
     fireEvent.submit(form)

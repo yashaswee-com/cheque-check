@@ -1,28 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useEditParty } from '@/features/parties/hooks/use-edit-party'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useRouter, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  Tick02Icon as Check,
   UserIcon as User,
-  CallIcon as Phone,
   Location01Icon as MapPin,
   Delete02Icon as Trash2,
   Mail01Icon as Mail,
   Note01Icon as Note,
 } from '@hugeicons/core-free-icons'
-import { cn } from '@/lib/utils'
 import { FormSection } from '@/components/ui/form-section'
 import { Skeleton } from '@/components/ui/skeleton'
 import dynamic from 'next/dynamic'
 import { EditableAvatar } from '@/components/ui/editable-avatar'
-import { PhoneInput } from '@/components/ui/phone-input'
+import { PhoneInput, useDefaultPhoneCountry } from '@/components/ui/phone-input'
 import { Controller } from 'react-hook-form'
 import { useTranslations } from 'next-intl'
 import { useValidationMessage } from '@/hooks/use-validation-message'
@@ -30,6 +27,15 @@ import { toast } from '@/components/ui/toast'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useEntityTagsDraft } from '@/features/tags/hooks/use-entity-tags'
 import { PartyTypePicker } from '@/features/parties/components/party-type-picker'
+import { useParties } from '@/features/parties/hooks/use-parties'
+import { findPossiblePartyDuplicates } from '@/features/parties/lib/party-duplicates'
+import {
+  PARTY_THEME_COLORS,
+  ThemeColorRow,
+} from '@/components/ui/theme-color-row'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog'
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -48,10 +54,14 @@ export default function EditPartyPage() {
   const tCommon = useTranslations('Common')
   const { id } = useParams() as { id: string }
   const { activeBusiness } = useBusiness()
+  const { parties = [] } = useParties(activeBusiness?.id)
+  const defaultPhoneCountry = useDefaultPhoneCountry()
+  const leaveRef = useRef<() => void>(() => {})
 
   const { form, party, isLoading, isSaving, onSubmit, onDelete } = useEditParty(
     id,
     activeBusiness?.id,
+    { onSaved: () => leaveRef.current() },
   )
 
   const {
@@ -59,14 +69,26 @@ export default function EditPartyPage() {
     control,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty: isFormDirty },
   } = form
   const tagsDraft = useEntityTagsDraft('party', id)
+  const isDirty = isFormDirty || tagsDraft.isDirty
+  const guard = useUnsavedChangesGuard(isDirty)
+  useEffect(() => {
+    leaveRef.current = guard.leave
+  }, [guard.leave])
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const duplicateNames = findPossiblePartyDuplicates(
+    parties.filter((other) => other.id !== id),
+    watch('name'),
+    watch('contact') ?? '',
+    defaultPhoneCountry,
+  )
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (isSubmitting || isSaving) return
+    if (!isDirty || isSubmitting || isSaving) return
     setIsSubmitting(true)
     try {
       if (await form.trigger()) {
@@ -83,49 +105,24 @@ export default function EditPartyPage() {
     }
   }
 
-  const colors = [
-    '#FF3B30',
-    '#FF9500',
-    '#FFCC00',
-    '#34C759',
-    '#007AFF',
-    '#5856D6',
-    '#AF52DE',
-  ]
-
   if (isLoading) {
     return (
       <div className="max-w-2xl space-y-8 pb-20">
+        <Skeleton className="h-14 w-full rounded-sm" />
+        <Skeleton className="h-14 w-full rounded-sm" />
+        <Skeleton className="h-10 w-2/3 rounded-full" />
         <div className="flex justify-center">
           <Skeleton className="h-24 w-24 rounded-full" />
         </div>
-        <Skeleton className="h-14 w-full rounded-sm" />
-        <Skeleton className="h-10 w-2/3 rounded-full" />
-        <Skeleton className="h-14 w-full rounded-sm" />
         <Skeleton className="h-14 w-full rounded-sm" />
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl space-y-8 pb-20">
-      <form onSubmit={handleSubmit} className="space-y-10">
+    <div className="max-w-2xl space-y-8 pb-6">
+      <form id="party-edit-form" onSubmit={handleSubmit} className="space-y-10">
         <FormSection title={t('basicDetails')} icon={User}>
-          <div className="flex justify-center">
-            <EditableAvatar
-              name={watch('name')}
-              color={(watch as any)('color')}
-              imageUrl={watch('avatar_url' as any)}
-              onUpload={async (url) => {
-                setValue('avatar_url' as any, url, { shouldDirty: true })
-              }}
-              onDelete={async () => {
-                setValue('avatar_url' as any, null, { shouldDirty: true })
-              }}
-              size="xl"
-            />
-          </div>
-
           <div className="space-y-2">
             <Label
               required
@@ -148,39 +145,6 @@ export default function EditPartyPage() {
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
-              {tCommon('themeColor')}
-            </Label>
-            <div className="flex flex-wrap gap-3 p-1">
-              {colors.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  aria-label={c}
-                  onClick={() =>
-                    setValue('color' as any, c, { shouldDirty: true })
-                  }
-                  className={cn(
-                    'h-10 w-10 rounded-full transition-all active:scale-95 ring-offset-2',
-                    (watch as any)('color') === c
-                      ? 'ring-2 ring-primary scale-110'
-                      : 'hover:scale-105',
-                  )}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-          </div>
-          <PartyTypePicker
-            value={watch('party_type')}
-            onChange={(value) =>
-              setValue('party_type', value, { shouldDirty: true })
-            }
-          />
-        </FormSection>
-
-        <FormSection title={t('contactInfo')} icon={Phone}>
           <div className="space-y-2">
             <Label
               required
@@ -210,6 +174,52 @@ export default function EditPartyPage() {
             )}
           </div>
 
+          {duplicateNames.length > 0 && (
+            <p
+              role="status"
+              data-testid="party-duplicate-warning"
+              className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm"
+            >
+              {t('possibleDuplicateWarning', {
+                names: duplicateNames.join(', '),
+              })}
+            </p>
+          )}
+
+          <PartyTypePicker
+            value={watch('party_type')}
+            onChange={(value) =>
+              setValue('party_type', value, { shouldDirty: true })
+            }
+          />
+        </FormSection>
+
+        <FormSection title={t('contactInfo')} icon={Mail}>
+          <div className="flex justify-center">
+            <EditableAvatar
+              name={watch('name')}
+              color={watch('color')}
+              imageUrl={watch('avatar_url')}
+              onUpload={async (url) => {
+                setValue('avatar_url', url, { shouldDirty: true })
+              }}
+              onDelete={async () => {
+                setValue('avatar_url', null, { shouldDirty: true })
+              }}
+              size="xl"
+            />
+          </div>
+
+          <ThemeColorRow
+            label={tCommon('themeColor')}
+            colors={PARTY_THEME_COLORS}
+            value={watch('color')}
+            onChange={(color) =>
+              setValue('color', color, { shouldDirty: true })
+            }
+            testId="party-theme-color"
+          />
+
           <div className="space-y-2">
             <Label
               htmlFor="email"
@@ -224,10 +234,13 @@ export default function EditPartyPage() {
               placeholder={t('emailPlaceholder')}
               className="h-14 bg-canvas-parchment border-none rounded-sm"
             />
+            {errors.email && (
+              <p className="text-xs text-destructive ml-1">
+                {validationMessage(errors.email.message)}
+              </p>
+            )}
           </div>
-        </FormSection>
 
-        <FormSection title={t('locationNotes')} icon={MapPin}>
           <div className="space-y-2">
             <Label
               htmlFor="address"
@@ -243,7 +256,9 @@ export default function EditPartyPage() {
               className="h-14 bg-canvas-parchment border-none rounded-sm"
             />
           </div>
+        </FormSection>
 
+        <FormSection title={t('locationNotes')} icon={Note}>
           <div className="space-y-2">
             <Label
               htmlFor="notes"
@@ -272,40 +287,36 @@ export default function EditPartyPage() {
             />
           </div>
         </FormSection>
-
-        <div className="pt-4 flex flex-col gap-3">
-          <Button
-            type="submit"
-            className="w-full rounded-full h-14 text-lg"
-            disabled={isSaving}
-            loading={isSaving || isSubmitting}
-            data-testid="party-edit-submit-button"
-          >
-            {t('updateParty')}{' '}
-            <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
-          </Button>
-
-          <DeleteConfirmationDialog
-            title={t('deleteConfirmTitle')}
-            description={t('deleteConfirmDesc')}
-            confirmName={party?.name || ''}
-            onDelete={async () => {
-              onDelete()
-            }}
-            trigger={
-              <Button
-                type="button"
-                variant="ghost"
-                data-testid="party-delete-trigger"
-                className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
-              >
-                <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
-                {t('deleteParty')}
-              </Button>
-            }
-          />
-        </div>
       </form>
+
+      <DeleteConfirmationDialog
+        title={t('deleteConfirmTitle')}
+        description={t('deleteConfirmDesc')}
+        confirmName={party?.name || ''}
+        onDelete={async () => {
+          guard.bypass(onDelete)
+        }}
+        trigger={
+          <Button
+            type="button"
+            variant="ghost"
+            data-testid="party-delete-trigger"
+            className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
+            {t('deleteParty')}
+          </Button>
+        }
+      />
+
+      <EditSaveBar
+        formId="party-edit-form"
+        label={t('updateParty')}
+        isDirty={isDirty}
+        isSaving={isSaving || isSubmitting}
+        testId="party-edit-submit-button"
+      />
+      <UnsavedChangesDialog {...guard.dialogProps} />
     </div>
   )
 }
