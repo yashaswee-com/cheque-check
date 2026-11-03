@@ -1,8 +1,17 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react'
+import {
+  ArrowDownLeft01Icon,
+  ArrowUpRight01Icon,
+  Cancel01Icon,
+  CheckmarkCircle01Icon,
+  CircleIcon,
+  HourglassIcon,
+  UnavailableIcon,
+} from '@hugeicons/core-free-icons'
 import { DateInput } from '@/components/ui/date-input'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
@@ -12,20 +21,44 @@ import {
 } from '@/components/ui/pill-scroller'
 import { useBanks } from '@/features/accounts/hooks/use-banks'
 import { bankSearchLabel } from '@/features/accounts/lib/bank-details'
+import { PARTY_TYPE_ICONS } from '@/features/parties/components/party-type-picker'
+import { AmountRangeFilter } from './amount-range-filter'
 import type { ChequeStatus } from '@/types'
 
-const statusGroups: { key: string; values: ChequeStatus[] }[] = [
-  { key: 'pendingStatus', values: ['Issued', 'Received'] },
-  { key: 'cleared', values: ['Cleared'] },
-  { key: 'returnedStatus', values: ['Bounced'] },
+const statusGroups: {
+  key: string
+  values: ChequeStatus[]
+  icon: IconSvgElement
+}[] = [
+  { key: 'pendingStatus', values: ['Issued', 'Received'], icon: HourglassIcon },
+  { key: 'cleared', values: ['Cleared'], icon: CheckmarkCircle01Icon },
+  { key: 'returnedStatus', values: ['Bounced'], icon: Cancel01Icon },
 ]
 
+const directionIcons = {
+  All: CircleIcon,
+  Outward: ArrowUpRight01Icon,
+  Inward: ArrowDownLeft01Icon,
+} as const
+
+const partyTypeIcons: Record<string, IconSvgElement> = {
+  '': CircleIcon,
+  ...PARTY_TYPE_ICONS,
+  unclassified: UnavailableIcon,
+}
+
+function PillIcon({ icon }: { icon: IconSvgElement }) {
+  return <HugeiconsIcon icon={icon} className="size-4" aria-hidden />
+}
+
 export function AdvancedChequeFilters({
+  businessId,
   params,
   onChange,
   onClear,
   onValidityChange,
 }: {
+  businessId?: string
   params: URLSearchParams
   onChange: (key: string, value: string) => void
   onClear: () => void
@@ -51,6 +84,7 @@ export function AdvancedChequeFilters({
             aria-pressed={(params.get('type') ?? 'All') === type}
             onClick={() => onChange('type', type === 'All' ? '' : type)}
           >
+            <PillIcon icon={directionIcons[type]} />
             {stats(
               type === 'All'
                 ? 'all'
@@ -68,9 +102,10 @@ export function AdvancedChequeFilters({
           aria-pressed={!statuses.length}
           onClick={() => onChange('statuses', '')}
         >
+          <PillIcon icon={CircleIcon} />
           {common('all')}
         </button>
-        {statusGroups.map(({ key, values }) => {
+        {statusGroups.map(({ key, values, icon }) => {
           const selected = values.every((value) => statuses.includes(value))
           return (
             <button
@@ -90,6 +125,7 @@ export function AdvancedChequeFilters({
                 )
               }
             >
+              <PillIcon icon={icon} />
               {key === 'cleared' ? common('cleared') : t(key)}
             </button>
           )
@@ -106,6 +142,7 @@ export function AdvancedChequeFilters({
             aria-pressed={(params.get('party_type') ?? '') === type}
             onClick={() => onChange('party_type', type)}
           >
+            <PillIcon icon={partyTypeIcons[type]} />
             {type
               ? type === 'unclassified'
                 ? t('unclassified')
@@ -130,19 +167,13 @@ export function AdvancedChequeFilters({
             />
           </div>
         ))}
-        {['min_amount', 'max_amount'].map((key) => (
-          <div key={key} className="space-y-2">
-            <Label htmlFor={`filter-${key}`}>{t(`filter_${key}`)}</Label>
-            <Input
-              id={`filter-${key}`}
-              inputMode="decimal"
-              enableMic={false}
-              value={params.get(key) ?? ''}
-              onChange={(event) => onChange(key, event.target.value)}
-            />
-          </div>
-        ))}
       </div>
+      <AmountRangeFilter
+        businessId={businessId}
+        min={params.get('min_amount') ?? ''}
+        max={params.get('max_amount') ?? ''}
+        onChange={onChange}
+      />
       <div className="space-y-3">
         <h3 className="text-sm font-semibold">{t('bankFilter')}</h3>
         {banks.error ? (

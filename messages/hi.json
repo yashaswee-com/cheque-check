@@ -989,6 +989,7 @@
     "duplicateNumber": "इस खाते में इस नंबर का चेक पहले से मौजूद है"
   },
   "Cheques": {
+    "amountRange": "राशि सीमा",
     "unknownBank": "अज्ञात बैंक",
     "noChequesMatch": "इन फ़िल्टरों से कोई चेक मेल नहीं खाता",
     "pendingStatus": "लंबित",
@@ -1037,7 +1038,7 @@
     "status": "स्थिति",
     "history": "चेक का इतिहास",
     "searchPlaceholder": "चेक खोजें...",
-    "filterStatus": "स्थिति के अनुसार फ़िल्टर करें",
+    "filterStatus": "चेक की स्थिति",
     "noChequesTitle": "कोई चेक दर्ज नहीं है",
     "noChequesDesc": "आपने अभी कोई चेक दर्ज नहीं किया है। अपना पहला जारी या प्राप्त चेक जोड़ें।",
     "recordFirst": "अपना पहला चेक दर्ज करें",
@@ -1355,7 +1356,7 @@
     "bounced": "बाउंस",
     "chequeHistory": "चेक का इतिहास",
     "cleared": "क्लियर",
-    "filterStatus": "स्थिति के अनुसार फ़िल्टर करें",
+    "filterStatus": "चेक की स्थिति",
     "issued": "जारी",
     "noData": "कोई डेटा नहीं मिला",
     "notes": "नोट्स",

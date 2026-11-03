@@ -688,7 +688,7 @@
     "outstanding": "Outstanding",
     "totalCheques": "Total Cheques",
     "chequeHistory": "Cheque History",
-    "filterStatus": "Status Filter karein",
+    "filterStatus": "Cheque status",
     "contact": "Contact",
     "themeColor": "Theme Color",
     "noIfsc": "IFSC nahi hai",
@@ -954,6 +954,7 @@
     "duplicateNumber": "Is account mein is number ka cheque pehle se hai"
   },
   "Cheques": {
+    "amountRange": "Amount range",
     "unknownBank": "Unknown bank",
     "noChequesMatch": "In filters se koi cheque match nahi karta",
     "pendingStatus": "Pending",
@@ -1010,7 +1011,7 @@
     "status": "Status",
     "history": "Cheque ki History",
     "searchPlaceholder": "Cheques search karein...",
-    "filterStatus": "Status Filter karein",
+    "filterStatus": "Cheque status",
     "noChequesTitle": "Koi cheque record nahi mila",
     "noChequesDesc": "Aapne abhi tak koi cheque record nahi kiya hai. Apna pehla cheque add karein.",
     "recordFirst": "Pehla cheque record karein",

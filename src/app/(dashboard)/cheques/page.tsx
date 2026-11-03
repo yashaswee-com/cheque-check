@@ -138,6 +138,7 @@ function ChequesContent() {
         advancedFilters={
           <AdvancedChequeFilters
             key={filterReset}
+            businessId={businessId}
             params={new URLSearchParams(searchParams.toString())}
             onChange={changeParam}
             onClear={clearFilters}

@@ -688,7 +688,7 @@
     "outstanding": "Outstanding",
     "totalCheques": "Total Cheques",
     "chequeHistory": "Cheque History",
-    "filterStatus": "Filter Status",
+    "filterStatus": "Cheque status",
     "contact": "Contact",
     "themeColor": "Theme Color",
     "noIfsc": "No IFSC",
@@ -954,6 +954,7 @@
     "duplicateNumber": "A cheque with this number already exists for this account"
   },
   "Cheques": {
+    "amountRange": "Amount range",
     "unknownBank": "Unknown bank",
     "noChequesMatch": "No cheques match these filters",
     "pendingStatus": "Pending",
@@ -1010,7 +1011,7 @@
     "status": "Status",
     "history": "Cheque History",
     "searchPlaceholder": "Search cheques...",
-    "filterStatus": "Filter Status",
+    "filterStatus": "Cheque status",
     "noChequesTitle": "No cheques recorded",
     "noChequesDesc": "You haven't recorded any cheques yet. Add your first issued or received cheque.",
     "recordFirst": "Record your first cheque",
