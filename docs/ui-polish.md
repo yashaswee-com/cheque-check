@@ -41,6 +41,9 @@ explicitly dismissed, or unavailable. Acceptance alone is not installation proof
 Skip/Finish persist to profile; failed saves keep the dialog open for retry.
 Replay in Settings re-enables the tour across devices. Background controls remain
 inert, so the tour never creates records or bypasses quotas/premium checks.
+The tour card sits on the half opposite the spotlight, inset by safe areas. It
+overrides the CSS `translate` property rather than adding a `transform`, so it
+stays fully on screen on mobile.
 
 `npm run test:scaling` includes owner-scoped appearance reads, tour completion,
 and replay on the existing 10,000-profile fixture, with the same 1,000ms p95

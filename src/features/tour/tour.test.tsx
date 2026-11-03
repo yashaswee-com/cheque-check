@@ -162,6 +162,32 @@ describe('first-run dashboard tour', () => {
       view.container.append(target)
     }
   })
+  it('places the card opposite the spotlight without stacking a second transform', async () => {
+    mount()
+    await screen.findByTestId('tour-spotlight')
+    const card = screen.getByTestId('tour-card')
+    expect(card).toHaveAttribute('data-placement', 'bottom')
+    expect(card.style.translate).toBe('-50% 0')
+    expect(card.style.transform).toBe('')
+    expect(card.style.top).toBe('auto')
+    expect(card.style.bottom).toContain('safe-area-inset-bottom')
+    vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockReturnValue({
+      x: 20,
+      y: window.innerHeight - 60,
+      left: 20,
+      top: window.innerHeight - 60,
+      width: 100,
+      height: 50,
+      right: 120,
+      bottom: window.innerHeight - 10,
+      toJSON: () => ({}),
+    })
+    fireEvent(window, new Event('resize'))
+    await waitFor(() => expect(card).toHaveAttribute('data-placement', 'top'))
+    expect(card.style.translate).toBe('-50% 0')
+    expect(card.style.transform).toBe('')
+    expect(card.style.top).toContain('safe-area-inset-top')
+  })
   it('remeasures on resize and removes the spotlight on unmount', async () => {
     const view = mount()
     expect(await screen.findByTestId('tour-spotlight')).toHaveStyle({

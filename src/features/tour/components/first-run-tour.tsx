@@ -34,6 +34,11 @@ function TourDialog({
   const saving = useRef(false)
   const target = steps[step]
   const activeBox = box?.target === target ? box : null
+  // The card sits on the opposite half so it never covers the spotlight.
+  const placement =
+    activeBox && activeBox.top + activeBox.height / 2 < window.innerHeight / 2
+      ? 'bottom'
+      : 'top'
   useEffect(() => {
     let element: HTMLElement | null = null
     let frame = 0
@@ -141,10 +146,19 @@ function TourDialog({
         showCloseButton={false}
         overlayClassName="bg-transparent supports-backdrop-filter:backdrop-blur-none"
         className="z-[70] max-h-[45dvh]"
+        data-testid="tour-card"
+        data-placement={placement}
         style={
-          activeBox && activeBox.top < window.innerHeight / 2
-            ? { top: 'auto', bottom: '1rem', transform: 'translateX(-50%)' }
-            : { top: '1rem', transform: 'translateX(-50%)' }
+          placement === 'bottom'
+            ? {
+                top: 'auto',
+                bottom: 'calc(1rem + env(safe-area-inset-bottom))',
+                translate: '-50% 0',
+              }
+            : {
+                top: 'calc(1rem + env(safe-area-inset-top))',
+                translate: '-50% 0',
+              }
         }
       >
         <p className="text-xs" aria-live="polite">
