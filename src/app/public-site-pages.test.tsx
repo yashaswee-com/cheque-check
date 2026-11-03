@@ -104,9 +104,25 @@ describe('public site pages', () => {
       expect(
         screen.getByRole('heading', { name: catalog.PublicSite.landing.title }),
       ).toBeVisible()
+      const ctas = screen.getAllByRole('link', {
+        name: catalog.PublicSite.landing.primaryCta,
+      })
+      expect(ctas).toHaveLength(2)
+      for (const cta of ctas) {
+        expect(cta).toHaveAttribute('href', '/signup')
+        expect(cta).toHaveAttribute('data-app-entry')
+      }
       expect(
-        screen.getByText(catalog.PublicSite.landing.primaryCta),
+        screen.getByRole('heading', {
+          name: catalog.PublicSite.landing.howTitle,
+        }),
       ).toBeVisible()
+      expect(
+        screen.getByRole('figure', {
+          name: catalog.PublicSite.landing.previewLabel,
+        }),
+      ).toBeVisible()
+      expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(9)
     },
   )
 
