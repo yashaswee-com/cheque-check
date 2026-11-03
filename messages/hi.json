@@ -1412,7 +1412,6 @@
   },
   "Parties": {
     "partyType": "Party type",
-    "partyTypeOptional": "Party type (optional)",
     "partyTypeAll": "All types",
     "partyTypeUnset": "Not set",
     "partyTypeCustomer": "Customer",

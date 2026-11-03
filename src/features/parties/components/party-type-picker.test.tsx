@@ -36,7 +36,7 @@ function Controlled({ onChange }: { onChange: (v: PartyType | null) => void }) {
 describe('PartyTypePicker', () => {
   it('renders the three hard-coded types in one labelled horizontal row', () => {
     renderWithIntl(<PartyTypePicker value={null} onChange={vi.fn()} />)
-    const row = screen.getByRole('group', { name: 'Party type (optional)' })
+    const row = screen.getByRole('group', { name: 'Party type' })
     expect(row).toHaveAttribute('data-slot', 'pill-scroller')
     expect(
       screen.getAllByRole('button').map((button) => button.textContent),

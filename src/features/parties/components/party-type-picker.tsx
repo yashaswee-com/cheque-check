@@ -53,7 +53,7 @@ export function PartyTypePicker({
   const label = usePartyTypeLabel()
 
   return (
-    <FilterPillSection title={title ?? t('partyTypeOptional')}>
+    <FilterPillSection title={title ?? t('partyType')}>
       {PARTY_TYPES.map((type) => {
         const active = value === type
         return (
