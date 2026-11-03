@@ -16,6 +16,15 @@ let missingAccountDetails = false
 let isDefault = false
 let profile: { currency: string } | null = null
 let error: Error | null = null
+let bulk = false
+function many<T extends { id: string }>(item: T) {
+  return bulk
+    ? Array.from({ length: 45 }, (_, index) => ({
+        ...item,
+        id: `${item.id}-${index}`,
+      }))
+    : [item]
+}
 const account = {
   id: 'account',
   account_name: 'Operating',
@@ -43,12 +52,12 @@ function useList() {
     : account
   const accountWithDefault = { ...listedAccount, is_default: isDefault }
   return {
-    accounts: empty ? [] : [accountWithDefault],
-    filteredAccounts: empty || noResults ? [] : [accountWithDefault],
-    parties: empty ? [] : [party],
-    filteredParties: empty || noResults ? [] : [party],
-    tags: empty ? [] : [tag],
-    filteredTags: empty || noResults ? [] : [tag],
+    accounts: empty ? [] : many(accountWithDefault),
+    filteredAccounts: empty || noResults ? [] : many(accountWithDefault),
+    parties: empty ? [] : many(party),
+    filteredParties: empty || noResults ? [] : many(party),
+    tags: empty ? [] : many(tag),
+    filteredTags: empty || noResults ? [] : many(tag),
     uniqueBanks: [account.bank],
     isLoading: loading,
     error,
@@ -126,6 +135,7 @@ beforeEach(() => {
   isDefault = false
   loading = empty = noResults = false
   missingAccountDetails = false
+  bulk = false
   profile = { currency: '$' }
   error = null
 })
@@ -188,6 +198,29 @@ describe.each([
   it('lays out every sort and filter section as a horizontally scrollable pill row', () => {
     renderPage(<Component />)
     expectHorizontalPillRows(sections)
+  })
+  it('pages long lists 20 at a time and returns to page one on a new search', () => {
+    bulk = true
+    renderPage(<Component />)
+    const status = () => screen.getByTestId(`${kind}-pagination-status`)
+    expect(status()).toHaveTextContent('1 / 3')
+    expect(screen.getAllByText(title)).toHaveLength(20)
+    const next = screen.getByRole('button', {
+      name: messages.SharedUI.nextPage,
+    })
+    fireEvent.click(next)
+    fireEvent.click(next)
+    expect(status()).toHaveTextContent('3 / 3')
+    expect(screen.getAllByText(title)).toHaveLength(5)
+    expect(next).toBeDisabled()
+    fireEvent.change(screen.getByPlaceholderText(search), {
+      target: { value: 'a' },
+    })
+    expect(status()).toHaveTextContent('1 / 3')
+  })
+  it('hides pagination when everything fits on one page', () => {
+    renderPage(<Component />)
+    expect(screen.queryByTestId(`${kind}-pagination`)).toBeNull()
   })
   it('renders records with usable detail links and entity-specific metadata', () => {
     renderPage(<Component />)

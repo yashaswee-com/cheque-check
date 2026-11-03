@@ -1,5 +1,8 @@
 'use client'
 
+import { StickyPagination } from '@/components/ui/sticky-pagination'
+import { usePagedItems } from '@/hooks/use-paged-items'
+
 import { useParties } from '@/features/parties/hooks/use-parties'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -69,6 +72,10 @@ export default function PartiesPage() {
     setPartyType,
     getBalance,
   } = useParties(businessId)
+  const paged = usePagedItems(
+    filteredParties,
+    JSON.stringify([businessId, search, sortBy, sortOrder, partyType]),
+  )
   const tagMap = useEntityTagMap(businessId, 'party')
   const partyTypeLabel = usePartyTypeLabel()
 
@@ -213,7 +220,7 @@ export default function PartiesPage() {
             />
           }
         >
-          {filteredParties?.map((party: Party) => (
+          {paged.items?.map((party: Party) => (
             <Link
               key={party.id}
               href={`/parties/${party.id}`}
@@ -257,6 +264,15 @@ export default function PartiesPage() {
             </Link>
           ))}
         </DataState>
+        {!isLoading && !error && (
+          <StickyPagination
+            page={paged.page}
+            totalPages={paged.totalPages}
+            onPrevious={paged.previous}
+            onNext={paged.next}
+            testId="parties-pagination"
+          />
+        )}
       </div>
     </div>
   )

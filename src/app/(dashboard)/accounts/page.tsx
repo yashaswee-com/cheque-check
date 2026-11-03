@@ -1,5 +1,8 @@
 'use client'
 
+import { StickyPagination } from '@/components/ui/sticky-pagination'
+import { usePagedItems } from '@/hooks/use-paged-items'
+
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowRight01Icon as ChevronRight,
@@ -60,6 +63,10 @@ export default function AccountsPage() {
     bankFilter,
     setBankFilter,
   } = useAccounts(businessId)
+  const paged = usePagedItems(
+    filteredAccounts,
+    JSON.stringify([businessId, search, sortBy, sortOrder, bankFilter]),
+  )
   const tagMap = useEntityTagMap(businessId, 'account')
 
   const clearFilters = () => {
@@ -228,7 +235,7 @@ export default function AccountsPage() {
             />
           }
         >
-          {filteredAccounts?.map((account: Account) => (
+          {paged.items?.map((account: Account) => (
             <Link key={account.id} href={`/accounts/${account.id}`}>
               <div className="group relative rounded-xl border bg-card p-5 transition-all active:scale-95 border-zinc-200 dark:border-zinc-800">
                 <div className="flex items-start gap-4">
@@ -282,6 +289,15 @@ export default function AccountsPage() {
             </Link>
           ))}
         </DataState>
+        {!isLoading && !error && (
+          <StickyPagination
+            page={paged.page}
+            totalPages={paged.totalPages}
+            onPrevious={paged.previous}
+            onNext={paged.next}
+            testId="accounts-pagination"
+          />
+        )}
       </div>
     </div>
   )

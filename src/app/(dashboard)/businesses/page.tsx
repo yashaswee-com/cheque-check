@@ -1,5 +1,8 @@
 'use client'
 
+import { StickyPagination } from '@/components/ui/sticky-pagination'
+import { usePagedItems } from '@/hooks/use-paged-items'
+
 import { useBusinesses } from '@/features/businesses/hooks/use-businesses-page'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -89,6 +92,10 @@ export default function BusinessesPage() {
     getUpcomingTotal,
     deleteBusiness,
   } = useBusinesses()
+  const paged = usePagedItems(
+    filteredBusinesses,
+    JSON.stringify([search, sortBy, sortOrder]),
+  )
   const tagMap = useEntityTagMap(null, 'business')
 
   const clearFilters = () => {
@@ -210,7 +217,7 @@ export default function BusinessesPage() {
             />
           }
         >
-          {filteredBusinesses?.map((business) => (
+          {paged.items?.map((business) => (
             <div
               key={business.id}
               data-testid={`business-card-${business.id}`}
@@ -304,6 +311,15 @@ export default function BusinessesPage() {
             </div>
           ))}
         </DataState>
+        {!isLoading && !error && (
+          <StickyPagination
+            page={paged.page}
+            totalPages={paged.totalPages}
+            onPrevious={paged.previous}
+            onNext={paged.next}
+            testId="businesses-pagination"
+          />
+        )}
       </div>
       <NativeTools
         destination="businesses"

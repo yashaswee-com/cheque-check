@@ -54,6 +54,7 @@ const baseCheque = {
   status: 'Received',
   amount: 500,
 }
+let businessCount = 1
 let cheques = [baseCheque]
 let loading = false
 let active = true
@@ -125,7 +126,15 @@ vi.mock('@/features/businesses/hooks/use-businesses-page', () => ({
       : business
     return {
       businesses: empty ? [] : [listedBusiness],
-      filteredBusinesses: empty || noResults ? [] : [listedBusiness],
+      filteredBusinesses:
+        empty || noResults
+          ? []
+          : businessCount > 1
+            ? Array.from({ length: businessCount }, (_, index) => ({
+                ...listedBusiness,
+                id: `business-${index}`,
+              }))
+            : [listedBusiness],
       isLoading: loading,
       activeBusiness: active ? business : null,
       setActiveBusiness: mocks.activate,
@@ -964,6 +973,25 @@ describe('profile page', () => {
 })
 
 describe('business list page', () => {
+  it('pages businesses 20 at a time with sticky pagination', () => {
+    businessCount = 21
+    try {
+      renderPage(<BusinessesPage />)
+      expect(
+        screen.getByTestId('businesses-pagination-status'),
+      ).toHaveTextContent('1 / 2')
+      fireEvent.click(
+        screen.getByRole('button', { name: messages.SharedUI.nextPage }),
+      )
+      expect(
+        screen.getByTestId('businesses-pagination-status'),
+      ).toHaveTextContent('2 / 2')
+      expect(screen.getAllByTestId(/^business-card-/)).toHaveLength(1)
+    } finally {
+      businessCount = 1
+    }
+  })
+
   it('shows a loading placeholder for the lazily loaded delete dialog', () => {
     mocks.deferDynamicLoading = true
     renderPage(<BusinessesPage />)

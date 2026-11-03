@@ -1,5 +1,8 @@
 'use client'
 
+import { StickyPagination } from '@/components/ui/sticky-pagination'
+import { usePagedItems } from '@/hooks/use-paged-items'
+
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -59,6 +62,17 @@ export default function TagsPage() {
     setUsage,
     clearFilters,
   } = useTagList(activeBusiness?.id)
+  const paged = usePagedItems(
+    filteredTags,
+    JSON.stringify([
+      activeBusiness?.id,
+      search,
+      sortBy,
+      sortOrder,
+      color,
+      usage,
+    ]),
+  )
 
   const sortOptions: { label: string; value: TagSortBy; icon: any }[] = [
     { label: t('sortByName'), value: 'name', icon: NameIcon },
@@ -231,7 +245,7 @@ export default function TagsPage() {
             />
           }
         >
-          {filteredTags.map((tag) => (
+          {paged.items?.map((tag) => (
             <Link key={tag.id} href={`/tags/${tag.id}`} className="block">
               <div className="group flex items-center gap-4 rounded-xl border border-zinc-200 bg-card p-4 transition-all active:scale-95 dark:border-zinc-800">
                 <div
@@ -258,6 +272,15 @@ export default function TagsPage() {
             </Link>
           ))}
         </DataState>
+        {!isLoading && !error && (
+          <StickyPagination
+            page={paged.page}
+            totalPages={paged.totalPages}
+            onPrevious={paged.previous}
+            onNext={paged.next}
+            testId="tags-pagination"
+          />
+        )}
       </div>
     </div>
   )
