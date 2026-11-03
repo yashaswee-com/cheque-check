@@ -11,6 +11,7 @@ describe('browser push subscription validation', () => {
   it.each([
     subscription.endpoint,
     'https://fcm.googleapis.com/fcm/send/test-device',
+    'https://fcm.googleapis.com/fcm/send/test-device~mid?token=abc123&scope=all',
     'https://updates.push.services.mozilla.com/wpush/v2/test-device',
     'https://web.push.apple.com/test-device',
     'https://test.notify.windows.com/test-device',
