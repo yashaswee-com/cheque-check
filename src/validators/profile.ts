@@ -11,6 +11,20 @@ export const timeFormatSchema = z.enum(['12h', '24h'])
 export const appearanceSchema = z.enum(['light', 'dark', 'system'])
 export const tourStatusSchema = z.enum(['pending', 'completed', 'skipped'])
 
+export function isValidTimeZone(zone: string) {
+  if (!zone.trim()) return false
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: zone })
+    return true
+  } catch {
+    return false
+  }
+}
+/** Mirrors profile_time_zone_valid: a non-empty IANA time zone name. */
+export const timeZoneSchema = z
+  .string()
+  .refine(isValidTimeZone, 'Choose a supported time zone')
+
 /** Mirrors profile_reminder_times_valid: 1-3 distinct 15-minute times, 06:00-22:00. */
 export const reminderTimesSchema = z
   .array(z.string().regex(/^\d{2}:\d{2}(:00)?$/))
@@ -40,5 +54,6 @@ export const closedProfileChoices = z
     language: localeSchema,
     appearance: appearanceSchema,
     tour_status: tourStatusSchema,
+    time_zone: timeZoneSchema,
   })
   .partial()

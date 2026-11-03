@@ -292,6 +292,15 @@ back to the canonical source.
 closed PostgreSQL enums after `20261021010000_closed_choices.sql`. Adding a
 channel or purpose requires a migration and matching application contracts.
 
+Profile `time_zone` stays text so any IANA zone works, but
+`20261110000000_profile_time_zone_valid.sql` rejects (22023
+`invalid_time_zone`) any new value that is empty or not listed in
+`pg_timezone_names`. The scheduler joins on that name, so an unknown value
+would otherwise skip reminders silently. Rows that already store an unknown
+value are kept as they are. The Preferences page shows those fields as
+unselected with a message, never saves an empty value, and shows a field
+error when a save fails.
+
 ## 8. Required secrets / configuration
 
 | Secret                                                            | Where                                                 | Purpose                                                                                                                                                            |

@@ -178,6 +178,14 @@ describe('toProfileUpdate', () => {
     expect(() => toProfileUpdate({ currency: 'XYZ' })).toThrow()
   })
 
+  it('accepts IANA time zones and rejects empty or unknown ones', () => {
+    expect(toProfileUpdate({ time_zone: 'Asia/Kolkata' })).toEqual({
+      time_zone: 'Asia/Kolkata',
+    })
+    for (const time_zone of ['', '  ', 'Mars/Olympus'])
+      expect(() => toProfileUpdate({ time_zone })).toThrow()
+  })
+
   it('sorts reminder times to the stored order and rejects invalid ones', () => {
     expect(toProfileUpdate({ reminder_times: ['18:00:00', '07:30'] })).toEqual({
       reminder_times: ['07:30', '18:00'],

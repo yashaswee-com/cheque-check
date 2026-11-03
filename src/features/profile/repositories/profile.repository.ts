@@ -28,6 +28,7 @@ export function toProfileUpdate(profile: Partial<Profile>): ProfileUpdate {
     language: update.language,
     appearance: update.appearance,
     tour_status: update.tour_status,
+    time_zone: update.time_zone,
   })
   for (const key of Object.keys(choices) as (keyof typeof choices)[]) {
     update[key] = choices[key]
