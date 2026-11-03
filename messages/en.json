@@ -1,5 +1,6 @@
 {
   "Security": {
+    "checkingDescription": "Verifying your app lock. This only takes a moment.",
     "pinTitle": "App PIN lock",
     "resetTitle": "Recover PIN with fresh authentication",
     "pinLimit": "Account-wide six-digit PIN, verified online. Locks on app open or after one minute in the background. Five wrong attempts sign you out. This additional session/UI lock does not protect against someone controlling your browser or replace account authentication.",

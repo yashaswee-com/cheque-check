@@ -131,6 +131,31 @@ describe('PIN shell gating', () => {
     ).toBeInTheDocument()
     expect(mocks.mounted).not.toHaveBeenCalled()
   })
+  it('shows a spinner with a clear heading while security status loads', async () => {
+    let resolve!: (value: typeof enabled) => void
+    mocks.status.mockReturnValue(
+      new Promise<typeof enabled>((done) => {
+        resolve = done
+      }),
+    )
+    mount()
+    const checking = await screen.findByTestId('pin-gate-checking')
+    expect(checking).toHaveAttribute('role', 'status')
+    expect(checking.querySelector('svg.animate-spin')).not.toBeNull()
+    const [title, description] = checking.querySelectorAll('p')
+    expect(title).toHaveTextContent(messages.Security.checking)
+    expect(title).toHaveClass('font-semibold')
+    expect(description).toHaveTextContent(messages.Security.checkingDescription)
+    expect(description).toHaveClass('text-muted-foreground')
+    expect(screen.getByText('ChequeCheck')).toHaveClass('sr-only')
+    expect(screen.getByRole('dialog')).toHaveAccessibleName('ChequeCheck')
+    await act(async () => resolve(enabled))
+    expect(
+      await screen.findByLabelText('Enter six-digit PIN'),
+    ).toBeInTheDocument()
+    expect(screen.queryByTestId('pin-gate-checking')).not.toBeInTheDocument()
+    expect(screen.getByText('ChequeCheck')).not.toHaveClass('sr-only')
+  })
   it('traps keyboard focus and never dismisses the lock on Escape', async () => {
     mount()
     await screen.findByLabelText('Enter six-digit PIN')

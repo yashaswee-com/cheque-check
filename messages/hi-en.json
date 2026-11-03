@@ -1,5 +1,6 @@
 {
   "Security": {
+    "checkingDescription": "Aapka app lock verify ho raha hai. Bas ek pal lagega.",
     "pinTitle": "App PIN lock",
     "resetTitle": "Fresh verification se PIN recover karein",
     "pinLimit": "Account-wide six-digit PIN online verify hota hai. App open ya ek minute background ke baad lock hota hai. Paanch galat attempts par sign out hota hai. Yeh extra UI lock hai, browser control karne wale se protection ya account login ka replacement nahi.",

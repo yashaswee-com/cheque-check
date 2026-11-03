@@ -6,6 +6,8 @@ import { PinSettings } from './pin-settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Spinner } from '@/components/ui/spinner'
+import { cn } from '@/lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -28,10 +30,31 @@ export function PinGate({ children }: { children: React.ReactNode }) {
         data-sentry-mask
         data-clarity-mask="true"
       >
-        <DialogTitle>ChequeCheck</DialogTitle>
-        <DialogDescription>{t('locked')}</DialogDescription>
+        <DialogTitle className={cn(gate.loading && 'sr-only')}>
+          ChequeCheck
+        </DialogTitle>
+        <DialogDescription className={cn(gate.loading && 'sr-only')}>
+          {t('locked')}
+        </DialogDescription>
         {gate.loading ? (
-          <p role="status">{t('checking')}</p>
+          <div
+            role="status"
+            aria-live="polite"
+            data-testid="pin-gate-checking"
+            className="flex flex-col items-center gap-4 py-8 text-center"
+          >
+            <span className="grid size-14 place-items-center rounded-full bg-primary/10 text-primary">
+              <Spinner className="size-7" />
+            </span>
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-foreground">
+                {t('checking')}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {t('checkingDescription')}
+              </p>
+            </div>
+          </div>
         ) : (
           <>
             <h2>{t('locked')}</h2>
