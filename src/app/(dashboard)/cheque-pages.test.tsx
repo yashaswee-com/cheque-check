@@ -43,6 +43,7 @@ const mocks = vi.hoisted(() => ({
   filterSortBy: vi.fn(),
   filterSortOrder: vi.fn(),
   listRequest: vi.fn(),
+  conflictCheck: vi.fn(),
 }))
 let loading = false
 let saving = false
@@ -95,6 +96,7 @@ filteredCheques = listedCheques
 function useChequeForm(options?: {
   beforePublish?: (id: string) => Promise<void>
   onCreated?: (entity: { id: string }) => Promise<void>
+  onSaved?: () => void
 }) {
   const form = useForm({
     defaultValues: {
@@ -109,7 +111,11 @@ function useChequeForm(options?: {
     form: {
       ...form,
       trigger: mocks.trigger,
-      formState: { ...form.formState, errors },
+      formState: {
+        ...form.formState,
+        isDirty: form.formState.isDirty,
+        errors,
+      },
     },
     step,
     nextStep: () => setStep((s) => s + 1),
@@ -132,6 +138,7 @@ function useChequeForm(options?: {
       await options?.beforePublish?.('draft')
       mocks.submit(form.getValues())
       await options?.onCreated?.({ id: 'created' })
+      options?.onSaved?.()
     },
     onDelete: mocks.delete,
     draft: {
@@ -172,7 +179,8 @@ vi.mock('@/features/cheques/hooks/use-create-cheque', () => ({
   ) => useChequeForm(options),
 }))
 vi.mock('@/features/cheques/hooks/use-edit-cheque', () => ({
-  useEditCheque: () => useChequeForm(),
+  useEditCheque: (_id: string, options: Parameters<typeof useChequeForm>[0]) =>
+    useChequeForm(options),
 }))
 vi.mock('@/features/cheques/hooks/use-cheque-detail', () => ({
   useChequeDetail: () => ({
@@ -254,7 +262,10 @@ vi.mock('@/features/accounts/hooks/use-banks', () => ({
   useBanks: () => ({ data: [] }),
 }))
 vi.mock('@/features/cheques/hooks/use-cheque-number-conflict', () => ({
-  useChequeNumberConflict: () => ({ data: conflict }),
+  useChequeNumberConflict: (...args: unknown[]) => {
+    mocks.conflictCheck(...args)
+    return { data: conflict }
+  },
 }))
 vi.mock('@/features/cheques/hooks/use-ocr-extraction', () => ({
   useOcrExtraction: () => {
@@ -286,7 +297,12 @@ vi.mock('@/features/tags/hooks/use-entity-tags', () => ({
   useEntityTagMap: () => ({ cheque: [] }),
   useEntityTagsDraft: () => {
     const [tagIds, setTagIds] = useState<string[]>([])
-    return { tagIds, setTagIds, commit: mocks.commit }
+    return {
+      tagIds,
+      setTagIds,
+      commit: mocks.commit,
+      isDirty: tagIds.length > 0,
+    }
   },
 }))
 vi.mock('@/features/cheques/components/cheque-filter-bar', () => ({
@@ -917,6 +933,89 @@ describe('cheque creation page', () => {
 })
 
 describe('cheque edit page', () => {
+  const makeDirty = () => change('notes', 'Updated note')
+  const saveButton = () => screen.getByTestId('cheque-edit-submit-button')
+
+  it('keeps save disabled until a field or tag changes and ignores clean submits', async () => {
+    const { container } = renderPage(<EditChequePage />)
+    expect(saveButton()).toBeDisabled()
+    fireEvent.submit(container.querySelector('form')!)
+    await Promise.resolve()
+    expect(mocks.submit).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Choose tags' }))
+    expect(saveButton()).toBeEnabled()
+    cleanup()
+    renderPage(<EditChequePage />)
+    makeDirty()
+    expect(saveButton()).toBeEnabled()
+    expect(saveButton()).toHaveAttribute('form', 'cheque-edit-form')
+    expect(screen.getByTestId('edit-save-bar')).toContainElement(saveButton())
+  })
+  it('mirrors the creation flow field order and test ids', () => {
+    renderPage(<EditChequePage />)
+    const order = [
+      'cheque-type-outward',
+      'cheque-amount-input',
+      'cheque-amount-words',
+      'cheque-number-input',
+      'cheque-photo-field',
+      'cheque-date-input',
+    ].map((id) => screen.getByTestId(id))
+    for (let index = 1; index < order.length; index++)
+      expect(
+        order[index - 1].compareDocumentPosition(order[index]) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy()
+    expect(screen.getByTestId('cheque-type-inward')).toBeInTheDocument()
+  })
+  it('warns about a duplicate cheque number while ignoring the cheque itself', () => {
+    defaults = { account_id: 'account', cheque_number: '100123' }
+    renderPage(<EditChequePage />)
+    expect(mocks.conflictCheck).toHaveBeenLastCalledWith(
+      'business',
+      'account',
+      '100123',
+      'cheque',
+    )
+    for (const warning of screen.getAllByTestId('cheque-number-conflict'))
+      expect(warning).toHaveClass('invisible')
+    cleanup()
+    conflict = true
+    renderPage(<EditChequePage />)
+    const warnings = screen.getAllByTestId('cheque-number-conflict')
+    expect(warnings).toHaveLength(2)
+    for (const warning of warnings) {
+      expect(warning).not.toHaveClass('invisible')
+      expect(warning).toHaveTextContent(messages.Drafts.duplicateNumber)
+    }
+  })
+  it('shows deposit date errors like the creation flow', () => {
+    errors = { deposit_date: { message: 'Deposit date invalid' } }
+    renderPage(<EditChequePage />)
+    expect(screen.getByText('Deposit date invalid')).toBeVisible()
+  })
+  it('asks before leaving with unsaved changes and skips the guard entry after saving', async () => {
+    const go = vi.spyOn(window.history, 'go').mockImplementation(() => {})
+    renderPage(<EditChequePage />)
+    makeDirty()
+    const link = document.createElement('a')
+    link.href = '/cheques'
+    document.body.append(link)
+    fireEvent.click(link)
+    expect(screen.getByTestId('unsaved-changes-dialog')).toBeVisible()
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.SharedUI.discardChanges }),
+    )
+    expect(mocks.push).toHaveBeenCalledWith('/cheques')
+    link.remove()
+    cleanup()
+    renderPage(<EditChequePage />)
+    change('notes', 'Another note')
+    fireEvent.submit(document.querySelector('form')!)
+    await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
+    await waitFor(() => expect(go).toHaveBeenCalledWith(-2))
+    go.mockRestore()
+  })
   it('renders the cheque number as six digit slots', () => {
     defaults = { cheque_number: '100123' }
     renderPage(<EditChequePage />)
@@ -982,6 +1081,7 @@ describe('cheque edit page', () => {
     mocks.require.mockReturnValue(false)
     defaults = { type: 'Inward' }
     const { container } = renderPage(<EditChequePage />)
+    makeDirty()
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() =>
       expect(mocks.require).toHaveBeenCalledWith('inward-tracking'),
@@ -1002,6 +1102,7 @@ describe('cheque edit page', () => {
     originalType = 'Inward'
     defaults = { type: 'Inward' }
     const { container } = renderPage(<EditChequePage />)
+    makeDirty()
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
     expect(mocks.require).not.toHaveBeenCalled()
@@ -1009,6 +1110,7 @@ describe('cheque edit page', () => {
   it('stops entity persistence when committing tags fails', async () => {
     mocks.commit.mockRejectedValueOnce(new Error('Offline'))
     const { container } = renderPage(<EditChequePage />)
+    makeDirty()
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() =>
       expect(mocks.toast).toHaveBeenCalledWith({
@@ -1030,6 +1132,7 @@ describe('cheque edit page', () => {
     const { container } = renderPage(<EditChequePage />)
     for (const message of Object.values(errors))
       expect(screen.getByText(message.message)).toBeVisible()
+    makeDirty()
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
     expect(mocks.commit).not.toHaveBeenCalled()
@@ -1053,10 +1156,12 @@ describe('cheque edit page', () => {
     cleanup()
     saving = true
     renderPage(<EditChequePage />)
+    makeDirty()
     expect(
       screen.getByRole('button', { name: messages.Cheques.removePhoto }),
     ).toBeDisabled()
-    expect(screen.getByTestId('cheque-edit-submit-button')).toBeDisabled()
+    expect(saveButton()).toBeDisabled()
+    expect(saveButton()).toHaveAttribute('aria-busy', 'true')
   })
   it('keeps the upload action named and shows only the shared spinner while uploading', () => {
     uploading = true

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
 import {
   PremiumTab,
@@ -22,7 +22,6 @@ import { useParams } from 'next/navigation'
 import {
   Calendar03Icon as Calendar,
   Note01Icon as Note,
-  Tick02Icon as Check,
   Delete02Icon as Trash2,
   ArrowUpRight01Icon as ArrowUpRight,
   ArrowDownLeft01Icon as ArrowDownLeft,
@@ -47,6 +46,10 @@ import { useProfile } from '@/features/profile/hooks/use-profile'
 import { toast } from '@/components/ui/toast'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useEntityTagsDraft } from '@/features/tags/hooks/use-entity-tags'
+import { useChequeNumberConflict } from '@/features/cheques/hooks/use-cheque-number-conflict'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog'
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -64,12 +67,14 @@ export default function EditChequePage() {
   const locale = useLocale()
   const t = useTranslations('Cheques')
   const tCommon = useTranslations('Common')
+  const tDrafts = useTranslations('Drafts')
   const { id } = useParams() as { id: string }
   const { activeBusiness } = useBusiness()
   const businessId = activeBusiness?.id
   const { profile } = useProfile()
   const currency = profile?.currency || '₹'
   const photoInputRef = useRef<HTMLInputElement>(null)
+  const leaveRef = useRef<() => void>(() => {})
 
   const {
     form,
@@ -80,23 +85,46 @@ export default function EditChequePage() {
     handleImageUpload,
     onSubmit,
     onDelete,
-  } = useEditCheque(id)
+  } = useEditCheque(id, { onSaved: () => leaveRef.current() })
   const premium = usePremiumAction()
 
   const {
     register,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty: isFormDirty },
   } = form
 
   const { parties } = useParties(businessId)
   const tagsDraft = useEntityTagsDraft('cheque', id)
+  const isDirty = isFormDirty || tagsDraft.isDirty
+  const guard = useUnsavedChangesGuard(isDirty)
+  useEffect(() => {
+    leaveRef.current = guard.leave
+  }, [guard.leave])
+
+  const { data: hasNumberConflict } = useChequeNumberConflict(
+    businessId,
+    watch('account_id'),
+    watch('cheque_number') ?? '',
+    id,
+  )
+  const numberConflictWarning = (
+    <p
+      data-testid="cheque-number-conflict"
+      className={cn(
+        'text-xs text-amber-600 ml-1 min-h-4',
+        !hasNumberConflict && 'invisible',
+      )}
+    >
+      {hasNumberConflict ? tDrafts('duplicateNumber') : '\u00A0'}
+    </p>
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (isSubmitting || isSaving || isUploading) return
+    if (!isDirty || isSubmitting || isSaving || isUploading) return
     setIsSubmitting(true)
     try {
       if (
@@ -160,10 +188,130 @@ export default function EditChequePage() {
   const isBusy = isUploading || isSaving || isSubmitting
 
   return (
-    <div className="max-w-2xl space-y-8 pb-20">
-      <form onSubmit={handleSubmit} className="space-y-10">
+    <div className="max-w-2xl space-y-8 pb-6">
+      <form
+        id="cheque-edit-form"
+        onSubmit={handleSubmit}
+        className="space-y-10"
+      >
         <FormSection title={t('scanDetails')} icon={Camera}>
           <div className="space-y-2">
+            <Label
+              required
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            >
+              {t('type')}
+            </Label>
+            <PremiumTabs
+              featureByValue={{ Inward: 'inward-tracking' }}
+              exemptValues={cheque?.type === 'Inward' ? ['Inward'] : []}
+              value={watch('type')}
+              onValueChange={(value) => {
+                setField('type', value as string)
+              }}
+            >
+              <TabsList className="h-14 w-full rounded-lg bg-canvas-parchment p-1">
+                <TabsTrigger
+                  value="Outward"
+                  data-testid="cheque-type-outward"
+                  className="h-full flex-1 gap-2 rounded-md text-xs font-semibold uppercase tracking-wider data-active:bg-primary data-active:text-white"
+                >
+                  <HugeiconsIcon icon={ArrowUpRight} className="h-4 w-4" />
+                  {t('issued')}
+                </TabsTrigger>
+                <PremiumTab
+                  feature="inward-tracking"
+                  value="Inward"
+                  data-testid="cheque-type-inward"
+                  className="h-full flex-1 gap-2 rounded-md text-xs font-semibold uppercase tracking-wider data-active:bg-green-500 data-active:text-white"
+                >
+                  <HugeiconsIcon icon={ArrowDownLeft} className="h-4 w-4" />
+                  {t('received')}
+                </PremiumTab>
+              </TabsList>
+            </PremiumTabs>
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              required
+              htmlFor="amount"
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            >
+              {t('amount')}
+            </Label>
+            <CurrencyPrefixInput
+              currency={currency}
+              id="amount"
+              data-testid="cheque-amount-input"
+              type="number"
+              min={0}
+              step="any"
+              {...register('amount', { valueAsNumber: true })}
+              className="h-12 font-semibold rounded-sm"
+            />
+            <p
+              data-testid="cheque-amount-words"
+              className="ml-1 text-[10px] text-muted-foreground uppercase tracking-widest"
+            >
+              {numberToIndianWords(watch('amount') || 0, currency, locale)}
+            </p>
+            <p
+              className={cn(
+                'text-xs text-destructive ml-1 min-h-4',
+                !errors.amount && 'invisible',
+              )}
+            >
+              {validationMessage(errors.amount?.message) || '\u00A0'}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              required
+              htmlFor="cheque_number"
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            >
+              {t('chequeNumber')}
+            </Label>
+            <Controller
+              control={form.control}
+              name="cheque_number"
+              render={({ field }) => (
+                <DigitSlotsInput
+                  ref={field.ref}
+                  id="cheque_number"
+                  data-testid="cheque-number-input"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  invalid={!!errors.cheque_number}
+                />
+              )}
+            />
+            <p
+              className={cn(
+                'text-xs text-destructive ml-1 min-h-4',
+                !errors.cheque_number && 'invisible',
+              )}
+            >
+              {validationMessage(errors.cheque_number?.message) || '\u00A0'}
+            </p>
+            {numberConflictWarning}
+            {cheque?.cheque_number_legacy && (
+              <p
+                role="status"
+                data-testid="legacy-cheque-number"
+                className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm"
+              >
+                {t('legacyChequeNumberHint', {
+                  number: cheque.cheque_number ?? '',
+                })}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2" data-testid="cheque-photo-field">
             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
               {t('photo')}
             </Label>
@@ -228,115 +376,6 @@ export default function EditChequePage() {
               )}
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label
-              required
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
-            >
-              {t('type')}
-            </Label>
-            <PremiumTabs
-              featureByValue={{ Inward: 'inward-tracking' }}
-              exemptValues={cheque?.type === 'Inward' ? ['Inward'] : []}
-              value={watch('type')}
-              onValueChange={(value) => {
-                setField('type', value as string)
-              }}
-            >
-              <TabsList className="h-14 w-full rounded-lg bg-canvas-parchment p-1">
-                <TabsTrigger
-                  value="Outward"
-                  className="h-full flex-1 gap-2 rounded-md text-xs font-semibold uppercase tracking-wider data-active:bg-primary data-active:text-white"
-                >
-                  <HugeiconsIcon icon={ArrowUpRight} className="h-4 w-4" />
-                  {t('issued')}
-                </TabsTrigger>
-                <PremiumTab
-                  feature="inward-tracking"
-                  value="Inward"
-                  className="h-full flex-1 gap-2 rounded-md text-xs font-semibold uppercase tracking-wider data-active:bg-green-500 data-active:text-white"
-                >
-                  <HugeiconsIcon icon={ArrowDownLeft} className="h-4 w-4" />
-                  {t('received')}
-                </PremiumTab>
-              </TabsList>
-            </PremiumTabs>
-          </div>
-
-          <div className="space-y-2">
-            <Label
-              required
-              htmlFor="amount"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
-            >
-              {t('amount')}
-            </Label>
-            <CurrencyPrefixInput
-              currency={currency}
-              id="amount"
-              type="number"
-              min={0}
-              step="any"
-              {...register('amount', { valueAsNumber: true })}
-              className="h-12 font-semibold rounded-sm"
-            />
-            <p className="ml-1 text-[10px] text-muted-foreground uppercase tracking-widest">
-              {numberToIndianWords(watch('amount') || 0, currency, locale)}
-            </p>
-            <p
-              className={cn(
-                'text-xs text-destructive ml-1 min-h-4',
-                !errors.amount && 'invisible',
-              )}
-            >
-              {validationMessage(errors.amount?.message) || '\u00A0'}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label
-              required
-              htmlFor="cheque_number"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
-            >
-              {t('chequeNumber')}
-            </Label>
-            <Controller
-              control={form.control}
-              name="cheque_number"
-              render={({ field }) => (
-                <DigitSlotsInput
-                  ref={field.ref}
-                  id="cheque_number"
-                  data-testid="cheque-number-input"
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  invalid={!!errors.cheque_number}
-                />
-              )}
-            />
-            <p
-              className={cn(
-                'text-xs text-destructive ml-1 min-h-4',
-                !errors.cheque_number && 'invisible',
-              )}
-            >
-              {validationMessage(errors.cheque_number?.message) || '\u00A0'}
-            </p>
-            {cheque?.cheque_number_legacy && (
-              <p
-                role="status"
-                data-testid="legacy-cheque-number"
-                className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm"
-              >
-                {t('legacyChequeNumberHint', {
-                  number: cheque.cheque_number ?? '',
-                })}
-              </p>
-            )}
-          </div>
         </FormSection>
 
         <FormSection title={t('entities')} icon={User}>
@@ -386,6 +425,7 @@ export default function EditChequePage() {
             >
               {validationMessage(errors.account_id?.message) || '\u00A0'}
             </p>
+            {numberConflictWarning}
           </div>
         </FormSection>
 
@@ -401,6 +441,7 @@ export default function EditChequePage() {
             <DateInput
               leftIcon={Calendar}
               id="cheque_date"
+              data-testid="cheque-date-input"
               type="date"
               {...register('cheque_date')}
               value={watch('cheque_date') || ''}
@@ -444,6 +485,14 @@ export default function EditChequePage() {
                 </>
               )}
             />
+            <p
+              className={cn(
+                'text-xs text-destructive ml-1 min-h-4',
+                !errors.deposit_date && 'invisible',
+              )}
+            >
+              {validationMessage(errors.deposit_date?.message) || '\u00A0'}
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -474,40 +523,36 @@ export default function EditChequePage() {
             />
           </div>
         </FormSection>
-
-        <div className="pt-4 flex flex-col gap-3">
-          <Button
-            type="submit"
-            className="w-full rounded-full h-14 text-lg"
-            disabled={isBusy}
-            loading={isSaving || isSubmitting}
-            data-testid="cheque-edit-submit-button"
-          >
-            {t('updateAction')}{' '}
-            <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
-          </Button>
-
-          <DeleteConfirmationDialog
-            title={t('deleteConfirmTitle')}
-            description={t('deleteConfirmDesc')}
-            confirmName={cheque?.cheque_number || 'Cheque'}
-            onDelete={async () => {
-              onDelete()
-            }}
-            trigger={
-              <Button
-                type="button"
-                variant="ghost"
-                data-testid="cheque-edit-delete-trigger"
-                className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
-              >
-                <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
-                {t('deleteAction')}
-              </Button>
-            }
-          />
-        </div>
       </form>
+
+      <DeleteConfirmationDialog
+        title={t('deleteConfirmTitle')}
+        description={t('deleteConfirmDesc')}
+        confirmName={cheque?.cheque_number || 'Cheque'}
+        onDelete={async () => {
+          guard.bypass(onDelete)
+        }}
+        trigger={
+          <Button
+            type="button"
+            variant="ghost"
+            data-testid="cheque-edit-delete-trigger"
+            className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
+            {t('deleteAction')}
+          </Button>
+        }
+      />
+
+      <EditSaveBar
+        formId="cheque-edit-form"
+        label={t('updateAction')}
+        isDirty={isDirty}
+        isSaving={isBusy}
+        testId="cheque-edit-submit-button"
+      />
+      <UnsavedChangesDialog {...guard.dialogProps} />
     </div>
   )
 }
