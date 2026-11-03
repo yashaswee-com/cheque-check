@@ -148,6 +148,7 @@ function useChequeForm(options?: {
 vi.mock('next/navigation', () => ({
   useParams: () => ({ id: 'cheque' }),
   useSearchParams: () => query,
+  usePathname: () => '/cheques',
   useRouter: () => ({ push: mocks.push, replace: mocks.replace }),
 }))
 vi.mock('next/dynamic', () => ({

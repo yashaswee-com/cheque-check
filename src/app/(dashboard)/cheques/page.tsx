@@ -3,7 +3,8 @@
 import { useChequeList } from '@/features/cheques/hooks/use-cheque-list'
 import { Button } from '@/components/ui/button'
 import { ChequeCard } from '@/components/cheque-card'
-import { ChequeFilterBar } from '@/features/cheques/components/cheque-filter-bar'
+import { ChequeListFilterControls } from '@/features/cheques/components/cheque-list-filter-controls'
+import { useChequeListFilterState } from '@/features/cheques/hooks/use-cheque-list-filter-state'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Invoice01Icon as ReceiptText } from '@hugeicons/core-free-icons'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
@@ -18,80 +19,44 @@ import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { NativeTools } from '@/features/premium-workspace/components/native-tools'
 import type { ChequeFilters } from '@/features/premium-workspace/types'
 import { Suspense, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { chequeDateFilterSchema } from '@/validators'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
-import { AdvancedChequeFilters } from '@/features/cheques/components/advanced-cheque-filters'
-import {
-  CHEQUE_FILTER_PARAMS,
-  parseChequeListUrl,
-} from '@/validators/cheque-list-filters'
 
 function ChequesContent() {
   const display = useDisplayFormat()
   const t = useTranslations('Cheques')
   const tc = useTranslations('SharedUI')
   const searchParams = useSearchParams()
-  const router = useRouter()
+  const filterState = useChequeListFilterState()
   const requestedDate = searchParams.get('date')
   const parsedDate = chequeDateFilterSchema.safeParse(requestedDate)
   const date = parsedDate.success ? parsedDate.data : null
   const invalidDate = requestedDate !== null && !parsedDate.success
-  const url = parseChequeListUrl(new URLSearchParams(searchParams.toString()))
-  const [invalidDateInputs, setInvalidDateInputs] = useState<
-    Record<string, boolean>
-  >({})
-  const [filterReset, setFilterReset] = useState(0)
-  const invalidFilters =
-    !url.success || Object.values(invalidDateInputs).some(Boolean)
+  const invalidFilters = filterState.invalidFilters
   const { activeBusiness } = useBusiness()
   const businessId = activeBusiness?.id
   const [nativeFilters, setNativeFilters] = useState<ChequeFilters>({})
-  const filters = { ...nativeFilters, ...(url.success ? url.filters : {}) }
-  const replaceParams = (params: URLSearchParams) => {
-    router.replace(`/cheques${params.size ? `?${params}` : ''}`, {
-      scroll: false,
-    })
-  }
-  const changeParam = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    if ((key === 'from' || key === 'to') && params.has('date')) {
-      const linked = params.get('date')!
-      params.set('from', linked)
-      params.set('to', linked)
-      params.delete('date')
-    }
-    if (value) params.set(key, value)
-    else params.delete(key)
-    replaceParams(params)
-  }
+  const filters = { ...nativeFilters, ...filterState.filters }
 
+  const list = useChequeList(
+    invalidFilters ? undefined : businessId,
+    filters,
+    filterState.controls,
+  )
   const {
     cheques,
     activeCount,
     isLoading,
     error,
-    search,
     setSearch,
-    filter,
     setFilter,
-    sortBy,
-    setSortBy,
-    sortOrder,
-    setSortOrder,
     updateStatus,
     pageIndex,
     hasNextPage,
     nextPage,
     previousPage,
-  } = useChequeList(invalidFilters ? undefined : businessId, filters, {
-    search: searchParams.get('q') ?? '',
-    setSearch: (value) => changeParam('q', value),
-    sortBy: url.success ? url.sort : 'date',
-    setSortBy: (value) => changeParam('sort', value),
-    sortOrder: url.success ? url.order : 'desc',
-    setSortOrder: (value) => changeParam('order', value),
-  })
+  } = list
   const tagMap = useEntityTagMap(
     businessId,
     'cheque',
@@ -106,51 +71,25 @@ function ChequesContent() {
     if (requestedDate !== null) {
       const params = new URLSearchParams(searchParams.toString())
       params.delete('date')
-      router.replace(`/cheques${params.size ? `?${params}` : ''}`, {
-        scroll: false,
-      })
+      filterState.replaceParams(params)
     }
   }
   const clearFilters = () => {
     setSearch('')
     setFilter('All')
     setNativeFilters({})
-    setInvalidDateInputs({})
-    setFilterReset((previous) => previous + 1)
-    const params = new URLSearchParams(searchParams.toString())
-    CHEQUE_FILTER_PARAMS.forEach((key) => params.delete(key))
-    replaceParams(params)
+    filterState.resetFilters()
   }
   const visibleCheques = cheques
 
   return (
     <div className="max-w-2xl space-y-8 pb-24">
-      <ChequeFilterBar
-        search={search}
-        setSearch={setSearch}
-        filter={filter}
-        setFilter={setFilter}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
+      <ChequeListFilterControls
+        state={filterState}
+        list={list}
+        businessId={businessId}
+        onClear={clearFilters}
         hasAdvancedFilters={Object.keys(filters).length > 0}
-        advancedFilters={
-          <AdvancedChequeFilters
-            key={filterReset}
-            businessId={businessId}
-            params={new URLSearchParams(searchParams.toString())}
-            onChange={changeParam}
-            onClear={clearFilters}
-            onValidityChange={(key, valid) =>
-              setInvalidDateInputs((previous) =>
-                previous[key] === !valid
-                  ? previous
-                  : { ...previous, [key]: !valid },
-              )
-            }
-          />
-        }
       />
       {invalidFilters && !invalidDate && (
         <p role="alert">{t('invalidFilters')}</p>
