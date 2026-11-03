@@ -848,6 +848,7 @@
     "unknownError": "An error occurred"
   },
   "Onboarding": {
+    "fieldRequired": "This field is required",
     "step": "Step {step} of {total}",
     "getStarted": "Get Started",
     "welcome": "Welcome to ChequeCheck",

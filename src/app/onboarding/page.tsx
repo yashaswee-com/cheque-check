@@ -45,6 +45,8 @@ import {
 } from '@/components/reui/stepper'
 import { useTranslations } from 'next-intl'
 import { EditableAvatar } from '@/components/ui/editable-avatar'
+import { EntityAvatar } from '@/components/ui/entity-avatar'
+import { InfoPopover } from '@/components/ui/info-popover'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { businessSchema } from '@/validators'
 import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
@@ -121,6 +123,54 @@ export default function OnboardingPage() {
   const isBusinessPhoneValid = businessSchema.shape.phone.safeParse(
     formData.businessPhone,
   ).success
+  const arePreferencesComplete = [
+    formData.currency,
+    formData.language,
+    formData.dateFormat,
+    formData.timeFormat,
+    formData.timeZone,
+  ].every(Boolean)
+  const canAdvance =
+    (step === 1 && Boolean(formData.businessName.trim())) ||
+    (step === 2 && arePreferencesComplete) ||
+    (step === 3 && isBusinessPhoneValid)
+  const preferenceFields: Array<{
+    id: string
+    key: 'currency' | 'language' | 'dateFormat' | 'timeFormat' | 'timeZone'
+    label: string
+    options: Array<{ value: string; label: string }>
+  }> = [
+    {
+      id: 'currency',
+      key: 'currency',
+      label: t('currency'),
+      options: CURRENCY_OPTIONS,
+    },
+    {
+      id: 'language',
+      key: 'language',
+      label: t('language'),
+      options: LANGUAGE_OPTIONS,
+    },
+    {
+      id: 'date-format',
+      key: 'dateFormat',
+      label: t('dateFormat'),
+      options: DATE_FORMAT_OPTIONS,
+    },
+    {
+      id: 'time-format',
+      key: 'timeFormat',
+      label: t('timeFormat'),
+      options: timeFormatOptions,
+    },
+    {
+      id: 'time-zone',
+      key: 'timeZone',
+      label: t('timeZone'),
+      options: TIMEZONE_OPTIONS,
+    },
+  ]
 
   const handleFinish = async () => {
     setIsSubmitting(true)
@@ -168,27 +218,8 @@ export default function OnboardingPage() {
     <div className="min-h-full bg-background dark:bg-black selection:bg-primary/10 transition-colors duration-500">
       <div className="mx-auto max-w-2xl px-6 py-12 md:py-24 space-y-12">
         {/* Header */}
-        <div className="relative flex items-center justify-center min-h-[64px]">
-          <AnimatePresence mode="wait">
-            {step > 1 && step < 5 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="absolute left-0"
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={prevStep}
-                  className="rounded-full h-12 w-12 hover:bg-canvas-parchment"
-                >
-                  <HugeiconsIcon icon={ArrowLeft} className="h-6 w-6" />
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div className="text-center">
+        <div className="flex items-center justify-center min-h-[64px]">
+          <div className="text-center" data-testid="onboarding-heading">
             {step < 5 ? (
               <h1 className="text-display-md md:text-display-lg font-semibold tracking-tight text-ink dark:text-white flex items-center justify-center gap-3">
                 {step === 1 && (
@@ -199,13 +230,13 @@ export default function OnboardingPage() {
                 )}
                 {step === 2 && (
                   <HugeiconsIcon
-                    icon={Building2}
+                    icon={Settings2}
                     className="h-8 w-8 text-primary"
                   />
                 )}
                 {step === 3 && (
                   <HugeiconsIcon
-                    icon={Settings2}
+                    icon={Building2}
                     className="h-8 w-8 text-primary"
                   />
                 )}
@@ -214,8 +245,8 @@ export default function OnboardingPage() {
                 )}
                 <span>
                   {step === 1 && t('welcome')}
-                  {step === 2 && t('businessDetails')}
-                  {step === 3 && t('personalizeExperience')}
+                  {step === 2 && t('personalizeExperience')}
+                  {step === 3 && t('businessDetails')}
                   {step === 4 && t('notifications')}
                 </span>
               </h1>
@@ -255,12 +286,12 @@ export default function OnboardingPage() {
                     icon: <HugeiconsIcon icon={Wallet} className="size-4" />,
                   },
                   {
-                    title: tc('businesses'),
-                    icon: <HugeiconsIcon icon={Building2} className="size-4" />,
+                    title: t('personalizeExperience'),
+                    icon: <HugeiconsIcon icon={Settings2} className="size-4" />,
                   },
                   {
-                    title: tc('activeNow'),
-                    icon: <HugeiconsIcon icon={Settings2} className="size-4" />,
+                    title: t('businessDetails'),
+                    icon: <HugeiconsIcon icon={Building2} className="size-4" />,
                   },
                   {
                     title: t('notifications'),
@@ -288,7 +319,8 @@ export default function OnboardingPage() {
                 variant="ghost"
                 size="icon"
                 onClick={nextStep}
-                disabled={step === 4 || (step === 1 && !formData.businessName)}
+                disabled={!canAdvance}
+                data-testid="onboarding-next-button"
                 className="rounded-full h-8 w-8 shrink-0 hover:bg-canvas-parchment"
               >
                 <HugeiconsIcon icon={ArrowRight} className="h-4 w-4" />
@@ -309,8 +341,35 @@ export default function OnboardingPage() {
                 className="space-y-8"
               >
                 <div className="space-y-6">
+                  <div className="flex flex-col items-center gap-3 py-2">
+                    <EditableAvatar
+                      name={formData.businessName}
+                      color={formData.businessColor}
+                      imageUrl={formData.businessLogoUrl}
+                      onUpload={async (url) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          businessLogoUrl: url,
+                        }))
+                      }
+                      onDelete={async () =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          businessLogoUrl: null,
+                        }))
+                      }
+                      size="xl"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t('businessLogo')}
+                    </p>
+                  </div>
                   <div className="space-y-3">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
+                    <Label
+                      htmlFor="onboarding-business-name"
+                      required
+                      className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1"
+                    >
                       {t('businessName')}
                     </Label>
                     <div className="relative group">
@@ -319,6 +378,7 @@ export default function OnboardingPage() {
                         className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary"
                       />
                       <Input
+                        id="onboarding-business-name"
                         leftIcon={TextIcon}
                         data-testid="onboarding-business-name-input"
                         placeholder={t('businessNamePlaceholder')}
@@ -343,6 +403,8 @@ export default function OnboardingPage() {
                         <button
                           key={c}
                           type="button"
+                          aria-label={c}
+                          aria-pressed={formData.businessColor === c}
                           onClick={() =>
                             setFormData({ ...formData, businessColor: c })
                           }
@@ -363,7 +425,7 @@ export default function OnboardingPage() {
                   className="w-full rounded-pill h-14 text-lg font-medium active:scale-95 transition-transform"
                   data-testid="onboarding-step1-continue"
                   onClick={nextStep}
-                  disabled={!formData.businessName}
+                  disabled={!formData.businessName.trim()}
                 >
                   {t('getStarted')}{' '}
                   <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
@@ -374,6 +436,59 @@ export default function OnboardingPage() {
             {step === 2 && (
               <motion.div
                 key="step2"
+                variants={containerVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="space-y-6"
+              >
+                <div
+                  className="grid min-w-0 grid-cols-1 gap-6"
+                  data-testid="onboarding-preferences"
+                >
+                  {preferenceFields.map((field) => (
+                    <div key={field.id} className="min-w-0 space-y-2">
+                      <Label
+                        htmlFor={`onboarding-${field.id}`}
+                        required
+                        className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1"
+                      >
+                        {field.label}
+                      </Label>
+                      <Combobox
+                        id={`onboarding-${field.id}`}
+                        testId={`onboarding-${field.id}`}
+                        options={field.options}
+                        value={formData[field.key]}
+                        onValueChange={(v) =>
+                          setFormData((prev) => ({ ...prev, [field.key]: v }))
+                        }
+                        className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
+                      />
+                      {!formData[field.key] && (
+                        <p className="text-xs text-destructive ml-1">
+                          {t('fieldRequired')}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  className="w-full rounded-pill h-14 text-lg font-medium active:scale-95 transition-transform"
+                  data-testid="onboarding-step2-continue"
+                  onClick={nextStep}
+                  disabled={!arePreferencesComplete}
+                >
+                  {t('looksGood')}{' '}
+                  <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
+                </Button>
+              </motion.div>
+            )}
+
+            {step === 3 && (
+              <motion.div
+                key="step3"
                 variants={containerVariants}
                 initial="initial"
                 animate="animate"
@@ -453,103 +568,11 @@ export default function OnboardingPage() {
 
                 <Button
                   className="w-full rounded-pill h-14 text-lg font-medium active:scale-95 transition-transform"
-                  data-testid="onboarding-step2-continue"
+                  data-testid="onboarding-step3-continue"
                   onClick={nextStep}
                   disabled={!isBusinessPhoneValid}
                 >
                   {tc('continue')}{' '}
-                  <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-                </Button>
-              </motion.div>
-            )}
-
-            {step === 3 && (
-              <motion.div
-                key="step3"
-                variants={containerVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                className="space-y-6"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                      {t('currency')}
-                    </Label>
-                    <Combobox
-                      options={CURRENCY_OPTIONS}
-                      value={formData.currency}
-                      onValueChange={(v) =>
-                        setFormData({ ...formData, currency: v })
-                      }
-                      className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                      {t('language')}
-                    </Label>
-                    <Combobox
-                      options={LANGUAGE_OPTIONS}
-                      value={formData.language}
-                      onValueChange={(v) =>
-                        setFormData({ ...formData, language: v })
-                      }
-                      className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                    {t('dateFormat')}
-                  </Label>
-                  <Combobox
-                    options={DATE_FORMAT_OPTIONS}
-                    value={formData.dateFormat}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, dateFormat: v })
-                    }
-                    className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                      {t('timeFormat')}
-                    </Label>
-                    <Combobox
-                      options={timeFormatOptions}
-                      value={formData.timeFormat}
-                      onValueChange={(v) =>
-                        setFormData({ ...formData, timeFormat: v })
-                      }
-                      className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                      {t('timeZone')}
-                    </Label>
-                    <Combobox
-                      options={TIMEZONE_OPTIONS}
-                      value={formData.timeZone}
-                      onValueChange={(v) =>
-                        setFormData({ ...formData, timeZone: v })
-                      }
-                      className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  className="w-full rounded-pill h-14 text-lg font-medium active:scale-95 transition-transform"
-                  data-testid="onboarding-step3-continue"
-                  onClick={nextStep}
-                >
-                  {t('looksGood')}{' '}
                   <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -565,74 +588,57 @@ export default function OnboardingPage() {
                 className="space-y-8"
               >
                 <div className="space-y-6">
-                  <div className="flex flex-col items-center gap-3 py-2">
-                    <EditableAvatar
-                      name={formData.businessName}
-                      color={formData.businessColor}
-                      imageUrl={formData.businessLogoUrl}
-                      onUpload={async (url) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          businessLogoUrl: url,
-                        }))
-                      }
-                      onDelete={async () =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          businessLogoUrl: null,
-                        }))
-                      }
-                      size="xl"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {t('businessLogo')}
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                      {t('dailyFrequency')}
-                    </Label>
+                  <div className="min-w-0 space-y-2">
+                    <div className="flex items-center gap-1">
+                      <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
+                        {t('dailyFrequency')}
+                      </Label>
+                      <InfoPopover title={t('dailyFrequency')}>
+                        {t('dailyFrequencyHelp')}
+                      </InfoPopover>
+                    </div>
                     <Combobox
                       options={REMINDERS_PER_DAY_OPTIONS}
                       value={formData.remindersPerDay}
+                      allowDeselect={false}
                       onValueChange={(v) =>
                         setFormData({ ...formData, remindersPerDay: v })
                       }
                       className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
                     />
-                    <p className="text-[11px] text-muted-foreground px-1">
-                      {t('dailyFrequencyHelp')}
-                    </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                      {t('advancedWarning')}
-                    </Label>
+                  <div className="min-w-0 space-y-2">
+                    <div className="flex items-center gap-1">
+                      <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
+                        {t('advancedWarning')}
+                      </Label>
+                      <InfoPopover title={t('advancedWarning')}>
+                        {t('advancedWarningHelp')}
+                      </InfoPopover>
+                    </div>
                     <Combobox
                       options={REMINDER_FREQUENCY_OPTIONS}
                       value={formData.defaultReminderDays}
+                      allowDeselect={false}
                       onValueChange={(v) =>
                         setFormData({ ...formData, defaultReminderDays: v })
                       }
                       className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
                     />
-                    <p className="text-[11px] text-muted-foreground px-1">
-                      {t('advancedWarningHelp')}
-                    </p>
                   </div>
                 </div>
 
                 <div className="p-6 rounded-lg bg-primary/5 dark:bg-primary/10 border border-primary/10 space-y-4">
                   <div className="flex items-center gap-4">
-                    <div
-                      className="h-12 w-12 rounded-full flex items-center justify-center text-white text-xl font-bold"
-                      style={{ backgroundColor: formData.businessColor }}
-                    >
-                      {formData.businessName.charAt(0)}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-ink dark:text-white">
+                    <EntityAvatar
+                      name={formData.businessName}
+                      color={formData.businessColor}
+                      imageUrl={formData.businessLogoUrl}
+                      size="lg"
+                    />
+                    <div className="min-w-0">
+                      <h3 className="truncate font-semibold text-ink dark:text-white">
                         {formData.businessName}
                       </h3>
                       <p className="text-sm text-muted-foreground">

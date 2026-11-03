@@ -169,11 +169,11 @@ describe('onboarding page', () => {
       target: { value: 'Acme' },
     })
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
+    fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
     fireEvent.change(
       screen.getByPlaceholderText(messages.Onboarding.businessPhonePlaceholder),
       { target: { value: '+919876543210' } },
     )
-    fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
     fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
   }
   it('requires a business name and valid optional phone, while preserving values on back navigation', () => {
@@ -183,17 +183,20 @@ describe('onboarding page', () => {
       target: { value: 'Acme' },
     })
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
+    fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
     fireEvent.change(
       screen.getByPlaceholderText(messages.Onboarding.businessPhonePlaceholder),
       { target: { value: '123' } },
     )
-    expect(screen.getByTestId('onboarding-step2-continue')).toBeDisabled()
+    expect(screen.getByTestId('onboarding-step3-continue')).toBeDisabled()
+    expect(screen.getByTestId('onboarding-next-button')).toBeDisabled()
     expect(screen.getByText(messages.Common.invalidPhone)).toBeVisible()
     fireEvent.change(
       screen.getByPlaceholderText(messages.Onboarding.businessPhonePlaceholder),
       { target: { value: '+919876543210' } },
     )
-    expect(screen.getByTestId('onboarding-step2-continue')).toBeEnabled()
+    expect(screen.getByTestId('onboarding-step3-continue')).toBeEnabled()
+    fireEvent.click(screen.getByTestId('onboarding-back-button'))
     fireEvent.click(screen.getByTestId('onboarding-back-button'))
     expect(screen.getByTestId('onboarding-business-name-input')).toHaveValue(
       'Acme',
@@ -207,7 +210,16 @@ describe('onboarding page', () => {
     fireEvent.click(
       document.querySelector('button[style*="background-color"]')!,
     )
+    fireEvent.click(screen.getByRole('button', { name: 'Upload logo' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove logo' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Upload logo' }))
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
+    const preferences = screen.getAllByRole('combobox')
+    preferences.forEach((select) => {
+      const option = (select as HTMLSelectElement).options[1]
+      if (option) fireEvent.change(select, { target: { value: option.value } })
+    })
+    fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
     fireEvent.change(
       screen.getByPlaceholderText(messages.Onboarding.businessEmailPlaceholder),
       { target: { value: 'acme@example.test' } },
@@ -220,16 +232,7 @@ describe('onboarding page', () => {
       screen.getByPlaceholderText(messages.Onboarding.headquartersPlaceholder),
       { target: { value: 'Warehouse Road' } },
     )
-    fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
-    const preferences = screen.getAllByRole('combobox')
-    preferences.forEach((select) => {
-      const option = (select as HTMLSelectElement).options[1]
-      if (option) fireEvent.change(select, { target: { value: option.value } })
-    })
     fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
-    fireEvent.click(screen.getByRole('button', { name: 'Upload logo' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Remove logo' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Upload logo' }))
     const reminders = screen.getAllByRole('combobox')
     fireEvent.change(reminders[0], { target: { value: '2' } })
     fireEvent.change(reminders[1], { target: { value: '7' } })
@@ -336,17 +339,69 @@ describe('onboarding page', () => {
       target: { value: 'Acme' },
     })
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
-    fireEvent.change(
-      screen.getByPlaceholderText(messages.Onboarding.businessPhonePlaceholder),
-      { target: { value: '+919876543210' } },
-    )
-    fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
     const preferences = screen.getAllByRole('combobox')
     expect(preferences[0]).toHaveValue('₹')
     expect(preferences[1]).toHaveValue('en')
     expect(preferences[2]).toHaveValue('dd/MM/yyyy')
     expect(preferences[3]).toHaveValue('12h')
     expect(preferences[4]).toHaveValue('Asia/Kolkata')
+  })
+
+  it('orders logo, preferences, contact and notification steps without a heading back control', () => {
+    renderPage(<OnboardingPage />)
+    const heading = screen.getByTestId('onboarding-heading')
+    expect(heading).toHaveTextContent(messages.Onboarding.welcome)
+    expect(screen.getByRole('button', { name: 'Upload logo' })).toBeVisible()
+    fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
+      target: { value: 'Acme' },
+    })
+    fireEvent.click(screen.getByTestId('onboarding-next-button'))
+    expect(heading).toHaveTextContent(messages.Onboarding.personalizeExperience)
+    expect(heading.querySelector('button')).toBeNull()
+    fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
+    expect(heading).toHaveTextContent(messages.Onboarding.businessDetails)
+    fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
+    expect(heading).toHaveTextContent(messages.Onboarding.notifications)
+    expect(screen.getByTestId('onboarding-next-button')).toBeDisabled()
+  })
+
+  it('marks all five personalization selectors required and blocks progress when any is cleared', () => {
+    renderPage(<OnboardingPage />)
+    fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
+      target: { value: 'Acme' },
+    })
+    fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
+    const ids = [
+      'currency',
+      'language',
+      'date-format',
+      'time-format',
+      'time-zone',
+    ]
+    for (const id of ids) {
+      const label = document.querySelector(`label[for="onboarding-${id}"]`)
+      expect(label?.querySelector('.text-destructive')).toHaveTextContent('*')
+      expect(label?.parentElement).toHaveClass('min-w-0')
+    }
+    expect(screen.getByTestId('onboarding-preferences')).toHaveClass(
+      'grid-cols-1',
+    )
+    expect(screen.getByTestId('onboarding-preferences')).not.toHaveClass(
+      'md:grid-cols-2',
+    )
+    for (const id of ids) {
+      const select = screen.getByTestId(`onboarding-${id}`) as HTMLSelectElement
+      const original = select.value
+      const blank = document.createElement('option')
+      blank.value = ''
+      select.prepend(blank)
+      fireEvent.change(select, { target: { value: '' } })
+      expect(screen.getByTestId('onboarding-step2-continue')).toBeDisabled()
+      expect(screen.getByTestId('onboarding-next-button')).toBeDisabled()
+      expect(screen.getByText(messages.Onboarding.fieldRequired)).toBeVisible()
+      fireEvent.change(select, { target: { value: original } })
+      expect(screen.getByTestId('onboarding-step2-continue')).toBeEnabled()
+    }
   })
 })
 

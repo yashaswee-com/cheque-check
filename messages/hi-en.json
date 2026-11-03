@@ -848,6 +848,7 @@
     "unknownError": "Ek error aayi hai"
   },
   "Onboarding": {
+    "fieldRequired": "Yeh field zaroori hai",
     "step": "Step {step} of {total}",
     "getStarted": "Get Started karein",
     "welcome": "ChequeCheck par swagat hai",

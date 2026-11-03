@@ -624,6 +624,7 @@
     "signOut": "साइन आउट"
   },
   "Onboarding": {
+    "fieldRequired": "यह फ़ील्ड आवश्यक है",
     "step": "चरण {step}/{total}",
     "getStarted": "शुरू करें",
     "welcome": "ChequeCheck में आपका स्वागत है",
