@@ -41,3 +41,47 @@ it('previews name and color edits and submits only trimmed valid values when idl
   expect(submit).toHaveBeenCalledOnce()
   expect(screen.getByRole('link', { name: 'Help' })).toBeInTheDocument()
 })
+
+it('supports an external save control that only submits real changes', () => {
+  const submit = vi.fn()
+  const onStateChange = vi.fn()
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <TagForm
+        formId="external-tag-form"
+        hideSubmit
+        onStateChange={onStateChange}
+        defaultValues={{ name: 'Urgent', color: TAG_COLORS[0].value }}
+        submitLabel="Save tag"
+        isSaving={false}
+        onSubmit={submit}
+      />
+    </NextIntlClientProvider>,
+  )
+  const form = document.getElementById('external-tag-form')!
+  expect(screen.queryByTestId('tag-form-submit-button')).not.toBeInTheDocument()
+  expect(onStateChange).toHaveBeenLastCalledWith({
+    isDirty: false,
+    canSubmit: false,
+  })
+  fireEvent.submit(form)
+  expect(submit).not.toHaveBeenCalled()
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '' } })
+  expect(onStateChange).toHaveBeenLastCalledWith({
+    isDirty: true,
+    canSubmit: false,
+  })
+  fireEvent.change(screen.getByRole('textbox'), {
+    target: { value: 'Urgent' },
+  })
+  fireEvent.click(screen.getByRole('radio', { name: TAG_COLORS[1].name }))
+  expect(onStateChange).toHaveBeenLastCalledWith({
+    isDirty: true,
+    canSubmit: true,
+  })
+  fireEvent.submit(form)
+  expect(submit).toHaveBeenCalledExactlyOnceWith({
+    name: 'Urgent',
+    color: TAG_COLORS[1].value,
+  })
+})

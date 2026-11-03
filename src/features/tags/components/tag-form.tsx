@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -24,6 +24,10 @@ interface TagFormProps {
   isSaving: boolean
   onSubmit: (values: TagFormValues) => Promise<void> | void
   children?: React.ReactNode
+  /** Lets an external submit control (e.g. a docked save bar) target this form. */
+  formId?: string
+  hideSubmit?: boolean
+  onStateChange?: (state: { isDirty: boolean; canSubmit: boolean }) => void
 }
 
 export function TagForm({
@@ -32,19 +36,31 @@ export function TagForm({
   isSaving,
   onSubmit,
   children,
+  formId,
+  hideSubmit = false,
+  onStateChange,
 }: TagFormProps) {
   const t = useTranslations('Tags')
   const [name, setName] = useState(defaultValues.name)
   const [color, setColor] = useState(defaultValues.color)
   const trimmedName = name.trim()
+  const isDirty =
+    trimmedName !== defaultValues.name.trim() || color !== defaultValues.color
+  const canSubmit = !!trimmedName && isDirty
+
+  useEffect(() => {
+    onStateChange?.({ isDirty, canSubmit })
+  }, [canSubmit, isDirty, onStateChange])
 
   return (
     <form
+      id={formId}
       className="space-y-10"
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        if (trimmedName && !isSaving)
+        // A docked save bar can also be triggered by Enter, so require a change.
+        if (trimmedName && !isSaving && (!hideSubmit || isDirty))
           void onSubmit({ name: trimmedName, color })
       }}
     >
@@ -98,19 +114,23 @@ export function TagForm({
         </div>
       </FormSection>
 
-      <div className="flex flex-col gap-3 pt-4">
-        <Button
-          type="submit"
-          data-testid="tag-form-submit-button"
-          className="h-14 w-full rounded-full text-lg"
-          disabled={!trimmedName || isSaving}
-          loading={isSaving}
-        >
-          {submitLabel}
-          <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
-        </Button>
-        {children}
-      </div>
+      {(!hideSubmit || children) && (
+        <div className="flex flex-col gap-3 pt-4">
+          {!hideSubmit && (
+            <Button
+              type="submit"
+              data-testid="tag-form-submit-button"
+              className="h-14 w-full rounded-full text-lg"
+              disabled={!trimmedName || isSaving}
+              loading={isSaving}
+            >
+              {submitLabel}
+              <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
+            </Button>
+          )}
+          {children}
+        </div>
+      )}
     </form>
   )
 }
