@@ -367,6 +367,10 @@ describe('dashboard page', () => {
       .closest('.bg-primary')!
     expect(card.querySelector('svg')).toBeNull()
   })
+  it('keeps plan usage off the dashboard', () => {
+    renderPage(<DashboardPage />)
+    expect(screen.queryByTestId('usage-card')).not.toBeInTheDocument()
+  })
   it('shows only available overflow arrows and scrolls the quick actions', () => {
     let onResize!: () => void
     vi.stubGlobal(
@@ -1029,5 +1033,5 @@ vi.mock('@/features/monetization/components/premium-mark', () => ({
   PremiumMark: () => <span data-slot="premium-mark" />,
 }))
 vi.mock('@/features/monetization/components/free-usage-banner', () => ({
-  FreeUsageBanner: () => null,
+  UsageCard: () => <div data-testid="usage-card" />,
 }))

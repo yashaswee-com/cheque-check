@@ -156,7 +156,3 @@ export function UsageCard({ alwaysShow = false }: UsageCardProps) {
     </aside>
   )
 }
-
-export function FreeUsageBanner() {
-  return <UsageCard />
-}

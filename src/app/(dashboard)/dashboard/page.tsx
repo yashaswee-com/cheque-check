@@ -1,7 +1,6 @@
 'use client'
 
 import { PremiumLink } from '@/features/monetization/components/premium-controls'
-import { FreeUsageBanner } from '@/features/monetization/components/free-usage-banner'
 
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -132,7 +131,6 @@ export default function HomePage() {
 
   return (
     <div className="max-w-2xl space-y-8 pb-20 pt-2">
-      <FreeUsageBanner />
       <DataState
         isLoading={isLoading}
         isError={!!error}

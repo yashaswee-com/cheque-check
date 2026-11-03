@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
-import { FreeUsageBanner, UsageCard } from './free-usage-banner'
+import { UsageCard } from './free-usage-banner'
 const mocks = vi.hoisted(() => ({ rpc: vi.fn() }))
 vi.mock('@/lib/supabase/client', () => ({ createClient: () => mocks }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
@@ -30,7 +30,7 @@ beforeEach(() => {
   mocks.rpc.mockImplementation(async () => ({ data: [data], error: null }))
 })
 afterEach(cleanup)
-function mount(ui: React.ReactNode = <FreeUsageBanner />) {
+function mount(ui: React.ReactNode = <UsageCard />) {
   render(
     <QueryClientProvider
       client={
