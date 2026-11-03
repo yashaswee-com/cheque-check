@@ -274,6 +274,7 @@ describe('application shell routes', () => {
     const main = screen.getByRole('main')
     expect(main).toHaveAttribute('data-page-scroll')
     expect(main).toHaveClass('overflow-y-auto', 'min-h-0', 'scroll-fade-y')
+    expect(document.documentElement).toHaveAttribute('data-clipboard-guard')
     expect(main.className).not.toMatch(/pb-\[calc\(6rem/)
     expect(main.nextElementSibling?.nextElementSibling).toHaveTextContent(
       'Bottom nav',

@@ -28,6 +28,7 @@ import { Label } from '@/components/ui/label'
 import { businessService } from '@/features/businesses/services/business.service'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useProfile } from '@/features/profile/hooks/use-profile'
+import { ClipboardGuard } from '@/features/security/components/clipboard-guard'
 import { useTimeFormatOptions } from '@/features/profile/hooks/use-time-format-options'
 import { useQueryClient } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -216,6 +217,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-full bg-background dark:bg-black selection:bg-primary/10 transition-colors duration-500">
+      <ClipboardGuard />
       <div className="mx-auto max-w-2xl px-6 py-12 md:py-24 space-y-12">
         {/* Header */}
         <div className="flex items-center justify-center min-h-[64px]">

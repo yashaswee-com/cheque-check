@@ -292,6 +292,18 @@ html[data-reduce-motion] *::after {
   }
 }
 
+/* Copying app data is blocked; text selection stays available in form fields. */
+html[data-clipboard-guard] body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+html[data-clipboard-guard]
+  :where(input, textarea, [contenteditable]:not([contenteditable='false'])) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* Printing is a capture path; the privacy cover replaces app content. */
 @media print {
   html[data-privacy-cover] body > *:not([data-testid='privacy-cover']) {

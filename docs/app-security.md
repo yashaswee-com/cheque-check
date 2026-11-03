@@ -7,7 +7,7 @@ dimensions, border and corner radius, leaving the blue surround unchanged.
 PrintScreen, and the Meta+Shift prefix of Win+Shift+S and Cmd+Shift+3/4/5,
 briefly cover the view where the browser delivers those keys. Ctrl/Cmd+P is
 blocked, and `beforeprint` plus `@media print` replace printed output with the
-cover. It does not access the clipboard.
+cover. The privacy cover itself never reads the clipboard.
 
 This is **best effort**, not screenshot prevention: operating systems may capture
 before browser events, and screen recording, external cameras and task-switcher
@@ -15,6 +15,16 @@ thumbnails cannot be reliably blocked by a web app. Android and iOS hardware
 screenshot buttons deliver no browser event at all; blocking them requires a
 native wrapper (Android `FLAG_SECURE`, iOS secure text-field layering). The preference text states
 these limits. The cover also runs on public/auth routes; it never replaces Auth.
+
+## Clipboard guard
+
+Inside the signed-in app shell and onboarding, `ClipboardGuard` always blocks
+`copy` and `cut` (including from form fields) and blocks `paste` everywhere
+except editable inputs, textareas and content-editable regions, so OTPs, amounts
+and names can still be pasted. Text selection is disabled outside form fields.
+It is not tied to the privacy cover preference. Like the cover this is best
+effort: browser developer tools, extensions, OCR or screenshots can still
+extract visible data.
 
 ## Account-wide online PIN
 

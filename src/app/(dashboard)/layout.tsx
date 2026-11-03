@@ -5,6 +5,7 @@ import { OnboardingCheck } from '@/components/onboarding-check'
 import { PageTransition } from '@/components/ui/page-transition'
 import { AppFab } from '@/components/app-fab'
 import { PinGate } from '@/features/security/components/pin-gate'
+import { ClipboardGuard } from '@/features/security/components/clipboard-guard'
 
 export default function DashboardLayout({
   children,
@@ -13,6 +14,7 @@ export default function DashboardLayout({
 }) {
   return (
     <OnboardingCheck>
+      <ClipboardGuard />
       <PinGate>
         <div className="flex h-full min-h-0 min-w-0 shrink-0 flex-col">
           <ScrollToTop />
