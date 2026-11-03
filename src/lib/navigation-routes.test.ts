@@ -5,7 +5,7 @@ describe('shell route classification', () => {
   it.each([
     '/dashboard',
     '/cheques',
-    '/cheques/drafts',
+    '/drafts',
     '/cheques/abc',
     '/parties/abc',
     '/accounts/abc',
@@ -54,6 +54,16 @@ describe('shell route classification', () => {
     )
     expect(getShellRoute('/feedback').showBusinessSwitcher).toBe(false)
     expect(getShellRoute('/roadmap').showBusinessSwitcher).toBe(false)
+  })
+  it('keeps the drafts page scoped to the business with a back button', () => {
+    const route = getShellRoute('/drafts?type=cheque')
+    expect(route).toMatchObject({
+      showBottomNav: true,
+      isTopLevel: false,
+      showBusinessSwitcher: true,
+      createHref: null,
+      activeTab: null,
+    })
   })
 })
 

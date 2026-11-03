@@ -24,6 +24,7 @@ import {
   PencilEdit01Icon as Edit,
   Calculator01Icon as CalculatorIcon,
   Tag01Icon as TagIcon,
+  NoteEditIcon as DraftIcon,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
@@ -76,6 +77,7 @@ export function TopNav() {
       return { title: t('Navigation.settings'), icon: Settings }
     if (path === '/notifications')
       return { title: t('Inbox.title'), icon: null }
+    if (path === '/drafts') return { title: t('Drafts.title'), icon: DraftIcon }
     if (path === '/features' || path.startsWith('/features/'))
       return { title: t('Navigation.features'), icon: Star }
     if (path === '/profile') return { title: t('Settings.profile'), icon: User }
@@ -143,17 +145,6 @@ export function TopNav() {
       return {
         title: t(createKeys[resource]),
         icon: createIcons[resource] || Plus,
-      }
-    }
-
-    if (id === 'drafts') {
-      const draftKeys: Record<string, string> = {
-        accounts: 'Drafts.accountDrafts',
-        cheques: 'Drafts.chequeDrafts',
-        parties: 'Drafts.partyDrafts',
-      }
-      if (draftKeys[resource]) {
-        return { title: t(draftKeys[resource]), icon: feature.icon }
       }
     }
 

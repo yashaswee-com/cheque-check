@@ -90,7 +90,7 @@ export function useCreateCheque(
         localDay(new Date(), profile?.time_zone || 'Asia/Kolkata'),
       ),
     onHydrated: (loaded) => setStep(firstIncompleteChequeStep(loaded)),
-    draftsHref: '/cheques/drafts',
+    draftsHref: '/drafts?type=cheque',
   })
 
   useEffect(() => {

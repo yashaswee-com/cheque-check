@@ -81,7 +81,7 @@ function setup(
         toFields: (values) => values,
         toFormValues,
         onHydrated: notifyHydration ? onHydrated : undefined,
-        draftsHref: '/parties/drafts',
+        draftsHref: '/drafts?type=party',
       })
       return { form, controller }
     },
@@ -185,7 +185,7 @@ describe('useDraftController', () => {
     await act(async () => result.current.controller.saveDraftAndExit())
     expect(mocks.autosave.save).toHaveBeenCalledOnce()
     expect(mocks.guard.bypass).toHaveBeenCalledOnce()
-    expect(mocks.routerPush).toHaveBeenCalledWith('/parties/drafts')
+    expect(mocks.routerPush).toHaveBeenCalledWith('/drafts?type=party')
     expect(mocks.toastAdd).toHaveBeenCalledWith({
       title: 'saved',
       type: 'success',

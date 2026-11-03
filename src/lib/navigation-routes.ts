@@ -17,7 +17,10 @@ const viewingRoutes = new Set([
   'feedback',
   'roadmap',
   'help',
+  'drafts',
 ])
+/** Single-segment pages reached from another screen, so they keep a back button. */
+const nestedRoutes = new Set(['drafts'])
 
 /** Classify complete route segments, never substrings in entity IDs. */
 export function getShellRoute(pathname: string) {
@@ -29,11 +32,13 @@ export function getShellRoute(pathname: string) {
   const authenticated = resource || viewingRoutes.has(family)
   return {
     showBottomNav: authenticated && !workflow && !fullscreen,
-    isTopLevel: authenticated && segments.length === 1,
+    isTopLevel:
+      authenticated && segments.length === 1 && !nestedRoutes.has(family),
     showBusinessSwitcher:
       (resource && !(family === 'businesses' && id === 'create')) ||
       family === 'dashboard' ||
-      family === 'reports',
+      family === 'reports' ||
+      family === 'drafts',
     createHref:
       segments.length === 1 && (resource || family === 'dashboard')
         ? `/${family === 'dashboard' ? 'cheques' : family}/create`

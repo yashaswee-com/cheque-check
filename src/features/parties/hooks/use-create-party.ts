@@ -66,7 +66,7 @@ export function useCreateParty(
     toFields: toPartyDraftFields,
     toFormValues: partyDraftToFormValues,
     onHydrated: (loaded) => setStep(firstIncompletePartyStep(loaded)),
-    draftsHref: '/parties/drafts',
+    draftsHref: '/drafts?type=party',
   })
 
   const mutation = useEntityCreateMutation<Party, PartyFormData, Party>({

@@ -72,7 +72,7 @@ export function useCreateAccount(
     toFields: toAccountDraftFields,
     toFormValues: accountDraftToFormValues,
     onHydrated: (loaded) => setStep(firstIncompleteAccountStep(loaded)),
-    draftsHref: '/accounts/drafts',
+    draftsHref: '/drafts?type=account',
   })
 
   const mutation = useEntityCreateMutation<Account, AccountFormData, Account>({

@@ -11,9 +11,7 @@ import messages from '../../messages/en.json'
 import hindiMessages from '../../messages/hi.json'
 import hinglishMessages from '../../messages/hi-en.json'
 import { version } from '../../package.json'
-import AccountsDraftsPage from './(dashboard)/accounts/drafts/page'
-import ChequeDraftsPage from './(dashboard)/cheques/drafts/page'
-import PartiesDraftsPage from './(dashboard)/parties/drafts/page'
+import DraftsPage from './(dashboard)/drafts/page'
 import LegacyTagsPage from './(dashboard)/settings/tags/page'
 import AboutPage from './(dashboard)/settings/about/page'
 import HelpPage from './(dashboard)/help/page'
@@ -23,7 +21,7 @@ import RefundPolicyPage from './(dashboard)/settings/refund-policy/page'
 import TermsPage from './(dashboard)/settings/terms-and-conditions/page'
 import WhatsNewPage from './(dashboard)/settings/whats-new/page'
 
-const mocks = vi.hoisted(() => ({ redirect: vi.fn(), draftList: vi.fn() }))
+const mocks = vi.hoisted(() => ({ redirect: vi.fn() }))
 vi.mock('next/navigation', () => ({
   redirect: (href: string) => {
     mocks.redirect(href)
@@ -31,10 +29,7 @@ vi.mock('next/navigation', () => ({
   },
 }))
 vi.mock('@/features/drafts', () => ({
-  DraftList: ({ entity }: { entity: string }) => {
-    mocks.draftList(entity)
-    return <p>{entity} drafts</p>
-  },
+  DraftsBrowser: () => <p>All drafts</p>,
 }))
 vi.mock('@/features/announcements/components/developer-message', () => ({
   DeveloperMessage: () => null,
@@ -68,14 +63,9 @@ afterEach(() => {
 })
 
 describe('settings and draft routes', () => {
-  it.each([
-    ['account', AccountsDraftsPage],
-    ['cheque', ChequeDraftsPage],
-    ['party', PartiesDraftsPage],
-  ])('opens the %s draft list', (entity, Page) => {
-    renderPage(<Page />)
-    expect(screen.getByText(`${entity} drafts`)).toBeVisible()
-    expect(mocks.draftList).toHaveBeenCalledWith(entity)
+  it('opens the unified drafts browser', () => {
+    renderPage(<DraftsPage />)
+    expect(screen.getByText('All drafts')).toBeVisible()
   })
 
   it('redirects the legacy settings tags URL to the current list', () => {

@@ -17,9 +17,9 @@ export const DRAFT_CREATE_PATHS: Record<DraftEntity, string> = {
 }
 
 export const DRAFT_LIST_PATHS: Record<DraftEntity, string> = {
-  cheque: '/cheques/drafts',
-  party: '/parties/drafts',
-  account: '/accounts/drafts',
+  cheque: '/drafts?type=cheque',
+  party: '/drafts?type=party',
+  account: '/drafts?type=account',
 }
 
 const text = (value: unknown) =>
