@@ -95,4 +95,51 @@ describe('service-only durable PIN and attempt limits', () => {
       await db.close()
     }
   }, 60000)
+  it('stores a bounded lock timeout only for enabled PINs through a service-only RPC', async () => {
+    const db = await createMigratedDb([
+      '20261106010000_application_pin.sql',
+      '20261109010000_application_pin_lock_timeout.sql',
+    ])
+    const a = '10000000-0000-4000-8000-000000000001'
+    const proof = proofDigest('c'.repeat(64))
+    const timeout = async () =>
+      (
+        await db.query<{ lock_timeout_seconds: number }>(
+          `SELECT lock_timeout_seconds FROM application_pins WHERE user_id='${a}'`,
+        )
+      ).rows[0].lock_timeout_seconds
+    try {
+      await db.exec(`INSERT INTO auth.users(id,email) VALUES('${a}','a@test.invalid');
+        REVOKE ALL ON application_pins FROM authenticated`)
+      await db.exec(`SELECT security_pin_proof('${a}','${proof}')`)
+      await expect(
+        db.query(`SELECT security_pin_timeout('${a}',300)`),
+      ).rejects.toThrow(/not enabled/)
+      await db.exec(
+        `SELECT security_pin_manage('${a}','${proof}','${'a'.repeat(64)}','${'b'.repeat(64)}')`,
+      )
+      expect(await timeout()).toBe(60)
+      await expect(
+        asUser(db, a, `SELECT security_pin_timeout('${a}',300)`),
+      ).rejects.toThrow(/permission denied/)
+      await db.exec(`SELECT security_pin_timeout('${a}',900)`)
+      expect(await timeout()).toBe(900)
+      for (const seconds of [0, 30, 7200]) {
+        await expect(
+          db.query(`SELECT security_pin_timeout('${a}',${seconds})`),
+        ).rejects.toThrow(/Invalid lock timeout/)
+      }
+      await expect(
+        db.query(
+          `UPDATE application_pins SET lock_timeout_seconds=1 WHERE user_id='${a}'`,
+        ),
+      ).rejects.toThrow(/check/)
+      await db.exec(
+        `SELECT security_pin_proof('${a}','${proof}');SELECT security_pin_manage('${a}','${proof}','${'d'.repeat(64)}','${'e'.repeat(64)}')`,
+      )
+      expect(await timeout()).toBe(900)
+    } finally {
+      await db.close()
+    }
+  }, 60000)
 })

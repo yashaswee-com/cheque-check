@@ -38,6 +38,7 @@ export interface Database {
           failures: number
           proof_digest: string | null
           proof_expires_at: string | null
+          lock_timeout_seconds: number
         }
         Insert: Partial<
           Database['public']['Tables']['application_pins']['Row']
@@ -1081,6 +1082,10 @@ export interface Database {
           requested_match_businesses?: string[]
         }
         Returns: Json
+      }
+      security_pin_timeout: {
+        Args: { requested_user: string; requested_seconds: number }
+        Returns: undefined
       }
       register_push_subscription: {
         Args: {

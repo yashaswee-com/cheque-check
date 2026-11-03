@@ -147,8 +147,50 @@ describe('authenticated PIN verification and recovery API', () => {
       revision,
       emailOtp: true,
       phoneOtp: false,
+      lockTimeoutSeconds: 60,
     })
     expect(response.headers.get('cache-control')).toBe('no-store')
+  })
+  it('reports the stored lock timeout and saves allowed timeouts through the service RPC', async () => {
+    mocks.pin.mockResolvedValueOnce({
+      data: {
+        digest: 'a'.repeat(64),
+        salt: 'b'.repeat(64),
+        revision,
+        failures: 0,
+        lock_timeout_seconds: 900,
+      },
+      error: null,
+    })
+    expect(
+      (await (await handleSecurity(request())).json()).lockTimeoutSeconds,
+    ).toBe(900)
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: null })
+    const saved = await handleSecurity(
+      request({ action: 'timeout', seconds: 300 }),
+    )
+    expect(await saved.json()).toEqual({ saved: true })
+    expect(mocks.rpc).toHaveBeenLastCalledWith('security_pin_timeout', {
+      requested_user: 'user',
+      requested_seconds: 300,
+    })
+    expect(mocks.rate).toHaveBeenLastCalledWith(
+      'consume_api_rate_limit',
+      expect.objectContaining({ requested_endpoint: 'security-pin-action' }),
+    )
+  })
+  it('rejects unsupported timeouts and timeouts without an enabled PIN', async () => {
+    for (const seconds of [0, 30, 7200]) {
+      expect(
+        (await handleSecurity(request({ action: 'timeout', seconds }))).status,
+      ).toBe(400)
+    }
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: { code: 'P0001' } })
+    const disabled = await handleSecurity(
+      request({ action: 'timeout', seconds: 60 }),
+    )
+    expect(disabled.status).toBe(409)
+    expect(await disabled.json()).toEqual({ error: 'pin_disabled' })
   })
   it('verifies online and revokes sessions on fifth failure', async () => {
     mocks.rpc.mockResolvedValueOnce({

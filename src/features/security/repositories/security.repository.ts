@@ -5,6 +5,7 @@ import {
   sentResponseSchema,
   savedResponseSchema,
   errorResponseSchema,
+  type PinLockTimeout,
 } from '../validators/security'
 import { SecurityError, type SecurityAction } from '../types'
 import { logger } from '@/lib/logger'
@@ -48,4 +49,6 @@ export const securityRepository = {
     request(savedResponseSchema, { action: 'set', proof, pin }),
   remove: (proof: string) =>
     request(savedResponseSchema, { action: 'remove', proof }),
+  timeout: (seconds: PinLockTimeout) =>
+    request(savedResponseSchema, { action: 'timeout', seconds }),
 }

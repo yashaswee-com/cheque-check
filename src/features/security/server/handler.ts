@@ -4,7 +4,11 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { TABLES } from '@/lib/supabase/tables'
 import { publicEnv } from '@/lib/env/client'
 import { logger } from '@/lib/logger'
-import { securityActionSchema, pinResultSchema } from '../validators/security'
+import {
+  DEFAULT_PIN_LOCK_TIMEOUT,
+  securityActionSchema,
+  pinResultSchema,
+} from '../validators/security'
 import { pinDigest, proofDigest, randomSecret } from './crypto'
 
 const failure = (error: string, status: number) =>
@@ -54,6 +58,8 @@ export async function handleSecurity(request: Request) {
         revision: pin?.revision ?? null,
         emailOtp: email,
         phoneOtp: phone,
+        lockTimeoutSeconds:
+          pin?.lock_timeout_seconds ?? DEFAULT_PIN_LOCK_TIMEOUT,
       })
     let body: unknown
     try {
@@ -112,6 +118,17 @@ export async function handleSecurity(request: Request) {
       })
       if (error) {
         if (error.code === 'P0001') return failure('fresh_auth_required', 403)
+        throw error
+      }
+      return json({ saved: true })
+    }
+    if (action.action === 'timeout') {
+      const { error } = await admin.rpc('security_pin_timeout', {
+        requested_user: user.id,
+        requested_seconds: action.seconds,
+      })
+      if (error) {
+        if (error.code === 'P0001') return failure('pin_disabled', 409)
         throw error
       }
       return json({ saved: true })

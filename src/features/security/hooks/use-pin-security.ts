@@ -1,15 +1,19 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import { useRouter } from 'next/navigation'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { authService } from '@/features/auth/services/auth.service'
 import { securityRepository } from '../repositories/security.repository'
 import { SecurityError } from '../types'
+import {
+  DEFAULT_PIN_LOCK_TIMEOUT,
+  type PinLockTimeout,
+} from '../validators/security'
 import { logger } from '@/lib/logger'
 export const PIN_CHANGED_EVENT = 'chequecheck:pin-changed'
-export const BACKGROUND_LOCK_MS = 60000
+export const BACKGROUND_LOCK_MS = DEFAULT_PIN_LOCK_TIMEOUT * 1000
 function announceChange() {
   window.dispatchEvent(new Event(PIN_CHANGED_EVENT))
   if (typeof BroadcastChannel !== 'undefined') {
@@ -19,6 +23,7 @@ function announceChange() {
   }
 }
 export function usePinActions() {
+  const client = useQueryClient()
   return {
     status: securityRepository.status,
     password: securityRepository.password,
@@ -31,6 +36,11 @@ export function usePinActions() {
     remove: async (proof: string) => {
       await securityRepository.remove(proof)
       announceChange()
+    },
+    // Only refreshes the gate's timer; announcing a change would relock this session.
+    timeout: async (seconds: PinLockTimeout) => {
+      await securityRepository.timeout(seconds)
+      await client.invalidateQueries({ queryKey: queryKeys.security.all() })
     },
   }
 }
@@ -58,6 +68,8 @@ export function usePinGate() {
   const submitting = useRef(false)
   const status = statusQuery.data ?? null
   const refetch = statusQuery.refetch
+  const lockAfterMs =
+    (status?.lockTimeoutSeconds ?? DEFAULT_PIN_LOCK_TIMEOUT) * 1000
   const refresh = async () => {
     setError(null)
     await refetch()
@@ -71,14 +83,11 @@ export function usePinGate() {
       clearTimeout(timer)
       timer = setTimeout(() => {
         if (active) setUnlocked(null)
-      }, BACKGROUND_LOCK_MS)
+      }, lockAfterMs)
     }
     const focus = () => {
       if (document.visibilityState === 'hidden') return
-      if (
-        backgroundAt !== null &&
-        Date.now() - backgroundAt >= BACKGROUND_LOCK_MS
-      )
+      if (backgroundAt !== null && Date.now() - backgroundAt >= lockAfterMs)
         setUnlocked(null)
       backgroundAt = null
       clearTimeout(timer)
@@ -108,7 +117,7 @@ export function usePinGate() {
       document.removeEventListener('visibilitychange', visibility)
       window.removeEventListener(PIN_CHANGED_EVENT, changed)
     }
-  }, [refetch])
+  }, [refetch, lockAfterMs])
   const signOut = async () => {
     setUnlocked(null)
     try {

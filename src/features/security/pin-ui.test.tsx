@@ -199,6 +199,18 @@ describe('PIN shell gating', () => {
     expect(screen.getByLabelText('Enter six-digit PIN')).toBeInTheDocument()
     vi.useRealTimers()
   })
+  it('locks after the server-configured timeout instead of the one-minute default', async () => {
+    mocks.status.mockResolvedValue({ ...enabled, lockTimeoutSeconds: 300 })
+    mount()
+    await unlock()
+    vi.useFakeTimers()
+    fireEvent(window, new Event('blur'))
+    act(() => vi.advanceTimersByTime(299999))
+    expect(screen.getByText('Financial records')).toBeInTheDocument()
+    act(() => vi.advanceTimersByTime(1))
+    expect(screen.queryByText('Financial records')).not.toBeInTheDocument()
+    vi.useRealTimers()
+  })
   it('uses elapsed wall time on focus when suspended timers cannot run', async () => {
     mount()
     await unlock()
