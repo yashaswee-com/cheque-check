@@ -19,8 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/components/ui/toast'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useSettings } from '@/features/settings/hooks/use-settings'
-import { LoginPhoneSection } from '@/features/auth/components/login-phone-section'
-import { EmailLinkSection } from '@/features/auth/components/email-link-section'
+import { ProfileContacts } from '@/features/auth/components/profile-contacts'
 import { usePremiumAvatarRing } from '@/features/monetization/hooks/use-premium-avatar-ring'
 
 const DeleteConfirmationDialog = dynamic(
@@ -135,8 +134,7 @@ export default function ProfilePage() {
         </Button>
       </form>
 
-      <EmailLinkSection />
-      <LoginPhoneSection />
+      <ProfileContacts />
 
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-2">

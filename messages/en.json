@@ -78,6 +78,9 @@
     }
   },
   "EmailLink": {
+    "verified": "Verified",
+    "signInEmail": "You sign in with this email.",
+    "addEmailHint": "Add an email and verify it from the link we send.",
     "title": "Email",
     "newEmail": "Email to link",
     "send": "Send verification email",
@@ -766,6 +769,7 @@
     "signOut": "Sign Out"
   },
   "PhoneAuth": {
+    "signInPhone": "You sign in with this phone number.",
     "linkDisabled": "Phone login linking is not enabled in this environment.",
     "errorTitle": "Phone verification needs attention",
     "usePhone": "Use phone number",

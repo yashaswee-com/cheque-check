@@ -9,13 +9,15 @@ import { toast } from '@/components/ui/toast'
 import { maskPhone } from '@/lib/phone-auth'
 import { PhoneAuthForm } from './phone-auth-form'
 import { publicEnv } from '@/lib/env/client'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { SmartPhone01Icon } from '@hugeicons/core-free-icons'
+import { ContactField } from './contact-field'
 
 export function LoginPhoneSection({
   enabled = publicEnv.NEXT_PUBLIC_PHONE_AUTH_ENABLED === 'true',
+  primary = false,
 }: {
   enabled?: boolean
+  primary?: boolean
 }) {
   const t = useTranslations('PhoneAuth')
   const [phone, setPhone] = useState<string | null>(null)
@@ -42,27 +44,32 @@ export function LoginPhoneSection({
   }, [refresh])
 
   return (
-    <div className="space-y-3" data-testid="login-phone-section">
-      <h3 className="ml-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {t('linkTitle')}
-      </h3>
-      <p className="ml-1 text-xs text-muted-foreground">
-        {t('linkDescription')}
-      </p>
-      <Label htmlFor="verified-phone">{t('linkTitle')}</Label>
-      <Input
-        id="verified-phone"
-        readOnly
-        value={phone ?? ''}
-        placeholder={t('notLinked')}
-      />
-      {phone && (
-        <p className="ml-1 text-sm">
-          {t('linkedAs', { phone: maskPhone(phone) })}
+    <ContactField
+      id="verified-phone"
+      testId="login-phone-section"
+      label={t('linkTitle')}
+      icon={SmartPhone01Icon}
+      value={phone ?? ''}
+      placeholder={t('notLinked')}
+      verified={!!phone}
+      hint={
+        phone
+          ? primary
+            ? t('signInPhone')
+            : t('linkedAs', { phone: maskPhone(phone) })
+          : t('notLinked')
+      }
+    >
+      {!primary && !phone && (
+        <p className="ml-1 text-xs text-muted-foreground">
+          {t('linkDescription')}
         </p>
       )}
-      {!phone && <p>{t('notLinked')}</p>}
-      {!enabled && <p>{t('linkDisabled')}</p>}
+      {!enabled && !primary && (
+        <p className="ml-1 text-xs text-muted-foreground">
+          {t('linkDisabled')}
+        </p>
+      )}
       {linked && (
         <p role="status" className="ml-1 text-sm text-green-600">
           {t('linkSuccess')}
@@ -78,7 +85,7 @@ export function LoginPhoneSection({
             void refresh()
           }}
         />
-      ) : (
+      ) : primary ? null : (
         <Button
           type="button"
           disabled={!enabled}
@@ -93,6 +100,6 @@ export function LoginPhoneSection({
           {phone ? t('changeAction') : t('linkAction')}
         </Button>
       )}
-    </div>
+    </ContactField>
   )
 }

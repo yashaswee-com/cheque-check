@@ -95,12 +95,10 @@ describe('LoginPhoneSection', () => {
   })
 
   it('refreshes the identity and reports a successful link after verification', async () => {
-    mocks.getUser
-      .mockResolvedValueOnce(null)
-      .mockResolvedValue({
-        phone: '+919876543210',
-        phone_confirmed_at: '2026-11-02T00:00:00Z',
-      })
+    mocks.getUser.mockResolvedValueOnce(null).mockResolvedValue({
+      phone: '+919876543210',
+      phone_confirmed_at: '2026-11-02T00:00:00Z',
+    })
     mount()
     await waitFor(() => expect(mocks.getUser).toHaveBeenCalledOnce())
     fireEvent.click(screen.getByTestId('login-phone-link-button'))
@@ -111,6 +109,26 @@ describe('LoginPhoneSection', () => {
     await waitFor(() => expect(mocks.getUser).toHaveBeenCalledTimes(2))
     fireEvent.click(screen.getByTestId('login-phone-link-button'))
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  it('shows the sign-in phone read-only with a verified badge and no actions', async () => {
+    mocks.getUser.mockResolvedValue({
+      phone: '919876543210',
+      phone_confirmed_at: '2026-11-02T00:00:00Z',
+    })
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <LoginPhoneSection enabled primary />
+      </NextIntlClientProvider>,
+    )
+    expect(
+      await screen.findByTestId('login-phone-section-verified'),
+    ).toHaveTextContent(messages.EmailLink.verified)
+    expect(screen.getByLabelText(messages.PhoneAuth.linkTitle)).toHaveValue(
+      '+919876543210',
+    )
+    expect(screen.getByText(messages.PhoneAuth.signInPhone)).toBeVisible()
+    expect(screen.queryByTestId('login-phone-link-button')).toBeNull()
   })
 
   it('logs identity-load errors and notifies the user', async () => {

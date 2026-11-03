@@ -33,10 +33,10 @@ afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
 })
-function mount() {
+function mount(primary = false) {
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <EmailLinkSection />
+      <EmailLinkSection primary={primary} />
     </NextIntlClientProvider>,
   )
 }
@@ -63,6 +63,27 @@ describe('verified email UI', () => {
       screen.queryByRole('button', { name: messages.EmailLink.send }),
     ).not.toBeInTheDocument()
   })
+  it('marks a verified email with a badge', () => {
+    mocks.data.email = 'linked@example.test'
+    mount()
+    expect(screen.getByTestId('profile-email-verified')).toHaveTextContent(
+      messages.EmailLink.verified,
+    )
+  })
+  it('shows the sign-in email read-only without verification actions', () => {
+    mocks.data.email = 'owner@example.test'
+    mount(true)
+    expect(screen.getByLabelText('Email')).toHaveAttribute('readonly')
+    expect(screen.getByText(messages.EmailLink.signInEmail)).toBeVisible()
+    expect(
+      screen.queryByLabelText(messages.EmailLink.newEmail),
+    ).not.toBeInTheDocument()
+  })
+  it('invites a secondary email with a verification link', () => {
+    mount()
+    expect(screen.getByText(messages.EmailLink.addEmailHint)).toBeVisible()
+    expect(screen.queryByTestId('profile-email-verified')).toBeNull()
+  })
   it('shows claimed email rejection without a success message', async () => {
     mocks.send.mockRejectedValue(new EmailLinkError('email_in_use'))
     mount()
@@ -84,28 +105,31 @@ describe('email link repository', () => {
       data: { user: { email: 'pending@example.test' } },
       error: null,
     })
-    expect(await emailLinkRepository.identity()).toEqual({ email: null })
+    expect(await emailLinkRepository.identity()).toEqual({
+      email: null,
+      loginMethod: 'email',
+    })
     mocks.getUser.mockResolvedValue({
       data: {
         user: {
           email: 'linked@example.test',
           email_confirmed_at: '2026-11-01',
+          app_metadata: { provider: 'phone' },
         },
       },
       error: null,
     })
     expect(await emailLinkRepository.identity()).toEqual({
       email: 'linked@example.test',
+      loginMethod: 'phone',
     })
   })
   it('validates send responses and propagates claimed-account rejection', async () => {
-    const fetch = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(
-        new Response(JSON.stringify({ error: 'email_in_use' }), {
-          status: 409,
-        }),
-      )
+    const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ error: 'email_in_use' }), {
+        status: 409,
+      }),
+    )
     await expect(
       emailLinkRepository.send('claimed@example.test'),
     ).rejects.toMatchObject({ code: 'email_in_use' })

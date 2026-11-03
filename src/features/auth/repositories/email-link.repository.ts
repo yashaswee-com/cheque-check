@@ -1,6 +1,14 @@
 import { createClient } from '@/lib/supabase/client'
 import { emailLinkSchema } from '@/validators/email-link'
 import { EmailLinkError } from '../email-link.types'
+
+export type LoginMethod = 'email' | 'phone'
+
+/** Phone OTP sign-ups lead with phone; email, Google and others lead with email. */
+export function loginMethodOf(provider: unknown): LoginMethod {
+  return provider === 'phone' ? 'phone' : 'email'
+}
+
 export const emailLinkRepository = {
   async identity() {
     const {
@@ -9,7 +17,10 @@ export const emailLinkRepository = {
     } = await createClient().auth.getUser()
     if (error) throw error
     if (!user) throw new EmailLinkError('unauthorized')
-    return { email: user.email && user.email_confirmed_at ? user.email : null }
+    return {
+      email: user.email && user.email_confirmed_at ? user.email : null,
+      loginMethod: loginMethodOf(user.app_metadata?.provider),
+    }
   },
   async send(email: string) {
     const parsed = emailLinkSchema.safeParse({ email })

@@ -78,6 +78,9 @@
     }
   },
   "EmailLink": {
+    "verified": "Verified",
+    "signInEmail": "Aap is email se sign in karte hain.",
+    "addEmailHint": "Email add karein aur bheje gaye link se verify karein.",
     "title": "Email",
     "newEmail": "Link karne ke liye email",
     "send": "Verification email bhejein",
@@ -766,6 +769,7 @@
     "signOut": "Sign Out karein"
   },
   "PhoneAuth": {
+    "signInPhone": "Aap is phone number se sign in karte hain.",
     "linkDisabled": "Is environment mein phone login linking enabled nahi hai.",
     "errorTitle": "Phone verification mein dhyan dein",
     "usePhone": "Phone number se continue karein",

@@ -271,6 +271,9 @@ vi.mock('@/components/ui/toast', () => ({ toast: { add: mocks.toast } }))
 vi.mock('@/lib/env/client', () => ({
   publicEnv: { NEXT_PUBLIC_PHONE_AUTH_ENABLED: 'true' },
 }))
+vi.mock('@/features/auth/hooks/use-email-link', () => ({
+  useEmailLink: () => ({ data: { email: null, loginMethod: 'email' } }),
+}))
 vi.mock('@/features/auth/components/login-phone-section', () => ({
   LoginPhoneSection: () => <span>Login phone settings</span>,
 }))
