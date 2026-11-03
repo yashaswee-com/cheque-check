@@ -49,6 +49,10 @@ or encryption keys. Push provider errors do not log sensitive request bodies.
    The latter hardens the existing subscription table: removes malformed
    endpoints/keys and retains the ten most recently seen legacy devices per user.
    It revokes direct client access; subscription RPCs are the only write path.
+   Apply `20261104030000_push_endpoint_colons.sql` as well: Chrome/FCM
+   endpoint paths can contain colons. This forward migration fixes registration
+   validation without changing the provider-host allowlist. Deploy the matching
+   frontend validator before asking users to enable notifications again.
 3. Generate deployment VAPID keys in trusted operator tooling. Do not commit,
    paste into chats, or log private keys.
 4. Set Edge secrets `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT`

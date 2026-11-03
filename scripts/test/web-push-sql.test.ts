@@ -21,6 +21,7 @@ beforeAll(async () => {
     '20261031050000_notification_provider_capacity.sql',
     '20261103015000_inbox_push_purpose.sql',
     '20261103020000_web_push.sql',
+    '20261104030000_push_endpoint_colons.sql',
   ])
     await db.exec(
       readFileSync(join(process.cwd(), 'supabase', 'migrations', file), 'utf8'),
@@ -68,6 +69,13 @@ async function finish(job: Job, outcome: string, status: number | null) {
   ])
 }
 describe('secure free multi-device Web Push queue', () => {
+  it('registers Chrome FCM endpoints containing colons and queues their push jobs', async () => {
+    const url = endpoint + ':APA91-test'
+    expect(await register(url)).toBe(await register(url))
+    const jobs = await emit()
+    expect(jobs).toHaveLength(1)
+    expect((await admit(jobs[0])).status).toBe('started')
+  })
   it('registers idempotently, opts in and hides endpoint/key rows from clients', async () => {
     expect(await register()).toBe(await register())
     expect(
@@ -112,6 +120,8 @@ describe('secure free multi-device Web Push queue', () => {
     'https://fcm.googleapis.com.evil.test/a',
     'https://fcm.googleapis.com@evil.test/a',
     'https://fcm.googleapis.com:8443/a',
+    'https://fcm.googleapis.com/a#fragment',
+    'https://fcm.googleapis.com/' + 'a'.repeat(2048),
   ])('rejects SSRF endpoint %s', async (url) => {
     await expect(register(url)).rejects.toThrow(/Invalid push/)
   })
