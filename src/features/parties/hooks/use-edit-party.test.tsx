@@ -37,7 +37,7 @@ const party: Party = {
 }
 const other: Party = { ...party, id: 'party-2', name: 'Other' }
 
-function setup() {
+function setup(options?: Parameters<typeof useEditParty>[2]) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
@@ -45,7 +45,7 @@ function setup() {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   )
-  return renderHook(() => useEditParty(party.id, party.business_id), {
+  return renderHook(() => useEditParty(party.id, party.business_id, options), {
     wrapper,
   })
 }
@@ -76,6 +76,15 @@ describe('useEditParty', () => {
       expect.objectContaining({ name: 'Acme Updated' }),
     )
     expect(mocks.back).toHaveBeenCalledOnce()
+  })
+
+  it('runs the onSaved callback instead of navigating back', async () => {
+    const onSaved = vi.fn()
+    const { result } = setup({ onSaved })
+    await waitFor(() => expect(result.current.party?.id).toBe(party.id))
+    await act(async () => result.current.onSubmit())
+    expect(onSaved).toHaveBeenCalledOnce()
+    expect(mocks.back).not.toHaveBeenCalled()
   })
 
   it('deletes a party and navigates to the party list', async () => {

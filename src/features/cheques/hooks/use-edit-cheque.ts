@@ -6,7 +6,10 @@ import { toast } from '@/components/ui/toast'
 import { useTranslations } from 'next-intl'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import { useRouter } from 'next/navigation'
-import { useEntityEditor } from '@/hooks/use-entity-editor'
+import {
+  useEntityEditor,
+  type EditEntityOptions,
+} from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import { queryKeys } from '@/lib/query-keys'
 import { useFormattingPreferences } from '@/features/profile/hooks/use-display-format'
@@ -14,7 +17,7 @@ import { localDay } from '@/lib/preference-format'
 
 import type { ChequeFormValues as ChequeFormData } from '@/types'
 
-export function useEditCheque(id: string) {
+export function useEditCheque(id: string, options: EditEntityOptions = {}) {
   const preferences = useFormattingPreferences()
   const router = useRouter()
   const [isUploading, setIsUploading] = useState(false)
@@ -107,7 +110,8 @@ export function useEditCheque(id: string) {
 
     try {
       await updateMutation.mutateAsync(data)
-      router.back()
+      if (options.onSaved) options.onSaved()
+      else router.back()
     } catch (error) {
       toast.add({
         title: tCommon('error'),

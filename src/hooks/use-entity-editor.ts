@@ -9,6 +9,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery, type QueryKey } from '@tanstack/react-query'
 import type { ZodType } from 'zod'
 
+export interface EditEntityOptions {
+  /** Runs after a successful save instead of the default history back. */
+  onSaved?: () => void
+}
+
 interface UseEntityEditorOptions<TEntity, TFormValues extends FieldValues> {
   queryKey: QueryKey
   fetchFn: () => Promise<TEntity>

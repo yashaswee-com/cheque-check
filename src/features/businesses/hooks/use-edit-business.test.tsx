@@ -48,7 +48,7 @@ const other: Business = {
   name: 'Other',
 }
 
-function setup() {
+function setup(options?: Parameters<typeof useEditBusiness>[1]) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
@@ -56,7 +56,7 @@ function setup() {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   )
-  return renderHook(() => useEditBusiness(business.id), { wrapper })
+  return renderHook(() => useEditBusiness(business.id, options), { wrapper })
 }
 
 beforeEach(() => {
@@ -90,6 +90,15 @@ describe('useEditBusiness', () => {
     )
     expect(mocks.deleteAvatar).not.toHaveBeenCalled()
     expect(mocks.back).toHaveBeenCalledOnce()
+  })
+
+  it('runs the onSaved callback instead of navigating back', async () => {
+    const onSaved = vi.fn()
+    const { result } = setup({ onSaved })
+    await waitFor(() => expect(result.current.business?.id).toBe(business.id))
+    await act(async () => result.current.onSubmit())
+    expect(onSaved).toHaveBeenCalledOnce()
+    expect(mocks.back).not.toHaveBeenCalled()
   })
 
   it('deletes a changed previous logo and navigates after delete', async () => {

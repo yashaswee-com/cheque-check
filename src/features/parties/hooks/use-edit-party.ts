@@ -5,11 +5,18 @@ import {
 } from '@/features/parties/services/party.service'
 import { useRouter } from 'next/navigation'
 import type { Party, PartyFormData } from '@/types'
-import { useEntityEditor } from '@/hooks/use-entity-editor'
+import {
+  useEntityEditor,
+  type EditEntityOptions,
+} from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import { queryKeys } from '@/lib/query-keys'
 
-export function useEditParty(id: string, businessId: string | undefined) {
+export function useEditParty(
+  id: string,
+  businessId: string | undefined,
+  options: EditEntityOptions = {},
+) {
   const router = useRouter()
 
   const {
@@ -72,7 +79,8 @@ export function useEditParty(id: string, businessId: string | undefined) {
     isDeleting: deleteMutation.isPending,
     onSubmit: form.handleSubmit(async (data) => {
       await updateMutation.mutateAsync(data)
-      router.back()
+      if (options.onSaved) options.onSaved()
+      else router.back()
     }),
     onDelete: () => {
       deleteMutation.mutate()

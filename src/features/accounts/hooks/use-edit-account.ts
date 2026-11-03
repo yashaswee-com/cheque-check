@@ -4,14 +4,21 @@ import {
   accountService,
 } from '@/features/accounts/services/account.service'
 import { useRouter } from 'next/navigation'
-import { useEntityEditor } from '@/hooks/use-entity-editor'
+import {
+  useEntityEditor,
+  type EditEntityOptions,
+} from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import type { Account, AccountFormData } from '@/types'
 import { queryKeys } from '@/lib/query-keys'
 import { useQueryClient } from '@tanstack/react-query'
 import { selectDefaultAccount } from '../lib/default-account'
 
-export function useEditAccount(id: string, businessId: string | undefined) {
+export function useEditAccount(
+  id: string,
+  businessId: string | undefined,
+  options: EditEntityOptions = {},
+) {
   const router = useRouter()
   const queryClient = useQueryClient()
 
@@ -86,7 +93,8 @@ export function useEditAccount(id: string, businessId: string | undefined) {
           queryKey: queryKeys.accounts.allDetails(),
         })
       }
-      router.back()
+      if (options.onSaved) options.onSaved()
+      else router.back()
     }),
     onDelete: () => {
       deleteMutation.mutate()

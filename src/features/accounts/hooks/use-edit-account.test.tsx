@@ -39,7 +39,7 @@ const account: Account = {
 }
 const other: Account = { ...account, id: 'account-2', bank_id: 'bank-2' }
 
-function setup() {
+function setup(options?: Parameters<typeof useEditAccount>[2]) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
@@ -48,7 +48,9 @@ function setup() {
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   )
   return {
-    ...renderHook(() => useEditAccount(account.id, 'business-1'), { wrapper }),
+    ...renderHook(() => useEditAccount(account.id, 'business-1', options), {
+      wrapper,
+    }),
     client,
   }
 }
@@ -134,6 +136,15 @@ describe('useEditAccount', () => {
       expect.objectContaining({ account_name: 'Reserve' }),
     )
     expect(mocks.back).toHaveBeenCalledOnce()
+  })
+  it('runs the onSaved callback instead of navigating back', async () => {
+    const onSaved = vi.fn()
+    const { result } = setup({ onSaved })
+    await waitFor(() => expect(result.current.account?.id).toBe(account.id))
+    act(() => result.current.form.setValue('bank_id', 'bank-1'))
+    await act(async () => result.current.onSubmit())
+    expect(onSaved).toHaveBeenCalledOnce()
+    expect(mocks.back).not.toHaveBeenCalled()
   })
 
   it('deletes an account and returns to the account list', async () => {

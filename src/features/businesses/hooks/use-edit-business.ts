@@ -1,14 +1,17 @@
 import { businessSchema } from '@/validators'
 import { businessService } from '@/features/businesses/services/business.service'
 import { useRouter } from 'next/navigation'
-import { useEntityEditor } from '@/hooks/use-entity-editor'
+import {
+  useEntityEditor,
+  type EditEntityOptions,
+} from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import type { Business, BusinessFormData } from '@/types'
 import { storageService } from '@/services/storage.service'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 
-export function useEditBusiness(id: string) {
+export function useEditBusiness(id: string, options: EditEntityOptions = {}) {
   const router = useRouter()
 
   const {
@@ -76,7 +79,8 @@ export function useEditBusiness(id: string) {
           logger.error('Failed to delete previous business logo', error)
         })
       }
-      router.back()
+      if (options.onSaved) options.onSaved()
+      else router.back()
     }),
     onDelete: () => {
       deleteMutation.mutate()
