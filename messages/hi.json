@@ -253,6 +253,11 @@
     "invalidValue": "सही मान दर्ज करें"
   },
   "SharedUI": {
+    "unsavedTitle": "सहेजे न गए बदलाव हटाएं?",
+    "unsavedDescription": "आपके बदलाव सहेजे नहीं गए हैं। अभी छोड़ने पर वे खो जाएंगे।",
+    "discardChanges": "बदलाव हटाएं",
+    "keepEditing": "संपादन जारी रखें",
+    "noChangesToSave": "सहेजने के लिए कोई बदलाव नहीं",
     "pagination": "पेज नेविगेशन",
     "pageStatus": "पेज {page} / {total}",
     "moreInfo": "{title} के बारे में जानें",
