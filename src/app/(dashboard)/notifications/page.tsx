@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
+  Alert02Icon,
   Building03Icon,
   DashboardSquare01Icon,
   Mail01Icon,
   MailOpen01Icon,
+  Notification03Icon,
   RefreshIcon,
   Search01Icon,
   SortByDown02Icon,
@@ -22,7 +24,9 @@ import { useInbox } from '@/features/notifications/hooks/use-inbox'
 import { matchInboxSearch } from '@/features/notifications/lib/inbox-search'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { InfoPopover } from '@/components/ui/info-popover'
 import {
   FilterPillSection,
@@ -128,6 +132,11 @@ export default function NotificationsPage() {
       label: business.name ?? '',
     })),
   ]
+  const filtered = debouncedSearch.trim().length > 0
+  const clearFilters = () => {
+    setSearch('')
+    setUnread(false)
+  }
   const sortOptions = [
     { ascending: false, label: t('sortNewest'), icon: SortByDown02Icon },
     { ascending: true, label: t('sortOldest'), icon: SortByUp02Icon },
@@ -283,11 +292,65 @@ export default function NotificationsPage() {
       <PushSettings />
       {error && <p role="alert">{t('actionError')}</p>}
       {inbox.isLoading ? (
-        <p role="status">{common('loading')}</p>
+        <div
+          role="status"
+          aria-label={common('loading')}
+          className="space-y-2"
+          data-testid="inbox-loading"
+        >
+          {[0, 1, 2, 3].map((index) => (
+            <div
+              key={index}
+              className="flex items-center gap-3 rounded-xl border p-3"
+            >
+              <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-3 w-1/3" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : inbox.error ? (
-        <p role="alert">{common('loadDataError')}</p>
+        <EmptyState
+          role="alert"
+          data-testid="inbox-error"
+          icon={Alert02Icon}
+          title={t('errorTitle')}
+          description={t('errorDescription')}
+          action={{
+            label: t('retry'),
+            onClick: () => void inbox.refetch(),
+          }}
+        />
       ) : !inbox.data?.items.length ? (
-        <p role="status">{t('empty')}</p>
+        filtered ? (
+          <EmptyState
+            role="status"
+            data-testid="inbox-no-match"
+            icon={Search01Icon}
+            title={t('noMatchTitle')}
+            description={t('noMatchDescription')}
+            action={{ label: t('clearFilters'), onClick: clearFilters }}
+          />
+        ) : unread ? (
+          <EmptyState
+            role="status"
+            data-testid="inbox-empty-unread"
+            icon={MailOpen01Icon}
+            title={t('noUnreadTitle')}
+            description={t('noUnreadDescription')}
+            action={{ label: t('showAll'), onClick: () => setUnread(false) }}
+          />
+        ) : (
+          <EmptyState
+            role="status"
+            data-testid="inbox-empty"
+            icon={Notification03Icon}
+            title={t('emptyTitle')}
+            description={t('emptyDescription')}
+          />
+        )
       ) : (
         <ul className="space-y-2" data-testid="inbox-list">
           {inbox.data.items.map((item) => (

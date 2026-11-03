@@ -23,6 +23,8 @@ const mocks = vi.hoisted(() => ({
   refetch: vi.fn(),
   requests: [] as Record<string, unknown>[],
   totalPages: 1,
+  isLoading: false,
+  error: null as Error | null,
   items: [] as {
     id: string
     business_id: string
@@ -45,8 +47,8 @@ vi.mock('../hooks/use-inbox', () => ({
       },
       totalPages: mocks.totalPages,
       isFetching: false,
-      isLoading: false,
-      error: null,
+      isLoading: mocks.isLoading,
+      error: mocks.error,
       markRead: mocks.markRead,
       markAll: mocks.markAll,
       refetch: mocks.refetch,
@@ -80,6 +82,8 @@ beforeEach(() => {
   mocks.count = { data: 120, error: null }
   mocks.requests = []
   mocks.totalPages = 1
+  mocks.isLoading = false
+  mocks.error = null
   mocks.items = [
     {
       id: '1',
@@ -132,12 +136,87 @@ describe('inbox and header bell', () => {
     )
     expect(mocks.push).not.toHaveBeenCalled()
   })
-  it('shows an entity-specific no-match state', () => {
+  it('shows skeleton cards while the first page loads', () => {
+    mocks.isLoading = true
+    mount(<NotificationsPage />)
+    const loading = screen.getByTestId('inbox-loading')
+    expect(loading).toHaveAttribute('role', 'status')
+    expect(loading).toHaveAccessibleName(messages.Common.loading)
+    expect(screen.queryByTestId('inbox-list')).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId('notifications-pagination'),
+    ).not.toBeInTheDocument()
+  })
+  it('shows an all-caught-up empty state with no action', () => {
     mocks.items = []
     mount(<NotificationsPage />)
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'No notifications match',
+    const empty = screen.getByTestId('inbox-empty')
+    expect(empty).toHaveTextContent(messages.Inbox.emptyTitle)
+    expect(empty.querySelector('button')).toBeNull()
+  })
+  it('offers Show all when the unread filter is empty', async () => {
+    mocks.items = []
+    mount(<NotificationsPage />)
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Common.sortAndFilter }),
     )
+    fireEvent.click(
+      (
+        await screen.findAllByRole('button', { name: messages.Inbox.unread })
+      ).at(-1)!,
+    )
+    fireEvent.keyDown(document.activeElement ?? document.body, {
+      key: 'Escape',
+    })
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    )
+    const empty = screen.getByTestId('inbox-empty-unread')
+    expect(empty).toHaveTextContent(messages.Inbox.noUnreadTitle)
+    fireEvent.click(
+      within(empty).getByRole('button', { name: messages.Inbox.showAll }),
+    )
+    expect(mocks.requests.at(-1)).toMatchObject({ unread: false })
+    expect(screen.getByTestId('inbox-empty')).toBeInTheDocument()
+  })
+  it('shows a no-match state that clears the search', () => {
+    vi.useFakeTimers()
+    try {
+      mocks.items = []
+      mount(<NotificationsPage />)
+      const search = screen.getByRole('searchbox', {
+        name: messages.Inbox.searchPlaceholder,
+      })
+      fireEvent.change(search, { target: { value: 'zzz' } })
+      act(() => vi.advanceTimersByTime(250))
+      const empty = screen.getByTestId('inbox-no-match')
+      expect(empty).toHaveTextContent(messages.Inbox.noMatchTitle)
+      fireEvent.click(
+        within(empty).getByRole('button', {
+          name: messages.Inbox.clearFilters,
+        }),
+      )
+      expect(search).toHaveValue('')
+      act(() => vi.advanceTimersByTime(250))
+      expect(mocks.requests.at(-1)?.match).toBeUndefined()
+      expect(screen.getByTestId('inbox-empty')).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it('shows a load error with a retry button', () => {
+    mocks.error = new Error('offline')
+    mount(<NotificationsPage />)
+    const error = screen.getByTestId('inbox-error')
+    expect(error).toHaveAttribute('role', 'alert')
+    expect(error).toHaveTextContent(messages.Inbox.errorTitle)
+    fireEvent.click(
+      within(error).getByRole('button', { name: messages.Inbox.retry }),
+    )
+    expect(mocks.refetch).toHaveBeenCalledOnce()
+    expect(
+      screen.queryByTestId('notifications-pagination'),
+    ).not.toBeInTheDocument()
   })
   it('keeps search, sort & filter, refresh and mark all read in one row', () => {
     mount(<NotificationsPage />)

@@ -189,6 +189,17 @@
     }
   },
   "Inbox": {
+    "emptyTitle": "You're all caught up",
+    "emptyDescription": "Cheque reminders and report export updates will appear here.",
+    "noUnreadTitle": "No unread notifications",
+    "noUnreadDescription": "You have read everything here. Show all to see earlier notifications.",
+    "showAll": "Show all",
+    "noMatchTitle": "No notifications match your search",
+    "noMatchDescription": "Try another type or business name, or clear the search.",
+    "clearFilters": "Clear search",
+    "errorTitle": "Notifications could not be loaded",
+    "errorDescription": "Check your connection and try again.",
+    "retry": "Try again",
     "searchPlaceholder": "Search by type or business",
     "sortNewest": "Newest first",
     "sortOldest": "Oldest first",
@@ -206,7 +217,6 @@
     "refresh": "Refresh",
     "markAll": "Mark all read",
     "actionError": "Could not complete this action. Please try again.",
-    "empty": "No notifications match.",
     "events": {
       "cheque_reminder": "Cheques need your attention",
       "export_ready": "Your report export is ready",

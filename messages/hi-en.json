@@ -189,6 +189,17 @@
     }
   },
   "Inbox": {
+    "emptyTitle": "Aap sab dekh chuke hain",
+    "emptyDescription": "Cheque reminders aur report export updates yahan dikhenge.",
+    "noUnreadTitle": "Koi unread notification nahi",
+    "noUnreadDescription": "Aapne yahan sab padh liya hai. Purani notifications dekhne ke liye sab dikhayein.",
+    "showAll": "Sab dikhayein",
+    "noMatchTitle": "Aapki search se koi notification nahi mili",
+    "noMatchDescription": "Koi aur type ya business name try karein, ya search clear karein.",
+    "clearFilters": "Search clear karein",
+    "errorTitle": "Notifications load nahi ho sakin",
+    "errorDescription": "Apna connection check karein aur dobara try karein.",
+    "retry": "Dobara try karein",
     "searchPlaceholder": "Type ya business se search karein",
     "sortNewest": "Naye pehle",
     "sortOldest": "Purane pehle",
@@ -206,7 +217,6 @@
     "refresh": "Refresh karein",
     "markAll": "Sabhi read mark karein",
     "actionError": "Yeh action poora nahi hua. Dobara try karein.",
-    "empty": "Koi matching notification nahi hai.",
     "events": {
       "cheque_reminder": "Cheques par aapka dhyan chahiye",
       "export_ready": "Aapka report export taiyaar hai",
