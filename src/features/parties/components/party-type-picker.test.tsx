@@ -3,7 +3,11 @@ import { NextIntlClientProvider } from 'next-intl'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
-import { PartyTypePicker, usePartyTypeLabel } from './party-type-picker'
+import {
+  PARTY_TYPE_ICONS,
+  PartyTypePicker,
+  usePartyTypeLabel,
+} from './party-type-picker'
 import type { PartyType } from '@/types'
 
 afterEach(cleanup)
@@ -37,6 +41,16 @@ describe('PartyTypePicker', () => {
     expect(
       screen.getAllByRole('button').map((button) => button.textContent),
     ).toEqual(['Customer', 'Supplier', 'Vendor'])
+  })
+
+  it('shows a distinct icon inside every party type pill', () => {
+    renderWithIntl(<PartyTypePicker value="vendor" onChange={vi.fn()} />)
+    for (const type of ['customer', 'supplier', 'vendor']) {
+      expect(screen.getByTestId(`party-type-${type}`)).toContainElement(
+        screen.getByTestId(`party-type-icon-${type}`),
+      )
+    }
+    expect(new Set(Object.values(PARTY_TYPE_ICONS)).size).toBe(3)
   })
 
   it('selects a type, switches type, and clears when the active pill is tapped again', () => {

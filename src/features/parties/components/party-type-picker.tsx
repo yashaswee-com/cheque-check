@@ -2,13 +2,24 @@
 
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Tick02Icon as Check } from '@hugeicons/core-free-icons'
+import {
+  Tick02Icon as Check,
+  UserIcon,
+  DeliveryTruck01Icon,
+  Store01Icon,
+} from '@hugeicons/core-free-icons'
 import {
   FilterPillSection,
   filterPillClassName,
 } from '@/components/ui/pill-scroller'
 import { PARTY_TYPES } from '@/validators'
 import type { PartyType } from '@/types'
+
+export const PARTY_TYPE_ICONS: Record<PartyType, typeof UserIcon> = {
+  customer: UserIcon,
+  supplier: DeliveryTruck01Icon,
+  vendor: Store01Icon,
+}
 
 export function usePartyTypeLabel() {
   const t = useTranslations('Parties')
@@ -52,7 +63,14 @@ export function PartyTypePicker({
             aria-pressed={active}
             onClick={() => onChange(active ? null : type)}
             className={filterPillClassName(active)}
+            data-testid={`party-type-${type}`}
           >
+            <HugeiconsIcon
+              icon={PARTY_TYPE_ICONS[type]}
+              className="size-4 shrink-0"
+              data-testid={`party-type-icon-${type}`}
+              aria-hidden
+            />
             <span className="text-sm font-bold">{label(type)}</span>
             {active && (
               <HugeiconsIcon icon={Check} className="h-4 w-4 stroke-[3]" />
