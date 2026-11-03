@@ -24,4 +24,17 @@ describe('Lifetime crown', () => {
       expect(mark).toHaveAttribute('aria-hidden', 'true')
     },
   )
+  it('renders a compact solid crown rather than an outline', () => {
+    state.owned = false
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PremiumMark />
+      </NextIntlClientProvider>,
+    )
+    const mark = screen.getByTitle(messages.Premium.marker)
+    const crown = mark.querySelector('[data-slot="premium-crown"]')!
+    expect(crown).toHaveAttribute('fill', 'currentColor')
+    expect(crown).toHaveClass('size-2.5')
+    expect(mark).toHaveClass('p-0.5')
+  })
 })
