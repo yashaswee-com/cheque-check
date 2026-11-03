@@ -1,11 +1,7 @@
 'use client'
 
-import {
-  useAccountDetail,
-  type SortBy,
-  type SortOrder,
-} from '@/features/accounts/hooks/use-account-detail'
-import { ChequeCard } from '@/components/cheque-card'
+import { useAccountDetail } from '@/features/accounts/hooks/use-account-detail'
+import { ScopedChequeList } from '@/features/cheques/components/scoped-cheque-list'
 import { useParams } from 'next/navigation'
 import {
   UserIcon as User,
@@ -17,57 +13,29 @@ import {
   Note01Icon as Note,
   Building03Icon as Building,
   Wallet01Icon as Wallet,
-  Search01Icon as Search,
   Location01Icon as Location,
   TextFontIcon as TextIcon,
   PencilEdit01Icon as Pencil,
   File02Icon as FileText,
-  FilterIcon as Filter,
   Invoice01Icon as ReceiptText,
   Tick02Icon as Check,
-  Calendar03Icon as DateIcon,
-  Money03Icon as AmountIcon,
-  SortingAZ01Icon as AscIcon,
-  SortingZA01Icon as DescIcon,
-  CircleIcon as AllIcon,
-  ArrowUpRight01Icon as IssuedIcon,
-  ArrowDownLeft01Icon as ReceivedIcon,
-  CheckmarkCircle01Icon as ClearedIcon,
-  Cancel01Icon as BouncedIcon,
 } from '@hugeicons/core-free-icons'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Input } from '@/components/ui/input'
 
 import { StatusPill } from '@/components/ui/status-pill'
-import { cn } from '@/lib/utils'
-import {
-  FilterPillSection,
-  filterPillClassName,
-} from '@/components/ui/pill-scroller'
-import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { TextTruncate } from '@/components/ui/text-truncate'
 import { useTranslations } from 'next-intl'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { useRedirectIfDraft } from '@/features/drafts'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
 
-import { type ChequeStatus, type ChequeWithRelations } from '@/types'
 import { SpeedDialFab } from '@/components/speed-dial-fab'
 import { EntityTagsSection } from '@/features/tags/components/tag-chips'
-import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { NativeTools } from '@/features/premium-workspace/components/native-tools'
 
 export default function AccountDetailPage() {
@@ -79,58 +47,10 @@ export default function AccountDetailPage() {
   const display = useDisplayFormat(profile)
   const businessId = activeBusiness?.id
 
-  const {
-    account,
-    accountCheques,
-    filteredCheques,
-    isLoading,
-    updateChequeStatus,
-    error,
-    search,
-    setSearch,
-    filter,
-    setFilter,
-    sortBy,
-    setSortBy,
-    sortOrder,
-    setSortOrder,
-  } = useAccountDetail(id, businessId)
-  const chequeTagMap = useEntityTagMap(businessId, 'cheque')
-
-  const clearFilters = () => {
-    setSearch('')
-    setFilter('All')
-  }
-
-  const sortOptions: Array<{
-    label: string
-    value: SortBy
-    icon: typeof DateIcon
-  }> = [
-    { label: tc('date'), value: 'date', icon: DateIcon },
-    { label: tc('amount'), value: 'amount', icon: AmountIcon },
-  ]
-
-  const orderOptions: Array<{
-    label: string
-    value: SortOrder
-    icon: typeof DescIcon
-  }> = [
-    { label: tc('descending'), value: 'desc', icon: DescIcon },
-    { label: tc('ascending'), value: 'asc', icon: AscIcon },
-  ]
-
-  const statusOptions: Array<{
-    label: string
-    value: ChequeStatus | 'All'
-    icon: typeof AllIcon
-  }> = [
-    { label: tc('all'), value: 'All', icon: AllIcon },
-    { label: tc('issued'), value: 'Issued', icon: IssuedIcon },
-    { label: tc('received'), value: 'Received', icon: ReceivedIcon },
-    { label: tc('cleared'), value: 'Cleared', icon: ClearedIcon },
-    { label: tc('bounced'), value: 'Bounced', icon: BouncedIcon },
-  ]
+  const { account, accountCheques, isLoading } = useAccountDetail(
+    id,
+    businessId,
+  )
 
   const isDraft = useRedirectIfDraft('account', account)
 
@@ -260,128 +180,10 @@ export default function AccountDetailPage() {
           </h3>
         </div>
 
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <HugeiconsIcon
-              icon={Search}
-              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <Input
-              leftIcon={Search}
-              className="rounded-full  h-11 bg-canvas-parchment border-none"
-              placeholder={t('searchChequesPlaceholder')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <Sheet>
-            <SheetTrigger
-              render={
-                <Button
-                  variant={
-                    filter !== 'All' ||
-                    sortBy !== 'date' ||
-                    sortOrder !== 'desc'
-                      ? 'default'
-                      : 'outline'
-                  }
-                  size="icon"
-                  className={cn(
-                    'rounded-full h-11 w-11 shrink-0',
-                    filter === 'All' &&
-                      sortBy === 'date' &&
-                      sortOrder === 'desc' &&
-                      'bg-white',
-                  )}
-                >
-                  <HugeiconsIcon icon={Filter} className="h-5 w-5" />
-                </Button>
-              }
-            />
-            <SheetContent className="max-h-[85dvh]">
-              <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
-                  <HugeiconsIcon
-                    icon={Filter}
-                    className="h-5 w-5 text-primary"
-                  />
-                  {tc('sortAndFilter')}
-                </SheetTitle>
-              </SheetHeader>
-
-              <div className="space-y-6 py-4">
-                <FilterPillSection title={tc('sortBy')}>
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      aria-pressed={sortBy === option.value}
-                      onClick={() => setSortBy(option.value)}
-                      className={filterPillClassName(sortBy === option.value)}
-                    >
-                      <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-                      <span className="font-bold text-sm">{option.label}</span>
-                    </button>
-                  ))}
-                </FilterPillSection>
-
-                <FilterPillSection title={tc('order')}>
-                  {orderOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      aria-pressed={sortOrder === option.value}
-                      onClick={() => setSortOrder(option.value)}
-                      className={filterPillClassName(
-                        sortOrder === option.value,
-                      )}
-                    >
-                      <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-                      <span className="font-bold text-sm">{option.label}</span>
-                    </button>
-                  ))}
-                </FilterPillSection>
-
-                <FilterPillSection title={tc('filterStatus')}>
-                  {statusOptions.map((s) => (
-                    <button
-                      key={s.value}
-                      type="button"
-                      aria-pressed={filter === s.value}
-                      onClick={() => setFilter(s.value)}
-                      className={filterPillClassName(filter === s.value)}
-                    >
-                      <HugeiconsIcon icon={s.icon} className="h-4 w-4" />
-                      <span className="font-bold text-sm">{s.label}</span>
-                      {filter === s.value && (
-                        <HugeiconsIcon
-                          icon={Check}
-                          className="h-4 w-4 stroke-[3]"
-                        />
-                      )}
-                    </button>
-                  ))}
-                </FilterPillSection>
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-
-        <DataState
-          isLoading={false}
-          data={filteredCheques}
-          allData={accountCheques}
-          onClearFilters={clearFilters}
-          isError={!!error}
-          noResultsTitle={tc('noChequesMatch')}
-          loadingComponent={
-            <div className="space-y-4">
-              {[1, 2].map((i) => (
-                <Skeleton key={i} className="h-32 w-full rounded-lg" />
-              ))}
-            </div>
-          }
+        <ScopedChequeList
+          businessId={businessId}
+          scope={{ account_id: id }}
+          totalCount={accountCheques.length}
           emptyState={
             <EmptyState
               icon={ReceiptText}
@@ -393,18 +195,7 @@ export default function AccountDetailPage() {
               }}
             />
           }
-        >
-          <div className="space-y-4">
-            {filteredCheques?.map((cheque: ChequeWithRelations) => (
-              <ChequeCard
-                key={cheque.id}
-                cheque={cheque}
-                onStatusUpdate={updateChequeStatus}
-                tags={chequeTagMap[cheque.id]}
-              />
-            ))}
-          </div>
-        </DataState>
+        />
       </div>
 
       <NativeTools destination="account" accountId={account.id} />

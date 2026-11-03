@@ -51,3 +51,15 @@ stays fully on screen on mobile.
 and replay on the existing 10,000-profile fixture, with the same 1,000ms p95
 budget. This is a local single-connection SQL regression check, not proof of
 production browser or multi-connection capacity.
+
+## Cheque filters
+
+`/cheques` and the business, party, and account detail pages share one
+URL-backed filter state (`useChequeListFilterState`), the same filter sheet
+(`ChequeListFilterControls`), and the server-paged `cheque_list_page` RPC.
+Entity pages render `ScopedChequeList`, which pins `party_id` or `account_id`
+over any URL value. `20261108000000_cheque_list_account_filter.sql` adds the
+`requested_account` argument. Direction, cheque status, and party type pills
+carry icons. Amounts use a two-thumb slider scaled to the business's highest
+active cheque (about 100 stops, one indexed query cached for 60s) next to
+min/max inputs. Thumbs never cross, so each drag commits only one bound.

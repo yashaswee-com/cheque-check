@@ -6,6 +6,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../messages/en.json'
@@ -78,6 +79,11 @@ let filterState = {
   sortBy: 'date',
   sortOrder: 'desc',
 }
+let query = new URLSearchParams()
+let listCalls: Array<{
+  businessId: string | undefined
+  filters: Record<string, unknown>
+}> = []
 let hasContact = true
 let profileCurrency: string | null = '$'
 let missingAccountBank = false
@@ -129,8 +135,49 @@ function useDetail() {
     updateStatus: mocks.status,
   }
 }
+function useListMock(
+  businessId: string | undefined,
+  filters: Record<string, unknown>,
+  controls: {
+    search: string
+    setSearch: (value: string) => void
+    sortBy: string
+    setSortBy: (value: string) => void
+    sortOrder: string
+    setSortOrder: (value: string) => void
+  },
+) {
+  const [filter, setFilter] = useState(filterState.filter)
+  useEffect(() => {
+    filterState = { ...filterState, filter }
+  }, [filter])
+  listCalls.push({ businessId, filters })
+  return {
+    cheques: empty || noResults ? [] : [cheque],
+    activeCount: empty ? 0 : 1,
+    isLoading: false,
+    error,
+    ...controls,
+    filter,
+    setFilter,
+    updateStatus: mocks.status,
+    pageIndex: 0,
+    hasNextPage: false,
+    nextPage: vi.fn(),
+    previousPage: vi.fn(),
+  }
+}
+vi.mock('@/features/cheques/hooks/use-cheque-list', () => ({
+  useChequeList: useListMock,
+  useChequeAmountCeiling: () => ({ data: 0 }),
+}))
+vi.mock('@/features/accounts/hooks/use-banks', () => ({
+  useBanks: () => ({ data: [], isPending: false, error: null }),
+}))
 vi.mock('next/navigation', () => ({
   useParams: () => ({ id: 'entity' }),
+  useSearchParams: () => query,
+  usePathname: () => '/entity-path',
   useRouter: () => ({
     push: mocks.push,
     replace: mocks.replace,
@@ -266,12 +313,14 @@ vi.mock('@/features/cheques/components/cheque-filter-bar', () => ({
     setFilter,
     setSortBy,
     setSortOrder,
+    advancedFilters,
   }: {
     search: string
     setSearch: (value: string) => void
     setFilter: (value: string) => void
     setSortBy: (value: string) => void
     setSortOrder: (value: string) => void
+    advancedFilters?: ReactNode
   }) => (
     <div>
       <input
@@ -282,6 +331,7 @@ vi.mock('@/features/cheques/components/cheque-filter-bar', () => ({
       <button onClick={() => setFilter('Cleared')}>Choose cleared</button>
       <button onClick={() => setSortBy('amount')}>Choose amount</button>
       <button onClick={() => setSortOrder('asc')}>Choose ascending</button>
+      <section aria-label="Advanced filters">{advancedFilters}</section>
     </div>
   ),
 }))
@@ -371,12 +421,21 @@ beforeEach(() => {
   deferTagDeleteDialog = false
   error = null
   filterState = { search: '', filter: 'All', sortBy: 'date', sortOrder: 'desc' }
+  query = new URLSearchParams()
+  listCalls = []
   links = []
   mocks.create.mockResolvedValue({ id: 'created-tag' })
   mocks.update.mockResolvedValue(undefined)
   mocks.delete.mockResolvedValue(undefined)
 })
 afterEach(cleanup)
+
+/** The list-level "Clear all filters" action, not the one in the filter sheet. */
+function listClearButton() {
+  return screen
+    .queryAllByRole('button', { name: messages.Common.clearAllFilters })
+    .find((button) => !button.closest('section[aria-label="Advanced filters"]'))
+}
 
 describe.each([
   {
@@ -451,53 +510,81 @@ describe.each([
   it('connects search, sorting and status filters and preserves sorting when filters are cleared', () => {
     noResults = true
     renderPage(<Component />)
-    const search =
-      kind === 'business'
-        ? screen.getByRole('textbox', { name: 'Search cheques' })
-        : screen.getByPlaceholderText(
-            kind === 'account'
-              ? messages.Accounts.searchChequesPlaceholder
-              : messages.Parties.searchChequesPlaceholder,
-          )
-    fireEvent.change(search, { target: { value: 'missing' } })
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: kind === 'business' ? 'Choose amount' : messages.Common.amount,
-      }),
-    )
-    fireEvent.click(
-      screen.getByRole('button', {
-        name:
-          kind === 'business' ? 'Choose ascending' : messages.Common.ascending,
-      }),
-    )
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: kind === 'business' ? 'Choose cleared' : messages.Common.cleared,
-      }),
-    )
-    expect(filterState).toEqual({
-      search: 'missing',
-      filter: 'Cleared',
-      sortBy: 'amount',
-      sortOrder: 'asc',
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search cheques' }), {
+      target: { value: 'missing' },
     })
-    fireEvent.click(
-      screen.getByRole('button', { name: messages.Common.clearAllFilters }),
-    )
-    expect(filterState).toEqual({
-      search: '',
-      filter: 'All',
-      sortBy: 'amount',
-      sortOrder: 'asc',
+    expect(mocks.replace).toHaveBeenLastCalledWith('/entity-path?q=missing', {
+      scroll: false,
     })
+    fireEvent.click(screen.getByRole('button', { name: 'Choose amount' }))
+    expect(mocks.replace).toHaveBeenLastCalledWith('/entity-path?sort=amount', {
+      scroll: false,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Choose ascending' }))
+    expect(mocks.replace).toHaveBeenLastCalledWith('/entity-path?order=asc', {
+      scroll: false,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Choose cleared' }))
+    expect(filterState.filter).toBe('Cleared')
+    cleanup()
+    query = new URLSearchParams(
+      'q=missing&sort=amount&order=asc&type=Outward&min_amount=10',
+    )
+    renderPage(<Component />)
+    fireEvent.click(listClearButton()!)
+    expect(mocks.replace).toHaveBeenLastCalledWith(
+      '/entity-path?sort=amount&order=asc',
+      { scroll: false },
+    )
+  })
+  it('queries the shared server-paged cheque list scoped to the entity', () => {
+    query = new URLSearchParams('type=Inward&party_type=vendor&min_amount=5')
+    renderPage(<Component />)
+    const scope =
+      kind === 'account'
+        ? { account_id: 'entity' }
+        : kind === 'party'
+          ? { party_id: 'entity' }
+          : {}
+    expect(listCalls.at(-1)).toEqual({
+      businessId: kind === 'business' ? 'entity' : 'business',
+      filters: expect.objectContaining({
+        type: 'Inward',
+        party_type: 'vendor',
+        min_amount: 5,
+        ...scope,
+      }),
+    })
+  })
+  it('offers the same advanced filters as the cheques page', () => {
+    renderPage(<Component />)
+    const advanced = within(
+      screen.getByRole('region', { name: 'Advanced filters' }),
+    )
+    for (const title of [
+      messages.ChartStats.direction,
+      messages.Cheques.filterStatus,
+      messages.Cheques.partyTypeFilter,
+      messages.Cheques.amountRange,
+    ])
+      expect(advanced.getByText(title)).toBeVisible()
+    expect(
+      advanced.getByRole('heading', { name: messages.Cheques.bankFilter }),
+    ).toBeVisible()
+    expect(
+      advanced.getByRole('button', { name: messages.Parties.partyTypeVendor }),
+    ).toBeVisible()
+  })
+  it('blocks unfiltered fetches while URL filters are invalid', () => {
+    query = new URLSearchParams('min_amount=abc')
+    renderPage(<Component />)
+    expect(screen.getByText(messages.Cheques.invalidFilters)).toBeVisible()
+    expect(listCalls.at(-1)?.businessId).toBeUndefined()
   })
   it('explains an empty cheque history rather than offering filter reset', () => {
     empty = true
     renderPage(<Component />)
-    expect(
-      screen.queryByRole('button', { name: messages.Common.clearAllFilters }),
-    ).not.toBeInTheDocument()
+    expect(listClearButton()).toBeUndefined()
     expect(
       screen.queryByRole('button', { name: 'Clear cheque' }),
     ).not.toBeInTheDocument()
@@ -554,26 +641,6 @@ it('shows safe account fallbacks when optional bank details are absent', () => {
   renderPage(<AccountDetailPage />)
   expect(screen.getByText(messages.Common.notAvailable)).toBeVisible()
   expect(screen.getByText('₹2,500.50')).toBeVisible()
-})
-
-describe.each([
-  { kind: 'account', Component: AccountDetailPage },
-  { kind: 'party', Component: PartyDetailPage },
-])('$kind detail sort and filter sheet', ({ Component }) => {
-  it('lays out sort, order and status pills as horizontally scrollable rows', () => {
-    renderPage(<Component />)
-    expectHorizontalPillRows([
-      messages.Common.sortBy,
-      messages.Common.order,
-      messages.Common.filterStatus,
-    ])
-    const cleared = screen.getByRole('button', {
-      name: messages.Common.cleared,
-    })
-    expect(cleared).toHaveAttribute('aria-pressed', 'false')
-    fireEvent.click(cleared)
-    expect(cleared).toHaveAttribute('aria-pressed', 'true')
-  })
 })
 
 describe('business detail error state', () => {

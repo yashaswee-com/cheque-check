@@ -1,12 +1,10 @@
 'use client'
 
 import { useBusinessDetail } from '@/features/businesses/hooks/use-business-detail'
-import { ChequeCard } from '@/components/cheque-card'
-import { ChequeFilterBar } from '@/features/cheques/components/cheque-filter-bar'
+import { ScopedChequeList } from '@/features/cheques/components/scoped-cheque-list'
 import { useParams } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
-import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -17,14 +15,11 @@ import {
   File02Icon as FileText,
   Invoice01Icon as ReceiptText,
 } from '@hugeicons/core-free-icons'
-import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
-import type { ChequeWithRelations } from '@/types'
 import { SpeedDialFab } from '@/components/speed-dial-fab'
 import { EntityTagsSection } from '@/features/tags/components/tag-chips'
-import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { TextTruncate } from '@/components/ui/text-truncate'
 import { useTranslations } from 'next-intl'
 import { NativeTools } from '@/features/premium-workspace/components/native-tools'
@@ -37,29 +32,7 @@ export default function BusinessDetailPage() {
   const currency = profile?.currency || '₹'
   const display = useDisplayFormat(profile)
 
-  const {
-    business,
-    cheques,
-    filteredCheques,
-    stats,
-    isLoading,
-    error,
-    search,
-    setSearch,
-    filter,
-    setFilter,
-    sortBy,
-    setSortBy,
-    sortOrder,
-    setSortOrder,
-    updateStatus,
-  } = useBusinessDetail(id)
-  const chequeTagMap = useEntityTagMap(id, 'cheque')
-
-  const clearFilters = () => {
-    setSearch('')
-    setFilter('All')
-  }
+  const { business, cheques, stats, isLoading } = useBusinessDetail(id)
 
   if (isLoading) {
     return (
@@ -181,24 +154,9 @@ export default function BusinessDetailPage() {
           </h3>
         </div>
 
-        <ChequeFilterBar
-          search={search}
-          setSearch={setSearch}
-          filter={filter}
-          setFilter={setFilter}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-        />
-
-        <DataState
-          isLoading={false}
-          isError={!!error}
-          data={filteredCheques}
-          allData={cheques}
-          onClearFilters={clearFilters}
-          noResultsTitle={tc('noChequesMatch')}
+        <ScopedChequeList
+          businessId={id}
+          totalCount={cheques?.length ?? 0}
           emptyState={
             <EmptyState
               icon={ReceiptText}
@@ -206,18 +164,7 @@ export default function BusinessDetailPage() {
               description={t('noChequesDesc')}
             />
           }
-        >
-          <div className="space-y-4">
-            {filteredCheques?.map((cheque: ChequeWithRelations) => (
-              <ChequeCard
-                key={cheque.id}
-                cheque={cheque}
-                onStatusUpdate={updateStatus}
-                tags={chequeTagMap[cheque.id]}
-              />
-            ))}
-          </div>
-        </DataState>
+        />
       </div>
 
       <NativeTools
