@@ -36,9 +36,20 @@ browser or persisted in browser storage. There is no offline unlock.
 The dashboard shell does not mount its children before status is checked and,
 when enabled, the PIN is verified. Unlock exists in memory only. Opening/reloading
 locks again and requires fresh server status, never a cached disabled preference.
-Sixty seconds of blur/hidden background locks, with a wall-clock check on
-return to cover suspended browser timers. Other tabs/devices observe PIN changes
+Being blurred or hidden in the background for the user's chosen time locks the app.
+The choices are 1, 5, 15 or 60 minutes, and the default is 1 minute. There is a
+wall-clock check on return to cover suspended browser timers. The timeout is
+stored in `application_pins.lock_timeout_seconds` (apply
+`20261109010000_application_pin_lock_timeout.sql`) and saved through the
+service-only `security_pin_timeout` RPC. Changing it does not need fresh
+verification and does not relock the current session. There is no "Immediately"
+option: native camera and file pickers move the app to the background, and that
+would lock the app in the middle of a form. Other tabs/devices observe PIN changes
 through invalidation plus a bounded status refresh.
+
+The App PIN Lock settings page shows an On/Off status card. When the PIN is on,
+it offers Change passcode and Turn passcode off; when it is off, it offers Turn
+passcode on. Every one of these actions asks for fresh verification first.
 
 Attempt accounting is row-locked in PostgreSQL. Five incorrect attempts block
 the PIN even after clearing storage or logging in again; the server requests global

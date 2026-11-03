@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   otp: vi.fn(),
   set: vi.fn(),
   remove: vi.fn(),
+  timeout: vi.fn(),
   signOut: vi.fn(),
   replace: vi.fn(),
   mounted: vi.fn(),
@@ -50,6 +51,7 @@ const enabled = {
   revision,
   emailOtp: true,
   phoneOtp: false,
+  lockTimeoutSeconds: 60,
 }
 let client: QueryClient
 beforeEach(() => {
@@ -62,6 +64,7 @@ beforeEach(() => {
   mocks.sendOtp.mockResolvedValue({ sent: true })
   mocks.set.mockResolvedValue({ saved: true })
   mocks.remove.mockResolvedValue({ saved: true })
+  mocks.timeout.mockResolvedValue({ saved: true })
   mocks.signOut.mockResolvedValue(undefined)
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 })
@@ -283,7 +286,11 @@ describe('PIN shell gating', () => {
   })
 })
 describe('fresh-auth PIN management', () => {
-  async function password() {
+  async function begin(name: string) {
+    fireEvent.click(await screen.findByRole('button', { name }))
+  }
+  async function password(action = 'Change passcode') {
+    await begin(action)
     fireEvent.click(
       await screen.findByRole('button', {
         name: 'Use an app password instead',
@@ -352,6 +359,7 @@ describe('fresh-auth PIN management', () => {
         enabled: false,
       })
       mount(<PinSettings />)
+      await begin('Turn passcode on')
       fireEvent.click(await screen.findByRole('button', { name }))
       expect(
         screen.queryByLabelText('Account password'),
@@ -386,6 +394,12 @@ describe('fresh-auth PIN management', () => {
       'No supported verified identity',
     )
     expect(
+      screen.getByRole('button', { name: 'Change passcode' }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Turn passcode off' }),
+    ).toBeDisabled()
+    expect(
       screen.queryByRole('button', { name: /Send verified/ }),
     ).not.toBeInTheDocument()
     expect(
@@ -397,6 +411,7 @@ describe('fresh-auth PIN management', () => {
       new SecurityError('verification_failed'),
     )
     mount(<PinSettings />)
+    await begin('Change passcode')
     fireEvent.click(
       await screen.findByRole('button', { name: 'Send verified-email code' }),
     )
@@ -434,5 +449,113 @@ describe('fresh-auth PIN management', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('expired')
     expect(screen.queryByLabelText('New six-digit PIN')).not.toBeInTheDocument()
     expect(screen.queryByText('PIN preference saved.')).not.toBeInTheDocument()
+  })
+  it('shows an On status card with change, turn off and require-passcode options', async () => {
+    mount(<PinSettings />)
+    expect(await screen.findByTestId('pin-status-badge')).toHaveTextContent(
+      'On',
+    )
+    expect(
+      screen
+        .getAllByRole('button')
+        .filter((button) => button.closest('[data-testid="pin-actions"]'))
+        .map((button) => button.textContent),
+    ).toEqual(['Change passcode', 'Turn passcode off'])
+    const group = screen.getByRole('radiogroup', { name: 'Require passcode' })
+    expect(
+      Array.from(group.querySelectorAll('[role="radio"]')).map(
+        (radio) => radio.textContent,
+      ),
+    ).toEqual([
+      'After 1 minute',
+      'After 5 minutes',
+      'After 15 minutes',
+      'After 1 hour',
+    ])
+    expect(screen.getByRole('radio', { name: 'After 1 minute' })).toBeChecked()
+    expect(screen.queryByLabelText('New six-digit PIN')).not.toBeInTheDocument()
+  })
+  it('shows only Turn passcode on when the PIN is off', async () => {
+    mocks.status.mockResolvedValue({ ...enabled, enabled: false })
+    mount(<PinSettings />)
+    expect(await screen.findByTestId('pin-status-badge')).toHaveTextContent(
+      'Off',
+    )
+    expect(
+      screen.getByRole('button', { name: 'Turn passcode on' }),
+    ).toBeEnabled()
+    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Change passcode' }),
+    ).not.toBeInTheDocument()
+  })
+  it('saves the lock timeout without relocking the current session', async () => {
+    const changed = vi.fn()
+    window.addEventListener(PIN_CHANGED_EVENT, changed)
+    try {
+      mount(<PinSettings />)
+      fireEvent.click(
+        await screen.findByRole('radio', { name: 'After 15 minutes' }),
+      )
+      await waitFor(() => expect(mocks.timeout).toHaveBeenCalledWith(900))
+      expect(await screen.findByRole('status')).toHaveTextContent(
+        'Lock timing saved.',
+      )
+      expect(
+        screen.getByRole('radio', { name: 'After 15 minutes' }),
+      ).toBeChecked()
+      expect(changed).not.toHaveBeenCalled()
+    } finally {
+      window.removeEventListener(PIN_CHANGED_EVENT, changed)
+    }
+  })
+  it('keeps the previous timeout and reports failures', async () => {
+    mocks.timeout.mockRejectedValueOnce(new SecurityError('pin_disabled'))
+    mount(<PinSettings />)
+    fireEvent.click(await screen.findByRole('radio', { name: 'After 1 hour' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Turn the passcode on',
+    )
+    expect(screen.getByRole('radio', { name: 'After 1 minute' })).toBeChecked()
+  })
+  it('turns the passcode off only after fresh verification and confirmation', async () => {
+    mount(<PinSettings />)
+    await begin('Turn passcode off')
+    expect(mocks.remove).not.toHaveBeenCalled()
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Use an app password instead',
+      }),
+    )
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Verify account' }),
+      ).toBeEnabled(),
+    )
+    fireEvent.change(screen.getByLabelText('Account password'), {
+      target: { value: 'password' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Verify account' }))
+    expect(
+      await screen.findByText(/removes the PIN lock on every device/),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('New six-digit PIN')).not.toBeInTheDocument()
+    mocks.status.mockResolvedValue({ ...enabled, enabled: false })
+    fireEvent.click(screen.getByRole('button', { name: 'Turn passcode off' }))
+    await waitFor(() =>
+      expect(mocks.remove).toHaveBeenCalledWith('a'.repeat(64)),
+    )
+    expect(await screen.findByTestId('pin-status-badge')).toHaveTextContent(
+      'Off',
+    )
+    expect(screen.queryByTestId('pin-flow')).not.toBeInTheDocument()
+  })
+  it('cancel closes the flow and discards fresh proof', async () => {
+    mount(<PinSettings />)
+    await password()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByTestId('pin-flow')).not.toBeInTheDocument()
+    await begin('Change passcode')
+    expect(screen.queryByLabelText('New six-digit PIN')).not.toBeInTheDocument()
   })
 })
