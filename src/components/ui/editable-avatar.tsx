@@ -89,6 +89,12 @@ export function EditableAvatar({
     lg: 'h-20 w-20',
     xl: 'h-32 w-32',
   }
+  const badgeClasses = {
+    sm: { badge: '-bottom-1 -right-1 size-5', icon: 'size-3' },
+    md: { badge: '-bottom-1 -right-1 size-6', icon: 'size-3' },
+    lg: { badge: '-bottom-1 -right-1 size-7', icon: 'size-3.5' },
+    xl: { badge: 'bottom-0 right-0 size-9', icon: 'size-4' },
+  }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -148,37 +154,49 @@ export function EditableAvatar({
             type="button"
             aria-label={t('changePhoto')}
             className={cn(
-              'relative group rounded-full overflow-hidden border-2 border-background transition-all active:scale-95',
+              'relative group shrink-0 rounded-full transition-transform active:scale-95',
               sizeClasses[size],
               className,
             )}
           >
-            {imageUrl ? (
-              <SkeletonImage
-                src={imageUrl}
-                alt={name}
-                containerClassName="h-full w-full rounded-full"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <EntityAvatar
-                name={name}
-                color={color}
-                icon={icon}
-                size={size === 'xl' ? 'lg' : size}
-                className="h-full w-full"
-              />
-            )}
-
-            {/* Edit Overlay */}
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <HugeiconsIcon icon={Camera} className="text-white h-1/3 w-1/3" />
-            </div>
             <span
-              className="absolute bottom-0 right-0 rounded-full bg-primary p-1 text-primary-foreground"
+              className="absolute inset-0 overflow-hidden rounded-full border-2 border-background"
+              data-testid="avatar-image-clip"
+            >
+              {imageUrl ? (
+                <SkeletonImage
+                  src={imageUrl}
+                  alt={name}
+                  containerClassName="h-full w-full rounded-full"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <EntityAvatar
+                  name={name}
+                  color={color}
+                  icon={icon}
+                  size={size === 'xl' ? 'lg' : size}
+                  className="h-full w-full"
+                />
+              )}
+              <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                <HugeiconsIcon
+                  icon={Camera}
+                  className="h-1/3 w-1/3 text-white"
+                />
+              </span>
+            </span>
+            <span
+              className={cn(
+                'absolute flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-background',
+                badgeClasses[size].badge,
+              )}
               data-testid="avatar-camera-badge"
             >
-              <HugeiconsIcon icon={Camera} className="size-4" />
+              <HugeiconsIcon
+                icon={Camera}
+                className={badgeClasses[size].icon}
+              />
             </span>
           </button>
         }

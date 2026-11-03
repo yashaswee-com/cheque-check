@@ -77,6 +77,23 @@ describe('EditableAvatar', () => {
     )
     expect(screen.getByTestId('avatar-camera-badge')).toBeVisible()
   })
+  it.each(['sm', 'md', 'lg', 'xl'] as const)(
+    'keeps the %s camera badge outside the clipped circle',
+    (size) => {
+      render(<EditableAvatar name="Asha" size={size} onUpload={vi.fn()} />)
+      const trigger = screen.getByRole('button', { name: 'changePhoto' })
+      const clip = screen.getByTestId('avatar-image-clip')
+      const badge = screen.getByTestId('avatar-camera-badge')
+      expect(trigger).not.toHaveClass('overflow-hidden')
+      expect(clip).toHaveClass('overflow-hidden', 'rounded-full')
+      expect(clip).not.toContainElement(badge)
+      expect(trigger).toContainElement(badge)
+      expect(badge).toHaveClass('absolute', 'rounded-full', 'ring-2')
+      expect(badge.className).toMatch(
+        size === 'xl' ? /bottom-0 right-0/ : /-bottom-1 -right-1/,
+      )
+    },
+  )
   it('center-crops and uploads a selected image, then persists and notifies', async () => {
     const { onUpload } = openEditor()
     selectFile()
