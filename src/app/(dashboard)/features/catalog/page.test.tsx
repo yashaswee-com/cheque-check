@@ -42,6 +42,8 @@ let premiumState: PremiumState | null = null
 let finitePremium = false
 let resolvedEntitlementState: string | null = null
 
+type TestMessages = typeof messages | typeof hindi | typeof hinglish
+
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
@@ -122,10 +124,7 @@ function voiceCredits(used = 0) {
   ]
 }
 
-function renderPage(
-  locale = 'en',
-  translations: AbstractIntlMessages = messages,
-) {
+function renderPage(locale = 'en', translations: TestMessages = messages) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
@@ -134,7 +133,7 @@ function renderPage(
       <QueryClientProvider client={client}>
         <NextIntlClientProvider
           locale={locale}
-          messages={translations}
+          messages={translations as unknown as AbstractIntlMessages}
           timeZone="UTC"
         >
           <PremiumPromptProvider>{children}</PremiumPromptProvider>

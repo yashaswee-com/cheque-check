@@ -8,15 +8,17 @@ import en from '../../messages/en.json'
 import hi from '../../messages/hi.json'
 import hinglish from '../../messages/hi-en.json'
 
-type Catalog = { [key: string]: string | Catalog }
+type Catalog = string | Catalog[] | { [key: string]: Catalog }
 
 function flatten(catalog: Catalog, prefix = ''): Record<string, string> {
+  if (typeof catalog === 'string') {
+    return prefix ? { [prefix]: catalog } : {}
+  }
+
   return Object.fromEntries(
     Object.entries(catalog).flatMap(([key, value]) => {
       const path = prefix ? `${prefix}.${key}` : key
-      return typeof value === 'string'
-        ? [[path, value]]
-        : Object.entries(flatten(value, path))
+      return Object.entries(flatten(value, path))
     }),
   )
 }

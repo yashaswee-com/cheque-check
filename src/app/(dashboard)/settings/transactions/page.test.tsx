@@ -15,6 +15,8 @@ import { FEATURE_IDS } from '@/features/monetization/constants'
 import TransactionsPage from './page'
 import { expectHorizontalPillRows } from '@/test/pill-rows'
 
+type TestMessages = typeof messages | typeof hindi | typeof hinglish
+
 const mocks = vi.hoisted(() => ({ refresh: vi.fn(), copy: vi.fn() }))
 let transactions: Transaction[] | undefined = []
 let error: Error | null = null
@@ -58,11 +60,11 @@ beforeEach(() => {
   }))
 })
 
-function page(locale = 'en', translations: AbstractIntlMessages = messages) {
+function page(locale = 'en', translations: TestMessages = messages) {
   return render(
     <NextIntlClientProvider
       locale={locale}
-      messages={translations}
+      messages={translations as unknown as AbstractIntlMessages}
       timeZone="UTC"
     >
       <TransactionsPage />
