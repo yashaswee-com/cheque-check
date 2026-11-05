@@ -130,6 +130,7 @@ function ToolSection({
 
 type NativeToolsProps = {
   destination: Destination
+  inSpeedDial?: boolean
   businessId?: string
   businessName?: string
   businesses?: BusinessOption[]
@@ -169,6 +170,35 @@ export function NativeTools(props: NativeToolsProps) {
     businesses.length
   if (props.destination === 'account' && !props.accountId) return null
 
+  const trigger = props.inSpeedDial ? (
+    <Button
+      type="button"
+      variant="ghost"
+      role="menuitem"
+      aria-label={t('title')}
+      data-testid="native-tools-speed-dial-trigger"
+      className="flex h-auto items-center gap-3 rounded-full border-0 bg-background py-1.5 pl-4 pr-1.5 text-sm font-semibold shadow-lg ring-1 ring-border transition-transform hover:bg-background active:scale-95"
+    >
+      {t('title')}
+      <PremiumMark />
+      <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <HugeiconsIcon icon={More} className="size-4" />
+      </span>
+    </Button>
+  ) : (
+    <Button
+      type="button"
+      variant="secondary"
+      size="icon"
+      aria-label={t('title')}
+      data-testid="native-tools-fab"
+      className="size-12 rounded-full shadow-lg ring-1 ring-border"
+    >
+      <HugeiconsIcon icon={More} className="size-5" />
+      <PremiumMark className="absolute right-0 top-0" />
+    </Button>
+  )
+
   const content =
     props.destination === 'account' || !hasBusiness || activated ? (
       <InitialToolContext.Provider value={activated}>
@@ -193,21 +223,13 @@ export function NativeTools(props: NativeToolsProps) {
 
   return (
     <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-      <SheetTrigger
-        render={
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            aria-label={t('title')}
-            data-testid="native-tools-fab"
-            className="fixed bottom-[calc(5rem+var(--shell-bottom-extra,0px)+env(safe-area-inset-bottom))] right-24 z-40 size-12 rounded-full shadow-lg ring-1 ring-border"
-          >
-            <HugeiconsIcon icon={More} className="size-5" />
-            <PremiumMark className="absolute right-0 top-0" />
-          </Button>
-        }
-      />
+      {props.inSpeedDial ? (
+        <SheetTrigger render={trigger} />
+      ) : (
+        <div className="fixed bottom-[calc(5rem+var(--shell-bottom-extra,0px)+env(safe-area-inset-bottom)+4.5rem)] right-6 z-40 flex w-16 justify-center">
+          <SheetTrigger render={trigger} />
+        </div>
+      )}
       <SheetContent keepMounted className="max-h-[80dvh]">
         {content}
       </SheetContent>

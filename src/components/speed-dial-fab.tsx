@@ -29,6 +29,7 @@ interface SpeedDialFabProps {
   editHref: string
   editLabel: string
   actions?: SpeedDialAction[]
+  children?: React.ReactNode
 }
 
 /** View-page FAB: primary edit button plus an optional menu of secondary actions. */
@@ -36,6 +37,7 @@ export function SpeedDialFab({
   editHref,
   editLabel,
   actions = [],
+  children,
 }: SpeedDialFabProps) {
   const t = useTranslations('Common')
   const tp = useTranslations('Premium')
@@ -81,13 +83,14 @@ export function SpeedDialFab({
           onClick={() => setOpen(false)}
         />
       )}
-      <div className="fixed bottom-[calc(5rem+var(--shell-bottom-extra,0px)+env(safe-area-inset-bottom))] right-6 z-40 flex flex-col items-end gap-3">
+      <div className="fixed bottom-[calc(5rem+var(--shell-bottom-extra,0px)+env(safe-area-inset-bottom))] right-6 z-40 flex w-16 flex-col items-center gap-3">
         {open && (
           <ul
             role="menu"
             aria-label={t('moreActions')}
-            className="flex flex-col items-end gap-2"
+            className="flex w-full flex-col items-end gap-2"
           >
+            {children && <li role="none">{children}</li>}
             {actions.map((action, index) => (
               <li
                 key={action.label}
@@ -129,7 +132,7 @@ export function SpeedDialFab({
           </ul>
         )}
 
-        {actions.length > 0 && (
+        {(actions.length > 0 || children) && (
           <Button
             type="button"
             variant="secondary"
@@ -139,7 +142,7 @@ export function SpeedDialFab({
             aria-expanded={open}
             data-testid="speed-dial-toggle"
             onClick={() => setOpen((value) => !value)}
-            className="h-12 w-12 rounded-full shadow-lg ring-1 ring-border"
+            className="h-12 w-12 self-center rounded-full shadow-lg ring-1 ring-border"
           >
             <HugeiconsIcon icon={open ? Close : More} className="h-5 w-5" />
           </Button>

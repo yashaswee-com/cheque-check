@@ -167,12 +167,6 @@ export default function BusinessDetailPage() {
         />
       </div>
 
-      <NativeTools
-        destination="business"
-        businessId={business.id}
-        businessName={business.name}
-      />
-
       <SpeedDialFab
         editHref={`/businesses/${id}/edit`}
         editLabel={t('editBusiness')}
@@ -197,7 +191,14 @@ export default function BusinessDetailPage() {
               ]
             : []),
         ]}
-      />
+      >
+        <NativeTools
+          destination="business"
+          businessId={business.id}
+          businessName={business.name}
+          inSpeedDial
+        />
+      </SpeedDialFab>
     </div>
   )
 }

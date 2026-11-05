@@ -651,6 +651,22 @@ describe('speed dial actions', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   })
 
+  it('centers the menu control and keeps action chips inside the screen edge', () => {
+    renderIntl(
+      <SpeedDialFab editHref="/accounts/one/edit" editLabel="Edit account">
+        <button role="menuitem">Premium tools</button>
+      </SpeedDialFab>,
+    )
+
+    const dial = screen.getByTestId('speed-dial-edit-link').parentElement
+    expect(dial).toHaveClass('w-16', 'items-center')
+    fireEvent.click(screen.getByTestId('speed-dial-toggle'))
+    expect(screen.getByRole('menu')).toHaveClass('w-full', 'items-end')
+    expect(
+      screen.getByRole('menuitem', { name: 'Premium tools' }),
+    ).toBeVisible()
+  })
+
   it('omits the menu trigger when there are no secondary actions', () => {
     renderIntl(
       <SpeedDialFab editHref="/parties/one/edit" editLabel="Edit party" />,

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NativeTools } from './native-tools'
 import { PremiumWorkspace } from './workspace'
 import { useWorkspaceContext } from '../hooks/use-workspace'
+import { SpeedDialFab } from '@/components/speed-dial-fab'
 
 const state = vi.hoisted(() => ({
   business: {
@@ -256,6 +257,35 @@ describe('NativeTools destinations', () => {
     openTools()
     expect(document.querySelector('#bulk-import')).toHaveAttribute('open')
   })
+
+  it('opens premium tools from inside the entity speed dial without a second fab', () => {
+    render(
+      <SpeedDialFab editHref="/accounts/a1/edit" editLabel="Edit account">
+        <NativeTools destination="account" accountId="a1" inSpeedDial />
+      </SpeedDialFab>,
+    )
+
+    expect(screen.queryByTestId('native-tools-fab')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('speed-dial-toggle'))
+    fireEvent.click(screen.getByTestId('native-tools-speed-dial-trigger'))
+
+    expect(screen.getByRole('dialog')).toBeVisible()
+    expect(screen.getByText('printLayout')).toBeVisible()
+  })
+
+  it('aligns the standalone tools fab above the blue create fab centerline', () => {
+    render(<NativeTools destination="cheques" />)
+
+    const toolsFab = screen.getByTestId('native-tools-fab')
+    expect(toolsFab).toHaveClass('size-12')
+    expect(toolsFab.parentElement).toHaveClass(
+      'right-6',
+      'w-16',
+      'justify-center',
+    )
+    expect(toolsFab.parentElement?.className).toContain('+4.5rem)')
+  })
+
   it.each([
     [
       'cheques',

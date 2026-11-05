@@ -198,12 +198,12 @@ export default function AccountDetailPage() {
         />
       </div>
 
-      <NativeTools destination="account" accountId={account.id} />
-
       <SpeedDialFab
         editHref={`/accounts/${id}/edit`}
         editLabel={t('editAccount')}
-      />
+      >
+        <NativeTools destination="account" accountId={account.id} inSpeedDial />
+      </SpeedDialFab>
     </div>
   )
 }

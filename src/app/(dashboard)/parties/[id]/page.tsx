@@ -138,13 +138,6 @@ export default function PartyDetailPage() {
         </div>
       </div>
 
-      <NativeTools
-        destination="party"
-        businessId={businessId}
-        businessName={activeBusiness?.name}
-        partyId={id}
-      />
-
       <div className="space-y-4">
         <div className="flex items-center gap-2 px-1">
           <HugeiconsIcon
@@ -193,7 +186,15 @@ export default function PartyDetailPage() {
               ]
             : []),
         ]}
-      />
+      >
+        <NativeTools
+          destination="party"
+          businessId={businessId}
+          businessName={activeBusiness?.name}
+          partyId={id}
+          inSpeedDial
+        />
+      </SpeedDialFab>
     </div>
   )
 }
