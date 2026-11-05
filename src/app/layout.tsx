@@ -12,6 +12,7 @@ import { headers } from 'next/headers'
 import { PwaRegistrar } from '@/components/pwa-registrar'
 import { LaunchSplash } from '@/components/launch-splash'
 import { APPEARANCE_BOOTSTRAP } from '@/features/profile/lib/appearance'
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -140,6 +141,7 @@ export default async function RootLayout({
             strategy="lazyOnload"
           />
         )}
+        <Analytics />
       </body>
     </html>
   )
