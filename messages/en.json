@@ -15,6 +15,13 @@
     "timeoutSaved": "Lock timing saved.",
     "pin_disabled": "Turn the passcode on before choosing lock timing.",
     "checkingDescription": "Verifying your app lock. This only takes a moment.",
+    "checkingHints": [
+      "Protected screens stay hidden until security status is verified.",
+      "Your app lock is checked online before protected screens are shown.",
+      "Five incorrect PIN attempts sign you out of your account.",
+      "The app locks again after the background timeout you selected.",
+      "Recover your PIN by verifying your account again."
+    ],
     "pinTitle": "App PIN lock",
     "resetTitle": "Recover PIN with fresh authentication",
     "pinLimit": "Account-wide six-digit PIN, verified online. Locks on app open or after the time you choose in the background. Five wrong attempts sign you out. This additional session/UI lock does not protect against someone controlling your browser or replace account authentication.",

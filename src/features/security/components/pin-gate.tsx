@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { usePinGate } from '../hooks/use-pin-security'
 import { PinSettings } from './pin-settings'
@@ -19,6 +19,29 @@ export function PinGate({ children }: { children: React.ReactNode }) {
   const t = useTranslations('Security')
   const [pin, setPin] = useState(''),
     [recover, setRecover] = useState(false)
+  const [hintIndex, setHintIndex] = useState(0)
+  const checkingHints = t.raw('checkingHints') as string[]
+
+  useEffect(() => {
+    if (!gate.loading || checkingHints.length < 2) return
+
+    let timer: number
+    const scheduleNextHint = () => {
+      const delay = 3000 + Math.floor(Math.random() * 2001)
+      timer = window.setTimeout(() => {
+        setHintIndex((current) => {
+          const nextOffset =
+            1 + Math.floor(Math.random() * (checkingHints.length - 1))
+          return (current + nextOffset) % checkingHints.length
+        })
+        scheduleNextHint()
+      }, delay)
+    }
+
+    scheduleNextHint()
+    return () => window.clearTimeout(timer)
+  }, [gate.loading, checkingHints.length])
+
   if (gate.canEnter) return children
   return (
     <Dialog open disablePointerDismissal>
@@ -51,7 +74,7 @@ export function PinGate({ children }: { children: React.ReactNode }) {
                 {t('checking')}
               </p>
               <p className="text-sm text-muted-foreground">
-                {t('checkingDescription')}
+                {checkingHints[hintIndex]}
               </p>
             </div>
           </div>

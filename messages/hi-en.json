@@ -15,6 +15,13 @@
     "timeoutSaved": "Lock timing save ho gaya.",
     "pin_disabled": "Lock timing choose karne se pehle passcode on karein.",
     "checkingDescription": "Aapka app lock verify ho raha hai. Bas ek pal lagega.",
+    "checkingHints": [
+      "Security status verify hone tak protected screens hidden rehti hain.",
+      "Protected screens dikhane se pehle app lock online check hota hai.",
+      "Paanch galat PIN attempts ke baad aap sign out ho jaate hain.",
+      "Aapke chune background timeout ke baad app phir lock ho jaata hai.",
+      "Account dobara verify karke apna PIN recover karein."
+    ],
     "pinTitle": "App PIN lock",
     "resetTitle": "Fresh verification se PIN recover karein",
     "pinLimit": "Account-wide six-digit PIN online verify hota hai. App open par ya aapke chune time tak background mein rehne ke baad lock hota hai. Paanch galat attempts par sign out hota hai. Yeh extra UI lock hai, browser control karne wale se protection ya account login ka replacement nahi.",

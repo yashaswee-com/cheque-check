@@ -148,7 +148,7 @@ describe('PIN shell gating', () => {
     const [title, description] = checking.querySelectorAll('p')
     expect(title).toHaveTextContent(messages.Security.checking)
     expect(title).toHaveClass('font-semibold')
-    expect(description).toHaveTextContent(messages.Security.checkingDescription)
+    expect(description).toHaveTextContent(messages.Security.checkingHints[0])
     expect(description).toHaveClass('text-muted-foreground')
     expect(screen.getByText('ChequeCheck')).toHaveClass('sr-only')
     expect(screen.getByRole('dialog')).toHaveAccessibleName('ChequeCheck')
@@ -158,6 +158,21 @@ describe('PIN shell gating', () => {
     ).toBeInTheDocument()
     expect(screen.queryByTestId('pin-gate-checking')).not.toBeInTheDocument()
     expect(screen.getByText('ChequeCheck')).not.toHaveClass('sr-only')
+  })
+  it('rotates to a different security hint after a random 3–5 second delay', () => {
+    vi.useFakeTimers()
+    vi.spyOn(Math, 'random').mockReturnValue(0.1)
+    mocks.status.mockReturnValue(new Promise<typeof enabled>(() => {}))
+
+    mount()
+    const checking = screen.getByTestId('pin-gate-checking')
+    const hint = checking.querySelectorAll('p')[1]
+    expect(hint).toHaveTextContent(messages.Security.checkingHints[0])
+
+    act(() => vi.advanceTimersByTime(3199))
+    expect(hint).toHaveTextContent(messages.Security.checkingHints[0])
+    act(() => vi.advanceTimersByTime(1))
+    expect(hint).toHaveTextContent(messages.Security.checkingHints[1])
   })
   it('traps keyboard focus and never dismisses the lock on Escape', async () => {
     mount()
