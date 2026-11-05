@@ -292,11 +292,7 @@ export default function SettingsPage() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg text-primary">
-                        {item.icon === CrownIcon ? (
-                          <PremiumMark />
-                        ) : (
-                          <HugeiconsIcon icon={item.icon} className="h-3 w-3" />
-                        )}
+                        <HugeiconsIcon icon={item.icon} className="h-5 w-5" />
                       </div>
                       <div className="flex min-w-0 flex-col">
                         <span className="text-sm font-semibold">
