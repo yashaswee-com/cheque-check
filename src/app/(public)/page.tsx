@@ -66,7 +66,7 @@ export default async function LandingPage() {
 
   return (
     <main className="overflow-x-clip">
-      <section className="relative isolate border-b bg-gradient-to-b from-primary/10 via-background to-background">
+      <section className="relative isolate border-b bg-linear-to-b from-primary/10 via-background to-background">
         <div
           aria-hidden="true"
           className="absolute -top-24 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl sm:h-96 sm:w-96"

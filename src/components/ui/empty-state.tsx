@@ -1,10 +1,10 @@
-import * as React from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import * as React from 'react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
-import { IconType } from "@/types"
+import { IconType } from '@/types'
 
 interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
   icon?: IconType
@@ -30,8 +30,8 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center animate-in fade-in zoom-in duration-300",
-        className
+        'flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center animate-in fade-in zoom-in duration-300',
+        className,
       )}
       {...props}
     >
@@ -39,12 +39,12 @@ export function EmptyState({
         {illustration ? (
           illustration
         ) : Icon ? (
-          <HugeiconsIcon icon={Icon} className="h-10 w-10 text-primary/40"/>
+          <HugeiconsIcon icon={Icon} className="h-10 w-10 text-primary/40" />
         ) : null}
       </div>
       <h3 className="text-xl font-semibold tracking-tight">{title}</h3>
       {description && (
-        <p className="mt-2 text-sm text-muted-foreground max-w-[280px] mx-auto">
+        <p className="mx-auto mt-2 max-w-70 text-sm text-muted-foreground">
           {description}
         </p>
       )}
@@ -55,7 +55,10 @@ export function EmptyState({
               {action.label}
             </Button>
           ) : action.href ? (
-            <Button render={<Link href={action.href} />} className="rounded-full px-8">
+            <Button
+              render={<Link href={action.href} />}
+              className="rounded-full px-8"
+            >
               {action.label}
             </Button>
           ) : (
@@ -66,4 +69,3 @@ export function EmptyState({
     </div>
   )
 }
-

@@ -296,7 +296,7 @@ export default function SettingsPage() {
                     href={item.href}
                     feature={item.premiumFeature}
                     key={item.name}
-                    className="relative block [&>[data-slot=premium-mark]]:absolute [&>[data-slot=premium-mark]]:right-10 [&>[data-slot=premium-mark]]:top-1/2 [&>[data-slot=premium-mark]]:-translate-y-1/2"
+                    className="relative block *:data-[slot=premium-mark]:absolute *:data-[slot=premium-mark]:right-10 *:data-[slot=premium-mark]:top-1/2 *:data-[slot=premium-mark]:-translate-y-1/2"
                   >
                     {content}
                   </PremiumLink>

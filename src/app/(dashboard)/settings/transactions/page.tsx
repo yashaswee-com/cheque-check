@@ -231,7 +231,7 @@ export default function TransactionsPage() {
                       {filterType === opt && (
                         <HugeiconsIcon
                           icon={Check}
-                          className="h-4 w-4 stroke-[3]"
+                          className="h-4 w-4 stroke-3"
                         />
                       )}
                     </button>
@@ -263,7 +263,7 @@ export default function TransactionsPage() {
                     {filterStatus === opt && (
                       <HugeiconsIcon
                         icon={Check}
-                        className="h-4 w-4 stroke-[3]"
+                        className="h-4 w-4 stroke-3"
                       />
                     )}
                   </button>
@@ -286,7 +286,7 @@ export default function TransactionsPage() {
                     {sortBy === opt.value && (
                       <HugeiconsIcon
                         icon={Check}
-                        className="h-4 w-4 stroke-[3]"
+                        className="h-4 w-4 stroke-3"
                       />
                     )}
                   </button>

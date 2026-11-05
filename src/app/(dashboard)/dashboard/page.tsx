@@ -241,7 +241,7 @@ export default function HomePage() {
             <div
               ref={actionsRef}
               onScroll={(event) => updateActionsOverflow(event.currentTarget)}
-              className="scroll-fade-x scroll-fade-4 flex max-w-full gap-3 overflow-x-auto overscroll-x-contain snap-x snap-proximity px-1 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="scroll-fade-x scroll-fade-4 flex max-w-full gap-3 overflow-x-auto overscroll-x-contain snap-x snap-proximity px-1 py-2 scrollbar-none [&::-webkit-scrollbar]:hidden"
               data-testid="dashboard-quick-actions"
             >
               <input
@@ -283,7 +283,7 @@ export default function HomePage() {
                 feature="reports"
                 data-tour="reports"
                 href="/reports"
-                className="relative w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary [&>[data-slot=premium-mark]]:absolute [&>[data-slot=premium-mark]]:right-2 [&>[data-slot=premium-mark]]:top-2"
+                className="relative w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary *:data-[slot=premium-mark]:absolute *:data-[slot=premium-mark]:right-2 *:data-[slot=premium-mark]:top-2"
               >
                 <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-4 transition-transform active:scale-95 border border-primary/5">
                   <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary/10 text-primary">

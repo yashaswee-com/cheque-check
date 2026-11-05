@@ -9,8 +9,9 @@ import { PillScroller } from '@/components/ui/pill-scroller'
 import {
   Search01Icon,
   ArrowDown01Icon,
+  LayoutGridIcon as Grid,
   RocketIcon as Rocket,
-  Scan01Icon as Scan,
+  ScanIcon as Scan,
   Wallet03Icon as Wallet,
   Notification03Icon as Notification,
   Shield01Icon as Shield,

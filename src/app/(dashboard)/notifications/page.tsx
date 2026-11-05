@@ -199,7 +199,7 @@ export default function NotificationsPage() {
                     {ascending === option.ascending && (
                       <HugeiconsIcon
                         icon={Tick02Icon}
-                        className="h-4 w-4 stroke-[3]"
+                        className="h-4 w-4 stroke-3"
                       />
                     )}
                   </button>
