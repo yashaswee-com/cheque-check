@@ -58,7 +58,7 @@ export default async function LandingPage() {
     error,
   } = await supabase.auth.getUser()
 
-  if (error) {
+  if (error && error.name !== 'AuthSessionMissingError') {
     console.error('Unable to check session on landing page:', error)
   } else if (user) {
     redirect('/dashboard')

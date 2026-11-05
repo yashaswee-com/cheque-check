@@ -177,7 +177,21 @@ export default function ProfilePage() {
             title={t('deleteProfileTitle')}
             description={t('deleteProfileDescription')}
             confirmName={profile?.name || profile?.email || ''}
-            onDelete={handleDeleteProfile}
+            reasons={[
+              'I no longer need this account',
+              'I have privacy concerns',
+              'I am switching to another service',
+              'Something else',
+            ]}
+            onDelete={async (selectedReason) => {
+              if (selectedReason) {
+                console.info(
+                  'Account deletion reason selected:',
+                  selectedReason,
+                )
+              }
+              await handleDeleteProfile()
+            }}
             trigger={
               <div className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-destructive/10">
                 <div className="flex items-center gap-3">

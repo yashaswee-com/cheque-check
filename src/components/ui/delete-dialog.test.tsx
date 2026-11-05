@@ -126,6 +126,41 @@ describe('DeleteConfirmationDialog', () => {
     expect(onDelete).toHaveBeenCalledOnce()
   })
 
+  it('asks for a reason before enabling deletion when reasons are provided', async () => {
+    const onDelete = vi.fn().mockResolvedValue(undefined)
+    render(
+      <DeleteConfirmationDialog
+        open
+        title="Delete account"
+        description="Permanent action"
+        confirmName="Main"
+        reasons={['I no longer need this account', 'I have privacy concerns']}
+        onDelete={onDelete}
+      />,
+    )
+
+    expect(
+      screen.getByText('Please tell us why you are deleting your account'),
+    ).toBeInTheDocument()
+    const reason = screen.getByRole('radio', {
+      name: 'I no longer need this account',
+    })
+    fireEvent.click(reason)
+
+    const confirm = screen.getByTestId('delete-dialog-confirm-button')
+    expect(confirm).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('typeToConfirm Main'), {
+      target: { value: 'Main' },
+    })
+    expect(confirm).toBeEnabled()
+
+    fireEvent.click(confirm)
+    await waitFor(() =>
+      expect(onDelete).toHaveBeenCalledWith('I no longer need this account'),
+    )
+  })
+
   it('supports an uncontrolled trigger and closes after successful deletion', async () => {
     render(
       <DeleteConfirmationDialog

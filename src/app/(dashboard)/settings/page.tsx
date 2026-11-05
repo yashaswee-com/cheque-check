@@ -63,6 +63,12 @@ export default function SettingsPage() {
   const display = useDisplayFormat(profile)
   const { handleLogout } = useSettings()
   const { isLoading: monetizationLoading } = useMonetization()
+  const memberSince = profile?.created_at
+    ? new Intl.DateTimeFormat(display.locale, {
+        month: 'short',
+        year: 'numeric',
+      }).format(new Date(profile.created_at))
+    : null
 
   if (profileLoading || monetizationLoading) {
     return (
@@ -231,6 +237,11 @@ export default function SettingsPage() {
           <p className="text-xs text-muted-foreground font-semibold">
             {profile?.email ?? tpa('noEmail')}
           </p>
+          {memberSince && (
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Member since {memberSince}
+            </p>
+          )}
         </div>
         <HugeiconsIcon
           icon={ChevronRight}
@@ -244,7 +255,7 @@ export default function SettingsPage() {
         {sections.map((section: SettingsSection) => (
           <div key={section.title} className="space-y-3">
             <div className="flex items-center gap-2 px-2">
-              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <div className="flex h-5 w-5 items-center justify-center text-primary">
                 <HugeiconsIcon icon={section.icon} className="h-3 w-3" />
               </div>
               <h3 className="text-[10px] font-semibold text-primary uppercase tracking-wider">
@@ -264,19 +275,19 @@ export default function SettingsPage() {
                     onClick={item.action}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg text-primary">
                         {item.icon === CrownIcon ? (
                           <PremiumMark />
                         ) : (
                           <HugeiconsIcon icon={item.icon} className="h-3 w-3" />
                         )}
                       </div>
-                      <div className="flex flex-col">
+                      <div className="flex min-w-0 flex-col">
                         <span className="text-sm font-semibold">
                           {item.name}
                         </span>
                         {item.description && (
-                          <span className="text-[10px] text-muted-foreground font-medium leading-tight mt-0.5">
+                          <span className="mt-0.5 truncate text-[10px] font-medium leading-tight text-muted-foreground">
                             {item.description}
                           </span>
                         )}

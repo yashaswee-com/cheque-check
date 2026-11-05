@@ -35,10 +35,11 @@ interface DeleteConfirmationDialogProps {
   title: string
   description: string
   confirmName: string
-  onDelete: () => Promise<void>
+  onDelete: (selectedReason?: string) => Promise<void> | void
   trigger?: React.ReactElement
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  reasons?: string[]
 }
 
 export function DeleteConfirmationDialog({
@@ -49,23 +50,36 @@ export function DeleteConfirmationDialog({
   trigger,
   open: controlledOpen,
   onOpenChange,
+  reasons,
 }: DeleteConfirmationDialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : uncontrolledOpen
+  const resetState = () => {
+    setInputValue('')
+    setSelectedReason(null)
+    setIsDeleting(false)
+  }
   const setOpen = (value: boolean) => {
     if (!isControlled) setUncontrolledOpen(value)
+    if (value && !open) resetState()
     onOpenChange?.(value)
   }
   const [inputValue, setInputValue] = useState('')
+  const [selectedReason, setSelectedReason] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const t = useTranslations('Common')
 
   const handleConfirm = async () => {
-    if (inputValue !== confirmName || isDeleting) return
+    if (
+      inputValue !== confirmName ||
+      isDeleting ||
+      (reasons?.length && !selectedReason)
+    )
+      return
     setIsDeleting(true)
     try {
-      await onDelete()
+      await onDelete(selectedReason ?? undefined)
       setOpen(false)
     } catch (error) {
       alert(error instanceof Error ? error.message : String(error))
@@ -101,6 +115,32 @@ export function DeleteConfirmationDialog({
           </SheetHeader>
 
           <div className="space-y-4 py-6">
+            {reasons && reasons.length > 0 && (
+              <div className="space-y-2 text-left">
+                <Label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Please tell us why you are deleting your account
+                </Label>
+                <div className="space-y-2">
+                  {reasons.map((reason) => (
+                    <label
+                      key={reason}
+                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-muted/30 px-3 py-2 text-sm"
+                    >
+                      <input
+                        type="radio"
+                        name="delete-reason"
+                        value={reason}
+                        checked={selectedReason === reason}
+                        onChange={() => setSelectedReason(reason)}
+                        className="h-4 w-4 accent-destructive"
+                      />
+                      <span>{reason}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-3 text-center">
               <Label
                 htmlFor="confirm_name"
@@ -125,7 +165,11 @@ export function DeleteConfirmationDialog({
           <Button
             variant="destructive"
             onClick={handleConfirm}
-            disabled={inputValue !== confirmName || isDeleting}
+            disabled={
+              inputValue !== confirmName ||
+              (reasons?.length ? !selectedReason : false) ||
+              isDeleting
+            }
             loading={isDeleting}
             data-testid="delete-dialog-confirm-button"
             className="w-full rounded-pill h-14 font-bold text-lg"
