@@ -1,7 +1,15 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { mapPhoneAuthError, sendPhoneOtp, verifyPhoneOtp } from './phone-auth'
 import { deactivateAccount } from './deactivate-account'
+
+const mocks = vi.hoisted(() => ({ warn: vi.fn() }))
+
+vi.mock('@/lib/logger', () => ({ logger: { warn: mocks.warn } }))
+
+beforeEach(() => {
+  mocks.warn.mockClear()
+})
 
 function makeClient(overrides: Record<string, unknown> = {}) {
   const auth = {
@@ -108,6 +116,11 @@ describe('sendPhoneOtp', () => {
     expect(
       await sendPhoneOtp(client, { phone: '9876543210', purpose: 'login' }),
     ).toEqual({ ok: false, status: 503, code: 'provider_unavailable' })
+    expect(mocks.warn).toHaveBeenCalledWith('Phone auth provider unavailable', {
+      operation: 'auth.phone_send',
+      code: 'provider_exception',
+      status: undefined,
+    })
   })
 
   it('rejects non-Indian numbers before calling Supabase', async () => {
@@ -264,6 +277,12 @@ describe('sendPhoneOtp', () => {
       status: 503,
       code: 'provider_unavailable',
     })
+    expect(mocks.warn).toHaveBeenCalledWith('Phone auth provider unavailable', {
+      operation: 'auth.phone_send',
+      code: 'sms_send_failed',
+      status: 500,
+    })
+    expect(JSON.stringify(mocks.warn.mock.calls)).not.toContain('Twilio 21608')
   })
 })
 

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/logger'
 import {
   phoneOtpSendSchema as sendSchema,
   phoneOtpVerifySchema as verifySchema,
@@ -57,8 +58,34 @@ interface AuthErrorLike {
   message?: string
 }
 
+function providerUnavailable(
+  operation: string,
+  error?: AuthErrorLike,
+): PhoneAuthFailure {
+  const providerCode =
+    typeof error?.code === 'string' && /^[a-z0-9_]{1,64}$/i.test(error.code)
+      ? error.code
+      : 'unknown'
+  const providerStatus =
+    typeof error?.status === 'number' && Number.isInteger(error.status)
+      ? error.status
+      : undefined
+
+  // Provider messages can contain phone numbers or credentials; log only
+  // bounded machine-readable metadata so production failures are diagnosable.
+  logger.warn('Phone auth provider unavailable', {
+    operation,
+    code: providerCode,
+    status: providerStatus,
+  })
+  return failure('provider_unavailable')
+}
+
 /** Maps a Supabase Auth error to a safe code; never forwards provider text. */
-export function mapPhoneAuthError(error: AuthErrorLike): PhoneAuthFailure {
+export function mapPhoneAuthError(
+  error: AuthErrorLike,
+  operation = 'auth.phone',
+): PhoneAuthFailure {
   switch (error.code) {
     case 'over_sms_send_rate_limit':
     case 'over_request_rate_limit':
@@ -76,7 +103,7 @@ export function mapPhoneAuthError(error: AuthErrorLike): PhoneAuthFailure {
     case 'signup_disabled':
     case 'otp_disabled':
     case 'unexpected_failure':
-      return failure('provider_unavailable')
+      return providerUnavailable(operation, error)
     case 'validation_failed':
       return failure('invalid_phone')
   }
@@ -84,7 +111,7 @@ export function mapPhoneAuthError(error: AuthErrorLike): PhoneAuthFailure {
     return failure('rate_limited', OTP_RESEND_COOLDOWN_SECONDS)
   }
   if (!error.status || error.status >= 500) {
-    return failure('provider_unavailable')
+    return providerUnavailable(operation, error)
   }
   return failure('unknown')
 }
@@ -144,7 +171,7 @@ export async function sendPhoneOtp(
           ...(name ? { data: { name } } : {}),
         },
       })
-      return error ? mapPhoneAuthError(error) : done
+      return error ? mapPhoneAuthError(error, 'auth.phone_send') : done
     }
 
     const {
@@ -177,9 +204,11 @@ export async function sendPhoneOtp(
       return failure('rate_limited', LINK_SEND_RATE_LIMIT.windowSeconds)
 
     const { error } = await supabase.auth.updateUser({ phone })
-    return error ? mapPhoneAuthError(error) : done
+    return error ? mapPhoneAuthError(error, 'auth.phone_send') : done
   } catch {
-    return failure('provider_unavailable')
+    return providerUnavailable('auth.phone_send', {
+      code: 'provider_exception',
+    })
   }
 }
 
@@ -226,7 +255,7 @@ export async function verifyPhoneOtp(
       token,
       type: purpose === 'link' ? 'phone_change' : 'sms',
     })
-    if (error) return mapPhoneAuthError(error)
+    if (error) return mapPhoneAuthError(error, 'auth.phone_verify')
 
     const user = data.user
     if (!user || !data.session) return failure('provider_unavailable')
@@ -248,6 +277,8 @@ export async function verifyPhoneOtp(
 
     return { ok: true, phone, purpose }
   } catch {
-    return failure('provider_unavailable')
+    return providerUnavailable('auth.phone_verify', {
+      code: 'provider_exception',
+    })
   }
 }
