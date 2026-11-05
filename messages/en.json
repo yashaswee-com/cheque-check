@@ -1452,6 +1452,7 @@
     "dangerZone": "Danger Zone",
     "signOut": "Sign Out",
     "user": "User",
+    "memberFor": "Member for {duration}",
     "currency": "Currency",
     "dateFormat": "Date Format",
     "timeZone": "Time Zone",

@@ -51,6 +51,25 @@ interface SettingsSection {
   items: SettingsItem[]
 }
 
+function memberDuration(createdAt: string, now: Date): string | null {
+  const created = new Date(createdAt)
+  if (!Number.isFinite(created.getTime()) || created > now) return null
+
+  let totalMonths =
+    (now.getUTCFullYear() - created.getUTCFullYear()) * 12 +
+    now.getUTCMonth() -
+    created.getUTCMonth()
+  if (now.getUTCDate() < created.getUTCDate()) totalMonths -= 1
+  if (totalMonths < 0) return null
+  if (totalMonths === 0) return '<1m'
+
+  const years = Math.floor(totalMonths / 12)
+  const months = totalMonths % 12
+  return [years > 0 ? `${years}y` : '', months > 0 ? `${months}m` : '']
+    .filter(Boolean)
+    .join(' ')
+}
+
 export default function SettingsPage() {
   const t = useTranslations('Settings')
   const referrals = useTranslations('Referrals')
@@ -63,11 +82,8 @@ export default function SettingsPage() {
   const display = useDisplayFormat(profile)
   const { handleLogout } = useSettings()
   const { isLoading: monetizationLoading } = useMonetization()
-  const memberSince = profile?.created_at
-    ? new Intl.DateTimeFormat(display.locale, {
-        month: 'short',
-        year: 'numeric',
-      }).format(new Date(profile.created_at))
+  const membershipDuration = profile?.created_at
+    ? memberDuration(profile.created_at, new Date())
     : null
 
   if (profileLoading || monetizationLoading) {
@@ -237,9 +253,9 @@ export default function SettingsPage() {
           <p className="text-xs text-muted-foreground font-semibold">
             {profile?.email ?? tpa('noEmail')}
           </p>
-          {memberSince && (
+          {membershipDuration && (
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Member since {memberSince}
+              {t('memberFor', { duration: membershipDuration })}
             </p>
           )}
         </div>

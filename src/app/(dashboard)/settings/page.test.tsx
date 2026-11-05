@@ -13,6 +13,7 @@ let profile: {
   name: string | null
   email: string | null
   avatar_url: string | null
+  created_at?: string
 } | null = null
 
 vi.mock('@/features/profile/hooks/use-profile', () => ({
@@ -64,7 +65,10 @@ beforeEach(() => {
   }
 })
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 describe('settings page', () => {
   it('places the always-visible usage card directly under the profile card', () => {
@@ -128,6 +132,26 @@ describe('settings page', () => {
     renderPage()
     expect(screen.getAllByText(messages.Settings.user)).not.toHaveLength(0)
     expect(screen.getByText(messages.PhoneAuth.noEmail)).toBeVisible()
+  })
+
+  it('shows elapsed membership duration instead of the join date', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-06T12:00:00.000Z'))
+    profile = {
+      name: 'Riya Sharma',
+      email: 'riya@example.test',
+      avatar_url: null,
+      created_at: '2025-08-06T12:00:00.000Z',
+    }
+
+    renderPage()
+
+    expect(
+      screen.getByText(
+        messages.Settings.memberFor.replace('{duration}', '1y 3m'),
+      ),
+    ).toBeVisible()
+    expect(screen.queryByText(/Member since/)).not.toBeInTheDocument()
   })
 
   it('rings the profile photo in gold only while premium is active', () => {

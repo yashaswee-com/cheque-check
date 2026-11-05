@@ -1471,6 +1471,7 @@
     "dangerZone": "Danger Zone",
     "signOut": "Sign Out karein",
     "user": "User",
+    "memberFor": "Member for {duration}",
     "currency": "Currency",
     "dateFormat": "Date Format",
     "timeZone": "Time Zone",
