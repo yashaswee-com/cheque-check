@@ -54,6 +54,7 @@ interface SettingsSection {
 export default function SettingsPage() {
   const t = useTranslations('Settings')
   const referrals = useTranslations('Referrals')
+  const feedback = useTranslations('Feedback')
   const tp = useTranslations('Premium')
   const tpa = useTranslations('PhoneAuth')
   const security = useTranslations('Security')
@@ -157,6 +158,18 @@ export default function SettingsPage() {
           description: t('whatsNewDesc'),
           icon: Megaphone,
           href: '/settings/whats-new',
+        },
+        {
+          name: 'Announcements',
+          description: 'Latest product updates and important changes.',
+          icon: Megaphone,
+          href: '/announcements',
+        },
+        {
+          name: feedback('submitTitle'),
+          description: feedback('privacyNote'),
+          icon: Help,
+          href: '/feedback',
         },
         {
           name: t('helpAndSupport'),

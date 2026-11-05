@@ -8,17 +8,13 @@ import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
   Calendar03Icon as Calendar,
-  Chart01Icon as Stats,
   Camera01Icon as Camera,
   Building03Icon,
   Calendar01Icon,
   Tag01Icon,
 } from '@hugeicons/core-free-icons'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
-import {
-  useDashboardCheques,
-  useChequeSummary,
-} from '@/features/cheques/hooks/use-dashboard-cheques'
+import { useDashboardCheques } from '@/features/cheques/hooks/use-dashboard-cheques'
 import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { ChequeCard } from '@/components/cheque-card'
 import Link from 'next/link'
@@ -26,31 +22,12 @@ import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
-import { ChequeAnalytics } from '@/features/cheques/components/cheque-analytics'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
-import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { DraftsSummaryCard } from '@/features/drafts'
 import { cn } from '@/lib/utils'
-import type { DateRange } from 'react-day-picker'
-import { StatsDateFilter } from '@/features/cheques/components/stats-date-filter'
-import {
-  resolveDateRange,
-  type DateRangePreset,
-} from '@/features/cheques/lib/date-range'
-
-const ChequeStatsChart = dynamic(
-  () =>
-    import('@/features/cheques/components/cheque-distribution').then(
-      (mod) => mod.ChequeDistribution,
-    ),
-  {
-    loading: () => <Skeleton className="h-full w-full rounded-lg" />,
-    ssr: false,
-  },
-)
 
 export default function HomePage() {
   const tDashboard = useTranslations('Dashboard')
@@ -114,16 +91,6 @@ export default function HomePage() {
       router.push('/cheques/create?action=scan')
     })
   }
-
-  const [statsPreset, setStatsPreset] = useState<DateRangePreset>('last30Days')
-  const [customRange, setCustomRange] = useState<DateRange>()
-  const statsRange = resolveDateRange(
-    statsPreset,
-    new Date(),
-    customRange,
-    profile?.time_zone || 'Asia/Kolkata',
-  )
-  const statsSummary = useChequeSummary(activeBusiness?.id, statsRange)
 
   const currency = profile?.currency || '₹'
   const display = useDisplayFormat(profile)
@@ -378,38 +345,6 @@ export default function HomePage() {
             {hasMoreToday && (
               <Link href="/cheques">{tShared('viewAllCheques')}</Link>
             )}
-          </div>
-
-          {/* Statistics Pie Chart */}
-          <div className="space-y-4 pt-4">
-            <div className="flex items-center gap-2 px-1">
-              <HugeiconsIcon
-                icon={Stats}
-                className="h-3 w-3 text-muted-foreground opacity-80"
-              />
-              <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {tDashboard('statistics')}
-              </h2>
-            </div>
-            <StatsDateFilter
-              preset={statsPreset}
-              onPresetChange={setStatsPreset}
-              customRange={customRange}
-              onCustomRangeChange={setCustomRange}
-            />
-            <ChequeStatsChart
-              summary={statsSummary.data}
-              currency={currency}
-              isLoading={statsSummary.isFetching}
-              error={
-                statsSummary.isError ? tCommon('loadDataError') : undefined
-              }
-            />
-            <ChequeAnalytics
-              businessId={activeBusiness?.id}
-              range={statsRange}
-              showBankAnalysis
-            />
           </div>
         </>
       </DataState>

@@ -96,6 +96,8 @@ describe('settings page', () => {
       '/reports',
       '/tags',
       '/settings/whats-new',
+      '/announcements',
+      '/feedback',
       '/help',
       '/settings/about',
       '/settings/privacy-policy',

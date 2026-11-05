@@ -11,7 +11,6 @@ import { FaqExplorer } from '@/features/faqs/components/faq-explorer'
 
 export default function HelpPage() {
   const t = useTranslations('Settings')
-  const feedback = useTranslations('Feedback')
 
   return (
     <div className="max-w-2xl space-y-8 pb-24">
@@ -40,21 +39,6 @@ export default function HelpPage() {
               {t('getHelpViaWhatsApp')}
             </span>
           </a>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/feedback"
-            className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium hover:bg-muted"
-          >
-            {feedback('submitTitle')}
-          </Link>
-          <Link
-            href="/roadmap"
-            className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium hover:bg-muted"
-          >
-            {feedback('roadmapTitle')}
-          </Link>
         </div>
 
         <div className="rounded-lg bg-primary/5 border border-primary/20 p-6 text-center space-y-2">

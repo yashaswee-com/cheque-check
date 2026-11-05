@@ -20,6 +20,7 @@ import {
   Shield01Icon as Shield,
   LegalDocumentIcon as File,
   HelpCircleIcon as Help,
+  MegaphoneIcon as Megaphone,
   RocketIcon as Rocket,
   PencilEdit01Icon as Edit,
   Calculator01Icon as CalculatorIcon,
@@ -71,6 +72,8 @@ export function TopNav() {
     if (path === '/feedback')
       return { title: t('Feedback.submitTitle'), icon: Help }
     if (path === '/help') return { title: t('FAQ.title'), icon: Help }
+    if (path === '/announcements')
+      return { title: 'Announcements', icon: Megaphone }
     if (path === '/roadmap')
       return { title: t('Feedback.roadmapTitle'), icon: Star }
     if (path === '/settings')
@@ -93,6 +96,7 @@ export function TopNav() {
         'refund-policy': { title: t('Settings.refundPolicy'), icon: Pay },
         about: { title: t('Settings.aboutApp'), icon: Star },
         'help-and-support': { title: t('Settings.helpAndSupport'), icon: Help },
+        announcements: { title: 'Announcements', icon: Megaphone },
         'whats-new': { title: t('Settings.whatsNew'), icon: Rocket },
         preferences: { title: t('Settings.preferences'), icon: Settings },
         security: { title: t('Security.pinTitle'), icon: Shield },

@@ -81,7 +81,7 @@ export function SpeedDialFab({
           onClick={() => setOpen(false)}
         />
       )}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
+      <div className="fixed bottom-[calc(5rem+var(--shell-bottom-extra,0px)+env(safe-area-inset-bottom))] right-6 z-40 flex flex-col items-end gap-3">
         {open && (
           <ul
             role="menu"

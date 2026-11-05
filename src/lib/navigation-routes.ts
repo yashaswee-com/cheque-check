@@ -13,6 +13,7 @@ const viewingRoutes = new Set([
   'settings',
   'premium',
   'notifications',
+  'announcements',
   'referrals',
   'feedback',
   'roadmap',
@@ -20,7 +21,17 @@ const viewingRoutes = new Set([
   'drafts',
 ])
 /** Single-segment pages reached from another screen, so they keep a back button. */
-const nestedRoutes = new Set(['drafts'])
+const nestedRoutes = new Set([
+  'drafts',
+  'profile',
+  'settings',
+  'notifications',
+  'announcements',
+  'help',
+  'feedback',
+  'roadmap',
+  'referrals',
+])
 
 /** Classify complete route segments, never substrings in entity IDs. */
 export function getShellRoute(pathname: string) {

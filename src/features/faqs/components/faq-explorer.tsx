@@ -6,9 +6,25 @@ import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PillScroller } from '@/components/ui/pill-scroller'
-import { Search01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons'
+import {
+  Search01Icon,
+  ArrowDown01Icon,
+  RocketIcon as Rocket,
+  Scan01Icon as Scan,
+  Wallet03Icon as Wallet,
+  Notification03Icon as Notification,
+  Shield01Icon as Shield,
+} from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { getFaq, FAQ_CATEGORIES, FAQ_ENTRIES, type FaqId } from '../lib/faqs'
+
+const categoryIcons: Record<string, typeof Rocket> = {
+  gettingStarted: Rocket,
+  chequesScanning: Scan,
+  plansPayments: Wallet,
+  notifications: Notification,
+  privacySecurity: Shield,
+}
 
 export function FaqExplorer() {
   const t = useTranslations('FAQ')
@@ -84,7 +100,13 @@ export function FaqExplorer() {
             aria-pressed={category === item}
             onClick={() => setCategory(item)}
           >
-            {t(`categories.${item}`)}
+            <span className="inline-flex items-center gap-2">
+              <HugeiconsIcon
+                icon={categoryIcons[item] ?? Grid}
+                className="h-4 w-4"
+              />
+              <span>{t(`categories.${item}`)}</span>
+            </span>
           </Button>
         ))}
       </PillScroller>
