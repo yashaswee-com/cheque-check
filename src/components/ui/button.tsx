@@ -30,6 +30,7 @@ const buttonVariants = cva(
         lg: 'h-12 gap-1.5 px-6 text-base',
         pill: 'h-11 rounded-full px-6 text-base',
         icon: 'size-10 rounded-full',
+        'icon-md': 'size-9 rounded-full',
         'icon-sm': 'size-8 rounded-full',
       },
     },

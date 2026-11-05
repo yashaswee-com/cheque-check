@@ -12,14 +12,14 @@ export function NotificationBell() {
   return (
     <Link
       href="/notifications"
-      className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+      className="relative flex size-9 shrink-0 items-center justify-center rounded-full"
       aria-label={
         count.error ? t('countError') : t('bell', { count: count.data ?? 0 })
       }
     >
       <HugeiconsIcon
         icon={Notification01Icon}
-        className="h-5 w-5 text-muted-foreground"
+        className="size-5 text-muted-foreground"
       />
       {count.error ? (
         <span className="absolute right-0 top-0 text-xs" aria-hidden="true">

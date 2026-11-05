@@ -243,7 +243,7 @@ describe('navigation components', () => {
     },
   )
 
-  it('switches business icons, opens search/calculator, and hides restricted menu actions', async () => {
+  it('shows the avatar trigger and provides Calculator, Help, Reload, and Settings actions', async () => {
     const user = userEvent.setup()
     pathname = '/cheques'
     activeBusiness = {
@@ -275,6 +275,10 @@ describe('navigation components', () => {
     expect(
       screen.getByRole('link', { name: messages.Navigation.settings }),
     ).toBeVisible()
+    expect(screen.getByText(messages.SharedUI.help)).toBeVisible()
+    expect(
+      screen.getByTestId('top-nav-settings-icon').closest('a'),
+    ).toHaveAttribute('href', '/settings')
     expect(
       screen.getByRole('button', { name: messages.SharedUI.reload }),
     ).toBeVisible()
@@ -286,11 +290,30 @@ describe('navigation components', () => {
       screen.getByRole('button', { name: messages.SharedUI.more }),
     )
     expect(
-      screen.queryByRole('button', { name: messages.SharedUI.reload }),
-    ).not.toBeInTheDocument()
+      screen.getByRole('button', { name: messages.SharedUI.reload }),
+    ).toBeVisible()
     expect(
       screen.queryByTestId('business-switcher-trigger'),
     ).not.toBeInTheDocument()
+  })
+
+  it('uses equal header action hit areas and visual icon dimensions', () => {
+    pathname = '/cheques'
+    renderIntl(<TopNav />)
+
+    const notifications = document.querySelector('a[href="/notifications"]')
+    const search = screen.getByRole('button', {
+      name: messages.SharedUI.search,
+    })
+    const avatar = screen.getByTestId('top-nav-user-avatar')
+    const avatarButton = avatar.closest('button')
+
+    for (const control of [notifications, search, avatarButton]) {
+      expect(control).toHaveClass('size-9')
+    }
+    expect(avatar).toHaveClass('size-5')
+    expect(search.querySelector('svg')).toHaveClass('size-5')
+    expect(notifications?.querySelector('svg')).toHaveClass('size-5')
   })
 
   it('shows profile and business initials when their image URLs are absent or names are missing', () => {
@@ -303,10 +326,10 @@ describe('navigation components', () => {
     }
 
     renderIntl(<TopNav />)
-    fireEvent.click(
-      screen.getByRole('button', { name: messages.SharedUI.more }),
+    const avatar = screen.getByTestId('top-nav-user-avatar')
+    expect(avatar.closest('button')).toHaveAccessibleName(
+      messages.SharedUI.more,
     )
-
     expect(screen.getByRole('img', { name: 'User' })).toHaveAttribute(
       'src',
       'https://example.test/avatar.png',
@@ -314,9 +337,10 @@ describe('navigation components', () => {
     expect(screen.getByTestId('business-switcher-trigger')).toHaveTextContent(
       'A',
     )
-    expect(screen.getByTestId('top-nav-user-avatar')).not.toHaveClass(
-      'ring-[#D4AF37]',
-    )
+    expect(avatar).not.toHaveClass('ring-[#D4AF37]')
+    fireEvent.click(avatar.closest('button')!)
+    expect(screen.getByTestId('top-nav-settings-icon')).toBeVisible()
+    expect(screen.getByText(messages.SharedUI.help)).toBeVisible()
   })
 
   it('draws a gold ring around the user photo for premium members', () => {
@@ -324,9 +348,6 @@ describe('navigation components', () => {
     premiumRing = 'ring-[3px] ring-[#D4AF37]'
     try {
       renderIntl(<TopNav />)
-      fireEvent.click(
-        screen.getByRole('button', { name: messages.SharedUI.more }),
-      )
       expect(screen.getByTestId('top-nav-user-avatar')).toHaveClass(
         'ring-[#D4AF37]',
       )

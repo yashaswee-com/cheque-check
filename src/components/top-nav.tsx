@@ -26,6 +26,7 @@ import {
   Calculator01Icon as CalculatorIcon,
   Tag01Icon as TagIcon,
   NoteEditIcon as DraftIcon,
+  MoreVerticalIcon as More,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
@@ -181,10 +182,6 @@ export function TopNav() {
   const route = getShellRoute(pathname)
   const isMainTab = route.isTopLevel || pathname === '/features/catalog'
 
-  const hideSettingsIcon =
-    pathname.startsWith('/settings') ||
-    pathname.startsWith('/features') ||
-    pathname === '/profile'
   const hideBusinessSwitcher = !route.showBusinessSwitcher
 
   return (
@@ -229,15 +226,15 @@ export function TopNav() {
           <NotificationBell />
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-md"
             data-testid="global-search-trigger"
             onClick={() => setSearchOpen(true)}
-            className="rounded-full h-9 w-9"
+            className="size-9 rounded-full"
             aria-label={ts('search')}
           >
             <HugeiconsIcon
               icon={Search}
-              className="h-5 w-5 text-muted-foreground"
+              className="size-5 text-muted-foreground"
             />
           </Button>
           <Popover open={moreOpen} onOpenChange={setMoreOpen}>
@@ -245,15 +242,30 @@ export function TopNav() {
               render={
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
+                  size="icon-md"
+                  className="p-0"
                   aria-label={ts('more')}
                   data-tour="settings"
                 />
               }
             >
-              <span aria-hidden="true" className="text-xl leading-none">
-                ⋯
+              <span
+                data-testid="top-nav-user-avatar"
+                className={cn(
+                  'flex size-5 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary shadow-sm ring-1 ring-white transition-all active:scale-95',
+                  premiumRing,
+                )}
+              >
+                {profile?.avatar_url ? (
+                  <SkeletonImage
+                    src={profile.avatar_url}
+                    alt={profile.name || 'User'}
+                    containerClassName="h-full w-full rounded-full"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <HugeiconsIcon icon={User} className="size-5" />
+                )}
               </span>
             </PopoverTrigger>
             <PopoverContent
@@ -286,32 +298,28 @@ export function TopNav() {
                 </span>
               </a>
 
-              {!hideSettingsIcon && (
-                <>
-                  <Button
-                    variant="ghost"
-                    onClick={() => window.location.reload()}
-                    className="justify-start"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-muted-foreground"
-                    >
-                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                      <path d="M3 3v5h5" />
-                    </svg>
-                    {ts('reload')}
-                  </Button>
-                </>
-              )}
+              <Button
+                variant="ghost"
+                onClick={() => window.location.reload()}
+                className="justify-start"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-muted-foreground"
+                >
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
+                </svg>
+                {ts('reload')}
+              </Button>
 
               <Link
                 href="/settings"
@@ -319,24 +327,11 @@ export function TopNav() {
                 className="flex min-h-10 items-center gap-2 rounded-sm px-4 text-sm hover:bg-muted"
                 aria-label={t('Navigation.settings')}
               >
-                <div
-                  data-testid="top-nav-user-avatar"
-                  className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-all active:scale-95 overflow-hidden ring-2 ring-white shadow-sm',
-                    premiumRing,
-                  )}
-                >
-                  {profile?.avatar_url ? (
-                    <SkeletonImage
-                      src={profile.avatar_url}
-                      alt={profile.name || 'User'}
-                      containerClassName="h-full w-full rounded-full"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <HugeiconsIcon icon={User} className="h-4 w-4" />
-                  )}
-                </div>
+                <HugeiconsIcon
+                  icon={More}
+                  className="size-5 text-muted-foreground"
+                  data-testid="top-nav-settings-icon"
+                />
                 {t('Navigation.settings')}
               </Link>
             </PopoverContent>
