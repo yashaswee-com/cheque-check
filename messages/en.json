@@ -184,6 +184,8 @@
     "privacy": "Free reminders and report alerts. Lock-screen messages never show cheque numbers, parties or amounts. The Push notifications switch controls all devices.",
     "enable": "Enable on this device",
     "disable": "Disable on this device",
+    "settingsRedirect": "Manage push notifications for this device from notification settings.",
+    "settingsLink": "Open notification settings",
     "error": "Push action failed. Check permission and connection, then try again. A maximum of 10 devices is allowed.",
     "cleanupError": "Could not detach this browser's old push subscription. Disable push in browser settings before switching accounts.",
     "states": {

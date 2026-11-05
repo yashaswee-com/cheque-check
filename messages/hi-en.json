@@ -184,6 +184,8 @@
     "privacy": "Free reminders aur report alerts. Lock screen par cheque number, party ya amount nahi dikhta. Push notifications switch sabhi devices control karta hai.",
     "enable": "Is device par enable karein",
     "disable": "Is device par disable karein",
+    "settingsRedirect": "Is device ke push notifications ko notification settings mein manage karein.",
+    "settingsLink": "Notification settings kholein",
     "error": "Push action fail hua. Permission aur connection check karke dobara try karein. Maximum 10 devices allowed hain.",
     "cleanupError": "Browser ki purani push subscription nahi hat saki. Account badalne se pehle browser settings mein push band karein.",
     "states": {

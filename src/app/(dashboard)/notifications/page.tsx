@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -21,6 +22,10 @@ import {
 } from '@hugeicons/core-free-icons'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useInbox } from '@/features/notifications/hooks/use-inbox'
+import {
+  pushService,
+  type PushState,
+} from '@/features/notifications/services/push.service'
 import { matchInboxSearch } from '@/features/notifications/lib/inbox-search'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Button } from '@/components/ui/button'
@@ -40,7 +45,6 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { StickyPagination } from '@/components/ui/sticky-pagination'
-import { PushSettings } from '@/features/notifications/components/push-settings'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import type { InboxItem } from '@/validators/notification-inbox'
@@ -60,6 +64,7 @@ function useDebounced<T>(value: T, delay = 250) {
 export default function NotificationsPage() {
   const t = useTranslations('Inbox')
   const common = useTranslations('Common')
+  const push = useTranslations('Push')
   const { activeBusiness, businesses, setActiveBusiness } = useBusiness()
   const router = useRouter()
   const display = useDisplayFormat()
@@ -69,6 +74,21 @@ export default function NotificationsPage() {
     useState<BusinessFilter>(undefined)
   const [unread, setUnread] = useState(false)
   const [ascending, setAscending] = useState(false)
+  const [pushState, setPushState] = useState<PushState | null>(null)
+  useEffect(() => {
+    let active = true
+    void pushService
+      .state()
+      .then((state) => {
+        if (active) setPushState(state)
+      })
+      .catch((error) => {
+        logger.error('Push status failed to load', error)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
   const businessId =
     businessFilter === undefined
       ? activeBusiness?.id
@@ -289,7 +309,22 @@ export default function NotificationsPage() {
           <HugeiconsIcon icon={TickDouble02Icon} className="h-5 w-5" />
         </Button>
       </div>
-      <PushSettings />
+      {pushState && pushState !== 'enabled' && (
+        <section
+          aria-label={push('title')}
+          className="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="text-sm text-muted-foreground">
+            {push('settingsRedirect')}
+          </p>
+          <Link
+            href="/settings/notifications"
+            className="inline-flex h-10 shrink-0 items-center justify-center rounded-sm bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            {push('settingsLink')}
+          </Link>
+        </section>
+      )}
       {error && <p role="alert">{t('actionError')}</p>}
       {inbox.isLoading ? (
         <div
