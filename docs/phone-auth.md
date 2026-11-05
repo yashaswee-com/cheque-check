@@ -40,6 +40,22 @@ Expired and wrong codes are indistinguishable (`invalid_or_expired_code`).
 SMS OTP expiry is a hosted Auth setting (suggested 300 s); set it in the
 dashboard.
 
+## Troubleshooting `provider_unavailable`
+
+`POST /api/auth/phone/send` returns this safe 503 when Supabase Auth or the SMS
+provider fails. Check the matching **Supabase Auth logs** first, then the Vercel
+function log for the structured `Phone auth provider unavailable` event, which
+contains only the provider error code and status. A `captcha_failed` response is
+reported separately; do not disable CAPTCHA as a workaround.
+
+For `sms_send_failed` or a provider 5xx, verify in the deployed Supabase
+project's **Authentication > Providers > Phone** settings that phone auth and
+Twilio are enabled, the Account SID/Auth Token/Messaging Service SID belong to
+the same account, and the sender, billing, India permissions, and required
+India template/DLT registration are active. The checked-in `supabase/config.toml`
+has Twilio disabled for local defaults; do not blindly push that local config
+to the hosted project. Twilio credentials belong in Supabase Auth, not Vercel.
+
 The verification form uses `input-otp` to display six digit slots backed by
 one accessible input, preserving keyboard editing, paste and SMS autofill.
 Formatted pasted codes are reduced to digits, and verification requires all
