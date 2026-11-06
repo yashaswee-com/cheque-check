@@ -534,6 +534,23 @@ vi.mock('@/features/cheques/components/print-layout-editor', () => ({
       <button onClick={() => onOpenChange(false)}>Close print settings</button>
     ) : null,
 }))
+vi.mock('@/features/cheques/components/cheque-audit-sheet', () => ({
+  ChequeAuditSheet: ({
+    open,
+    onOpenChange,
+  }: {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+  }) =>
+    open ? (
+      <div>
+        <span>Audit log sheet</span>
+        <button type="button" onClick={() => onOpenChange(false)}>
+          Close audit log
+        </button>
+      </div>
+    ) : null,
+}))
 vi.mock('@/features/premium-workspace/services/workspace.service', () => ({
   getPrintLayout: mocks.layout,
 }))
@@ -605,6 +622,16 @@ describe('account logos in cheque surfaces', () => {
       'src',
       'account-logo',
     )
+  })
+})
+
+describe('cheque detail audit log speed dial', () => {
+  it('opens the audit log sheet from the speed dial', () => {
+    renderPage(<ChequeDetailPage />)
+
+    fireEvent.click(screen.getByRole('button', { name: /view audit log/i }))
+
+    expect(screen.getByText('Audit log sheet')).toBeInTheDocument()
   })
 })
 

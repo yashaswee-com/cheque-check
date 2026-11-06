@@ -13,9 +13,6 @@ create test account for razorpay team
 8. Setup SMTP email server for email login as well.
 9. Creat Test Account for ERazorpay team to test.
 10. SETUP Proper Git CI, when the unit tests fail don't forward the deployment. QA will work but the production would fail.
-11. Standardise SOP for migrating db and function changes in Supabase.
-12. How do I question docs [done]
 13. Copy some tools, used by cheque bounce people : https://lawcentral.ai/cheque-bounce like these, so they could come to our website. [progress]
 14. Fix the OpenAi project management thing
-15. MkE THE REPO P[RIVATE
-16.
+16. Add Cheque Managemebt FDeature= Aduit Feature, to seem timelineo f cheque changes

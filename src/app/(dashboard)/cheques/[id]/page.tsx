@@ -52,6 +52,7 @@ import { usePremiumAction } from '@/features/monetization/components/premium-gat
 
 import { PhotoProvider, PhotoView } from 'react-photo-view'
 import 'react-photo-view/dist/react-photo-view.css'
+import { ChequeAuditSheet } from '@/features/cheques/components/cheque-audit-sheet'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -110,6 +111,7 @@ export default function ChequeDetailPage() {
   const router = useRouter()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [printLayoutOpen, setPrintLayoutOpen] = useState(false)
+  const [auditLogOpen, setAuditLogOpen] = useState(false)
   const duplicating = useRef(false)
   const { data: party } = useParty(cheque?.party_id)
   const isDraft = useRedirectIfDraft('cheque', cheque)
@@ -218,6 +220,12 @@ export default function ChequeDetailPage() {
       onClick: () => {
         if (premium.requireAccess('cheque-printing')) setPrintLayoutOpen(true)
       },
+    },
+    {
+      label: t('viewAuditLog'),
+      icon: Calendar,
+      testId: 'cheque-detail-audit-log',
+      onClick: () => setAuditLogOpen(true),
     },
     {
       label: t('duplicate'),
@@ -434,6 +442,11 @@ export default function ChequeDetailPage() {
           deleteCheque(cheque.id)
           router.replace('/cheques')
         }}
+      />
+      <ChequeAuditSheet
+        chequeId={cheque.id}
+        open={auditLogOpen}
+        onOpenChange={setAuditLogOpen}
       />
       <SpeedDialFab
         editHref={`/cheques/${id}/edit`}

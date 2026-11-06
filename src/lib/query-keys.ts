@@ -79,6 +79,7 @@ export const queryKeys = {
       ['cheque-pages', request.businessId, request] as const,
     list: (businessId: string | undefined) => ['cheques', businessId] as const,
     detail: (id: string | undefined) => ['cheque', id] as const,
+    auditLog: (id: string | undefined) => ['cheque-audit', id] as const,
     numberConflict: (
       businessId: string | undefined,
       accountId: string | undefined,
