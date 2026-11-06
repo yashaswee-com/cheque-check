@@ -9,6 +9,7 @@ import PublicFeaturesPage from './(public)/features/page'
 import PublicPricingPage from './(public)/pricing/page'
 import PublicPrivacyPage from './(public)/privacy/page'
 import PublicSiteLayout from './(public)/layout'
+import ChequeBouncePage from './(public)/cheque-bounce/page'
 
 const catalogs = { en: english, hi: hindi, 'hi-en': hinglish }
 const mocks = vi.hoisted(() => ({
@@ -171,6 +172,26 @@ describe('public site pages', () => {
     expect(
       screen.getByRole('heading', {
         name: `7. ${english.Settings.contactUs}`,
+      }),
+    ).toBeVisible()
+  })
+
+  it('renders the cheque bounce tool page with the timeline calculator', async () => {
+    const page = await ChequeBouncePage()
+    renderPage(page)
+
+    expect(
+      screen.getByRole('heading', { name: /^Cheque Bounce$/i }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('heading', { name: /Timeline Calculator/i }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: /Calculate Timeline/i }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('heading', {
+        name: /^What is a Cheque Bounce Case\?$/i,
       }),
     ).toBeVisible()
   })
