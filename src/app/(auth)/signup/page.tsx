@@ -30,6 +30,7 @@ import { publicEnv } from '@/lib/env/client'
 import { PhoneAuthForm } from '@/features/auth/components/phone-auth-form'
 import { toast } from '@/components/ui/toast'
 import { getAuthErrorMessageKey } from '@/features/auth/auth-error-message'
+import { useEmailAuthCaptcha } from '@/features/auth/components/use-email-auth-captcha'
 
 const PHONE_AUTH_ENABLED = publicEnv.NEXT_PUBLIC_PHONE_AUTH_ENABLED === 'true'
 
@@ -44,6 +45,7 @@ export default function SignupPage() {
   const [name, setName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
+  const captcha = useEmailAuthCaptcha('email_signup')
 
   const reportError = (error: unknown) => {
     toast.add({
@@ -56,12 +58,17 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isSubmitting) return
+    if (captcha.required && !captcha.token) {
+      reportError({ code: 'captcha_failed' })
+      return
+    }
     setIsSubmitting(true)
     try {
       const { error } = await authService.signupWithPassword(
         email,
         password,
         name,
+        captcha.token,
       )
       if (error) {
         reportError(error)
@@ -72,6 +79,7 @@ export default function SignupPage() {
     } catch (error: unknown) {
       reportError(error)
     } finally {
+      captcha.reset()
       setIsSubmitting(false)
     }
   }
@@ -168,6 +176,7 @@ export default function SignupPage() {
                   </button>
                 </div>
               </div>
+              {captcha.challenge}
               <Button
                 type="submit"
                 data-testid="signup-submit-button"
@@ -186,7 +195,10 @@ export default function SignupPage() {
               variant="outline"
               className="h-12 w-full gap-2 rounded-sm font-normal"
               data-testid="signup-toggle-phone-button"
-              onClick={() => setUsePhone((value) => !value)}
+              onClick={() => {
+                captcha.reset()
+                setUsePhone((value) => !value)
+              }}
             >
               <HugeiconsIcon
                 icon={usePhone ? Mail : Phone}

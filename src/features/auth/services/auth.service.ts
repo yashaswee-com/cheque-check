@@ -21,12 +21,22 @@ export class AuthService {
     private readonly repository: IAuthRepository = new SupabaseAuthRepository(),
   ) {}
 
-  loginWithPassword(email: string, password: string) {
-    return this.repository.loginWithPassword(email, password)
+  loginWithPassword(email: string, password: string, captchaToken?: string) {
+    return this.repository.loginWithPassword(email, password, captchaToken)
   }
 
-  signupWithPassword(email: string, password: string, name: string) {
-    return this.repository.signupWithPassword(email, password, name)
+  signupWithPassword(
+    email: string,
+    password: string,
+    name: string,
+    captchaToken?: string,
+  ) {
+    return this.repository.signupWithPassword(
+      email,
+      password,
+      name,
+      captchaToken,
+    )
   }
 
   loginWithOAuth(provider: Provider) {
@@ -51,10 +61,11 @@ export class AuthService {
     return result
   }
 
-  resetPassword(email: string) {
+  resetPassword(email: string, captchaToken?: string) {
     return this.repository.resetPassword(
       email,
       `${window.location.origin}/auth/callback?next=/settings/password`,
+      captchaToken,
     )
   }
 

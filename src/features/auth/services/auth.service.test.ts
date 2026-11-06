@@ -14,6 +14,44 @@ describe('AuthService', () => {
     expect(repository.loginWithPassword).toHaveBeenCalledWith(
       'user@example.com',
       'password',
+      undefined,
+    )
+  })
+
+  it('forwards CAPTCHA tokens for login, signup and password recovery', async () => {
+    const repository = {
+      loginWithPassword: vi.fn(),
+      signupWithPassword: vi.fn(),
+      resetPassword: vi.fn(),
+    } as unknown as IAuthRepository
+    const service = new AuthService(repository)
+    await service.loginWithPassword(
+      'person@example.test',
+      'password',
+      'login-token',
+    )
+    await service.signupWithPassword(
+      'person@example.test',
+      'password',
+      'Test Person',
+      'signup-token',
+    )
+    await service.resetPassword('person@example.test', 'reset-token')
+    expect(repository.loginWithPassword).toHaveBeenCalledWith(
+      'person@example.test',
+      'password',
+      'login-token',
+    )
+    expect(repository.signupWithPassword).toHaveBeenCalledWith(
+      'person@example.test',
+      'password',
+      'Test Person',
+      'signup-token',
+    )
+    expect(repository.resetPassword).toHaveBeenCalledWith(
+      'person@example.test',
+      `${window.location.origin}/auth/callback?next=/settings/password`,
+      'reset-token',
     )
   })
 

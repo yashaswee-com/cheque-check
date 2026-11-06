@@ -22,12 +22,34 @@ const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   alert: vi.fn(),
   toast: vi.fn(),
+  env: {
+    NEXT_PUBLIC_PHONE_AUTH_ENABLED: 'true',
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: undefined as string | undefined,
+  },
 }))
 vi.mock('@/components/ui/toast', () => ({
   toast: { add: mocks.toast },
 }))
 vi.mock('@/lib/env/client', () => ({
-  publicEnv: { NEXT_PUBLIC_PHONE_AUTH_ENABLED: 'true' },
+  publicEnv: mocks.env,
+}))
+vi.mock('@/features/auth/components/turnstile-widget', () => ({
+  TurnstileWidget: ({
+    action,
+    onToken,
+  }: {
+    action: string
+    onToken: (token: string | null) => void
+  }) => (
+    <section data-testid="turnstile-widget" aria-label={action}>
+      <button type="button" onClick={() => onToken('email-captcha-token')}>
+        Complete security check
+      </button>
+      <button type="button" onClick={() => onToken(null)}>
+        Expire security check
+      </button>
+    </section>
+  ),
 }))
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace }),
@@ -65,6 +87,7 @@ function renderPage(page: ReactNode) {
 }
 beforeEach(() => {
   vi.resetAllMocks()
+  mocks.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = undefined
   mocks.login.mockResolvedValue({ error: null })
   mocks.signup.mockResolvedValue({ error: null })
   mocks.oauth.mockResolvedValue({ error: null })
@@ -132,18 +155,68 @@ describe.each([
       expect(submit).toHaveBeenCalledWith(
         'person@example.test',
         'test-password-123',
+        undefined,
       )
     else {
       expect(submit).toHaveBeenCalledWith(
         'person@example.test',
         'test-password-123',
         'Test Person',
+        undefined,
       )
       expect(mocks.alert).toHaveBeenCalledWith(
         messages.Auth.checkEmailConfirmation,
       )
     }
   })
+  it('requires a fresh CAPTCHA token for email authentication and preserves phone mode', async () => {
+    mocks.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = 'public-site-key'
+    submit.mockResolvedValue({ error: { code: 'captcha_failed' } })
+    renderPage(<Component />)
+    expect(screen.queryByTestId('turnstile-widget')).not.toBeInTheDocument()
+    enterCredentials()
+    expect(screen.getByTestId('turnstile-widget')).toHaveAttribute(
+      'aria-label',
+      `email_${kind}`,
+    )
+    const button = screen.getByTestId(`${kind}-submit-button`)
+    fireEvent.click(button)
+    expect(submit).not.toHaveBeenCalled()
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: messages.Auth.errorTitle,
+      description: messages.Auth.errors.captchaFailed,
+      type: 'error',
+    })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Complete security check' }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Expire security check' }),
+    )
+    fireEvent.click(button)
+    expect(submit).not.toHaveBeenCalled()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Complete security check' }),
+    )
+    fireEvent.click(button)
+    await waitFor(() => expect(button).toBeEnabled())
+    expect(submit).toHaveBeenCalledWith(
+      'person@example.test',
+      'test-password-123',
+      ...(kind === 'signup' ? ['Test Person'] : []),
+      'email-captcha-token',
+    )
+    fireEvent.click(button)
+    expect(submit).toHaveBeenCalledOnce()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Complete security check' }),
+    )
+    selectEmailAuthentication()
+    selectEmailAuthentication()
+    fireEvent.click(screen.getByTestId(`${kind}-submit-button`))
+    expect(submit).toHaveBeenCalledOnce()
+  })
+
   it('disables repeated submissions until the pending request finishes', async () => {
     let finish!: (value: { error: null }) => void
     submit.mockImplementationOnce(
@@ -332,6 +405,38 @@ describe('login return path', () => {
 })
 
 describe('forgot password page', () => {
+  it('requires a CAPTCHA token for recovery and consumes it after a thrown failure', async () => {
+    mocks.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = 'public-site-key'
+    mocks.reset.mockRejectedValueOnce(new Error('private provider details'))
+    renderPage(<ForgotPasswordPage />)
+    fireEvent.change(screen.getByTestId('forgot-password-email-input'), {
+      target: { value: 'person@example.test' },
+    })
+    expect(screen.getByTestId('turnstile-widget')).toHaveAttribute(
+      'aria-label',
+      'email_reset',
+    )
+    fireEvent.click(screen.getByTestId('forgot-password-submit-button'))
+    expect(mocks.reset).not.toHaveBeenCalled()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Complete security check' }),
+    )
+    fireEvent.click(screen.getByTestId('forgot-password-submit-button'))
+    await waitFor(() =>
+      expect(screen.getByTestId('forgot-password-submit-button')).toBeEnabled(),
+    )
+    expect(mocks.reset).toHaveBeenCalledWith(
+      'person@example.test',
+      'email-captcha-token',
+    )
+    fireEvent.click(screen.getByTestId('forgot-password-submit-button'))
+    expect(mocks.reset).toHaveBeenCalledOnce()
+    expect(mocks.alert).not.toHaveBeenCalled()
+    expect(
+      screen.queryByTestId('forgot-password-sent-confirmation'),
+    ).not.toBeInTheDocument()
+  })
+
   it('requires an email and links back to login', () => {
     renderPage(<ForgotPasswordPage />)
     expect(screen.getByTestId('forgot-password-email-input')).toBeRequired()
@@ -350,7 +455,7 @@ describe('forgot password page', () => {
         screen.getByTestId('forgot-password-sent-confirmation'),
       ).toBeVisible(),
     )
-    expect(mocks.reset).toHaveBeenCalledWith('person@example.test')
+    expect(mocks.reset).toHaveBeenCalledWith('person@example.test', undefined)
     expect(screen.getByText('person@example.test')).toBeVisible()
     expect(
       screen.queryByTestId('forgot-password-email-input'),
@@ -385,7 +490,11 @@ describe('forgot password page', () => {
     ).toHaveLength(1)
     fail(new Error('Reset unavailable'))
     await waitFor(() =>
-      expect(mocks.alert).toHaveBeenCalledWith('Reset unavailable'),
+      expect(mocks.toast).toHaveBeenCalledWith({
+        title: messages.Auth.errorTitle,
+        description: messages.Auth.errors.unavailable,
+        type: 'error',
+      }),
     )
     expect(screen.getByTestId('forgot-password-submit-button')).toBeEnabled()
     expect(
@@ -406,11 +515,11 @@ describe('forgot password page', () => {
       })
       fireEvent.click(screen.getByTestId('forgot-password-submit-button'))
       await waitFor(() =>
-        expect(mocks.alert).toHaveBeenCalledWith(
-          failure === 'returned'
-            ? 'Reset unavailable'
-            : messages.Auth.unknownError,
-        ),
+        expect(mocks.toast).toHaveBeenCalledWith({
+          title: messages.Auth.errorTitle,
+          description: messages.Auth.errors.unavailable,
+          type: 'error',
+        }),
       )
       expect(
         screen.queryByTestId('forgot-password-sent-confirmation'),

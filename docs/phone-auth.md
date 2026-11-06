@@ -3,6 +3,19 @@
 Phone OTP uses Supabase Auth as the provider. Email/password and OAuth
 (Google/Facebook) are unchanged.
 
+Supabase Auth CAPTCHA is shared across phone OTP, email signup, email/password
+login, and password-reset requests. Each email form renders Cloudflare Turnstile
+when `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is set, independently of the phone-auth
+feature flag, and forwards the token via Supabase's `options.captchaToken`.
+Tokens are reset after every request, including failures, and when switching
+between phone and email. Expired/failed challenges block submission until a
+fresh token is available. OAuth redirects do not use this token.
+
+If email signup returns `captcha_failed` with “no captcha_token found”, confirm
+the public site key is set in the deployed frontend build and its hostname is
+allowed in Cloudflare. The matching secret remains in Supabase Auth. Redeploy
+after changing a `NEXT_PUBLIC_*` value; do not disable CAPTCHA to fix this error.
+
 ## Flows
 
 When phone authentication is enabled, login and sign-up open the phone form

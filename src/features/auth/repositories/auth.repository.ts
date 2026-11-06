@@ -20,11 +20,13 @@ export interface IAuthRepository {
   loginWithPassword(
     email: string,
     password: string,
+    captchaToken?: string,
   ): ReturnType<SupabaseClient['auth']['signInWithPassword']>
   signupWithPassword(
     email: string,
     password: string,
     name: string,
+    captchaToken?: string,
   ): ReturnType<SupabaseClient['auth']['signUp']>
   loginWithOAuth(
     provider: Provider,
@@ -36,6 +38,7 @@ export interface IAuthRepository {
   resetPassword(
     email: string,
     redirectTo: string,
+    captchaToken?: string,
   ): ReturnType<SupabaseClient['auth']['resetPasswordForEmail']>
   getSession(): ReturnType<SupabaseClient['auth']['getSession']>
   getUser(): ReturnType<SupabaseClient['auth']['getUser']>
@@ -68,15 +71,24 @@ export class SupabaseAuthRepository implements IAuthRepository {
     return this.supabase.auth.onAuthStateChange(callback)
   }
 
-  loginWithPassword(email: string, password: string) {
-    return this.supabase.auth.signInWithPassword({ email, password })
+  loginWithPassword(email: string, password: string, captchaToken?: string) {
+    return this.supabase.auth.signInWithPassword({
+      email,
+      password,
+      ...(captchaToken ? { options: { captchaToken } } : {}),
+    })
   }
 
-  signupWithPassword(email: string, password: string, name: string) {
+  signupWithPassword(
+    email: string,
+    password: string,
+    name: string,
+    captchaToken?: string,
+  ) {
     return this.supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: { data: { name }, ...(captchaToken ? { captchaToken } : {}) },
     })
   }
 
@@ -105,8 +117,11 @@ export class SupabaseAuthRepository implements IAuthRepository {
     return this.supabase.auth.signOut()
   }
 
-  resetPassword(email: string, redirectTo: string) {
-    return this.supabase.auth.resetPasswordForEmail(email, { redirectTo })
+  resetPassword(email: string, redirectTo: string, captchaToken?: string) {
+    return this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+      ...(captchaToken ? { captchaToken } : {}),
+    })
   }
 
   getSession() {

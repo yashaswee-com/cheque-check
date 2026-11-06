@@ -24,33 +24,50 @@ import { authService } from '@/features/auth/services/auth.service'
 import Link from 'next/link'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslations } from 'next-intl'
+import { toast } from '@/components/ui/toast'
+import { getAuthErrorMessageKey } from '@/features/auth/auth-error-message'
+import { useEmailAuthCaptcha } from '@/features/auth/components/use-email-auth-captcha'
 
 export default function ForgotPasswordPage() {
   const t = useTranslations('Auth')
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
+  const captcha = useEmailAuthCaptcha('email_reset')
+
+  const reportError = (error: unknown) => {
+    toast.add({
+      title: t('errorTitle'),
+      description: t(getAuthErrorMessageKey(error)),
+      type: 'error',
+    })
+  }
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isSubmitting) return
+    if (captcha.required && !captcha.token) {
+      reportError({ code: 'captcha_failed' })
+      return
+    }
     setIsSubmitting(true)
     try {
-      const { error } = await authService.resetPassword(email)
+      const { error } = await authService.resetPassword(email, captcha.token)
       if (error) {
-        alert(error.message)
+        reportError(error)
       } else {
         setSent(true)
       }
     } catch (error) {
-      alert(error instanceof Error ? error.message : t('unknownError'))
+      reportError(error)
     } finally {
+      captcha.reset()
       setIsSubmitting(false)
     }
   }
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center bg-canvas-parchment px-6 dark:bg-black">
+    <div className="flex min-h-full flex-col items-center justify-center bg-canvas-parchment min-[360px]:px-3 sm:px-6 dark:bg-black">
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white shadow-sm overflow-hidden">
@@ -71,7 +88,7 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
 
-        <div className="space-y-4 rounded-lg bg-white p-8 dark:bg-surface-tile-1 border border-primary/5">
+        <div className="space-y-4 rounded-lg bg-white p-2 py-8 min-[360px]:px-4 sm:px-8 dark:bg-surface-tile-1 border border-primary/5">
           {sent ? (
             <div
               className="space-y-6 text-center"
@@ -107,6 +124,7 @@ export default function ForgotPasswordPage() {
                   className="h-12 bg-canvas-parchment border-none rounded-sm"
                 />
               </div>
+              {captcha.challenge}
               <Button
                 type="submit"
                 data-testid="forgot-password-submit-button"

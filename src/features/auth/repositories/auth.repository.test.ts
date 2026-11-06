@@ -30,6 +30,41 @@ afterEach(() => {
 })
 
 describe('SupabaseAuthRepository', () => {
+  it('passes CAPTCHA tokens in Supabase Auth options for all email flows', async () => {
+    mocks.createClient.mockReturnValue(supabase)
+    const repository = new SupabaseAuthRepository()
+    await repository.loginWithPassword(
+      'person@example.test',
+      'password',
+      'login-token',
+    )
+    await repository.signupWithPassword(
+      'person@example.test',
+      'password',
+      'Test Person',
+      'signup-token',
+    )
+    await repository.resetPassword(
+      'person@example.test',
+      'https://app.test/reset',
+      'reset-token',
+    )
+    expect(mocks.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: 'person@example.test',
+      password: 'password',
+      options: { captchaToken: 'login-token' },
+    })
+    expect(mocks.auth.signUp).toHaveBeenCalledWith({
+      email: 'person@example.test',
+      password: 'password',
+      options: { data: { name: 'Test Person' }, captchaToken: 'signup-token' },
+    })
+    expect(mocks.auth.resetPasswordForEmail).toHaveBeenCalledWith(
+      'person@example.test',
+      { redirectTo: 'https://app.test/reset', captchaToken: 'reset-token' },
+    )
+  })
+
   it('forwards password, signup, OAuth, and logout requests to Supabase', async () => {
     mocks.createClient.mockReturnValue(supabase)
     const repository = new SupabaseAuthRepository()
