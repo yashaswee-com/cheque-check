@@ -163,6 +163,14 @@ This log captures the product story across the project’s full Git history: 524
   - Improved phone-provider troubleshooting and sanitized auth logging so support and engineering can diagnose failures faster.
   - Commits: `440dec2`, `5060771`, `f225fbe`, `6934c45`, `1c89b4f`
 
+- Support, operations, and documentation improvements
+  - Added a clearer operations guide, end-user help center, and stronger operational documentation for setup, deployment, testing, and GitHub workflows.
+  - Commits: `628e12f`, `fcadc5d`, `3e11c34`
+
+- Public transparency and cheque lifecycle tooling
+  - Added a public status link in the footer and introduced cheque bounce tooling plus a legal notice page to support compliance and operational workflows.
+  - Commits: `921c063`, `97f44df`, `2ea28af`
+
 ---
 
 ## Product arc summary
