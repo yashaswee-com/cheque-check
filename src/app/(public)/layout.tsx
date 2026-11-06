@@ -83,6 +83,14 @@ export default async function PublicSiteLayout({
                   <span>{t(`nav.${labelKey}`)}</span>
                 </Link>
               ))}
+              <Link
+                href="https://chequecheck.openstatus.dev/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              >
+                <span>Status</span>
+              </Link>
             </div>
           </div>
           <span>

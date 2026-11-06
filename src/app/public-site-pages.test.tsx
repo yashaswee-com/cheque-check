@@ -201,4 +201,15 @@ describe('public site pages', () => {
       }),
     ).toBeVisible()
   })
+
+  it('adds the status link to the public footer', async () => {
+    const layout = await PublicSiteLayout({ children: <p>Page content</p> })
+    renderPage(layout)
+
+    const statusLink = screen.getByRole('link', { name: 'Status' })
+    expect(statusLink).toHaveAttribute(
+      'href',
+      'https://chequecheck.openstatus.dev/',
+    )
+  })
 })
