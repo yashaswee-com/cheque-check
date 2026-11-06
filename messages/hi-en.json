@@ -852,6 +852,7 @@
       "captcha_failed": "Cloudflare security check fail hua ya expire ho gaya. Naya check poora karke code dobara mangayein.",
       "captcha_required": "Code bhejne ya dobara mangane se pehle Cloudflare security check poora karein. Har code request ke liye naya check zaroori hai.",
       "phone_in_use": "Yeh number kisi aur account mein use ho raha hai. Accounts apne aap merge nahi hote; support se sampark karein.",
+      "account_not_found": "Is phone number se koi account registered nahi hai. Pehle sign up karein, ya apne account ka existing login method use karein.",
       "already_linked": "Yeh number pehle se aapke account ke liye verified hai.",
       "unauthorized": "Aage badhne ke liye dobara sign in karein.",
       "account_deactivated": "Yeh account deactivate ho chuka hai. Galti lage to support se sampark karein.",

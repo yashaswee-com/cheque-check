@@ -33,6 +33,7 @@ const STATUS: Record<PhoneAuthErrorCode, number> = {
   captcha_failed: 400,
   phone_in_use: 409,
   already_linked: 409,
+  account_not_found: 422,
   unauthorized: 401,
   account_deactivated: 403,
   provider_unavailable: 503,
@@ -171,6 +172,17 @@ export async function sendPhoneOtp(
           ...(name ? { data: { name } } : {}),
         },
       })
+      // With shouldCreateUser:false, Auth checks account existence before SMS
+      // delivery and returns otp_disabled/422 for an unregistered number.
+      // Only interpret this response as missing-account for login sends; an
+      // actual provider failure (or signup/verify error) must stay distinct.
+      if (
+        purpose === 'login' &&
+        error?.code === 'otp_disabled' &&
+        error.status === 422
+      ) {
+        return failure('account_not_found')
+      }
       return error ? mapPhoneAuthError(error, 'auth.phone_send') : done
     }
 

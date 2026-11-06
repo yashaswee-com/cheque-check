@@ -852,6 +852,7 @@
       "captcha_failed": "The Cloudflare security check failed or expired. Complete the new check, then request your code again.",
       "captcha_required": "Complete the Cloudflare security check before sending or resending a code. Each code request needs a fresh security check.",
       "phone_in_use": "This number is already used by another account. Accounts are not merged automatically; contact support to resolve it.",
+      "account_not_found": "No account is registered with this phone number. Sign up first, or use your account’s existing login method.",
       "already_linked": "This number is already verified for your account.",
       "unauthorized": "Please sign in again to continue.",
       "account_deactivated": "This account has been deactivated. Contact support if this is a mistake.",

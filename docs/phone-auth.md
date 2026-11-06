@@ -11,6 +11,11 @@ Google/Facebook buttons.
 
 - **Login**: `POST /api/auth/phone/send` then `/verify` with
   `purpose: "login"`. Login does not create accounts.
+  Supabase Auth checks the normalized login phone before SMS delivery using
+  `shouldCreateUser: false`. An unregistered number returns `otp_disabled`/422,
+  mapped only for login sends to `account_not_found`/422. The form stays on the
+  phone step and prompts the user to sign up or use their existing login method;
+  it does not start an OTP/resend countdown or report an SMS outage.
 - **Sign-up**: the same routes with `purpose: "signup"` and a required name.
   A verified new number creates a phone-only account (`profiles.email` is null;
   nothing is fabricated). The name is stored in Auth metadata for the profile
@@ -47,6 +52,14 @@ provider fails. Check the matching **Supabase Auth logs** first, then the Vercel
 function log for the structured `Phone auth provider unavailable` event, which
 contains only the provider error code and status. A `captcha_failed` response is
 reported separately; do not disable CAPTCHA as a workaround.
+
+An `otp_disabled`/422 **login send** is not an SMS provider outage: no account
+exists for the login phone. Only this combination maps to `account_not_found`;
+signup, linking, verification, and genuine provider failures are not relabeled.
+Account existence is checked by Auth, not a separate public lookup or an admin
+user-list scan. This deliberately exposes the missing-account distinction to
+the login caller; existing Auth CAPTCHA/rate limits remain enabled, and no phone
+numbers or raw provider messages are returned in failures or logged.
 
 For `sms_send_failed` or a provider 5xx, verify in the deployed Supabase
 project's **Authentication > Providers > Phone** settings that phone auth and

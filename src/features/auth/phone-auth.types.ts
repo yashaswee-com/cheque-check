@@ -9,6 +9,7 @@ export type PhoneAuthErrorCode =
   | 'captcha_failed'
   | 'phone_in_use'
   | 'already_linked'
+  | 'account_not_found'
   | 'unauthorized'
   | 'account_deactivated'
   | 'provider_unavailable'

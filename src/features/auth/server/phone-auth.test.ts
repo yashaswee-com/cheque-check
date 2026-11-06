@@ -38,6 +38,49 @@ function makeClient(overrides: Record<string, unknown> = {}) {
 }
 
 describe('sendPhoneOtp', () => {
+  it('reports an unregistered login phone without logging a provider outage', async () => {
+    const { client, auth } = makeClient()
+    auth.signInWithOtp.mockResolvedValueOnce({
+      error: {
+        code: 'otp_disabled',
+        status: 422,
+        message: 'Signups not allowed for otp',
+      },
+    })
+    expect(
+      await sendPhoneOtp(client, { phone: '98765 43210', purpose: 'login' }),
+    ).toEqual({ ok: false, status: 422, code: 'account_not_found' })
+    expect(auth.signInWithOtp).toHaveBeenCalledWith({
+      phone: '+919876543210',
+      options: {
+        channel: 'sms',
+        shouldCreateUser: false,
+        captchaToken: undefined,
+      },
+    })
+    expect(mocks.warn).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { purpose: 'signup', code: 'otp_disabled', status: 422 },
+    { purpose: 'link', code: 'otp_disabled', status: 422 },
+    { purpose: 'login', code: 'otp_disabled', status: 500 },
+    { purpose: 'login', code: 'phone_provider_disabled', status: 422 },
+    { purpose: 'login', code: 'sms_send_failed', status: 500 },
+  ])('keeps $purpose $code/$status as a provider failure', async (input) => {
+    const { client, auth } = makeClient()
+    const error = { code: input.code, status: input.status }
+    auth.signInWithOtp.mockResolvedValueOnce({ error })
+    auth.updateUser.mockResolvedValueOnce({ error })
+    expect(
+      await sendPhoneOtp(client, {
+        phone: '9876543210',
+        purpose: input.purpose,
+        ...(input.purpose === 'signup' ? { name: 'Asha Rao' } : {}),
+      }),
+    ).toEqual({ ok: false, status: 503, code: 'provider_unavailable' })
+  })
+
   it('rejects invalid national phones and maps conflicts while linking', async () => {
     const invalid = makeClient()
     expect(
@@ -287,6 +330,21 @@ describe('sendPhoneOtp', () => {
 })
 
 describe('verifyPhoneOtp', () => {
+  it('does not reinterpret a verification otp_disabled error as a missing account', async () => {
+    const { client, auth } = makeClient()
+    auth.verifyOtp.mockResolvedValueOnce({
+      data: {},
+      error: { code: 'otp_disabled', status: 422 },
+    })
+    expect(
+      await verifyPhoneOtp(client, {
+        phone: '9876543210',
+        token: '123456',
+        purpose: 'login',
+      }),
+    ).toEqual({ ok: false, status: 503, code: 'provider_unavailable' })
+  })
+
   it.each([
     { body: null, code: 'invalid_request' },
     {

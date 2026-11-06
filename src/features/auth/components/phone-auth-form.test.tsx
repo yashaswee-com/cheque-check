@@ -65,6 +65,7 @@ describe('PhoneAuthForm signup name', () => {
     'captcha_failed',
     'phone_in_use',
     'already_linked',
+    'account_not_found',
     'unauthorized',
     'account_deactivated',
     'provider_unavailable',
@@ -95,6 +96,53 @@ describe('PhoneAuthForm signup name', () => {
       expect(screen.getByTestId('phone-auth-send-button')).toBeEnabled()
     },
   )
+
+  it('keeps an unregistered number on the phone step and allows another login attempt', async () => {
+    mocks.sendPhoneOtp
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 422,
+        code: 'account_not_found',
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        phone: '+919876543211',
+        resendAfterSeconds: 60,
+      })
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PhoneAuthForm purpose="login" onVerified={vi.fn()} />
+      </NextIntlClientProvider>,
+    )
+    fireEvent.change(screen.getByTestId('phone-auth-number-input'), {
+      target: { value: '9876543210' },
+    })
+    fireEvent.click(screen.getByTestId('phone-auth-send-button'))
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        messages.PhoneAuth.errors.account_not_found,
+      ),
+    )
+    expect(
+      screen.queryByTestId('phone-auth-code-input'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId('phone-auth-resend-button'),
+    ).not.toBeInTheDocument()
+    expect(mocks.verifyPhoneOtp).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByTestId('phone-auth-number-input'), {
+      target: { value: '9876543211' },
+    })
+    fireEvent.click(screen.getByTestId('phone-auth-send-button'))
+    expect(
+      await screen.findByTestId('phone-auth-code-input'),
+    ).toBeInTheDocument()
+    expect(mocks.sendPhoneOtp).toHaveBeenLastCalledWith({
+      phone: '+919876543211',
+      purpose: 'login',
+      captchaToken: undefined,
+    })
+  })
 
   it('surfaces unexpected request failures and allows retry', async () => {
     mocks.sendPhoneOtp.mockRejectedValue(new Error('network failed'))

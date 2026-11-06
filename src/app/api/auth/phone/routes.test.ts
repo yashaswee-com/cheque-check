@@ -75,6 +75,30 @@ describe('phone OTP route handlers', () => {
     )
   })
 
+  it('returns missing-account guidance without a resend delay or phone in logs', async () => {
+    const body = { phone: '9876543210', purpose: 'login' }
+    mocks.sendPhoneOtp.mockResolvedValue({
+      ok: false,
+      status: 422,
+      code: 'account_not_found',
+    })
+    const response = await sendPhoneOtpRoute(request(JSON.stringify(body)))
+    expect(response.status).toBe(422)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(response.headers.get('Retry-After')).toBeNull()
+    expect(await response.json()).toEqual({
+      ok: false,
+      status: 422,
+      code: 'account_not_found',
+    })
+    expect(mocks.warn).toHaveBeenCalledWith('Phone auth request rejected', {
+      operation: 'auth.phone_send',
+      code: 'account_not_found',
+      status: 422,
+    })
+    expect(JSON.stringify(mocks.warn.mock.calls)).not.toContain(body.phone)
+  })
+
   it('passes malformed JSON as null to the validator and returns its failure', async () => {
     mocks.sendPhoneOtp.mockResolvedValue({
       ok: false,
