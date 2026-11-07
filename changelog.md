@@ -171,6 +171,24 @@ This log captures the product story across the project’s full Git history: 524
   - Added a public status link in the footer and introduced cheque bounce tooling plus a legal notice page to support compliance and operational workflows.
   - Commits: `921c063`, `97f44df`, `2ea28af`
 
+- Auth reliability and environment safety
+  - Hardened email and phone auth flows with Turnstile integration, improved unregistered-phone detection, and updated environment configuration for safer Edge Function operation.
+  - Commits: `af2f4d2`, `cef9b3a`, `48df628`
+
+- Auditability and compliance tracking
+  - Added a chronological audit log for cheques, improving traceability and operational oversight for important transaction events.
+  - Commits: `4e14c48`
+
+#### November 7, 2026
+
+- Monitoring, privacy, and telemetry hardening
+  - Strengthened Sentry compatibility, expanded telemetry privacy edge-case coverage, and refined the monitoring setup for safer global runtime behavior.
+  - Commits: `77c2911`, `4683166`
+
+- Documentation governance and platform knowledge base
+  - Expanded infrastructure, notifications, payments, security, and application documentation, and introduced governance/citation rules to keep the project knowledge base more maintainable.
+  - Commits: `ce83a10`, `86ac045`, `9cb3c3a`
+
 ---
 
 ## Product arc summary
