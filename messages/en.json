@@ -383,7 +383,8 @@
     "supportReference": "Support Reference",
     "copyReference": "Copy Support Reference",
     "copied": "Copied",
-    "privacyDisclosure": "We use Sentry for error diagnostics and Microsoft Clarity for usage analytics and masked session recordings. Diagnostics may include your user ID, email, display name, business ID, subscription state and language preferences. We exclude financial details, uploaded documents and form values. You can disable analytics and recordings in Settings for this browser; essential sanitized error reporting is separate. Clearing browser data resets your preference. Previously collected information is subject to each provider's retention and deletion policies."
+    "privacyDisclosure": "We use Sentry for error diagnostics and Microsoft Clarity for usage analytics and masked session recordings. Diagnostics may include your user ID, email, display name, business ID, subscription state and language preferences. We exclude financial details, uploaded documents and form values. You can disable analytics and recordings in Settings for this browser; essential sanitized error reporting is separate. Clearing browser data resets your preference. Previously collected information is subject to each provider's retention and deletion policies.",
+    "metaPixelDisclosure": "Meta Pixel is used only on allowlisted public marketing pages after you accept optional marketing cookies. It measures page views and may process browser or device information and the public page URL. We do not send account identifiers, cheque or financial data, form contents, or payment details. Rejecting or withdrawing consent stops future events; Meta's handling of information already received is subject to Meta's policies."
   },
   "PremiumWorkspace": {
     "title": "Premium workspace",
@@ -1698,6 +1699,14 @@
     "footer": {
       "tagline": "Clear, organized cheque management for your business.",
       "copyright": "ChequeCheck"
+    },
+    "cookieConsent": {
+      "title": "Optional marketing cookies",
+      "description": "With your permission, Meta Pixel measures visits to public ChequeCheck pages. Meta may receive browser and device information and the public page viewed. We do not send account, cheque, contact form, or payment details. You can change this choice anytime in Cookie settings.",
+      "accept": "Accept",
+      "reject": "Reject",
+      "manage": "Cookie settings",
+      "saveError": "Your choice could not be saved, so tracking remains off."
     },
     "landing": {
       "trustFree": "Free plan to start",

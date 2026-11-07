@@ -383,7 +383,8 @@
     "supportReference": "Support Reference",
     "copyReference": "Support Reference Copy Karein",
     "copied": "Copy Ho Gaya",
-    "privacyDisclosure": "Hum error diagnostics ke liye Sentry aur usage analytics aur masked session recordings ke liye Microsoft Clarity use karte hain. Diagnostics mein user ID, email, naam, business ID, subscription state aur language preferences shamil ho sakte hain. Financial details, uploaded documents aur form values shamil nahi hain. Settings mein is browser ke liye analytics aur recordings off kar sakte hain; zaroori sanitized error reporting alag hai. Browser data clear karne par preference reset hoti hai. Pehle collect ki gayi information providers ki retention aur deletion policies ke anusar rakhi jati hai."
+    "privacyDisclosure": "Hum error diagnostics ke liye Sentry aur usage analytics aur masked session recordings ke liye Microsoft Clarity use karte hain. Diagnostics mein user ID, email, naam, business ID, subscription state aur language preferences shamil ho sakte hain. Financial details, uploaded documents aur form values shamil nahi hain. Settings mein is browser ke liye analytics aur recordings off kar sakte hain; zaroori sanitized error reporting alag hai. Browser data clear karne par preference reset hoti hai. Pehle collect ki gayi information providers ki retention aur deletion policies ke anusar rakhi jati hai.",
+    "metaPixelDisclosure": "Meta Pixel sirf selected public marketing pages par optional marketing cookies accept karne ke baad use hota hai. Yeh page views measure karta hai aur browser/device info aur public page URL process kar sakta hai. Hum account identifiers, cheque ya financial data, form contents ya payment details nahi bhejte. Reject ya consent withdraw karne ke baad aage ke events rukte hain; pehle mili information Meta ki policies ke adheen hai."
   },
   "PremiumWorkspace": {
     "title": "Premium workspace",
@@ -1698,6 +1699,14 @@
     "footer": {
       "tagline": "Aapke business ke liye clear aur organized cheque management.",
       "copyright": "ChequeCheck"
+    },
+    "cookieConsent": {
+      "title": "Optional marketing cookies",
+      "description": "Aapki permission ke baad Meta Pixel public ChequeCheck pages ke visits measure karta hai. Meta ko browser/device info aur dekha gaya public page mil sakta hai. Hum account, cheque, contact form ya payment details nahi bhejte. Cookie settings mein aap yeh choice kabhi bhi badal sakte hain.",
+      "accept": "Accept",
+      "reject": "Reject",
+      "manage": "Cookie settings",
+      "saveError": "Choice save nahi ho saki, isliye tracking off hai."
     },
     "landing": {
       "trustFree": "Shuru karne ke liye free plan",

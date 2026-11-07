@@ -52,6 +52,9 @@ export default async function PublicPrivacyPage() {
           <p className="leading-relaxed text-muted-foreground">
             {tm('privacyDisclosure')}
           </p>
+          <p className="leading-relaxed text-muted-foreground">
+            {tm('metaPixelDisclosure')}
+          </p>
         </section>
         <section className="space-y-2">
           <h2 className="text-lg font-bold">7. {tp('contactUs')}</h2>

@@ -29,6 +29,7 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({ auth: { getUser: mocks.getUser } }),
 }))
 vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
   redirect: (href: string) => {
     mocks.redirect(href)
     throw new Error(`NEXT_REDIRECT:${href}`)

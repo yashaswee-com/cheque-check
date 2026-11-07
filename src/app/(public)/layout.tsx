@@ -9,6 +9,7 @@ import {
 } from '@hugeicons/core-free-icons'
 import { LocalePicker } from '@/components/public-site/locale-picker'
 import { AppEntryLink } from '@/components/public-site/app-entry-link'
+import { MetaPixelConsent } from '@/components/public-site/meta-pixel-consent'
 
 const NAV_LINKS = [
   { href: 'features', labelKey: 'features', icon: Analytics01Icon },
@@ -96,6 +97,14 @@ export default async function PublicSiteLayout({
           <span>
             © {new Date().getFullYear()} {t('footer.copyright')}
           </span>
+          <MetaPixelConsent
+            title={t('cookieConsent.title')}
+            description={t('cookieConsent.description')}
+            acceptLabel={t('cookieConsent.accept')}
+            rejectLabel={t('cookieConsent.reject')}
+            manageLabel={t('cookieConsent.manage')}
+            saveError={t('cookieConsent.saveError')}
+          />
         </div>
       </footer>
     </div>
