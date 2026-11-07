@@ -5,7 +5,7 @@ Cheque Check combines a Next.js application, Supabase Auth/PostgreSQL/Storage/Ed
 ## Quick path
 
 1. Confirm the target environment and credentials without printing secrets; preview builds must use QA destinations ([environment rules](environment-and-secrets.md#L1-L30), [public environment validation](../src/lib/env/schema.ts#L64-L109)).
-2. Build the Next.js app using Node 22 and its committed dependency lockfile ([runtime](../package.json#L1-L8), [package scripts](../package.json#L9-L24)).
+2. Build the Next.js app using Node.js `>=22.12.0 <23` and its committed dependency lockfile ([runtime](../package.json#L1-L8), [package scripts](../package.json#L9-L24)).
 3. Apply forward database migrations before deploying code that depends on their schema, then deploy Edge Functions separately ([migration scripts](../package.json#L25-L40), [function deploy command](../package.json#L37-L40)).
 4. Set provider secrets in their designated Supabase Auth, Edge Function, or hosting secret store ([environment groups](environment-and-secrets.md#L21-L34)).
 5. Verify the hosted callback, storage, worker, cron, and provider paths in the target environment; local tests alone do not prove hosted readiness ([QA limits](../e2e/README.md#L143-L153), [deployment verification](#deployment-verification)).
@@ -37,7 +37,7 @@ PostgreSQL stores job state and invokes reminder and export Edge Functions throu
 
 ## Deployable units
 
-- **Web app:** Next.js App Router, API routes, and browser assets; package scripts expose build/start and the manifest constrains the Node major version ([package runtime and scripts](../package.json#L1-L24)).
+- **Web app:** Next.js App Router, API routes, and browser assets; package scripts expose build/start and require Node.js `>=22.12.0 <23` ([package runtime and scripts](../package.json#L1-L24)). The Next.js config includes Sentry runtime-injection/core files in output tracing and enables Sentry build-time instrumentation; verify the deployed build artifact when changing this integration ([Sentry tracing and instrumentation](../next.config.ts#L35-L46), [Sentry build configuration](../next.config.ts#L67-L82), [Sentry dependency](../package.json#L52-L60)).
 - **Database:** schema, constraints, RLS, business RPCs, and scheduled job definitions are versioned in Supabase migrations ([lifecycle migration](../supabase/migrations/20261021000000_lifecycle.sql#L36-L76), [migration procedures](../scripts/README.md#L70-L125)).
 - **Edge Functions:** scheduler, dispatcher, Razorpay webhook, and report-export worker are deployed by a separate package command ([deploy script](../package.json#L37-L40)).
 - **Providers:** OpenAI, Razorpay, Twilio, VAPID push, Sentry, and Clarity have distinct environment/configuration requirements ([environment map](environment-and-secrets.md#L21-L34)).

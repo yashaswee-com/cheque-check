@@ -183,11 +183,19 @@ This log captures the product story across the project’s full Git history: 524
 
 - Monitoring, privacy, and telemetry hardening
   - Strengthened Sentry compatibility, expanded telemetry privacy edge-case coverage, and refined the monitoring setup for safer global runtime behavior.
-  - Commits: `77c2911`, `4683166`
+  - Commits: `77c2911`, `4683166`, `4b14b8b`
 
 - Documentation governance and platform knowledge base
   - Expanded infrastructure, notifications, payments, security, and application documentation, and introduced governance/citation rules to keep the project knowledge base more maintainable.
   - Commits: `ce83a10`, `86ac045`, `9cb3c3a`
+
+- Tracking consent and compliance updates
+  - Added Meta Pixel consent management and customer-facing disclosures so tracking preferences are more transparent and easier to control.
+  - Commits: `d14b2a8`
+
+- Changelog maintenance and release communication
+  - Refined the changelog to cover auth reliability, auditability, monitoring, and documentation governance in a clearer release narrative.
+  - Commits: `e48b92e`
 
 ---
 
