@@ -4,13 +4,15 @@ This index points to current feature and system guides. Implementation claims in
 
 ## System and operations
 
-| Guide                                                             | Purpose                                                                            |
-| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [Architecture](architecture.md)                                   | Repository structure, request/data flow, and design boundaries.                    |
-| [Environment and secrets](environment-and-secrets.md)             | Public build settings, server credentials, provider destinations, and config gaps. |
-| [Infrastructure and deployment](infrastructure-and-deployment.md) | Service topology, deployable units, and environment verification.                  |
-| [Security and known risks](security-and-known-risks.md)           | Security boundaries, limitations, and repository-level deployment risks.           |
-| [Scaling and observability](scaling-and-observability.md)         | Bounded data access, jobs, diagnostics, and local benchmark scope.                 |
+<!-- prettier-ignore -->
+| Guide                                                             | Purpose                                                                             |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| [Architecture](architecture.md)                                   | Repository structure, request/data flow, and design boundaries.                     |
+| [Environment and secrets](environment-and-secrets.md)             | Public build settings, server credentials, provider destinations, and config gaps.  |
+| [Infrastructure and deployment](infrastructure-and-deployment.md) | Service topology, deployable units, and environment verification.                   |
+| [Day-to-day operations runbook](operations-runbook.md)            | Daily operations, testing, and deployment command reference.                         |
+| [Security and known risks](security-and-known-risks.md)            | Security boundaries, limitations, and repository-level deployment risks.           |
+| [Scaling and observability](scaling-and-observability.md)          | Bounded data access, jobs, diagnostics, and local benchmark scope.                  |
 
 ## Feature guides
 
