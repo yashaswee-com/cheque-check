@@ -1,108 +1,24 @@
-# Indian bank catalog
+# Bank catalog
 
-The selector includes the shared, dated RBI reference catalog and banks privately
-added by the signed-in user. Private banks are reusable across that user's
-businesses; they are never published to other users.
+The bank selector combines shared reference entries with user-private custom banks. Reference rows are seeded by migrations; custom rows are owner-scoped and can be used by that owner's business accounts ([catalog migration](../supabase/migrations/20261021030000_bank_catalog.sql#L1-L65), [bank repository](../src/features/accounts/repositories/bank.repository.ts#L1-L120)).
 
-## Reference coverage
+## Quick reference
 
-Retrieved on 2026-10-21:
+- The reference snapshot and seed generator define the shared catalog source ([reference data](../supabase/reference/banks.json#L1-L20), [seed generator](../scripts/generate-bank-seed.mjs#L1-L90)).
+- Custom banks are private to the owner; database policies prevent cross-owner access ([bank policies](../supabase/migrations/20261021030000_bank_catalog.sql#L1-L65)).
+- Custom-bank removal is soft and blocked while an active account or draft refers to the bank ([bank lifecycle](../supabase/migrations/20261021030000_bank_catalog.sql#L66-L130), [lifecycle dependency checks](../supabase/migrations/20261021000000_lifecycle.sql#L188-L252)).
+- IFSC formatting is checked as an account field; it is not a live branch or account verification ([account validator](../src/features/accounts/validators/account.schema.ts#L1-L80)).
 
-| Category                        |   Entries | Source date                                             |
-| ------------------------------- | --------: | ------------------------------------------------------- |
-| Public sector                   |        12 | RBI page retrieved 2026-10-21 (site updated 2026-10-20) |
-| Domestic private sector         |        21 | Same commercial-bank page                               |
-| Small finance                   |        11 | Same commercial-bank page                               |
-| Regional rural                  |        28 | Same commercial-bank page                               |
-| Foreign banks in India          |        44 | Same commercial-bank page                               |
-| Scheduled urban cooperative     |        55 | 2026-06-30                                              |
-| Non-scheduled urban cooperative |     1,377 | 2026-06-30                                              |
-| Scheduled state cooperative     |        26 | PDF updated 2026-05-13                                  |
-| Non-scheduled state cooperative |         8 | PDF updated 2026-05-13                                  |
-| District central cooperative    |       352 | PDF updated 2026-05-13                                  |
-| **Total**                       | **1,934** |                                                         |
+## Catalog source and ownership
 
-Sources:
+The checked-in JSON snapshot records reference names and source metadata, and the generator produces the corresponding seed SQL ([reference JSON](../supabase/reference/banks.json#L1-L20), [seed generator](../scripts/generate-bank-seed.mjs#L1-L90)). The migration seed function writes shared catalog rows while preserving existing identities ([seed migration](../supabase/migrations/20261021030100_seed_bank_catalog.sql#L1-L80)). Catalog counts may change with a reviewed source snapshot; use the current JSON and generator rather than a historic total ([generator](../scripts/generate-bank-seed.mjs#L1-L90)).
 
-- [RBI scheduled commercial banks](https://www.rbi.org.in/Scripts/bs_viewcontent.aspx?Id=3657)
-- [RBI scheduled urban cooperative banks](https://rbidocs.rbi.org.in/rdocs/Content/pdfs/schedulecoop.pdf)
-- [RBI non-scheduled urban cooperative banks](https://rbidocs.rbi.org.in/rdocs/Content/pdfs/nonschedulecoop.pdf)
-- [RBI scheduled state cooperative banks](https://rbidocs.rbi.org.in/rdocs/Content/pdfs/SCCB20141702.pdf)
-- [RBI non-scheduled state cooperative banks](https://rbidocs.rbi.org.in/rdocs/Content/pdfs/NSCB20141402.pdf)
-- [RBI district central cooperative banks](https://rbidocs.rbi.org.in/rdocs/Content/pdfs/DCCB20141702.pdf)
+Custom bank rows carry an owner and are governed by RLS; account writes cannot refer to another user's private bank ([bank policies](../supabase/migrations/20261021030000_bank_catalog.sql#L1-L65), [account reference checks](../supabase/migrations/20261021000000_lifecycle.sql#L90-L149)). Custom banks are soft-deleted through a dedicated database path and dependency checks ([custom bank lifecycle](../supabase/migrations/20261021030000_bank_catalog.sql#L66-L130)).
 
-The PDF filenames containing 2014 are stable RBI publication URLs, not the
-current document dates. Their downloaded metadata and content were inspected.
-Urban lists were checked for consecutive serial numbers; state and district
-counts were checked against publication totals.
+## Selector behavior
 
-Payments banks are deliberately excluded from the cheque-account catalog.
-Inclusion records RBI list membership, not a guarantee that a particular
-institution, branch or account product currently issues/accepts cheques.
-Lists are snapshots, not a real-time licensing service. For missing or renamed
-institutions, use **Add New Bank**; never guess an IFSC or silently substitute
-another bank.
+The account feature fetches bank rows through a repository, and its selector pages visible options while preserving search behavior ([bank repository](../src/features/accounts/repositories/bank.repository.ts#L1-L120), [selector](../src/features/accounts/components/bank-selector.tsx#L1-L120)). Search, private-bank creation, and duplicate handling live in the account feature ([bank service](../src/features/accounts/services/bank.service.ts#L1-L140)).
 
-The add action includes a plus icon and the quoted search text, which prefills
-the **Add Custom Bank** bottom sheet. For a selected custom bank, **Delete Custom
-Bank** appears right-aligned below the selector with a delete icon. Custom banks
-remain private to their owner; the label does not change ownership or visibility.
+## Validation and limits
 
-## Reproducible seed
-
-[The reference snapshot](../supabase/reference/banks.json) records names,
-categories, source URLs, source dates and retrieval date. The generated
-[seed migration](../supabase/migrations/20261021030100_seed_bank_catalog.sql)
-defines `seed_reference_banks()`. Both the migration and database reset
-[seed](../supabase/seed.sql) call that function, so no manual storage/catalog SQL
-or duplicated 13-bank list is required.
-
-After reviewing an updated source snapshot:
-
-```powershell
-node scripts\generate-bank-seed.mjs --check
-```
-
-The existing generated migration must remain immutable after deployment. For
-future catalog updates, add a newly timestamped forward migration, update the
-generator's destination to that migration, then regenerate it. Before its first
-deployment only, `node scripts\generate-bank-seed.mjs` regenerates the current
-seed.
-
-Existing IDs and familiar short labels (for example HDFC Bank) are preserved.
-Comparison ignores punctuation, case and a trailing Limited/Ltd suffix, so
-seeding the corresponding official name does not create a duplicate or change
-account references. Historical bank IDs are never deleted or reassigned by
-seeding.
-
-## Private additions and lifecycle
-
-- Name is required (2-120 characters, at least one letter, no control characters).
-- Existing shared/owned names are detected before creation and in PostgreSQL.
-- RLS isolates user-private rows. Accounts cannot reference another user's
-  private bank, even through a direct database request.
-- Deletion is soft and blocked while any nondeleted account or account draft
-  refers to the bank. User deletion cannot physically delete or restore a bank.
-- A deleted private name can be reused. Administrative recovery must resolve
-  any resulting active-name collision explicitly.
-- Optional IFSC belongs to an account; it is normalized and format-checked.
-  Format validation is not a bank/branch existence lookup.
-- Catalog fetching is paginated, rather than truncated at Supabase's default
-  row limit. The selector reserves a fixed avatar footprint and anchor width.
-- Bank, party and account selectors render at most 50 options at once, with
-  keyboard-accessible previous/next controls. Search uses the existing fuzzy
-  matching across the entire fetched catalog, not just the visible page.
-  Search changes and dismissal reset pagination. Bank queries are cached for
-  five minutes; private-bank mutations still invalidate the cache immediately.
-  This is client-side render pagination; the full catalog remains available for
-  selected labels, duplicate checks and OCR matching.
-
-## Validation
-
-Bank service, source counts, alias identity, seed synchronization, and real
-isolated PostgreSQL tests cover seeding twice, ownership, cross-owner references,
-draft dependencies, soft deletion and deactivated-user access:
-
-```powershell
-npx vitest run src\features\accounts
-```
+The seed generator provides a `--check` mode to compare generated SQL with the checked-in reference snapshot ([generator](../scripts/generate-bank-seed.mjs#L1-L90), [seed test](../src/features/accounts/lib/bank-catalog.test.ts#L1-L100)). The account validator checks IFSC format but does not query a live registry or verify branch/account existence ([account schema](../src/features/accounts/validators/account.schema.ts#L1-L80)).

@@ -1,64 +1,51 @@
 # Documentation index
 
-Documentation filenames use descriptive lowercase kebab-case:
+This index points to current feature and system guides. Implementation claims in those guides cite repository code, migrations, tests, or configuration; deployment state must be verified separately ([documentation constitution](../constitution.md#L16-L41)).
 
-- Name the subject directly (`data-lifecycle.md`, `notification-system.md`).
-- Add a qualifier when it makes the subject clearer (`environment-configuration.md`,
-  `premium-access-policy.md`).
-- Avoid dates in narrative documents, generic names such as `notes.md`, and
-  redundant prefixes such as `doc-`. Database migration filenames retain their
-  timestamped naming convention.
-- Keep each document's top-level heading aligned with its filename and update
-  inbound links when a filename changes.
+## System and operations
 
-## Current implementation and operations
+| Guide                                                             | Purpose                                                                            |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [Architecture](architecture.md)                                   | Repository structure, request/data flow, and design boundaries.                    |
+| [Environment and secrets](environment-and-secrets.md)             | Public build settings, server credentials, provider destinations, and config gaps. |
+| [Infrastructure and deployment](infrastructure-and-deployment.md) | Service topology, deployable units, and environment verification.                  |
+| [Security and known risks](security-and-known-risks.md)           | Security boundaries, limitations, and repository-level deployment risks.           |
+| [Scaling and observability](scaling-and-observability.md)         | Bounded data access, jobs, diagnostics, and local benchmark scope.                 |
 
-| Document                                                          | What it covers                                                                                                                                                        |
-| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Application setup](application-setup.md)                         | From-scratch provider provisioning, unified resource naming, credential destinations, deployment, and acceptance checks.                                              |
-| [Bank catalog](bank-catalog.md)                                   | RBI reference snapshot, generated seed, private bank additions, and validation.                                                                                       |
-| [Cheque statistics](cheque-statistics.md)                         | Dashboard/report status partitions and date/amount semantics.                                                                                                         |
-| [Data lifecycle](data-lifecycle.md)                               | Soft deletion, recovery, ownership, private media, and retained records.                                                                                              |
-| [Environment configuration](environment-configuration.md)         | Deployment sequence and environment-specific Supabase setup. See also the [README environment reference](../README.md#environment) for variable purposes and sources. |
-| [Monitoring and session lookup](monitoring-and-session-lookup.md) | Sentry/Clarity gates, privacy, diagnostics, exports, and operations.                                                                                                  |
-| [Notification system](notification-system.md)                     | Voice reminder scheduling, delivery, capacity, and operational recovery.                                                                                              |
-| [Phone OTP authentication](phone-auth.md)                         | Phone sign-in/link flows, CAPTCHA, provider setup, and external readiness.                                                                                            |
-| [Premium access policy](premium-access-policy.md)                 | Entitlement rules, gated workflows, and Premium access behavior.                                                                                                      |
-| [Private media migration](private-media-migration.md)             | Legacy public-media conversion and retirement procedure.                                                                                                              |
-| [Shared shell and commerce](shared-shell-and-commerce.md)         | Shared navigation/pending-action behavior and payment-history labels.                                                                                                 |
+## Feature guides
 
-## Help center for end users
+| Guide                                                                       | Purpose                                                                      |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [Authentication and profile](authentication-and-profile.md)                 | Sessions, phone OTP, profile lifecycle, and application PIN.                 |
+| [Cheque management](cheque-management.md)                                   | Cheque records, drafts, filters, lifecycle, and dashboard statistics.        |
+| [Bank catalog](bank-catalog.md)                                             | Shared reference banks, private custom banks, and selector behavior.         |
+| [Reports and exports](reports-and-exports.md)                               | Aggregate reports, browser exports, and durable CSV/JSON jobs.               |
+| [Payments and Premium](payments-and-premium.md)                             | Razorpay checkout, entitlement enforcement, referrals, and wallet credit.    |
+| [Notifications](notifications.md)                                           | Inbox, voice reminders, Web Push, and worker boundaries.                     |
+| [Public site and feedback](public-site-and-feedback.md)                     | Public routes, contact submissions, help, feedback, and roadmap.             |
+| [Application shell and localization](application-shell-and-localization.md) | Route shell, navigation, locale, preferences, and PWA behavior.              |
+| [Data lifecycle and storage](data-lifecycle-and-storage.md)                 | Soft deletion, recovery, ownership, private media, and retention boundaries. |
 
-These guides are written for day-to-day users of the application, not developers. They focus on simple language, practical steps, and business-friendly explanations.
+## End-user help
 
-| Guide                                                       | What it covers                                                                |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| [Help Center home](help/en/README.md)                       | A Cal.com-style landing page and the best place to begin.                     |
-| [Manage your business](help/en/businesses.md)               | Creating, switching, and updating businesses.                                 |
-| [Manage parties](help/en/parties.md)                        | Adding, editing, tagging, and organising people and businesses you deal with. |
-| [Manage cheques](help/en/cheques.md)                        | Creating, tracking, searching, and updating cheque records.                   |
-| [Manage bank accounts](help/en/accounts.md)                 | Adding and maintaining bank account records.                                  |
-| [Use the dashboard](help/en/dashboard.md)                   | Reading the key overview and prioritising work efficiently.                   |
-| [Set reminders and notifications](help/en/notifications.md) | Setting deadlines and follow-up reminders to stay on track.                   |
-| [Use tags and labels](help/en/tags.md)                      | Grouping records so they are easy to find and manage.                         |
-| [Review reports and exports](help/en/reports.md)            | Summaries, filters, and business reporting tools.                             |
-| [Understand Premium](help/en/premium.md)                    | Paid features, upgrades, and what Premium unlocks.                            |
-| [Security and settings](help/en/settings.md)                | Profile preferences, safety habits, and business settings.                    |
+These guides are intended for application users rather than developers. The help catalog is available in English and Hindi ([help indexes](help/en/README.md#L1), [Hindi help index](help/hi/README.md#L1)).
 
-## Historical design records
+- [Help Center](help/en/README.md)
+- [Manage businesses](help/en/businesses.md)
+- [Manage parties](help/en/parties.md)
+- [Manage cheques](help/en/cheques.md)
+- [Manage bank accounts](help/en/accounts.md)
+- [Use the dashboard](help/en/dashboard.md)
+- [Notifications](help/en/notifications.md)
+- [Tags](help/en/tags.md)
+- [Reports](help/en/reports.md)
+- [Premium](help/en/premium.md)
+- [Settings](help/en/settings.md)
 
-These documents retain the scope or findings of earlier work. Their original
-baseline observations and validation results are not a current status report;
-use the implementation documents above and the root README for present behavior.
+## Product requirements
 
-| Document                                                      | Record                                                                                |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| [Code quality and SOLID review](code-quality-solid-review.md) | Static maintainability review and recommendations from its review baseline.           |
-| [Issue 2 resolution plan](issue-2-resolution-plan.md)         | Original backlog requirements and implementation approach; not a current defect list. |
+The numbered PRD files preserve product requirements and acceptance criteria; they are not implementation evidence. Check the current feature guide and code before treating a requirement as delivered ([PRD part 1](prd/prd-part-1.md#L1), [constitution](../constitution.md#L21-L41)).
 
-Product requirement documents remain in [`prd/`](prd/) and keep their numbered
-part filenames to preserve their reading order.
+## Naming and evidence
 
-## Documentation governance
-
-See the [Cheque-Check Documentation Constitution](../constitution.md) for the evidence, citation, privacy, writing, review, and amendment rules that apply to project documentation.
+Use lowercase kebab-case names that describe the feature or system concern. Cite current behavior to the narrowest useful repository source, state test scope accurately, and do not claim a hosted setting from local configuration ([documentation constitution](../constitution.md#L16-L41), [naming rules](../constitution.md#L102-L126)).
