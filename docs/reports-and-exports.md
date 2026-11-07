@@ -11,7 +11,7 @@ Reports separate bounded summaries from complete-history exports. Standard repor
 
 ## Report reads
 
-The report hook requests summary data and a bounded preview instead of downloading every cheque during page load ([report hook](../src/features/reports/hooks/use-report-cheques.ts#L9-L54)). The database analytics RPC aggregates date, direction, status, and bank data ([analytics migration](../supabase/migrations/20261102090000_cheque_analytics.sql#L1-L100)). Export scope is the business and current authorization context; statistics date controls do not silently become export bounds ([report repository](../src/features/reports/repositories/report.repository.ts#L102-L141), [export snapshot function](../supabase/migrations/20261031040000_background_exports.sql#L57-L112)).
+The report hook requests summary data and a bounded preview instead of downloading every cheque during page load ([report hook](../src/features/reports/hooks/use-report-cheques.ts#L9-L54)). The database analytics RPC aggregates date, direction, status, and bank data ([analytics migration](../supabase/migrations/20261102090000_cheque_analytics.sql#L1-L92)). Export scope is the business and current authorization context; statistics date controls do not silently become export bounds ([report repository](../src/features/reports/repositories/report.repository.ts#L102-L141), [export snapshot function](../supabase/migrations/20261031040000_background_exports.sql#L57-L112)).
 
 ## Export paths
 

@@ -229,16 +229,18 @@ Notes:
 expired request-slot rows remain. Normal saturation is informational. Use it
 alongside `ops notification-health` for queue-delay alerts; neither command sends
 provider calls or automatically changes limits/reconciles uncertain deliveries.
-See [shared provider capacity](../docs/notification-system.md#shared-provider-capacity-rollout)
+See [notifications](../docs/notifications.md)
 for configuration, migration/deployment order and local-test limitations.
 
 ### Bulk CSV
 
+The following rows are illustrative and use reserved placeholder email domains:
+
 ```csv
 email,action,amount,reason
-priya@example.com,lifetime,,Launch offer
-ravi@example.com,topup-voice,100,Support #42
-asha@example.com,trial,30,
+person1@example.invalid,lifetime,,Example grant
+person2@example.invalid,topup-voice,100,Example top-up
+person3@example.invalid,trial,30,
 ```
 
 | action           | amount                            |
@@ -287,7 +289,7 @@ The fixture caps the complete dataset at 1,000,000 cheques. The ten-task default
 does **not** emulate independent production connections or authenticated HTTP
 sessions. Compare baselines on the same runtime/machine/workload; do not interpret
 these results as 10,000 concurrent-user support. See
-[monitoring and session lookup](../docs/monitoring-and-session-lookup.md#scaling-validation-and-capacity-gates)
+[scaling and observability](../docs/scaling-and-observability.md#benchmark-scope)
 for the measurement assumptions and authorized QA follow-ups.
 
 ### Read-only Notification Health

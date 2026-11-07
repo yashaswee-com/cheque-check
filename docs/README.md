@@ -17,11 +17,13 @@ This index points to current feature and system guides. Implementation claims in
 | Guide                                                                       | Purpose                                                                      |
 | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | [Authentication and profile](authentication-and-profile.md)                 | Sessions, phone OTP, profile lifecycle, and application PIN.                 |
+| [Phone OTP authentication](phone-auth.md)                                   | CAPTCHA-aware sign-in, signup, phone linking, and verification behavior.     |
 | [Cheque management](cheque-management.md)                                   | Cheque records, drafts, filters, lifecycle, and dashboard statistics.        |
 | [Bank catalog](bank-catalog.md)                                             | Shared reference banks, private custom banks, and selector behavior.         |
 | [Reports and exports](reports-and-exports.md)                               | Aggregate reports, browser exports, and durable CSV/JSON jobs.               |
 | [Payments and Premium](payments-and-premium.md)                             | Razorpay checkout, entitlement enforcement, referrals, and wallet credit.    |
 | [Notifications](notifications.md)                                           | Inbox, voice reminders, Web Push, and worker boundaries.                     |
+| [Announcements and onboarding](announcements-and-onboarding.md)             | Published developer messages, acknowledgements, and the first-run tour.      |
 | [Public site and feedback](public-site-and-feedback.md)                     | Public routes, contact submissions, help, feedback, and roadmap.             |
 | [Application shell and localization](application-shell-and-localization.md) | Route shell, navigation, locale, preferences, and PWA behavior.              |
 | [Data lifecycle and storage](data-lifecycle-and-storage.md)                 | Soft deletion, recovery, ownership, private media, and retention boundaries. |

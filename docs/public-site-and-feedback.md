@@ -19,7 +19,7 @@ The contact route bounds and validates submitted fields, obtains the proxy-provi
 
 ### Proxy requirement {#proxy-requirement}
 
-The route reads forwarded address headers, so production infrastructure must replace or validate them using the actual client address. If it passes caller-supplied values through, address-based rate limiting can be influenced ([header selection](../src/app/api/contact/route.ts#L47-L64), [contact deployment notes](../docs/phase-six-public.md#L20-L45)). Verify this behavior at the deployed proxy; repository source alone cannot establish it ([deployment verification](infrastructure-and-deployment.md#deployment-verification)).
+The route reads forwarded address headers, so production infrastructure must replace or validate them using the actual client address. If it passes caller-supplied values through, address-based rate limiting can be influenced ([header selection](../src/app/api/contact/route.ts#L47-L64), [rate-limit RPC](../supabase/migrations/20261107000000_shared_contact_rate_limits.sql#L1-L57)). Verify this behavior at the deployed proxy; repository source alone cannot establish it ([deployment verification](infrastructure-and-deployment.md#deployment-verification)).
 
 ## Feedback and roadmap
 
@@ -27,4 +27,4 @@ Feedback rows are private to the submitter and operators; published feature requ
 
 ## Route-policy check
 
-A route's location under the public route group does not itself make it public; middleware uses the explicit allowlist ([public route policy](../src/lib/supabase/public-routes.ts#L1-L17), [middleware](../src/lib/supabase/middleware.ts#L49-L68)). Review new public pages against both the allowlist and route tests before release ([route tests](../src/lib/supabase/public-routes.test.ts#L1-L80)).
+A route's location under the public route group does not itself make it public; middleware uses the explicit allowlist ([public route policy](../src/lib/supabase/public-routes.ts#L1-L17), [middleware](../src/lib/supabase/middleware.ts#L49-L68)). Review new public pages against both the allowlist and route tests before release ([route tests](../src/lib/supabase/public-routes.test.ts#L1-L24)).

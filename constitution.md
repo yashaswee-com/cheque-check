@@ -12,7 +12,7 @@ Documentation describes what repository evidence supports. Authors inspect the r
 
 The repository already states that documentation naming is descriptive and uses lowercase kebab-case, and that historical design records are not current status reports. This constitution adopts that distinction as a project-wide rule.
 
-> **Project evidence — documentation conventions:** “Keep each document's top-level heading aligned with its filename and update inbound links when a filename changes.” The documentation index also says historical observations “are not a current status report.” ([docs/README.md](docs/README.md#L3-L12), [docs/README.md](docs/README.md#L48-L52))
+> **Project evidence — documentation conventions:** “Use lowercase kebab-case names that describe the feature or system concern.” ([docs/README.md](docs/README.md#L42-L46))
 
 ## Article I — Claims require evidence
 
@@ -28,7 +28,7 @@ The repository already states that documentation naming is descriptive and uses 
 5. For important or surprising claims, include a short exact quotation or a small code excerpt with its citation. Keep quotations short and faithful. Do not silently change a quote's meaning.
 6. If the evidence is missing, conflicting, stale, or cannot establish the claim, state the specific gap and do not state the claim as fact. Never fill a gap with a guess.
 
-> **Project evidence — architectural limit:** “These checks prevent common layer bypasses, not arbitrary semantic duplication.” The README identifies the limit of its checks rather than claiming they prove more than they do. ([README.md](README.md#L321-L327))
+> **Project evidence — scope limit:** “This repository snapshot describes checked-in code; it does not certify production deployment, provider readiness, security scan status, or user adoption.” ([README.md](README.md#L3-L4))
 
 ## Article II — Distinguish implementation, intent, and observation
 
@@ -38,7 +38,7 @@ The repository already states that documentation naming is descriptive and uses 
 4. Give time-sensitive claims an “as of” date and identify the source or environment checked.
 5. Separate facts from interpretation. Cite facts first, then label any conclusion and show how the facts support it.
 
-> **Project evidence — test limitation:** “PGlite's single connection does not prove multi-session lock/race behavior.” The lifecycle documentation names a specific limit instead of treating passing single-connection tests as proof of concurrent production behavior. ([docs/data-lifecycle.md](docs/data-lifecycle.md#L158-L172))
+> **Project evidence — benchmark limitation:** “Its worker tasks share one serialized database connection, so the results do not prove independent PostgreSQL concurrency.” ([docs/scaling-and-observability.md](docs/scaling-and-observability.md#L22-L23))
 
 ## Article III — Protect secrets and people
 
@@ -49,7 +49,7 @@ The repository already states that documentation naming is descriptive and uses 
 5. A security test may use sensitive-looking sample data. Quote only the test's relevant assertion or description; do not reproduce the sample values.
 6. If a source contains a secret or personal data, do not repeat it in the document. Redact the value and cite the source only when the citation itself does not expose it. Otherwise describe the evidence without the value and use the project's documented private reporting route, if one exists.
 
-> **Project evidence — privacy behavior and test scope:** The monitoring guide says request bodies, raw exception messages, and arbitrary logger extras are excluded. A privacy test is named “never includes raw request data, arbitrary context or exception messages.” These are documented and tested telemetry rules; they do not authorize copying sensitive values into documentation. ([docs/monitoring-and-session-lookup.md](docs/monitoring-and-session-lookup.md#L66-L74), [src/lib/monitoring/monitoring.test.ts](src/lib/monitoring/monitoring.test.ts#L16-L18))
+> **Project evidence — privacy behavior and test scope:** A focused test checks that monitoring output excludes raw request data, arbitrary context, and exception messages; this is test evidence for those exercised cases, not permission to copy sensitive values into documentation. ([src/lib/monitoring/monitoring.test.ts](src/lib/monitoring/monitoring.test.ts#L16-L60))
 
 > **Code evidence — route sanitization:** `if (pathname.startsWith('/api/storage/')) return '/api/storage/[private]'`. ([src/lib/monitoring/privacy.ts](src/lib/monitoring/privacy.ts#L34))
 
@@ -78,7 +78,7 @@ A technical document includes both a short path and a complete path when its sub
 2. Cite the implementation, query, test, report, or command that produces the number. For a changing measurement, include the date and exact command or query.
 3. Distinguish a configured limit from an observed measurement, a test count from a passing-test result, and a benchmark from production performance.
 4. Do not use false precision, an unexplained percentage, or a total without a denominator. Do not claim a trend without comparable measurements over a stated period.
-5. A repository claim can be stated narrowly. For example, the README documents a cheque list page size of 50 rows and a global search limit of five matches. That citation supports the documented limits; it does not prove response time or production usage. ([README.md](README.md#L195-L201))
+5. A repository claim can be stated narrowly. For example, the scaling runner defines a user population and a local latency budget; that configuration does not prove production response time or capacity ([scripts/scaling-benchmark.ts](scripts/scaling-benchmark.ts#L18-L51)).
 
 ## Article VII — Explain examples and snippets safely
 
@@ -97,7 +97,7 @@ A technical document includes both a short path and a complete path when its sub
 
 ## Article IX — Keep documents current and navigable
 
-1. Use descriptive lowercase kebab-case names, a heading that matches the filename, and maintained inbound links, in line with the documentation index. ([docs/README.md](docs/README.md#L3-L12))
+1. Use descriptive lowercase kebab-case names, a heading that matches the filename, and maintained inbound links, in line with the documentation index. ([docs/README.md](docs/README.md#L42-L46))
 2. Update the relevant index when adding or renaming a document.
 3. Separate current implementation guidance from historical records. Give historical documents a clear date or baseline and link to current implementation guidance when available.
 4. Check commands, paths, line links, configuration names, and code snippets against the current repository before publishing.
