@@ -35,6 +35,12 @@ const nextConfig: NextConfig = {
     ...(appRelease ? { NEXT_PUBLIC_APP_RELEASE: appRelease } : {}),
     NEXT_PUBLIC_DEPLOYMENT_KIND: deploymentKind,
   },
+  outputFileTracingIncludes: {
+    '/*': [
+      './node_modules/@sentry/server-runtime-injection/build/esm/**/*.{js,json}',
+      './node_modules/@sentry/core/build/esm/**/*.{js,json}',
+    ],
+  },
   turbopack: {
     root: fileURLToPath(new URL('.', import.meta.url)),
   },
@@ -66,6 +72,7 @@ export default withNextIntl(
     org: 'cheque-check',
     project: 'cheque-check-web',
     authToken: process.env.SENTRY_AUTH_TOKEN,
+    buildTimeInstrumentation: true,
     release: {
       name: appRelease,
       create: uploadSourceMaps,

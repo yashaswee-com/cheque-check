@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const keys = [
@@ -20,6 +22,14 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs())
 
 describe('monitoring deployment policy', () => {
+  it('keeps QA hosted monitoring enabled for Sentry', () => {
+    const qaEnv = readFileSync(join(process.cwd(), '.env.qa'), 'utf8')
+
+    expect(qaEnv).toContain('NEXT_PUBLIC_OBSERVABILITY_ENABLED=true')
+    expect(qaEnv).toContain('NEXT_PUBLIC_PREVIEW_MONITORING_ENABLED=true')
+    expect(qaEnv).toContain('NEXT_PUBLIC_MONITORING_POLICY_APPROVED=true')
+  })
+
   it('remains disabled in tests even with opted-in valid configuration', async () => {
     vi.stubEnv('NEXT_PUBLIC_APP_ENV', 'qa')
     vi.stubEnv('NEXT_PUBLIC_APP_RELEASE', 'release')
