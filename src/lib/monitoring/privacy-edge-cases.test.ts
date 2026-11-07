@@ -128,6 +128,7 @@ describe('telemetry privacy edge cases', () => {
           trace_id: 'trace',
           start_timestamp: 1,
           timestamp: 2,
+          status: 'ok',
           op: 'save',
           description: 'private',
           data: { amount: 300, operation: 'save' },
@@ -148,5 +149,6 @@ describe('telemetry privacy edge cases', () => {
     )
     expect(event.spans?.[0].description).toBe('save')
     expect(event.spans?.[0].data).toEqual({ operation: 'save' })
+    expect(event.spans?.[0].status).toBe('ok')
   })
 })

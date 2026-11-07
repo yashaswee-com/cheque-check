@@ -1,5 +1,4 @@
 // @vitest-environment node
-import { globFiles as legacyGlobFiles } from '@sentry/bundler-plugin-core'
 import { globFiles } from '@sentry/bundler-plugins/core'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -22,12 +21,9 @@ afterAll(() => {
   rmSync(directory, { recursive: true, force: true })
 })
 
-describe.each([
-  ['@sentry/bundler-plugin-core', legacyGlobFiles],
-  ['@sentry/bundler-plugins', globFiles],
-] as const)('%s patched glob compatibility', (_name, discover) => {
+describe('@sentry/bundler-plugins patched glob compatibility', () => {
   it('discovers JavaScript and source maps while respecting ignore rules', async () => {
-    const files = await discover(
+    const files = await globFiles(
       [`${globRoot}/**/*.js`, `${globRoot}/**/*.js.map`],
       { ignore: [`${globRoot}/**/ignored.js`] },
     )
@@ -40,7 +36,7 @@ describe.each([
   })
 
   it('excludes directories and returns no files for an unmatched pattern', async () => {
-    expect(await discover(`${globRoot}/**/chunks`)).toEqual([])
-    expect(await discover(`${globRoot}/**/*.css`)).toEqual([])
+    expect(await globFiles(`${globRoot}/**/chunks`)).toEqual([])
+    expect(await globFiles(`${globRoot}/**/*.css`)).toEqual([])
   })
 })
