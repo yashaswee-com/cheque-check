@@ -8,6 +8,7 @@ This index points to current feature and system guides. Implementation claims in
 | Guide                                                             | Purpose                                                                             |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | [Architecture](architecture.md)                                   | Repository structure, request/data flow, and design boundaries.                     |
+| [Launch deployment checklist](../deployments.md)                    | Launch gates, deployment evidence, and human verification items.                   |
 | [Environment and secrets](environment-and-secrets.md)             | Public build settings, server credentials, provider destinations, and config gaps.  |
 | [Infrastructure and deployment](infrastructure-and-deployment.md) | Service topology, deployable units, and environment verification.                   |
 | [Day-to-day operations runbook](operations-runbook.md)            | Daily operations, testing, and deployment command reference.                         |
