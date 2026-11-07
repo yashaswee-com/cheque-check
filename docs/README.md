@@ -58,3 +58,7 @@ use the implementation documents above and the root README for present behavior.
 
 Product requirement documents remain in [`prd/`](prd/) and keep their numbered
 part filenames to preserve their reading order.
+
+## Documentation governance
+
+See the [Cheque-Check Documentation Constitution](../constitution.md) for the evidence, citation, privacy, writing, review, and amendment rules that apply to project documentation.
