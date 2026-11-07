@@ -31,7 +31,7 @@ The app uses bounded reads for interactive pages and aggregates for totals. Cheq
 
 ## Runtime and verification
 
-The package declares Node.js `>=22 <23`, npm `11.17.0`, Next.js `16.4.1`, and React `19.2.8` ([runtime](../package.json#L1-L8), [framework dependencies](../package.json#L72-L80)). Available checks include lint, TypeScript, Vitest, Playwright, build, and a local scaling runner; their presence does not mean they have passed in this snapshot ([scripts](../package.json#L9-L24), [CI workflow](../.github/workflows/quality.yml#L39-L71)).
+The package declares Node.js `>=22.12.0 <23`, npm `11.17.0`, Next.js `16.4.1`, and React `19.2.8` ([runtime](../package.json#L1-L8), [framework dependencies](../package.json#L72-L80)). Available checks include lint, TypeScript, Vitest, Playwright, build, and a local scaling runner; their presence does not mean they have passed in this snapshot ([scripts](../package.json#L9-L24), [CI workflow](../.github/workflows/quality.yml#L39-L71)).
 
 ## Boundaries
 

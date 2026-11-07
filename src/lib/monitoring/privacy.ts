@@ -23,6 +23,7 @@ const contextKeys = new Set([
   'runtime',
   'route',
   'method',
+  'sentry.op',
 ])
 
 export function safeRoute(value: string): string {

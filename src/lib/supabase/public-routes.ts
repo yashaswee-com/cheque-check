@@ -4,6 +4,7 @@ const PUBLIC_PAGE_PATHS = new Set([
   '/pricing',
   '/privacy',
   '/contact',
+  '/sentry-example-page',
 ])
 
 const PUBLIC_API_PATHS = new Set(['/api/contact'])

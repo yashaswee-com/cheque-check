@@ -15,8 +15,16 @@ describe('Sentry options', () => {
   it('keeps sensitive automatic integrations and private storage out of monitoring', () => {
     const options = sentryOptions('browser')
     expect(options.enabled).toBe(true)
-    expect(options.sendDefaultPii).toBe(false)
-    expect(options.enableLogs).toBe(false)
+    expect(options.dataCollection).toMatchObject({
+      userInfo: false,
+      cookies: false,
+      httpHeaders: false,
+      httpBodies: [],
+      urlQueryParams: false,
+      databaseQueryData: false,
+      stackFrameVariables: false,
+      frameContextLines: 0,
+    })
     const integrations = [
       'OpenAI',
       'Anthropic',
@@ -53,7 +61,7 @@ describe('Sentry options', () => {
     expect(sentryOptions('nodejs').tracePropagationTargets).toHaveLength(1)
   })
 
-  it('drops expected errors and sanitizes events, transactions and spans', () => {
+  it('drops expected errors and sanitizes events and streamed spans', () => {
     const options = sentryOptions('browser')
     const expected = Object.assign(new Error('invalid input'), {
       name: 'ValidationError',
@@ -65,23 +73,25 @@ describe('Sentry options', () => {
       options.beforeSend({ type: undefined, message: 'person@example.com' }, {})
         ?.message,
     ).not.toContain('person@example.com')
-    expect(
-      options.beforeSendTransaction({
-        type: 'transaction',
-        transaction: '/cheques/123?token=private',
-      }).transaction,
-    ).toBe('/cheques/[id]')
     const span = options.beforeSendSpan({
       span_id: 'span',
       trace_id: 'trace',
       start_timestamp: 1,
-      timestamp: 2,
-      op: 'http.client',
-      description: 'private payload',
-      data: { operation: 'cheque.create', amount: 500 },
+      end_timestamp: 2,
+      status: 'ok',
+      is_segment: false,
+      name: 'private payload',
+      attributes: {
+        'sentry.op': 'http.client',
+        operation: 'cheque.create',
+        amount: 500,
+      },
     })
-    expect(span.description).toBe('http.client')
-    expect(span.data).toEqual({ operation: 'cheque.create' })
+    expect(span.name).toBe('http.client')
+    expect(span.attributes).toEqual({
+      'sentry.op': 'http.client',
+      operation: 'cheque.create',
+    })
     expect(
       options.beforeBreadcrumb({ category: 'console', message: 'private' }),
     ).toBeNull()

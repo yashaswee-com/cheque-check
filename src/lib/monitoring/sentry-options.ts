@@ -13,8 +13,20 @@ export function sentryOptions(runtime: string) {
     dsn: monitoringConfig.dsn,
     environment: monitoringConfig.environment,
     release: monitoringConfig.release,
-    sendDefaultPii: false,
-    enableLogs: false,
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: false,
+      httpBodies: [],
+      urlQueryParams: false,
+      graphQL: { document: false, variables: false },
+      genAI: { inputs: false, outputs: false },
+      mcp: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
+      stackFrameVariables: false,
+      frameContextLines: 0,
+    },
     integrations: (defaults) =>
       defaults.filter(
         (integration) =>
@@ -40,11 +52,13 @@ export function sentryOptions(runtime: string) {
     beforeBreadcrumb: scrubBreadcrumb,
     beforeSend: (event, hint) =>
       isExpectedError(hint.originalException) ? null : scrubEvent(event),
-    beforeSendTransaction: (event) => scrubEvent(event),
-    beforeSendSpan: (span) => ({
-      ...span,
-      description: span.op,
-      data: safeContext(span.data),
-    }),
+    beforeSendSpan: (span) => {
+      const operation = span.attributes['sentry.op']
+      return {
+        ...span,
+        name: typeof operation === 'string' ? operation : 'operation',
+        attributes: safeContext(span.attributes),
+      }
+    },
   } satisfies BrowserOptions
 }

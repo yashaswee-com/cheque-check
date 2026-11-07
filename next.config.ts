@@ -64,7 +64,7 @@ export default withNextIntl(
     // Suppresses source map uploading logs during bundling
     silent: true,
     org: 'cheque-check',
-    project: 'javascript-nextjs',
+    project: 'cheque-check-web',
     authToken: process.env.SENTRY_AUTH_TOKEN,
     release: {
       name: appRelease,

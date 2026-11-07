@@ -13,7 +13,7 @@ Cheque Check is a Next.js and Supabase application for managing business cheque 
 
 ## Local development
 
-The package declares Node.js `>=22 <23` and npm `11.17.0`; its scripts include development, build, lint, type-check, tests, and local Supabase helpers ([runtime and scripts](package.json#L1-L40)). The app's public environment schema requires a Supabase URL and public anon key ([environment schema](src/lib/env/schema.ts#L64-L76)).
+The package declares Node.js `>=22.12.0 <23` and npm `11.17.0`; its scripts include development, build, lint, type-check, tests, and local Supabase helpers ([runtime and scripts](package.json#L1-L40)). The app's public environment schema requires a Supabase URL and public anon key ([environment schema](src/lib/env/schema.ts#L64-L76)).
 
 ```sh
 npm ci
