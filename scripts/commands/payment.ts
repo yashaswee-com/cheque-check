@@ -10,7 +10,10 @@ import {
   findTransaction,
   fulfillOrder,
   isAdminGrant,
+  listReservedPaymentCheckouts,
   listTransactions,
+  countOrderPaymentAttempts,
+  releasePaymentCheckout,
   verifyCapturedPayment,
   type VerifiedPayment,
 } from '../domain/payments'
@@ -99,6 +102,143 @@ const list = defineAction<TransactionRow[]>({
   },
   render(ctx, rows) {
     ctx.ui.table(transactionTable(rows), 'No transactions.')
+  },
+})
+
+type ExpireCheckoutsResult = {
+  expired: number
+  unchanged: number
+  providerOrdersRemainUsable: number
+}
+
+const expireCheckouts = defineAction<ExpireCheckoutsResult>({
+  name: 'expire-checkouts',
+  title: 'Force-expire active checkout reservations',
+  description:
+    'Destructive: expires every local reserved checkout, including unexpired ones. It does not cancel Razorpay orders; a later payment may need manual reconciliation.',
+  mutates: true,
+  options: [
+    {
+      flags: '--force-active',
+      description:
+        'Required: include reservations whose 30-minute window has not elapsed',
+    },
+  ],
+  examples: [
+    'payment expire-checkouts --env prod --force-active --reason "Reset checkout for payment testing"',
+  ],
+  async run(ctx, options) {
+    if (options.forceActive !== true) {
+      throw new UsageError(
+        'Pass --force-active to confirm that unexpired reservations are included.',
+      )
+    }
+    if (!ctx.flags.reason) {
+      throw new UsageError(
+        'A reason is required for checkout expiry.',
+        'Pass --reason with the operator purpose.',
+      )
+    }
+
+    const checkouts = await listReservedPaymentCheckouts(ctx.db())
+    if (!checkouts.length)
+      return { expired: 0, unchanged: 0, providerOrdersRemainUsable: 0 }
+
+    const orders = checkouts.filter(
+      (checkout): checkout is typeof checkout & { provider_order: string } =>
+        Boolean(checkout.provider_order),
+    )
+    if (orders.length) {
+      const { RAZORPAY_KEY_ID: keyId, RAZORPAY_KEY_SECRET: keySecret } =
+        ctx.env.values
+      if (!keyId || !keySecret) {
+        throw new UsageError(
+          'Razorpay credentials are required to check payment attempts before expiry.',
+        )
+      }
+      for (const checkout of orders) {
+        const attemptCount = await countOrderPaymentAttempts(
+          { keyId, keySecret },
+          checkout.provider_order,
+        )
+        if (attemptCount > 0) {
+          throw new UsageError(
+            'At least one reserved checkout has a Razorpay payment attempt; no checkout was expired.',
+            'Review payment status in the Razorpay dashboard and reconcile any captured payment before retrying.',
+          )
+        }
+      }
+    }
+
+    await confirmMutation(ctx, {
+      title: 'Force-expire all reserved local payment checkouts',
+      destructive: true,
+      changes: [
+        { field: 'reserved checkouts', before: checkouts.length, after: 0 },
+        {
+          field: 'Razorpay orders',
+          before: orders.length,
+          after: 'not canceled',
+        },
+      ],
+      notes: [
+        'This expires local reservations and marks linked created transactions failed.',
+        'It does not cancel a Razorpay order. A later payment callback will be rejected and require operator reconciliation.',
+        'The preflight found no Razorpay payment attempts for the listed orders.',
+      ],
+    })
+
+    let expired = 0
+    let unchanged = 0
+    for (const checkout of checkouts) {
+      try {
+        const didExpire = await ctx.ui.spin('Expiring checkout', () =>
+          releasePaymentCheckout(ctx.db(), checkout.id),
+        )
+        if (!didExpire) {
+          unchanged += 1
+          continue
+        }
+        await writeAudit(ctx, {
+          action: 'payment.expire_checkout',
+          targetUserId: checkout.user_id,
+          targetType: 'payment_checkout',
+          targetId: checkout.id,
+          before: { status: 'reserved', expiresAt: checkout.expires_at },
+          after: { status: 'expired' },
+          metadata: {
+            productId: checkout.product_id,
+            providerOrderPresent: Boolean(checkout.provider_order),
+            forced: true,
+          },
+        })
+        expired += 1
+      } catch (error) {
+        throw new OpsError(
+          `${expired} checkout(s) were expired before a later step failed.`,
+          {
+            hint: 'Check payment_checkouts and admin_audit_log before retrying; the Razorpay order is not canceled.',
+            cause: error,
+          },
+        )
+      }
+    }
+    return {
+      expired,
+      unchanged,
+      providerOrdersRemainUsable: orders.length,
+    }
+  },
+  render(ctx, result) {
+    ctx.ui.kv({
+      'Local checkouts expired': result.expired,
+      'Changed before expiry': result.unchanged,
+      'Razorpay orders not canceled': result.providerOrdersRemainUsable,
+    })
+    if (result.providerOrdersRemainUsable)
+      ctx.ui.warn(
+        'Existing Razorpay orders remain usable externally; a later payment may require reconciliation.',
+      )
   },
 })
 
@@ -321,7 +461,8 @@ const refund = defineAction<RefundResult>({
 
 export const paymentGroup: GroupDef = {
   name: 'payment',
-  title: 'Payments: list, reconcile, refund',
-  description: 'Fix payment problems: missing grants after payment, refunds.',
-  actions: [list, reconcile, refund],
+  title: 'Payments: list, reconcile, refund, expire checkouts',
+  description:
+    'Inspect payment activity, reconcile captured payments, record refunds, and expire local checkout reservations.',
+  actions: [list, expireCheckouts, reconcile, refund],
 }

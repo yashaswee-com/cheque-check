@@ -1,4 +1,5 @@
 import Razorpay from 'razorpay'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { TABLES } from '../../src/lib/supabase/tables'
 import { NotFoundError, OpsError, unwrap, unwrapRows } from '../lib/errors'
 import type { AdminClient } from '../lib/supabase'
@@ -70,6 +71,83 @@ export interface VerifiedPayment {
 export interface RazorpayKeys {
   keyId: string
   keySecret: string
+}
+
+export interface ReservedPaymentCheckout {
+  id: string
+  user_id: string
+  product_id: string
+  provider_order: string | null
+  expires_at: string
+}
+
+type UntypedAdminClient = SupabaseClient
+
+/** Lists local checkout reservations without exposing user data to the CLI. */
+export async function listReservedPaymentCheckouts(
+  db: AdminClient,
+): Promise<ReservedPaymentCheckout[]> {
+  const { data, error } = await (db as unknown as UntypedAdminClient)
+    .from('payment_checkouts')
+    .select('id,user_id,product_id,provider_order,expires_at')
+    .eq('status', 'reserved')
+    .order('expires_at', { ascending: true })
+
+  if (error || !data) {
+    throw new OpsError('Could not list reserved payment checkouts.', {
+      cause: error,
+    })
+  }
+  return data as ReservedPaymentCheckout[]
+}
+
+/** Refuses to expire an order with any recorded Razorpay payment attempt. */
+export async function countOrderPaymentAttempts(
+  keys: RazorpayKeys,
+  orderId: string,
+): Promise<number> {
+  const client = new Razorpay({
+    key_id: keys.keyId,
+    key_secret: keys.keySecret,
+  })
+  try {
+    const response = await client.orders.fetchPayments(orderId)
+    return response.items.length
+  } catch (error) {
+    throw new OpsError('Could not verify Razorpay payment attempts.', {
+      hint: 'No checkout was expired. Verify the Razorpay keys and order in the dashboard, then retry.',
+      cause: error,
+    })
+  }
+}
+
+/** Releases the app-side reservation and reports whether it is now expired. */
+export async function releasePaymentCheckout(
+  db: AdminClient,
+  checkoutId: string,
+): Promise<boolean> {
+  const { error } = await db.rpc('release_payment_checkout', {
+    requested_id: checkoutId,
+    requested_status: 'expired',
+  })
+  if (error) {
+    throw new OpsError('Could not release a payment checkout reservation.', {
+      cause: error,
+    })
+  }
+
+  const { data, error: readError } = await (db as unknown as UntypedAdminClient)
+    .from('payment_checkouts')
+    .select('status')
+    .eq('id', checkoutId)
+    .maybeSingle()
+  if (readError || !data) {
+    throw new OpsError(
+      'Checkout release was requested, but its final status could not be verified.',
+      { cause: readError },
+    )
+  }
+  return data.status === 'expired'
 }
 
 /** Finds the captured Razorpay payment for an order (the source of truth before fulfilling). */
