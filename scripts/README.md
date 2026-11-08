@@ -63,6 +63,22 @@ so scripts never hang.
    npm run ops -- ops doctor --env qa
    ```
 
+   For production, also provide the expected site origin and make a
+   `SUPABASE_ACCESS_TOKEN` with project Auth-read access available in the
+   current shell (not an env file). The doctor reads the hosted Auth config
+   through Supabase's [Management API](https://api.supabase.com/api/v1), then
+   checks the Site URL and `/auth/callback` allow-list entry:
+
+   ```bash
+   npm run ops -- ops doctor --env prod --expected-site-url https://example.com --json
+   ```
+
+   `example.com` is illustrative; replace it with the production origin.
+   Do not put the access token in a command argument, repository file, or
+   terminal transcript. The expected origin is required for production; the
+   check fails closed if the token is unavailable or the hosted settings do
+   not match.
+
 ## Environments and safety
 
 `--env local|qa|staging|prod` picks the env file (`.env.local`, `.env.qa`,
@@ -133,6 +149,7 @@ fail and list the matches).
 | "My subscription expired"              | `quota sub --user <u> --kind voice` (catalog days + quota)                              |
 | "I paid but didn't get it"             | `payment list --user <u>` then `payment reconcile --ref <reference>`                    |
 | "Refund me"                            | Refund in the Razorpay dashboard, then `payment refund --ref <reference>`               |
+| "Reset checkout test state"            | `payment expire-checkouts --force-active --reason "..."` (see warning below)            |
 | "I'm not getting reminder calls"       | `voice diagnose --user <u>`                                                             |
 | "Call me now for this business"        | `voice trigger-business --user <u> --business <id>`                                     |
 | "Does calling even work?"              | `voice sample --user <u>` (or `--to <phone>` to call yourself)                          |
@@ -181,6 +198,7 @@ Notes:
 `[W]` = writes (goes through the safety gate). Run any command with
 `--help` for its flags and examples.
 
+<!-- prettier-ignore -->
 | Command                            | What it does                                                          |
 | ---------------------------------- | --------------------------------------------------------------------- |
 | `user find`                        | Search users                                                          |
@@ -206,6 +224,7 @@ Notes:
 | `voice jobs-cancel` W              | Pending → cancelled                                                   |
 | `voice pipeline` W                 | Run the scheduler and dispatcher once (all users)                     |
 | `payment list`                     | Transactions (`--user`, `--status`)                                   |
+| `payment expire-checkouts` W       | Force-expire reserved local checkouts (explicit confirmation required) |
 | `payment reconcile` W              | Fulfil a paid-but-not-granted order (verifies with Razorpay)          |
 | `payment refund` W                 | Record a refund and revoke                                            |
 | `account profile` W                | Phone, time zone, language, voice/SMS, reminders per day              |
@@ -215,13 +234,26 @@ Notes:
 | `account restore` W                | Restore a soft-deleted business, party, or bank account               |
 | `account rate-limits`              | API rate-limit counters                                               |
 | `account rate-limits-reset` W      | Clear them (all, or `--endpoint`)                                     |
-| `ops doctor`                       | Env, credentials, target, migration, functions                        |
+| `ops doctor`                       | Env, credentials, target, migration, functions, hosted Auth URLs      |
 | `ops stats`                        | Key numbers                                                           |
 | `ops notification-health`          | Read-only queue/scheduler aggregates and threshold alerts             |
 | `ops notification-provider-health` | Shared admission limits, request slots and cumulative throttle counts |
 | `ops audit`                        | Audit log (`--user`, `--action`, `--by`, `--since`)                   |
 | `ops bulk` W                       | Apply grants from a CSV                                               |
 | `ops allowlist-add`                | Mark a project as dev on this machine                                 |
+
+### Checkout Reservation Expiry
+
+The checkout-expiry cron releases reservations after their 30-minute window.
+For a confirmed test reset, `payment expire-checkouts --force-active` expires
+all currently reserved **local** checkouts after checking that linked Razorpay
+orders have no payment attempts. It requires `--reason` and uses the standard
+production project-ref confirmation. This marks linked created transactions
+failed and releases wallet reservations; it does **not** cancel a Razorpay
+order. A later payment on that provider order can be rejected by the app and
+need manual reconciliation. Use it only when the operator intends to affect
+every currently reserved checkout ([CLI action](commands/payment.ts#L114-L243),
+[release RPC and cron](../supabase/migrations/20261104020000_referrals_and_wallet.sql#L126-L145)).
 
 ### Provider Capacity Diagnostics
 

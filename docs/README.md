@@ -9,9 +9,11 @@ This index points to current feature and system guides. Implementation claims in
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | [Architecture](architecture.md)                                   | Repository structure, request/data flow, and design boundaries.                     |
 | [Launch deployment checklist](../deployments.md)                    | Launch gates, deployment evidence, and human verification items.                   |
+| [Reusable pre-deployment checklist](../deployment-checklist.md)      | Chronological release steps from Git preparation through post-deploy verification. |
 | [Environment and secrets](environment-and-secrets.md)             | Public build settings, server credentials, provider destinations, and config gaps.  |
 | [Infrastructure and deployment](infrastructure-and-deployment.md) | Service topology, deployable units, and environment verification.                   |
 | [Day-to-day operations runbook](operations-runbook.md)            | Daily operations, testing, and deployment command reference.                         |
+| [Incident records](../incidents/README.md)                        | Feature-classified incident reports and tracking-reference gaps.                     |
 | [Security and known risks](security-and-known-risks.md)            | Security boundaries, limitations, and repository-level deployment risks.           |
 | [Scaling and observability](scaling-and-observability.md)          | Bounded data access, jobs, diagnostics, and local benchmark scope.                  |
 

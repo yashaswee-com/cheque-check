@@ -15,6 +15,12 @@ The app route validates the requested product and user context, applies an API r
 
 A client success redirect is not proof of payment capture or Premium access; the authoritative state comes from the verified server-side flow ([webhook fulfillment](../supabase/functions/razorpay-webhook/handler.ts#L65-L180), [entitlement check](../supabase/migrations/20261017030000_premium_workspace.sql#L22-L38)).
 
+## Product prices
+
+Product prices live in `public.payment_products.amount` and use paise (for example, ₹400 is `40000`). The initial catalog is established by a migration, and the order route reads the product catalog before preparing the server-side quote ([catalog migration](../supabase/migrations/20260924010000_add_payment_product_catalog.sql#L1-L41), [order route](../src/app/api/payments/create-order/route.ts#L58-L70)). To change a price, add a new forward migration that updates the chosen product ID; do not edit an already-applied catalog migration. Review the price and related tests in QA before applying the migration to production.
+
+New checkout quotes use the updated catalog amount; each checkout stores a product snapshot and amount, and the order route sends the locked quote amount to Razorpay. Existing checkout reservations therefore retain their original quote rather than changing mid-checkout ([quote snapshot](../supabase/migrations/20261104020000_referrals_and_wallet.sql#L143-L190), [Razorpay order amount](../src/app/api/payments/create-order/route.ts#L147-L180)). No product price was changed as part of this release work.
+
 ## Premium authorization
 
 The Premium workspace uses shared access helpers in the client and a database assertion for server-backed writes ([workspace hooks](../src/features/premium-workspace/hooks/use-workspace.ts#L1-L25), [database assertion](../supabase/migrations/20261017030000_premium_workspace.sql#L22-L38)). Entitlement state is separate from transaction state; a payment row alone does not grant feature access ([entitlement RPC](../supabase/migrations/20261017030000_premium_workspace.sql#L22-L38), [checkout fulfillment](../supabase/migrations/20261104020000_referrals_and_wallet.sql#L191-L307)). Saved workspace items remain persisted independently of whether a user currently has access ([workspace tables and policies](../supabase/migrations/20261017030000_premium_workspace.sql#L1-L80)).
