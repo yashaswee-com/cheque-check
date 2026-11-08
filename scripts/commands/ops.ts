@@ -51,12 +51,29 @@ const doctor = defineAction<DoctorCheck[]>({
   name: 'doctor',
   title: 'Check the CLI setup for this environment',
   description:
-    'Read-only: env vars, production guard, operator, database connectivity, admin_ops migration, and deployed edge functions. Exits 1 if anything fails.',
+    'Read-only: env vars, production guard, operator, database connectivity, admin_ops migration, deployed edge functions, and hosted Supabase Auth URLs. Production checks require --expected-site-url and SUPABASE_ACCESS_TOKEN. Exits 1 if anything fails.',
   mutates: false,
-  options: [],
-  examples: ['ops doctor', 'ops doctor --env qa --json'],
-  async run(ctx) {
-    const checks = await ctx.ui.spin('Checking', () => runDoctor(ctx))
+  options: [
+    {
+      flags: '--expected-site-url <url>',
+      description: 'Expected production site origin (e.g. https://example.com)',
+    },
+  ],
+  examples: [
+    'ops doctor',
+    'ops doctor --env qa --json',
+    'ops doctor --env prod --expected-site-url https://example.com --json',
+  ],
+  async run(ctx, options) {
+    const checks = await ctx.ui.spin('Checking', () =>
+      runDoctor(ctx, {
+        expectedSiteUrl:
+          typeof options.expectedSiteUrl === 'string'
+            ? options.expectedSiteUrl
+            : undefined,
+        requireAuthUrlCheck: ctx.envName === 'prod' || ctx.target.isProduction,
+      }),
+    )
     if (checks.some((check) => check.status === 'fail')) process.exitCode = 1
     return checks
   },

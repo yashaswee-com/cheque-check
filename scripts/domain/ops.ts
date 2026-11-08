@@ -26,9 +26,175 @@ function missing(ctx: OpsContext, keys: string[]) {
   return keys.filter((key) => !ctx.env.values[key])
 }
 
+function normalizedOrigin(value: unknown): string | null {
+  if (typeof value !== 'string' || !value) return null
+  try {
+    const url = new URL(value)
+    if (
+      !['https:', 'http:'].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      url.pathname !== '/'
+    )
+      return null
+    if (
+      url.protocol === 'http:' &&
+      !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+    )
+      return null
+    return url.origin
+  } catch {
+    return null
+  }
+}
+
+function matchesUriPattern(pattern: string, uri: string): boolean {
+  const expression = pattern
+    .split('**')
+    .map((part) =>
+      part
+        .split('*')
+        .map((segment) => segment.replace(/[|\\{}()[\]^$+?.]/g, '\\$&'))
+        .join('[^/]*'),
+    )
+    .join('.*')
+  return new RegExp(`^${expression}$`).test(uri)
+}
+
+export async function checkAuthUrlConfiguration(
+  input: {
+    projectRef: string | null
+    expectedSiteUrl?: string
+    accessToken?: string
+    required?: boolean
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<DoctorCheck> {
+  const name = 'Supabase Auth URL configuration'
+  if (!input.expectedSiteUrl) {
+    return {
+      name,
+      status: input.required ? 'fail' : 'warn',
+      detail: 'not checked (pass --expected-site-url before deployment)',
+    }
+  }
+
+  const expectedOrigin = normalizedOrigin(input.expectedSiteUrl)
+  let expectedUrl: URL | null = null
+  try {
+    expectedUrl = new URL(input.expectedSiteUrl)
+  } catch {
+    // The origin validator below returns the user-facing format error.
+  }
+  const isLocalHost = ['localhost', '127.0.0.1', '[::1]'].includes(
+    expectedUrl?.hostname ?? '',
+  )
+  if (
+    !expectedOrigin ||
+    (input.required && (expectedUrl?.protocol !== 'https:' || isLocalHost))
+  ) {
+    return {
+      name,
+      status: 'fail',
+      detail: input.required
+        ? 'production expected site URL must be a public HTTPS origin'
+        : 'expected site URL is invalid; supply an HTTPS origin (HTTP is allowed only for localhost)',
+    }
+  }
+  if (!input.projectRef) {
+    return {
+      name,
+      status: 'fail',
+      detail: 'Supabase project reference is unavailable',
+    }
+  }
+  if (!input.accessToken) {
+    return {
+      name,
+      status: 'fail',
+      detail: 'SUPABASE_ACCESS_TOKEN is required for the Management API check',
+      hint: 'Provide the token through the operator shell environment; do not put it in project environment files or logs.',
+    }
+  }
+
+  let response: Response
+  try {
+    response = await fetchImpl(
+      `https://api.supabase.com/v1/projects/${encodeURIComponent(input.projectRef)}/config/auth`,
+      {
+        headers: { Authorization: `Bearer ${input.accessToken}` },
+        signal: AbortSignal.timeout(15_000),
+      },
+    )
+  } catch {
+    return {
+      name,
+      status: 'fail',
+      detail:
+        'could not read Auth URL configuration from Supabase Management API',
+    }
+  }
+  if (!response.ok) {
+    return {
+      name,
+      status: 'fail',
+      detail: `Supabase Management API returned HTTP ${response.status}`,
+      hint: 'Confirm the operator token has access to this project and retry.',
+    }
+  }
+
+  const config = (await response.json().catch(() => null)) as {
+    site_url?: unknown
+    uri_allow_list?: unknown
+  } | null
+  if (!config) {
+    return {
+      name,
+      status: 'fail',
+      detail: 'Supabase Management API returned unreadable Auth configuration',
+    }
+  }
+
+  const siteMatches = normalizedOrigin(config.site_url) === expectedOrigin
+  const allowedUris = Array.isArray(config.uri_allow_list)
+    ? config.uri_allow_list.filter(
+        (value): value is string => typeof value === 'string',
+      )
+    : typeof config.uri_allow_list === 'string'
+      ? config.uri_allow_list.split(/[\n,]+/).map((value) => value.trim())
+      : []
+  const callbackUrl = `${expectedOrigin}/auth/callback`
+  const callbackAllowed = allowedUris.some((pattern) =>
+    matchesUriPattern(pattern, callbackUrl),
+  )
+
+  return {
+    name,
+    status: siteMatches && callbackAllowed ? 'ok' : 'fail',
+    detail:
+      siteMatches && callbackAllowed
+        ? 'Site URL matches and production auth callback is allow-listed'
+        : [
+            siteMatches ? null : 'Site URL mismatch',
+            callbackAllowed
+              ? null
+              : 'production auth callback is not allow-listed',
+          ]
+            .filter(Boolean)
+            .join('; '),
+    hint:
+      siteMatches && callbackAllowed
+        ? undefined
+        : 'Correct the hosted Supabase Auth Site URL and Redirect URLs, then rerun the doctor.',
+  }
+}
+
 /** Read-only health check of everything the ops CLI depends on. */
 export async function runDoctor(
   ctx: OpsContext,
+  options: { expectedSiteUrl?: string; requireAuthUrlCheck?: boolean } = {},
   fetchImpl: typeof fetch = fetch,
 ): Promise<DoctorCheck[]> {
   const checks: DoctorCheck[] = []
@@ -84,6 +250,18 @@ export async function runDoctor(
         : undefined,
   })
   add({ name: 'Operator', status: 'ok', detail: ctx.operator })
+
+  add(
+    await checkAuthUrlConfiguration(
+      {
+        projectRef: ctx.target.projectRef,
+        expectedSiteUrl: options.expectedSiteUrl,
+        accessToken: process.env.SUPABASE_ACCESS_TOKEN,
+        required: options.requireAuthUrlCheck,
+      },
+      fetchImpl,
+    ),
+  )
 
   if (missingCore.length) return checks
 
