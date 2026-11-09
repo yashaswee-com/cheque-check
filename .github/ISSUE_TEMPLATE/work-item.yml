@@ -1,0 +1,128 @@
+name: Work item
+description: Report a bug, request a feature or documentation change, or propose an investigation.
+title: '[Work item] '
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Fill in what you know; mark unknown details clearly. Do not include passwords,
+        tokens, `.env` values, private customer data, or sensitive raw logs. The type,
+        area, and priority selections provide triage context. Triage must set the
+        native repository issue type (Task, Bug, or Feature) and apply matching
+        repository labels separately.
+
+  - type: dropdown
+    id: work_type
+    attributes:
+      label: Work type
+      description: Choose the closest category.
+      options:
+        - Task
+        - Bug
+        - Feature
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Select the primary area; choose Other / unsure if unclear.
+      options:
+        - Authentication and sessions
+        - Payments and pricing
+        - Navigation and search
+        - Shared UI
+        - Notifications and voice
+        - Privacy and data
+        - Operations and infrastructure
+        - Performance
+        - Other / unsure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Suggested priority
+      description: Leave urgency to triage if impact is unclear.
+      options:
+        - Unsure / needs triage
+        - P1 - Urgent security/data-loss/widespread outage
+        - P2 - Major user workflow substantially blocked
+        - P3 - Scoped issue or normal follow-up
+    validations:
+      required: true
+
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: State the desired outcome in one sentence.
+      placeholder: What should be fixed or added?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Problem and affected workflow
+      description: Who is affected, when does it happen, and why does it matter?
+      placeholder: Include relevant route, platform, account state, or frequency if known.
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_expected
+    attributes:
+      label: Current and expected behavior
+      description: Separate what happens now from the outcome you want.
+      placeholder: |-
+        Current:
+        Expected:
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps or evidence
+      description: Reproduction steps and safe evidence, if available.
+      placeholder: Use sanitized messages; never paste credentials, tokens, or customer-identifying data.
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List observable outcomes that would make this complete.
+      placeholder: |-
+        - [ ] 
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: edge_cases
+    attributes:
+      label: Edge cases and failure behavior
+      description: Include loading, error, retry, privacy, and recovery behavior where relevant.
+    validations:
+      required: false
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Test and verification plan
+      description: Expected automated tests, manual checks, or operational verification.
+    validations:
+      required: false
+
+  - type: textarea
+    id: questions
+    attributes:
+      label: Open questions and dependencies
+      description: List unresolved requirements or related work; do not guess.
+    validations:
+      required: false
