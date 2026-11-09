@@ -9,7 +9,6 @@ import {
   File01Icon as FileSpreadsheet,
   Building03Icon as Building2,
   LayoutGridIcon as LayoutGrid,
-  FlashIcon as Zap,
   Settings02Icon as Settings2,
   MegaphoneIcon as Megaphone,
   HelpCircleIcon as Help,
@@ -74,7 +73,6 @@ export default function SettingsPage() {
   const t = useTranslations('Settings')
   const referrals = useTranslations('Referrals')
   const feedback = useTranslations('Feedback')
-  const tp = useTranslations('Premium')
   const tpa = useTranslations('PhoneAuth')
   const security = useTranslations('Security')
   const { profile, isLoading: profileLoading } = useProfile()
@@ -107,13 +105,6 @@ export default function SettingsPage() {
       title: t('general'),
       icon: LayoutGrid,
       items: [
-        {
-          name: tp('openTools'),
-          description: tp('benefitsTitle'),
-          icon: Zap,
-          href: '/cheques#bulk-import',
-          premiumFeature: 'bulk-import',
-        },
         {
           name: t('preferences'),
           description: t('preferencesDesc'),

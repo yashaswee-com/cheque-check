@@ -110,6 +110,9 @@ describe('settings page', () => {
     ]) {
       expect(document.querySelector(`a[href="${href}"]`)).toBeInTheDocument()
     }
+    expect(
+      screen.queryByText(messages.Premium.openTools),
+    ).not.toBeInTheDocument()
     expect(screen.queryByText('Monitoring preferences')).not.toBeInTheDocument()
     fireEvent.click(screen.getByTestId('settings-logout-button'))
     expect(mocks.logout).toHaveBeenCalledOnce()
