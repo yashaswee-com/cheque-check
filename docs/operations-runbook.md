@@ -51,6 +51,25 @@ gh auth login
 vercel login
 ```
 
+For optional Sentry incident diagnostics on macOS, install the developer CLI and authenticate in the browser ([Sentry developer CLI](https://cli.sentry.dev/)):
+
+```sh
+brew install getsentry/tools/sentry
+sentry auth login --read-only
+```
+
+This installs `sentry`, not the separate build-oriented `sentry-cli`; use `sentry auth`, not `sentry-cli login`. Keep credentials local and out of Git and incident reports. For existing accounts, `sentry auth status` checks authentication ([CLI authentication](https://cli.sentry.dev/)).
+
+### Read-only incident diagnostics
+
+```sh
+sentry issue view cheque-check/CHEQUE-CHECK-WEB-D
+sentry issue events cheque-check/CHEQUE-CHECK-WEB-D --period 24h --limit 10
+npm run ops -- ops incident --issue CHEQUE-CHECK-WEB-D --json
+```
+
+The Ops command uses the CLI's stored login, not application build tokens, and returns selected issue metadata plus the latest event's environment and release. It does not expose raw events or change Sentry issue state. `--env` does not filter Sentry events; check the returned environment explicitly ([implementation](../scripts/domain/incident.ts#L25-L115)). Direct Sentry commands can display sensitive event details: inspect locally and record only sanitized evidence. Match events to the incident time, route/status, environment, release, and application frames; the latest event alone does not establish cause or recovery ([incident evidence rules](../.github/instructions/incident-documentation.instructions.md)).
+
 The project does not define a release command for the GitHub CLI or direct account-administration CLIs for Clarity and Razorpay; use those providers' approved account/API workflows rather than assuming a repo command ([configured workflows](../.github/workflows/quality.yml#L1-L6), [payment support procedure](../scripts/README.md#L122-L140), [Clarity/Sentry environment settings](../.env.example#L40-L57)).
 
 ### Start and stop local services

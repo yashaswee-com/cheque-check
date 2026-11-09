@@ -235,12 +235,15 @@ Notes:
 | `account rate-limits`              | API rate-limit counters                                               |
 | `account rate-limits-reset` W      | Clear them (all, or `--endpoint`)                                     |
 | `ops doctor`                       | Env, credentials, target, migration, functions, hosted Auth URLs      |
+| `ops incident`                     | Read-only Sentry issue metadata (`--issue`); uses the CLI login       |
 | `ops stats`                        | Key numbers                                                           |
 | `ops notification-health`          | Read-only queue/scheduler aggregates and threshold alerts             |
 | `ops notification-provider-health` | Shared admission limits, request slots and cumulative throttle counts |
 | `ops audit`                        | Audit log (`--user`, `--action`, `--by`, `--since`)                   |
 | `ops bulk` W                       | Apply grants from a CSV                                               |
 | `ops allowlist-add`                | Mark a project as dev on this machine                                 |
+
+For Sentry installation, authentication, and direct issue/event commands, see the [incident diagnostics runbook](../docs/operations-runbook.md#read-only-incident-diagnostics). `ops incident` does not resolve or modify issues; its latest-event metadata is not filtered by `--env` ([implementation](domain/incident.ts)).
 
 ### Checkout Reservation Expiry
 

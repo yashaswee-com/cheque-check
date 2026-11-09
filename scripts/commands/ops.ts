@@ -40,6 +40,36 @@ import {
 } from '../domain/notification-health'
 import { askValue, LIMIT_OPTION, selectUser } from './shared'
 import { feedbackActions } from './feedback'
+import { getIncident } from '../domain/incident'
+
+const incident = defineAction<Awaited<ReturnType<typeof getIncident>>>({
+  name: 'incident',
+  title: 'Read Sentry incident metadata',
+  description:
+    'Read-only issue summary via the authenticated sentry CLI. No raw events, personal data, or issue-state changes. --env does not filter Sentry events; the latest event environment is shown explicitly.',
+  mutates: false,
+  options: [
+    {
+      flags: '--issue <short-id>',
+      description: 'Sentry short ID in cheque-check/cheque-check-web',
+    },
+  ],
+  examples: ['ops incident --issue CHEQUE-CHECK-WEB-D --json'],
+  run: (_ctx, options) =>
+    getIncident(typeof options.issue === 'string' ? options.issue : ''),
+  render(ctx, result) {
+    ctx.ui.kv({
+      Issue: result.shortId,
+      URL: result.url,
+      Status: result.status,
+      Events: result.count,
+      'First seen': result.firstSeen,
+      'Last seen': result.lastSeen,
+      'Latest environment': result.latestEvent?.environment ?? 'unknown',
+      'Latest release': result.latestEvent?.release ?? 'unknown',
+    })
+  },
+})
 
 const STATUS_ICON = {
   ok: colors.green('✔'),
@@ -574,6 +604,7 @@ export const opsGroup: GroupDef = {
   description: 'Health checks, reporting, and batch operations.',
   actions: [
     doctor,
+    incident,
     stats,
     notificationHealth,
     providerHealth,
