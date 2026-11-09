@@ -10,13 +10,22 @@ import {
   Building03Icon as Building2,
   LayoutGridIcon as LayoutGrid,
   Settings02Icon as Settings2,
+  Notification01Icon as Notifications,
   MegaphoneIcon as Megaphone,
+  News01Icon as News,
+  ChatFeedbackIcon as FeedbackIcon,
+  CustomerSupportIcon as CustomerSupport,
   HelpCircleIcon as Help,
   InformationCircleIcon as Info,
   Shield01Icon as Shield,
+  Shield02Icon as PrivacyShield,
+  UserLock02Icon as SecurityLock,
   LicenseIcon as License,
   Money03Icon as Money,
   CrownIcon,
+  GiftIcon as Gift,
+  Tag01Icon as Tag,
+  ReceiptIndianRupeeIcon as Refund,
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -113,13 +122,13 @@ export default function SettingsPage() {
         },
         {
           name: security('pinTitle'),
-          icon: Shield,
+          icon: SecurityLock,
           href: '/settings/security',
         },
         {
           name: t('notifications'),
           description: t('notificationsDesc'),
-          icon: Settings2,
+          icon: Notifications,
           href: '/settings/notifications',
         },
         {
@@ -134,7 +143,7 @@ export default function SettingsPage() {
           icon: CrownIcon,
           href: '/features/catalog',
         },
-        { name: referrals('title'), icon: CrownIcon, href: '/referrals' },
+        { name: referrals('title'), icon: Gift, href: '/referrals' },
       ],
     },
     {
@@ -157,7 +166,7 @@ export default function SettingsPage() {
         {
           name: t('manageTags'),
           description: t('manageTagsDescShort'),
-          icon: Settings2,
+          icon: Tag,
           href: '/tags',
         },
       ],
@@ -169,7 +178,7 @@ export default function SettingsPage() {
         {
           name: t('whatsNew'),
           description: t('whatsNewDesc'),
-          icon: Megaphone,
+          icon: News,
           href: '/settings/whats-new',
         },
         {
@@ -181,13 +190,13 @@ export default function SettingsPage() {
         {
           name: feedback('submitTitle'),
           description: feedback('privacyNote'),
-          icon: Help,
+          icon: FeedbackIcon,
           href: '/feedback',
         },
         {
           name: t('helpAndSupport'),
           description: t('helpAndSupportDesc'),
-          icon: Help,
+          icon: CustomerSupport,
           href: '/help',
         },
         {
@@ -200,7 +209,7 @@ export default function SettingsPage() {
     },
     {
       title: t('legal'),
-      icon: Shield,
+      icon: PrivacyShield,
       items: [
         {
           name: t('privacyPolicy'),
@@ -217,7 +226,7 @@ export default function SettingsPage() {
         {
           name: t('refundPolicy'),
           description: t('refundPolicyDesc'),
-          icon: Money,
+          icon: Refund,
           href: '/settings/refund-policy',
         },
       ],
@@ -284,7 +293,11 @@ export default function SettingsPage() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg text-primary">
-                        <HugeiconsIcon icon={item.icon} className="h-5 w-5" />
+                        <HugeiconsIcon
+                          icon={item.icon}
+                          className="h-5 w-5"
+                          data-settings-item-icon
+                        />
                       </div>
                       <div className="flex min-w-0 flex-col">
                         <span className="text-sm font-semibold">

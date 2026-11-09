@@ -119,6 +119,16 @@ describe('settings page', () => {
     expect(mocks.logout).toHaveBeenCalledOnce()
   })
 
+  it('uses a distinct icon for each Settings line item', () => {
+    renderPage()
+    const icons = Array.from(
+      document.querySelectorAll<SVGElement>('[data-settings-item-icon]'),
+      (icon) => icon.innerHTML,
+    )
+    expect(icons.length).toBeGreaterThan(0)
+    expect(new Set(icons).size).toBe(icons.length)
+  })
+
   it('shows loading placeholders while either required source is pending', () => {
     profileLoading = true
     const view = renderPage()
