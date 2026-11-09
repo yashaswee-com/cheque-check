@@ -181,17 +181,17 @@ describe('PhoneAuthForm signup name', () => {
     await user.click(screen.getByTestId('phone-auth-send-button'))
     const input = await screen.findByTestId('phone-auth-code-input')
     await user.click(input)
-    await user.paste('123 456')
-    expect(input).toHaveValue('123456')
-    expect(screen.getByTestId('phone-auth-code-slots')).toHaveTextContent(
-      '123456',
-    )
-    expect(screen.getByTestId('phone-auth-verify-button')).toBeEnabled()
-    await user.keyboard('{End}{Backspace}')
+    await user.paste('123 45')
     expect(input).toHaveValue('12345')
+    expect(screen.getByTestId('phone-auth-code-slots')).toHaveTextContent(
+      '12345',
+    )
+    expect(screen.getByTestId('phone-auth-verify-button')).toBeDisabled()
+    await user.keyboard('{End}{Backspace}')
+    expect(input).toHaveValue('1234')
     expect(screen.getByTestId('phone-auth-verify-button')).toBeDisabled()
     await user.keyboard('9')
-    expect(input).toHaveValue('123459')
+    expect(input).toHaveValue('12349')
   })
 
   it('validates numbers, supports cancellation and displays a rate-limit error', async () => {
@@ -285,8 +285,8 @@ describe('PhoneAuthForm signup name', () => {
     expect(screen.getByTestId('phone-auth-code-slots')).toHaveTextContent(
       '123456',
     )
-    fireEvent.click(screen.getByTestId('phone-auth-verify-button'))
     await waitFor(() => expect(input).toHaveValue(''))
+    expect(mocks.verifyPhoneOtp).toHaveBeenCalledTimes(1)
     expect(mocks.toast).toHaveBeenLastCalledWith({
       title: messages.PhoneAuth.errorTitle,
       description: messages.PhoneAuth.errors.invalid_or_expired_code,
@@ -300,8 +300,8 @@ describe('PhoneAuthForm signup name', () => {
     fireEvent.click(screen.getByTestId('phone-auth-resend-button'))
     await waitFor(() => expect(mocks.sendPhoneOtp).toHaveBeenCalledTimes(2))
     fireEvent.change(input, { target: { value: '654321' } })
-    fireEvent.click(screen.getByTestId('phone-auth-verify-button'))
     await waitFor(() => expect(verified).toHaveBeenCalledWith('+919876543210'))
+    expect(mocks.verifyPhoneOtp).toHaveBeenCalledTimes(2)
     fireEvent.click(
       screen.getByRole('button', { name: messages.PhoneAuth.editNumber }),
     )
@@ -419,13 +419,14 @@ describe('PhoneAuthForm signup name', () => {
     fireEvent.click(screen.getByTestId('phone-auth-send-button'))
     const code = await screen.findByTestId('phone-auth-code-input')
     fireEvent.change(code, { target: { value: '123456' } })
-    fireEvent.click(screen.getByTestId('phone-auth-verify-button'))
     await waitFor(() =>
       expect(screen.getByRole('alert')).toHaveTextContent(
         messages.PhoneAuth.errors.phone_in_use,
       ),
     )
     expect(code).toHaveValue('123456')
+    fireEvent.click(screen.getByTestId('phone-auth-verify-button'))
+    await waitFor(() => expect(mocks.verifyPhoneOtp).toHaveBeenCalledTimes(2))
   })
 
   it('requires a name before requesting a signup code', async () => {

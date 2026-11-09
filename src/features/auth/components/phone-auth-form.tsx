@@ -155,10 +155,9 @@ export function PhoneAuthForm({
     void requestCode(checked.e164, 'send')
   }
 
-  const handleVerify = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const verifyCode = async (value: string) => {
     if (busy.current) return
-    const token = normalizeOtp(code)
+    const token = normalizeOtp(value)
     if (!token) {
       reportError('invalid_or_expired_code')
       focusField(codeId)
@@ -188,6 +187,11 @@ export function PhoneAuthForm({
       busy.current = false
       setPending(null)
     }
+  }
+
+  const handleVerify = (event: React.FormEvent) => {
+    event.preventDefault()
+    void verifyCode(code)
   }
 
   const editNumber = () => {
@@ -330,6 +334,7 @@ export function PhoneAuthForm({
           onChange={(value) => {
             setCode(value)
             setError(null)
+            if (normalizeOtp(value)) void verifyCode(value)
           }}
           disabled={pending !== null}
           aria-invalid={Boolean(error)}
