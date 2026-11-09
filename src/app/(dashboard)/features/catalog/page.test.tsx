@@ -216,14 +216,14 @@ describe('Features page', () => {
       screen.getByRole('switch', { name: messages.Features.receivingMode }),
     ).toBeInTheDocument()
   })
-  it('does not fetch or link payment activity on Features', () => {
+  it('links to transactions without fetching payment activity on Features', () => {
     renderPage()
     expect(mocks.transactions).not.toHaveBeenCalled()
     expect(
-      screen.queryByText(messages.Features.activityTitle),
-    ).not.toBeInTheDocument()
+      screen.getByRole('button', { name: messages.Settings.transactions }),
+    ).toHaveAttribute('href', '/settings/transactions')
     expect(
-      screen.queryByRole('link', { name: messages.Features.allTransactions }),
+      screen.queryByText(messages.Features.activityTitle),
     ).not.toBeInTheDocument()
     expect(document.querySelector('#feature-activity')).toBeNull()
   })

@@ -52,6 +52,7 @@ function FeatureStatus({
 
 export default function FeaturesPage() {
   const t = useTranslations('Features')
+  const ts = useTranslations('Settings')
   const referrals = useTranslations('Referrals')
   const tc = useTranslations('Common')
   const productNames = useTranslations('ProductNames')
@@ -220,22 +221,33 @@ export default function FeaturesPage() {
       className="@container mx-auto w-full min-w-0 max-w-5xl space-y-10 pb-24 pt-2"
       data-testid="features-page"
     >
-      <header className="max-w-2xl space-y-3">
-        <p className="text-sm font-semibold text-primary">{t('pageEyebrow')}</p>
-        <h1 className="font-heading text-[28px] font-semibold leading-[1.1] tracking-tight @min-[420px]:text-[34px] @min-[640px]:text-[40px]">
-          {t('pageTitle')}
-        </h1>
-        <p className="text-[17px] leading-relaxed text-muted-foreground">
-          {t('pageDescription')}
-        </p>
+      <header className="flex flex-col gap-5 @min-[640px]:flex-row @min-[640px]:items-start @min-[640px]:justify-between">
+        <div className="max-w-2xl space-y-3">
+          <p className="text-sm font-semibold text-primary">
+            {t('pageEyebrow')}
+          </p>
+          <h1 className="font-heading text-[28px] font-semibold leading-[1.1] tracking-tight @min-[420px]:text-[34px] @min-[640px]:text-[40px]">
+            {t('pageTitle')}
+          </h1>
+          <p className="text-[17px] leading-relaxed text-muted-foreground">
+            {t('pageDescription')}
+          </p>
+          <Button
+            variant="outline"
+            size="pill"
+            loading={isRefreshing}
+            onClick={refreshAccess}
+          >
+            <HugeiconsIcon icon={RefreshIcon} className="size-4" />
+            {t('refreshStatus')}
+          </Button>
+        </div>
         <Button
+          render={<Link href="/settings/transactions" />}
           variant="outline"
           size="pill"
-          loading={isRefreshing}
-          onClick={refreshAccess}
         >
-          <HugeiconsIcon icon={RefreshIcon} className="size-4" />
-          {t('refreshStatus')}
+          {ts('transactions')}
         </Button>
       </header>
 
