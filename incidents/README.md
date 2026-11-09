@@ -5,3 +5,7 @@ Incident records are organized by product feature. They preserve operator-report
 ## Authentication
 
 - [Supabase Auth URL misconfiguration — 8 November 2026](authentication/2026-11-08-supabase-auth-url-misconfiguration.md)
+
+## Cheque management
+
+- [Cheque OCR image not found — 9 November 2026](cheque-management/2026-11-09-cheque-ocr-image-not-found.md)

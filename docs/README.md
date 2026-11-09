@@ -13,7 +13,7 @@ This index points to current feature and system guides. Implementation claims in
 | [Environment and secrets](environment-and-secrets.md)             | Public build settings, server credentials, provider destinations, and config gaps.  |
 | [Infrastructure and deployment](infrastructure-and-deployment.md) | Service topology, deployable units, and environment verification.                   |
 | [Day-to-day operations runbook](operations-runbook.md)            | Daily operations, testing, and deployment command reference.                         |
-| [Incident records](../incidents/README.md)                        | Feature-classified incident reports and tracking-reference gaps.                     |
+| [Incident records](../incidents/README.md)                        | Feature-classified incident reports, including cheque OCR, and tracking-reference gaps. |
 | [Security and known risks](security-and-known-risks.md)            | Security boundaries, limitations, and repository-level deployment risks.           |
 | [Scaling and observability](scaling-and-observability.md)          | Bounded data access, jobs, diagnostics, and local benchmark scope.                  |
 
