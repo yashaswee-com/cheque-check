@@ -17,6 +17,9 @@ import {
   Analytics01Icon as UsageIcon,
   SortingAZ01Icon as AscIcon,
   SortingZA01Icon as DescIcon,
+  CircleIcon as AllUsageIcon,
+  CheckmarkCircle01Icon as UsedIcon,
+  CircleOffIcon as UnusedIcon,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -83,10 +86,14 @@ export default function TagsPage() {
     { label: tCommon('ascending'), value: 'asc' as const, icon: AscIcon },
     { label: tCommon('descending'), value: 'desc' as const, icon: DescIcon },
   ]
-  const usageOptions: { label: string; value: TagUsageFilter }[] = [
-    { label: tCommon('all'), value: 'all' },
-    { label: t('used'), value: 'used' },
-    { label: t('unused'), value: 'unused' },
+  const usageOptions: {
+    label: string
+    value: TagUsageFilter
+    icon: typeof AllUsageIcon
+  }[] = [
+    { label: tCommon('all'), value: 'all', icon: AllUsageIcon },
+    { label: t('used'), value: 'used', icon: UsedIcon },
+    { label: t('unused'), value: 'unused', icon: UnusedIcon },
   ]
   const hasActiveFilters = !!color || usage !== 'all'
 
@@ -137,7 +144,11 @@ export default function TagsPage() {
                     onClick={() => setSortBy(option.value)}
                     className={filterPillClassName(sortBy === option.value)}
                   >
-                    <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
+                    <HugeiconsIcon
+                      icon={option.icon}
+                      className="h-4 w-4"
+                      data-filter-option-icon
+                    />
                     <span className="text-sm font-bold">{option.label}</span>
                     {sortBy === option.value && (
                       <HugeiconsIcon
@@ -173,6 +184,11 @@ export default function TagsPage() {
                     onClick={() => setUsage(option.value)}
                     className={filterPillClassName(usage === option.value)}
                   >
+                    <HugeiconsIcon
+                      icon={option.icon}
+                      className="h-4 w-4"
+                      data-filter-option-icon
+                    />
                     <span className="text-sm font-bold">{option.label}</span>
                   </button>
                 ))}

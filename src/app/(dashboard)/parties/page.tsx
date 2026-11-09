@@ -15,6 +15,7 @@ import {
   Money03Icon as BalanceIcon,
   SortingAZ01Icon as AscIcon,
   SortingZA01Icon as DescIcon,
+  CircleIcon as AllPartyTypesIcon,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,7 +43,10 @@ import {
 } from '@/components/ui/pill-scroller'
 import type { Party } from '@/types'
 import { PARTY_TYPES } from '@/validators'
-import { usePartyTypeLabel } from '@/features/parties/components/party-type-picker'
+import {
+  PARTY_TYPE_ICONS,
+  usePartyTypeLabel,
+} from '@/features/parties/components/party-type-picker'
 import { TagChips } from '@/features/tags/components/tag-chips'
 import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { NativeTools } from '@/features/premium-workspace/components/native-tools'
@@ -177,6 +181,16 @@ export default function PartiesPage() {
                     onClick={() => setPartyType(value)}
                     className={filterPillClassName(partyType === value)}
                   >
+                    <HugeiconsIcon
+                      icon={
+                        value === 'all'
+                          ? AllPartyTypesIcon
+                          : PARTY_TYPE_ICONS[value]
+                      }
+                      className="h-4 w-4"
+                      data-filter-option-icon
+                      aria-hidden
+                    />
                     <span className="font-bold text-sm">
                       {value === 'all'
                         ? t('partyTypeAll')

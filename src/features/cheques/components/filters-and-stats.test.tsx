@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -82,6 +88,36 @@ it('routes search and every sorting and filtering action to its controlled sette
   fireEvent.click(screen.getByTestId('cheque-sort-order-asc'))
   expect(sort).toHaveBeenCalledWith('amount')
   expect(order).toHaveBeenCalledWith('asc')
+})
+
+it('shows icons for every cheque search sort and status option', async () => {
+  wrap(
+    <ChequeFilterBar
+      search=""
+      setSearch={vi.fn()}
+      filter="All"
+      setFilter={vi.fn()}
+      sortBy="date"
+      setSortBy={vi.fn()}
+      sortOrder="desc"
+      setSortOrder={vi.fn()}
+    />,
+  )
+  fireEvent.click(screen.getByTestId('cheque-filter-trigger'))
+  await screen.findByRole('dialog')
+
+  for (const section of [
+    messages.Common.sortBy,
+    messages.Common.order,
+    messages.Cheques.filterStatus,
+  ]) {
+    const options = within(
+      screen.getByRole('group', { name: section }),
+    ).getAllByRole('button')
+    for (const option of options) {
+      expect(option.querySelector('svg')).toBeInTheDocument()
+    }
+  }
 })
 
 it('marks a non-default filter selection on the trigger', () => {

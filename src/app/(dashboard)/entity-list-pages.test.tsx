@@ -1,5 +1,11 @@
 import { useState, type ReactNode } from 'react'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../messages/en.json'
@@ -198,6 +204,16 @@ describe.each([
   it('lays out every sort and filter section as a horizontally scrollable pill row', () => {
     renderPage(<Component />)
     expectHorizontalPillRows(sections)
+    for (const section of sections.filter(
+      (title) => title !== messages.Tags.filterColor,
+    )) {
+      const options = within(
+        screen.getByRole('group', { name: section }),
+      ).getAllByRole('button')
+      for (const option of options) {
+        expect(option.querySelector('svg')).toBeInTheDocument()
+      }
+    }
   })
   it('pages long lists 20 at a time and returns to page one on a new search', () => {
     bulk = true
@@ -312,17 +328,30 @@ describe('list-specific filters', () => {
     expect(color).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(color)
     expect(color).toHaveAttribute('aria-pressed', 'false')
-    const used = screen.getByRole('button', { name: messages.Tags.used })
+    const usageFilters = within(
+      screen.getByRole('group', { name: messages.Tags.filterUsage }),
+    )
+    const used = usageFilters.getByRole('button', {
+      name: messages.Tags.used,
+    })
     fireEvent.click(used)
     expect(used).toHaveClass('border-primary')
-    const unused = screen.getByRole('button', { name: messages.Tags.unused })
+    const unused = usageFilters.getByRole('button', {
+      name: messages.Tags.unused,
+    })
     fireEvent.click(unused)
     expect(unused).toHaveClass('border-primary')
-    const allOptions = screen.getAllByRole('button', {
+    const all = usageFilters.getByRole('button', {
       name: messages.Common.all,
     })
-    fireEvent.click(allOptions[1])
-    expect(allOptions[1]).toHaveClass('border-primary')
+    fireEvent.click(all)
+    expect(all).toHaveClass('border-primary')
+    for (const option of [used, unused, all]) {
+      expect(
+        option.querySelector('[data-filter-option-icon]'),
+        `Expected an icon on the ${option.textContent} usage filter`,
+      ).toBeInTheDocument()
+    }
   })
   it('selects a party type filter and resets it with clear filters', () => {
     noResults = true
@@ -333,6 +362,20 @@ describe('list-specific filters', () => {
     const vendor = screen.getByRole('button', {
       name: messages.Parties.partyTypeVendor,
     })
+    for (const option of [
+      all,
+      screen.getByRole('button', {
+        name: messages.Parties.partyTypeCustomer,
+      }),
+      screen.getByRole('button', {
+        name: messages.Parties.partyTypeSupplier,
+      }),
+      vendor,
+    ]) {
+      expect(
+        option.querySelector('[data-filter-option-icon]'),
+      ).toBeInTheDocument()
+    }
     expect(all).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(vendor)
     expect(vendor).toHaveAttribute('aria-pressed', 'true')
