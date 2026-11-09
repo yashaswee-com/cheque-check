@@ -29,6 +29,7 @@ import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { TextTruncate } from '@/components/ui/text-truncate'
+import { AccountName } from '@/features/accounts/components/account-name'
 import { useTranslations } from 'next-intl'
 import { DraftsLink } from '@/features/drafts'
 import {
@@ -247,12 +248,8 @@ export default function AccountsPage() {
                     size="md"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <TextTruncate
-                        text={account.account_name}
-                        maxLength={25}
-                        className="text-base font-bold"
-                      />
+                    <div className="flex min-w-0 items-center justify-between gap-2">
+                      <AccountName name={account.account_name} />
                       <HugeiconsIcon
                         icon={ChevronRight}
                         className="h-4 w-4 text-muted-foreground/40 group-hover:translate-x-0.5 transition-transform"
