@@ -4,6 +4,12 @@ import { useEffect, useState, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   clearInstallPrompt,
   getInstallPrompt,
   INSTALL_DISMISSED_KEY,
@@ -26,9 +32,9 @@ export function PwaInstallCard({
 
   useEffect(() => {
     const refresh = () => {
-      let dismissedUntil = 0
+      let dismissed = false
       try {
-        dismissedUntil = Number(localStorage.getItem(INSTALL_DISMISSED_KEY))
+        dismissed = sessionStorage.getItem(INSTALL_DISMISSED_KEY) === 'true'
       } catch (error) {
         console.error('Cannot read install preference', error)
       }
@@ -36,7 +42,7 @@ export function PwaInstallCard({
       const visible =
         !confirmedInstall.current &&
         !isInstalled() &&
-        Date.now() >= dismissedUntil &&
+        !dismissed &&
         (awaitingInstall.current || isIOS() || getInstallPrompt() !== null)
       setVisible(visible)
       onResolved?.(
@@ -60,10 +66,7 @@ export function PwaInstallCard({
 
   const dismiss = () => {
     try {
-      localStorage.setItem(
-        INSTALL_DISMISSED_KEY,
-        String(Date.now() + 7 * 86400000),
-      )
+      sessionStorage.setItem(INSTALL_DISMISSED_KEY, 'true')
       setVisible(false)
       awaitingInstall.current = false
       setInstalling(false)
@@ -95,24 +98,33 @@ export function PwaInstallCard({
 
   if (!visible) return null
   return (
-    <aside
-      className="mx-4 mt-4 rounded-xl border p-4 space-y-2"
-      aria-label={t('title')}
+    <Dialog
+      open={visible}
+      onOpenChange={(open) => {
+        if (!open) dismiss()
+      }}
     >
-      <h2 className="font-semibold">{t('title')}</h2>
-      <p className="text-sm">{ios ? t('iosInstructions') : t('description')}</p>
-      {installing && <p role="status">{t('waiting')}</p>}
-      {error && <p role="alert">{t('error')}</p>}
-      <div className="flex gap-2">
-        {!ios && (
-          <Button onClick={install} disabled={busy || installing}>
-            {t('install')}
+      <DialogContent
+        scrollable
+        className="max-h-[min(90dvh,calc(100dvh-2rem))]"
+      >
+        <DialogTitle className="pr-8">{t('title')}</DialogTitle>
+        <DialogDescription>
+          {ios ? t('iosInstructions') : t('description')}
+        </DialogDescription>
+        {installing && <p role="status">{t('waiting')}</p>}
+        {error && <p role="alert">{t('error')}</p>}
+        <div className="flex flex-wrap gap-2">
+          {!ios && (
+            <Button onClick={install} disabled={busy || installing}>
+              {t('install')}
+            </Button>
+          )}
+          <Button variant="outline" onClick={dismiss} disabled={busy}>
+            {t('later')}
           </Button>
-        )}
-        <Button variant="outline" onClick={dismiss} disabled={busy}>
-          {t('later')}
-        </Button>
-      </div>
-    </aside>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

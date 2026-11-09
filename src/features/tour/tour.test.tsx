@@ -35,6 +35,7 @@ beforeEach(() => {
   mocks.status = 'pending'
   mocks.update.mockResolvedValue(undefined)
   localStorage.clear()
+  sessionStorage.clear()
   clearInstallPrompt()
   vi.stubGlobal('matchMedia', () => ({
     matches: false,
@@ -243,12 +244,12 @@ describe('installation-before-tour sequencing', () => {
   it('waits for explicit install-card dismissal before showing tour', async () => {
     prompt('dismissed')
     mount(<PostOnboardingTour />)
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('dialog', { name: messages.PWA.title }),
+    ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Later' }))
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
-    expect(Number(localStorage.getItem(INSTALL_DISMISSED_KEY))).toBeGreaterThan(
-      Date.now(),
-    )
+    expect(sessionStorage.getItem(INSTALL_DISMISSED_KEY)).toBe('true')
   })
   it('does not equate accepted installation prompt with installation confirmation', async () => {
     prompt('accepted')
@@ -257,7 +258,9 @@ describe('installation-before-tour sequencing', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(
       'Waiting for installation',
     )
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('dialog', { name: messages.PWA.title }),
+    ).toBeInTheDocument()
     fireEvent(window, new Event('appinstalled'))
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
   })

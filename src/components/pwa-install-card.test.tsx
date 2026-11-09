@@ -5,6 +5,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../messages/en.json'
@@ -15,10 +16,10 @@ import {
   INSTALL_DISMISSED_KEY,
 } from '@/lib/pwa-install'
 
-function renderCard() {
+function renderCard(onResolved?: (resolved: boolean) => void) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <PwaInstallCard />
+      <PwaInstallCard onResolved={onResolved} />
     </NextIntlClientProvider>,
   )
 }
@@ -37,6 +38,7 @@ function available(outcome: 'accepted' | 'dismissed' = 'accepted') {
 describe('post-onboarding install card', () => {
   beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
     vi.stubGlobal('matchMedia', () => ({ matches: false }))
     clearInstallPrompt()
   })
@@ -47,9 +49,7 @@ describe('post-onboarding install card', () => {
   })
   it('hides unsupported browsers and never requests installation automatically', () => {
     renderCard()
-    expect(
-      screen.queryByRole('button', { name: 'Install' }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
   it('captures an early event and installs only after a click', async () => {
     const { prompt, event } = available()
@@ -62,38 +62,36 @@ describe('post-onboarding install card', () => {
     )
     fireEvent(window, new Event('appinstalled'))
     await waitFor(() =>
-      expect(screen.queryByRole('complementary')).not.toBeInTheDocument(),
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
     )
     expect(prompt).toHaveBeenCalledOnce()
   })
-  it('persists dismissal for exactly seven days', () => {
+  it('suppresses dismissal for the current browser session', () => {
     available()
-    vi.spyOn(Date, 'now').mockReturnValue(1000)
     renderCard()
     fireEvent.click(screen.getByRole('button', { name: 'Later' }))
-    expect(localStorage.getItem(INSTALL_DISMISSED_KEY)).toBe(
-      String(1000 + 7 * 86400000),
-    )
-    expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+    expect(sessionStorage.getItem(INSTALL_DISMISSED_KEY)).toBe('true')
+    expect(localStorage.getItem(INSTALL_DISMISSED_KEY)).toBeNull()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    renderCard()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
-  it('does not show during dismissal period or when standalone', () => {
+  it('does not show during the dismissed session or when standalone', () => {
     available()
-    localStorage.setItem(INSTALL_DISMISSED_KEY, String(Date.now() + 10000))
+    sessionStorage.setItem(INSTALL_DISMISSED_KEY, 'true')
     const view = renderCard()
-    expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     view.unmount()
-    localStorage.clear()
+    sessionStorage.clear()
     vi.stubGlobal('matchMedia', () => ({ matches: true }))
     renderCard()
-    expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
   it('shows iOS manual instructions without an unusable Install button', () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('iPhone')
     renderCard()
     expect(screen.getByText(/In Safari/)).toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Install' }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Install' })).toBeNull()
   })
   it('reports prompt failures without hiding the card', async () => {
     const { prompt } = available()
@@ -104,5 +102,20 @@ describe('post-onboarding install card', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Could not complete',
     )
+  })
+  it('traps focus and treats Escape as a session-only dismissal', async () => {
+    const onResolved = vi.fn()
+    available()
+    renderCard(onResolved)
+    const dialog = screen.getByRole('dialog', { name: messages.PWA.title })
+    await waitFor(() =>
+      expect(dialog.contains(document.activeElement)).toBe(true),
+    )
+
+    await userEvent.setup().keyboard('{Escape}')
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(sessionStorage.getItem(INSTALL_DISMISSED_KEY)).toBe('true')
+    expect(onResolved).toHaveBeenLastCalledWith(true)
   })
 })

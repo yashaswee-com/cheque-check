@@ -5,7 +5,7 @@ export interface InstallPromptEvent extends Event {
 
 let pendingPrompt: InstallPromptEvent | null = null
 export const INSTALL_EVENT = 'chequecheck-install-change'
-export const INSTALL_DISMISSED_KEY = 'chequecheck-install-dismissed-until'
+export const INSTALL_DISMISSED_KEY = 'chequecheck-install-dismissed'
 
 export function getInstallPrompt() {
   return pendingPrompt
