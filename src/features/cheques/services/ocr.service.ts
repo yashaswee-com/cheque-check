@@ -3,6 +3,7 @@ import { generateObject } from 'ai'
 import { getOpenAiEnv } from '@/lib/env/server'
 import { ChequeDetailsSchema } from '@/validators/ocr'
 import type { ChequeDetails, IOcrProvider } from '@/types/ocr'
+import { getOcrImageMediaType, OCR_IMAGE_FORMAT_ERROR } from './ocr-image'
 
 export const DEFAULT_OCR_MODEL = 'gpt-4o-mini'
 
@@ -13,6 +14,8 @@ export class OpenAiOcrProvider implements IOcrProvider {
     imageUrl: string,
     modelName = this.modelName,
   ): Promise<ChequeDetails> {
+    const mediaType = getOcrImageMediaType(imageUrl)
+    if (!mediaType) throw new Error(OCR_IMAGE_FORMAT_ERROR)
     getOpenAiEnv()
 
     const { object } = await generateObject({
@@ -33,7 +36,7 @@ export class OpenAiOcrProvider implements IOcrProvider {
 - IFSC Code: Located at the top middle of the cheque, to the left of the date. Format is 4 alphabetic characters followed by 7 numeric digits (e.g., HDFC0001234). If not visible/unclear, return null.
 - If any field is not clearly visible or legible, return null for that field. Keep processing fast and concise.`,
             },
-            { type: 'image', image: imageUrl },
+            { type: 'file', data: new URL(imageUrl), mediaType },
           ],
         },
       ],

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ChequeDetailsSchema } from '@/validators/ocr'
 import { OpenAiOcrProvider } from './ocr.service'
+import { getOcrImageMediaType } from './ocr-image'
 
 const mocks = vi.hoisted(() => ({
   openai: vi.fn(),
@@ -37,9 +38,29 @@ describe('canonical OCR provider', () => {
     expect(
       mocks.generateObject.mock.calls[0][0].messages[0].content[1],
     ).toEqual({
-      type: 'image',
-      image: 'https://app.test/image.png',
+      type: 'file',
+      data: new URL('https://app.test/image.png'),
+      mediaType: 'image/png',
     })
+  })
+
+  it.each([
+    ['image.jpg', 'image/jpeg'],
+    ['image.jpeg?token=redacted', 'image/jpeg'],
+    ['image.PNG', 'image/png'],
+    ['image.webp?token=redacted', 'image/webp'],
+  ])('detects the supported media type for %s', (url, mediaType) => {
+    expect(getOcrImageMediaType(`https://app.test/${url}`)).toBe(mediaType)
+  })
+
+  it('rejects unknown and unsupported file extensions', async () => {
+    await expect(
+      new OpenAiOcrProvider().processImage('https://app.test/image.gif'),
+    ).rejects.toThrow('Only PNG, JPEG, and WebP cheque images are supported.')
+    expect(
+      getOcrImageMediaType('https://app.test/image-without-extension'),
+    ).toBeNull()
+    expect(mocks.generateObject).not.toHaveBeenCalled()
   })
 
   it('uses a per-request model when the route resolves one from the plan', async () => {

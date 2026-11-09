@@ -2,11 +2,16 @@ import { logger } from '@/lib/logger'
 import { createClient } from '@/lib/supabase/server'
 import { getOpenAiEnv } from '@/lib/env/server'
 import { setRequestUser, withMonitoringRequest } from '@/lib/monitoring/server'
+import { parsePrivateMediaUrl, PRIVATE_CHEQUE_BUCKET } from '@/lib/storage'
 import { OcrRequestSchema } from '@/validators/ocr'
 import {
   DEFAULT_OCR_MODEL,
   OpenAiOcrProvider,
 } from '@/features/cheques/services/ocr.service'
+import {
+  getOcrImageMediaType,
+  OCR_IMAGE_FORMAT_ERROR,
+} from '@/features/cheques/services/ocr-image'
 import { executeOcrWorkflow } from '@/features/cheques/services/ocr-workflow'
 
 const ocrProvider = new OpenAiOcrProvider()
@@ -46,6 +51,17 @@ async function extractCheque(req: Request): Promise<Response> {
     if (!requestResult.success) {
       return respondWithError('A valid image URL is required.', 400)
     }
+    const { imageUrl } = requestResult.data
+    const privateMedia = parsePrivateMediaUrl(imageUrl)
+    if (!privateMedia || privateMedia.bucket !== PRIVATE_CHEQUE_BUCKET) {
+      return respondWithError(
+        'Only uploaded cheque images can be scanned.',
+        400,
+      )
+    }
+    if (!getOcrImageMediaType(imageUrl)) {
+      return respondWithError(OCR_IMAGE_FORMAT_ERROR, 415)
+    }
 
     const supabase = await createClient()
     const {
@@ -55,54 +71,50 @@ async function extractCheque(req: Request): Promise<Response> {
     if (!user) return respondWithError('Unauthorized', 401)
     setRequestUser(user)
 
-    const result = await executeOcrWorkflow(
-      requestResult.data.imageUrl,
-      user.id,
-      {
-        consumeRateLimit: async () => {
-          const { data, error } = await supabase.rpc('consume_api_rate_limit', {
-            requested_endpoint: 'ocr-cheque',
-            request_limit: 10,
-            window_seconds: 60,
+    const result = await executeOcrWorkflow(imageUrl, user.id, {
+      consumeRateLimit: async () => {
+        const { data, error } = await supabase.rpc('consume_api_rate_limit', {
+          requested_endpoint: 'ocr-cheque',
+          request_limit: 10,
+          window_seconds: 60,
+        })
+        if (error) throw error
+        return data
+      },
+      createSignedUrl: async (bucket, path, expiresIn) => {
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(path, expiresIn)
+        if (error) {
+          logger.warn('[OcrController] Unable to sign cheque image', {
+            status: error.status,
           })
-          if (error) throw error
-          return data
-        },
-        createSignedUrl: async (bucket, path, expiresIn) => {
-          const { data, error } = await supabase.storage
-            .from(bucket)
-            .createSignedUrl(path, expiresIn)
-          if (error) {
-            logger.warn('[OcrController] Unable to sign cheque image', {
-              status: error.status,
-            })
-            return null
-          }
-          if (!data?.signedUrl) {
-            logger.warn('[OcrController] Storage returned no signed cheque URL')
-            return null
-          }
-          return data.signedUrl
-        },
-        consumeQuota: async () => {
-          const { data, error } = await supabase.rpc('consume_user_quota', {
-            requested_feature: 'ai_scan',
-          })
-          if (error) throw error
-          return data
-        },
-        ensureProviderConfigured: getOpenAiEnv,
-        provider: {
-          processImage: async (imageUrl) => {
-            const { product_id, model } = await resolveScanModel(supabase)
-            logger.info(
-              `[OcrController] Processing request for user ${user.id} (product ${product_id}, model ${model})`,
-            )
-            return ocrProvider.processImage(imageUrl, model)
-          },
+          return null
+        }
+        if (!data?.signedUrl) {
+          logger.warn('[OcrController] Storage returned no signed cheque URL')
+          return null
+        }
+        return data.signedUrl
+      },
+      consumeQuota: async () => {
+        const { data, error } = await supabase.rpc('consume_user_quota', {
+          requested_feature: 'ai_scan',
+        })
+        if (error) throw error
+        return data
+      },
+      ensureProviderConfigured: getOpenAiEnv,
+      provider: {
+        processImage: async (imageUrl) => {
+          const { product_id, model } = await resolveScanModel(supabase)
+          logger.info(
+            `[OcrController] Processing request for user ${user.id} (product ${product_id}, model ${model})`,
+          )
+          return ocrProvider.processImage(imageUrl, model)
         },
       },
-    )
+    })
 
     if (result.kind === 'rate-limited') {
       return respondWithError(

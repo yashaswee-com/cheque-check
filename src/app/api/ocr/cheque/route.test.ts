@@ -50,6 +50,7 @@ const details = {
   ifsc_code: null,
   bank_name: null,
 }
+const imageUrl = buildPrivateMediaUrl(PRIVATE_CHEQUE_BUCKET, 'u1/image.png')
 const request = (body: unknown) =>
   new Request('https://app.test/api/ocr/cheque', {
     method: 'POST',
@@ -79,9 +80,7 @@ describe('OCR shared contracts and client', () => {
       mocks.rpc.mockImplementation(async (name: string) =>
         name === endpoint ? { data: null, error } : { data: true, error: null },
       )
-      const response = await POST(
-        request({ imageUrl: 'https://app.test/image.png' }),
-      )
+      const response = await POST(request({ imageUrl }))
       expect(response.status).toBe(500)
       expect(mocks.error).toHaveBeenCalledWith('[OcrController Error]', error)
       expect(mocks.processImage).not.toHaveBeenCalled()
@@ -161,9 +160,7 @@ describe('OCR shared contracts and client', () => {
   })
 
   it('passes the shared response contract through unchanged after rate and quota checks', async () => {
-    const response = await POST(
-      request({ imageUrl: 'https://app.test/image.png' }),
-    )
+    const response = await POST(request({ imageUrl }))
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual(details)
     expect(mocks.rpc.mock.calls).toEqual([
@@ -179,7 +176,7 @@ describe('OCR shared contracts and client', () => {
       ['resolve_ai_scan_model'],
     ])
     expect(mocks.processImage).toHaveBeenCalledWith(
-      'https://app.test/image.png',
+      'https://app.test/signed',
       'gpt-4o-mini',
     )
   })
@@ -194,11 +191,9 @@ describe('OCR shared contracts and client', () => {
         ? { data: [{ product_id, model }], error: null }
         : { data: true, error: null },
     )
-    expect(
-      (await POST(request({ imageUrl: 'https://app.test/image.png' }))).status,
-    ).toBe(200)
+    expect((await POST(request({ imageUrl }))).status).toBe(200)
     expect(mocks.processImage).toHaveBeenCalledWith(
-      'https://app.test/image.png',
+      'https://app.test/signed',
       model,
     )
   })
@@ -212,12 +207,9 @@ describe('OCR shared contracts and client', () => {
       mocks.rpc.mockImplementation(async (name: string) =>
         name === 'resolve_ai_scan_model' ? lookup : { data: true, error: null },
       )
-      expect(
-        (await POST(request({ imageUrl: 'https://app.test/image.png' })))
-          .status,
-      ).toBe(200)
+      expect((await POST(request({ imageUrl }))).status).toBe(200)
       expect(mocks.processImage).toHaveBeenCalledWith(
-        'https://app.test/image.png',
+        'https://app.test/signed',
         'gpt-4o-mini',
       )
       expect(mocks.warn).toHaveBeenCalledOnce()
@@ -226,7 +218,7 @@ describe('OCR shared contracts and client', () => {
 
   it('does not resolve a model when rate-limited or out of quota', async () => {
     mocks.rpc.mockResolvedValueOnce({ data: false, error: null })
-    await POST(request({ imageUrl: 'https://app.test/image.png' }))
+    await POST(request({ imageUrl }))
     expect(mocks.rpc).not.toHaveBeenCalledWith('resolve_ai_scan_model')
   })
 
@@ -240,19 +232,45 @@ describe('OCR shared contracts and client', () => {
     },
   )
 
+  it('rejects external image URLs before authentication', async () => {
+    const response = await POST(
+      request({ imageUrl: 'https://app.test/image.png' }),
+    )
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      error: 'Only uploaded cheque images can be scanned.',
+    })
+    expect(mocks.getUser).not.toHaveBeenCalled()
+  })
+
+  it.each(['image.gif', 'image.bmp', 'image-without-extension'])(
+    'rejects unsupported stored image formats with a clear client error: %s',
+    async (fileName) => {
+      const response = await POST(
+        request({
+          imageUrl: buildPrivateMediaUrl(
+            PRIVATE_CHEQUE_BUCKET,
+            `u1/${fileName}`,
+          ),
+        }),
+      )
+      expect(response.status).toBe(415)
+      expect(await response.json()).toEqual({
+        error: 'Only PNG, JPEG, and WebP cheque images are supported.',
+      })
+      expect(mocks.getUser).not.toHaveBeenCalled()
+    },
+  )
+
   it('retains the unauthorized response', async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null }, error: null })
-    expect(
-      (await POST(request({ imageUrl: 'https://app.test/image.png' }))).status,
-    ).toBe(401)
+    expect((await POST(request({ imageUrl }))).status).toBe(401)
     expect(mocks.rpc).not.toHaveBeenCalled()
   })
 
   it('retains rate-limit responses and does not consume quota', async () => {
     mocks.rpc.mockResolvedValueOnce({ data: false, error: null })
-    const response = await POST(
-      request({ imageUrl: 'https://app.test/image.png' }),
-    )
+    const response = await POST(request({ imageUrl }))
     expect(response.status).toBe(429)
     expect(response.headers.get('Retry-After')).toBe('60')
     expect(mocks.rpc).toHaveBeenCalledOnce()
@@ -263,9 +281,7 @@ describe('OCR shared contracts and client', () => {
     mocks.rpc
       .mockResolvedValueOnce({ data: true, error: null })
       .mockResolvedValueOnce({ data: false, error: null })
-    expect(
-      (await POST(request({ imageUrl: 'https://app.test/image.png' }))).status,
-    ).toBe(402)
+    expect((await POST(request({ imageUrl }))).status).toBe(402)
     expect(mocks.processImage).not.toHaveBeenCalled()
   })
 
@@ -294,9 +310,7 @@ describe('OCR shared contracts and client', () => {
 
   it('reports provider errors explicitly', async () => {
     mocks.processImage.mockRejectedValue(new Error('Provider unavailable'))
-    const response = await POST(
-      request({ imageUrl: 'https://app.test/image.png' }),
-    )
+    const response = await POST(request({ imageUrl }))
     expect(response.status).toBe(500)
     expect(await response.json()).toEqual({
       error: 'An unexpected error occurred during image processing.',
