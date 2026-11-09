@@ -72,23 +72,26 @@ function mount(child = <FirstRunTour />) {
   )
 }
 describe('first-run dashboard tour', () => {
-  it('spotlights all five steps and persists completion only at Finish', async () => {
+  it('spotlights all six steps and persists completion only at Finish', async () => {
     mount()
     await screen.findByTestId('tour-spotlight')
     expect(screen.getByRole('dialog')).toHaveTextContent(
       'Your dashboard summary',
     )
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       await waitFor(() =>
         expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled(),
       )
       fireEvent.click(screen.getByRole('button', { name: 'Next' }))
       await waitFor(() =>
         expect(screen.getByRole('dialog')).toHaveTextContent(
-          `Step ${i + 2} of 5`,
+          `Step ${i + 2} of 6`,
         ),
       )
     }
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      messages.Tour.voice.body,
+    )
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Finish tour' })).toBeEnabled(),
     )

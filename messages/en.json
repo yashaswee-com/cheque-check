@@ -94,6 +94,10 @@
     "settings": {
       "title": "Settings and preferences",
       "body": "Open this menu to find Settings, manage your profile, appearance and notifications."
+    },
+    "voice": {
+      "title": "Set up voice reminders",
+      "body": "In Settings > Features, open Voice Reminders, save your phone number, and turn the service on. Send a test call to place a real call to that number; it uses one call from your Voice Reminder quota."
     }
   },
   "EmailLink": {

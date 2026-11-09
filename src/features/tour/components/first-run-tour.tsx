@@ -12,7 +12,14 @@ import {
 } from '@/components/ui/dialog'
 import { useReducedMotionPreference } from '@/hooks/use-reduced-motion'
 import { logger } from '@/lib/logger'
-const steps = ['summary', 'add', 'scan', 'reports', 'settings'] as const
+const steps = [
+  { key: 'summary', target: 'summary' },
+  { key: 'add', target: 'add' },
+  { key: 'scan', target: 'scan' },
+  { key: 'reports', target: 'reports' },
+  { key: 'settings', target: 'settings' },
+  { key: 'voice', target: 'settings' },
+] as const
 type Box = {
   target: string
   left: number
@@ -32,7 +39,7 @@ function TourDialog({
     [error, setError] = useState(false)
   const reduced = useReducedMotionPreference()
   const saving = useRef(false)
-  const target = steps[step]
+  const { key, target } = steps[step]
   const activeBox = box?.target === target ? box : null
   // The card sits on the opposite half so it never covers the spotlight.
   const placement =
@@ -164,8 +171,8 @@ function TourDialog({
         <p className="text-xs" aria-live="polite">
           {t('progress', { step: step + 1, total: steps.length })}
         </p>
-        <DialogTitle>{t(`${target}.title`)}</DialogTitle>
-        <DialogDescription>{t(`${target}.body`)}</DialogDescription>
+        <DialogTitle>{t(`${key}.title`)}</DialogTitle>
+        <DialogDescription>{t(`${key}.body`)}</DialogDescription>
         {!activeBox && <p role="status">{t('waiting')}</p>}
         {error && <p role="alert">{t('saveError')}</p>}
         <div className="flex flex-wrap gap-2">

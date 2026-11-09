@@ -94,6 +94,10 @@
     "settings": {
       "title": "Settings aur preferences",
       "body": "Is menu mein Settings, profile, appearance aur notifications manage karein."
+    },
+    "voice": {
+      "title": "Voice reminders set up karein",
+      "body": "Settings > Features mein Voice Reminders kholein, apna phone number save karein aur service on karein. Test call bhejne par us number par real call jayegi aur aapke Voice Reminder quota se ek call use hogi."
     }
   },
   "EmailLink": {
