@@ -105,6 +105,9 @@ describe('OCR shared contracts and client', () => {
         ).status,
       ).toBe(404)
       expect(mocks.processImage).not.toHaveBeenCalled()
+      expect(mocks.warn).toHaveBeenCalledWith(
+        '[OcrController] Storage returned no signed cheque URL',
+      )
     },
   )
   it('rejects invalid JSON before authentication', async () => {
@@ -123,7 +126,7 @@ describe('OCR shared contracts and client', () => {
   it('maps a missing signed private image to not found', async () => {
     mocks.createSignedUrl.mockResolvedValueOnce({
       data: null,
-      error: new Error('missing'),
+      error: Object.assign(new Error('missing'), { status: 403 }),
     })
     const response = await POST(
       request({
@@ -133,6 +136,10 @@ describe('OCR shared contracts and client', () => {
     expect(response.status).toBe(404)
     expect(await response.json()).toEqual({ error: 'Cheque image not found.' })
     expect(mocks.processImage).not.toHaveBeenCalled()
+    expect(mocks.warn).toHaveBeenCalledWith(
+      '[OcrController] Unable to sign cheque image',
+      { status: 403 },
+    )
   })
   it('keeps the typed quota arguments aligned with the committed migration', () => {
     const args: Database['public']['Functions']['consume_user_quota']['Args'] =

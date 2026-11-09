@@ -103,6 +103,7 @@ function setup({
         watch: watch as never,
         setValue: setValue as never,
         handleImageUpload: upload,
+        isLoadingDraft: false,
       }),
     { wrapper },
   )

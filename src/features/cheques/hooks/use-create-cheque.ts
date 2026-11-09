@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { chequeSchema } from '@/validators'
@@ -46,12 +46,14 @@ export function useCreateCheque(
 ) {
   const [step, setStep] = useState(1)
   const [isUploading, setIsUploading] = useState(false)
+  const uploadingRef = useRef(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const router = useRouter()
   const queryClient = useQueryClient()
   const t = useTranslations('Cheques')
   const tc = useTranslations('Common')
+  const td = useTranslations('Drafts')
   const { profile } = useProfile()
   const premium = usePremiumAction()
 
@@ -243,10 +245,33 @@ export function useCreateCheque(
   }
 
   const handleImageUpload = async (file: File) => {
+    if (uploadingRef.current) return null
+    if (!businessId || draft.isLoadingDraft) {
+      toast.add({
+        title: tc('error'),
+        description: td('saveFailed'),
+        type: 'error',
+      })
+      return null
+    }
+    uploadingRef.current = true
     setIsUploading(true)
     try {
       const url = await storageService.uploadChequeImage(file)
-      setValue('image_url', url)
+      const previousUrl = form.getValues('image_url')
+      draft.setUserValue('image_url', url)
+      try {
+        const draftId = await draft.saveNow()
+        if (!draftId) throw new Error('Cheque draft was not saved')
+      } catch {
+        setValue('image_url', previousUrl)
+        toast.add({
+          title: tc('error'),
+          description: td('saveFailed'),
+          type: 'error',
+        })
+        return null
+      }
       return url
     } catch (error) {
       alert(
@@ -255,6 +280,7 @@ export function useCreateCheque(
       )
       return null
     } finally {
+      uploadingRef.current = false
       setIsUploading(false)
     }
   }
@@ -280,11 +306,12 @@ export function useCreateCheque(
     prevStep,
     isUploading,
     handleImageUpload,
-    isSaving: mutation.isPending || isPublishing,
+    isSaving: mutation.isPending || isPublishing || isUploading,
     isSuccess,
     continueAfterSuccess: () => router.push('/cheques'),
     draft,
     onSubmit: form.handleSubmit(async (data) => {
+      if (isUploading) return
       if (data.type === 'Inward' && !premium.requireAccess('inward-tracking'))
         return
       const publishedDraftId = await draft.beginPublish()

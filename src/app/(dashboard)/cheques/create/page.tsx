@@ -178,6 +178,7 @@ export default function CreateChequePage() {
     watch,
     setValue,
     handleImageUpload,
+    isLoadingDraft: draft.isLoadingDraft,
   })
 
   const partyOptions =
@@ -225,6 +226,7 @@ export default function CreateChequePage() {
             />
             <button
               type="button"
+              disabled={isUploading}
               onClick={() => setUserValue('image_url', null)}
               className="absolute top-3 right-3 p-2 bg-black/60 text-white rounded-full hover:bg-black transition-colors z-20"
             >
@@ -276,6 +278,7 @@ export default function CreateChequePage() {
               className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0]
+                e.target.value = ''
                 if (file) {
                   const url = await handleImageUpload(file)
                   if (url) extractData(url)

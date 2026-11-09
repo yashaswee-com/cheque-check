@@ -551,6 +551,44 @@ describe('PostgreSQL lifecycle migrations', () => {
     ).not.toBeNull()
   })
 
+  it('hides a newly uploaded cheque image until an active cheque references it', async () => {
+    const path = `${owner}/new-scan.jpg`
+    const media = `/api/storage/private-cheque-images/${path}`
+    await asUser(
+      owner,
+      `INSERT INTO storage.objects(bucket_id,name) VALUES('private-cheque-images','${path}')`,
+    )
+    expect(
+      (
+        await asUser<{ name: string }>(
+          owner,
+          `SELECT name FROM storage.objects WHERE bucket_id = 'private-cheque-images' AND name = '${path}'`,
+        )
+      ).rows,
+    ).toHaveLength(0)
+
+    await asUser(
+      owner,
+      `INSERT INTO cheques(business_id,is_draft,image_url) VALUES('${business}',true,'${media}')`,
+    )
+    expect(
+      (
+        await asUser<{ name: string }>(
+          owner,
+          `SELECT name FROM storage.objects WHERE bucket_id = 'private-cheque-images' AND name = '${path}'`,
+        )
+      ).rows,
+    ).toEqual([{ name: path }])
+    expect(
+      (
+        await asUser<{ name: string }>(
+          other,
+          `SELECT name FROM storage.objects WHERE bucket_id = 'private-cheque-images' AND name = '${path}'`,
+        )
+      ).rows,
+    ).toHaveLength(0)
+  })
+
   it('grants media reads only for active references and immediately denies deactivated JWTs', async () => {
     const media = `/api/storage/private-cheque-images/${owner}/retained.jpg`
     await db.exec(

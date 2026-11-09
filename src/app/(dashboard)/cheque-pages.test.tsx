@@ -885,6 +885,22 @@ describe('cheque creation page', () => {
       expect(mocks.extract).toHaveBeenCalledWith('scan-image'),
     )
   })
+  it('allows selecting the same image again after an upload or draft save failure', async () => {
+    mocks.upload.mockResolvedValueOnce(null).mockResolvedValueOnce('scan-image')
+    const { container } = renderPage(<CreateChequePage />)
+    const input =
+      container.querySelector<HTMLInputElement>('input[type="file"]')!
+    const file = new File(['scan'], 'scan.png', { type: 'image/png' })
+    fireEvent.change(input, { target: { files: [file] } })
+    await waitFor(() => expect(mocks.upload).toHaveBeenCalledTimes(1))
+    expect(input.value).toBe('')
+    expect(mocks.extract).not.toHaveBeenCalled()
+    fireEvent.change(input, { target: { files: [file] } })
+    await waitFor(() => expect(mocks.upload).toHaveBeenCalledTimes(2))
+    await waitFor(() =>
+      expect(mocks.extract).toHaveBeenCalledWith('scan-image'),
+    )
+  })
   it('uses one spinner instead of upload text and keeps the file picker disabled while uploading', () => {
     uploading = true
     const { container } = renderPage(<CreateChequePage />)

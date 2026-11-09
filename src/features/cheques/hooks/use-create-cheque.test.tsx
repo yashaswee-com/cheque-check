@@ -25,7 +25,9 @@ const mocks = vi.hoisted(() => ({
     draftId: null as string | null,
     status: 'idle',
     hasUserChanges: false,
+    isLoadingDraft: false,
     setUserValue: vi.fn(),
+    saveNow: vi.fn(),
     saveDraft: vi.fn(),
     saveDraftAndExit: vi.fn(),
     navigateAfterSave: vi.fn(),
@@ -136,10 +138,17 @@ function setValidCheque(result: ReturnType<typeof setup>['result']) {
 
 beforeEach(() => {
   vi.resetAllMocks()
-  mocks.useDraftController.mockReturnValue(mocks.draft)
+  mocks.useDraftController.mockImplementation(({ form }) => ({
+    ...mocks.draft,
+    setUserValue: (name: 'image_url', value: string) => {
+      mocks.draft.setUserValue(name, value)
+      form.setValue(name, value)
+    },
+  }))
   mocks.draft.draftId = null
   mocks.profile = { default_reminder_days: 5 }
   mocks.draft.beginPublish.mockResolvedValue(null)
+  mocks.draft.saveNow.mockResolvedValue('draft-1')
   mocks.firstIncompleteChequeStep.mockReturnValue(2)
   mocks.create.mockResolvedValue(createdCheque)
   mocks.publish.mockResolvedValue(createdCheque)
@@ -206,6 +215,11 @@ describe('useCreateCheque', () => {
       '/uploads/cheque.png',
     )
     expect(result.current.isUploading).toBe(false)
+    expect(mocks.draft.setUserValue).toHaveBeenCalledWith(
+      'image_url',
+      '/uploads/cheque.png',
+    )
+    expect(mocks.draft.saveNow).toHaveBeenCalledOnce()
 
     const alert = vi.spyOn(window, 'alert').mockImplementation(() => undefined)
     mocks.uploadImage.mockRejectedValueOnce(new Error('Storage unavailable'))
@@ -216,6 +230,75 @@ describe('useCreateCheque', () => {
     expect(alert).toHaveBeenCalledWith('Upload failed: Storage unavailable')
     expect(result.current.isUploading).toBe(false)
     alert.mockRestore()
+  })
+
+  it('waits for the image reference to be saved and restores it if saving fails', async () => {
+    const { result } = setup()
+    const file = new File(['scan'], 'scan.png', { type: 'image/png' })
+    let rejectSave!: (error: Error) => void
+    mocks.draft.saveNow.mockImplementationOnce(
+      () => new Promise((_resolve, reject) => (rejectSave = reject)),
+    )
+    let pending!: Promise<string | null>
+    await act(async () => {
+      pending = result.current.handleImageUpload(file)
+      await Promise.resolve()
+    })
+    expect(result.current.isUploading).toBe(true)
+    expect(result.current.isSaving).toBe(true)
+    expect(result.current.form.getValues('image_url')).toBe(
+      '/uploads/cheque.png',
+    )
+    await act(async () => {
+      rejectSave(new Error('offline'))
+      expect(await pending).toBeNull()
+    })
+    expect(result.current.form.getValues('image_url')).toBeNull()
+    expect(mocks.toastAdd).toHaveBeenLastCalledWith({
+      title: 'error',
+      description: 'saveFailed',
+      type: 'error',
+    })
+    expect(result.current.isUploading).toBe(false)
+  })
+
+  it('does not upload when no business is available or the draft is loading', async () => {
+    const file = new File(['scan'], 'scan.png', { type: 'image/png' })
+    const missing = setup('Outward', {}, '')
+    await act(async () =>
+      expect(await missing.result.current.handleImageUpload(file)).toBeNull(),
+    )
+    expect(mocks.uploadImage).not.toHaveBeenCalled()
+    expect(mocks.toastAdd).toHaveBeenLastCalledWith({
+      title: 'error',
+      description: 'saveFailed',
+      type: 'error',
+    })
+    mocks.draft.isLoadingDraft = true
+    const loading = setup()
+    await act(async () =>
+      expect(await loading.result.current.handleImageUpload(file)).toBeNull(),
+    )
+    expect(mocks.uploadImage).not.toHaveBeenCalled()
+    mocks.draft.isLoadingDraft = false
+  })
+
+  it('does not return an image if the draft save is skipped', async () => {
+    mocks.draft.saveNow.mockResolvedValueOnce(null)
+    const { result } = setup()
+    await act(async () => {
+      expect(
+        await result.current.handleImageUpload(
+          new File(['scan'], 'scan.png', { type: 'image/png' }),
+        ),
+      ).toBeNull()
+    })
+    expect(result.current.form.getValues('image_url')).toBeNull()
+    expect(mocks.toastAdd).toHaveBeenLastCalledWith({
+      title: 'error',
+      description: 'saveFailed',
+      type: 'error',
+    })
   })
 
   it('creates a cheque with its initial status and runs success side effects', async () => {

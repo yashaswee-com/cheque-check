@@ -31,6 +31,7 @@ interface UseOcrExtractionOptions {
   watch: UseFormWatch<ChequeFormValues>
   setValue: UseFormSetValue<ChequeFormValues>
   handleImageUpload: (file: File) => Promise<string | null>
+  isLoadingDraft: boolean
 }
 
 /** Cheque-scan OCR extraction + fuzzy-matching of the extracted party/account/bank onto existing records. */
@@ -43,6 +44,7 @@ export function useOcrExtraction({
   watch,
   setValue,
   handleImageUpload,
+  isLoadingDraft,
 }: UseOcrExtractionOptions) {
   const t = useTranslations('Cheques')
   const tCommon = useTranslations('Common')
@@ -211,6 +213,7 @@ export function useOcrExtraction({
   }
 
   useEffect(() => {
+    if (!businessId || isLoadingDraft) return
     const handlePendingScan = async () => {
       const pendingFile = ScanStore.getFile()
       if (pendingFile) {
@@ -220,7 +223,7 @@ export function useOcrExtraction({
     }
     handlePendingScan()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [businessId, isLoadingDraft])
 
   useEffect(() => {
     if (imageUrlParam && !isExtracting) {

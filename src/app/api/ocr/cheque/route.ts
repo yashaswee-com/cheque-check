@@ -72,8 +72,17 @@ async function extractCheque(req: Request): Promise<Response> {
           const { data, error } = await supabase.storage
             .from(bucket)
             .createSignedUrl(path, expiresIn)
-          if (error) return null
-          return data?.signedUrl ?? null
+          if (error) {
+            logger.warn('[OcrController] Unable to sign cheque image', {
+              status: error.status,
+            })
+            return null
+          }
+          if (!data?.signedUrl) {
+            logger.warn('[OcrController] Storage returned no signed cheque URL')
+            return null
+          }
+          return data.signedUrl
         },
         consumeQuota: async () => {
           const { data, error } = await supabase.rpc('consume_user_quota', {
