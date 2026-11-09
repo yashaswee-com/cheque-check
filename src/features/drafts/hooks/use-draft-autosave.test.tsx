@@ -223,6 +223,10 @@ describe('useDraftAutosave', () => {
 
     expect(stoppedId).toBe('d1')
     expect(service.update).not.toHaveBeenCalled()
+    await act(async () => {
+      expect(await result.current.autosave.save(true)).toBeNull()
+    })
+    expect(service.update).not.toHaveBeenCalled()
   })
 
   it('returns the current draft without saving when there is no business', async () => {

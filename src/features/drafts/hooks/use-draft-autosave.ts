@@ -55,39 +55,44 @@ export function useDraftAutosave<TValues extends FieldValues>({
     timerRef.current = null
   }
 
-  const save = useCallback((): Promise<string | null> => {
-    clearTimer()
-    const run = queueRef.current.then(async () => {
-      const { businessId: currentBusinessId, toFields: convert } =
-        optionsRef.current
-      if (stoppedRef.current || !currentBusinessId) return draftIdRef.current
-
-      setStatus('saving')
-      const fields = convert(form.getValues() as Record<string, unknown>)
-      const service = draftServices[entity]
-      try {
-        const saved = await (draftIdRef.current
-          ? service.update(draftIdRef.current, fields)
-          : service.create(currentBusinessId, fields))
-
-        if (!draftIdRef.current) {
-          draftIdRef.current = saved.id
-          setDraftId(saved.id)
-          writeDraftIdToUrl(saved.id)
+  const save = useCallback(
+    (requireSave = false): Promise<string | null> => {
+      clearTimer()
+      const run = queueRef.current.then(async () => {
+        const { businessId: currentBusinessId, toFields: convert } =
+          optionsRef.current
+        if (stoppedRef.current || !currentBusinessId) {
+          return requireSave ? null : draftIdRef.current
         }
-        queryClient.setQueryData(draftKeys.detail(entity, saved.id), saved)
-        queryClient.invalidateQueries({ queryKey: draftKeys.all() })
-        setStatus('saved')
-        return saved.id
-      } catch (error) {
-        logger.error('Draft autosave failed', error)
-        setStatus('error')
-        throw error
-      }
-    })
-    queueRef.current = run.catch(() => undefined)
-    return run
-  }, [entity, form, queryClient])
+
+        setStatus('saving')
+        const fields = convert(form.getValues() as Record<string, unknown>)
+        const service = draftServices[entity]
+        try {
+          const saved = await (draftIdRef.current
+            ? service.update(draftIdRef.current, fields)
+            : service.create(currentBusinessId, fields))
+
+          if (!draftIdRef.current) {
+            draftIdRef.current = saved.id
+            setDraftId(saved.id)
+            writeDraftIdToUrl(saved.id)
+          }
+          queryClient.setQueryData(draftKeys.detail(entity, saved.id), saved)
+          queryClient.invalidateQueries({ queryKey: draftKeys.all() })
+          setStatus('saved')
+          return saved.id
+        } catch (error) {
+          logger.error('Draft autosave failed', error)
+          setStatus('error')
+          throw error
+        }
+      })
+      queueRef.current = run.catch(() => undefined)
+      return run
+    },
+    [entity, form, queryClient],
+  )
 
   const scheduleSave = useCallback(() => {
     if (stoppedRef.current) return

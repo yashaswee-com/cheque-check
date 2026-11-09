@@ -146,8 +146,12 @@ export function useDraftController<TValues extends FieldValues, TDraft>({
     draftId: autosave.draftId,
     status: autosave.status,
     hasUserChanges: autosave.hasUserChanges,
-    isLoadingDraft: !!initialDraftId && !loadFailed && draftQuery.isLoading,
+    isLoadingDraft:
+      !!initialDraftId &&
+      !loadFailed &&
+      (!draftQuery.isFetchedAfterMount || draftQuery.isLoading),
     setUserValue: autosave.setUserValue,
+    saveNow: () => autosave.save(true),
     saveDraft,
     saveDraftAndExit,
     navigateAfterSave,
