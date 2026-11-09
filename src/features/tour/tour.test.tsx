@@ -105,12 +105,13 @@ describe('first-run dashboard tour', () => {
   })
   it('supports keyboard Escape as a durable skip and traps focus', async () => {
     mount()
-    await screen.findByRole('dialog')
+    const dialog = await screen.findByRole('dialog')
+    await waitFor(() =>
+      expect(dialog.contains(document.activeElement)).toBe(true),
+    )
     const user = userEvent.setup()
     await user.tab()
-    expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(
-      true,
-    )
+    expect(dialog.contains(document.activeElement)).toBe(true)
     await user.keyboard('{Escape}')
     await waitFor(() =>
       expect(mocks.update).toHaveBeenCalledWith({ tour_status: 'skipped' }),
