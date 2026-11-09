@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   FilterPillSection,
+  PillScroller,
   filterPillClassName,
 } from '@/components/ui/pill-scroller'
 import {
@@ -292,10 +293,9 @@ export function DraftsBrowser() {
           </SheetContent>
         </Sheet>
       </div>
-      <div
-        role="group"
+      <PillScroller
         aria-label={t('typeFilter')}
-        className="flex gap-2 overflow-x-auto pb-1"
+        className="max-w-full"
         data-testid="drafts-type-pills"
       >
         {typeOptions.map((option) => {
@@ -318,7 +318,7 @@ export function DraftsBrowser() {
             </button>
           )
         })}
-      </div>
+      </PillScroller>
       {drafts.isLoading || (!businessId && !drafts.data) ? (
         <div
           role="status"

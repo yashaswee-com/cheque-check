@@ -20,9 +20,15 @@ function PillScroller({
   const measure = React.useCallback(() => {
     const element = elementRef.current
     if (!element) return
+    const bounds = element.getBoundingClientRect()
+    const children = Array.from(element.children)
     setOverflow({
-      left: element.scrollLeft > 1,
-      right: element.scrollLeft + element.clientWidth < element.scrollWidth - 1,
+      left: children.some(
+        (child) => child.getBoundingClientRect().left < bounds.left - 1,
+      ),
+      right: children.some(
+        (child) => child.getBoundingClientRect().right > bounds.right + 1,
+      ),
     })
   }, [])
   React.useEffect(() => {
@@ -44,18 +50,30 @@ function PillScroller({
     const element = elementRef.current
     element?.scrollBy({
       left: direction * element.clientWidth,
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        ? 'instant'
-        : 'smooth',
+      behavior:
+        document.documentElement.hasAttribute('data-reduce-motion') ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'instant'
+          : 'smooth',
     })
   }
   return (
-    <div className="relative min-w-0">
+    <div className="flex min-w-0 items-center gap-1">
+      {overflow.left && (
+        <button
+          type="button"
+          aria-label={t('scrollLeft')}
+          onClick={() => scroll(-1)}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-background shadow-sm"
+        >
+          <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" />
+        </button>
+      )}
       <div
         role="group"
         data-slot="pill-scroller"
         className={cn(
-          'scroll-fade-x scroll-fade-4 flex snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden',
+          'scroll-fade-x scroll-fade-4 flex min-w-0 flex-1 snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden',
           className,
         )}
         {...props}
@@ -71,25 +89,15 @@ function PillScroller({
       >
         {children}
       </div>
-      {(['left', 'right'] as const).map(
-        (side) =>
-          overflow[side] && (
-            <button
-              key={side}
-              type="button"
-              aria-label={t(side === 'left' ? 'scrollLeft' : 'scrollRight')}
-              onClick={() => scroll(side === 'left' ? -1 : 1)}
-              className={cn(
-                'absolute top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border bg-background shadow-sm',
-                side === 'left' ? 'left-0' : 'right-0',
-              )}
-            >
-              <HugeiconsIcon
-                icon={side === 'left' ? ArrowLeft01Icon : ArrowRight01Icon}
-                className="h-4 w-4"
-              />
-            </button>
-          ),
+      {overflow.right && (
+        <button
+          type="button"
+          aria-label={t('scrollRight')}
+          onClick={() => scroll(1)}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-background shadow-sm"
+        >
+          <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
+        </button>
       )}
     </div>
   )

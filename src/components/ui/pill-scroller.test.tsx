@@ -20,36 +20,130 @@ beforeEach(() => {
   )
   vi.stubGlobal('matchMedia', () => ({ matches: false }))
 })
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  document.documentElement.removeAttribute('data-reduce-motion')
+  vi.unstubAllGlobals()
+})
 
 describe('PillScroller', () => {
-  it('shows only overflow directions and scrolls a visible width', () => {
+  it('shows physical overflow directions and scrolls a visible width', () => {
     render(
       <PillScroller aria-label="Options">
         <button>One</button>
+        <button>Two</button>
       </PillScroller>,
     )
     const row = screen.getByRole('group', { name: 'Options' })
     const scrollBy = vi.fn()
+    const makeRect = (left: number, right: number) =>
+      ({
+        left,
+        right,
+        top: 0,
+        bottom: 20,
+        width: right - left,
+        height: 20,
+        x: left,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect
+    const children = Array.from(row.children)
     Object.defineProperties(row, {
       clientWidth: { value: 200 },
       scrollWidth: { value: 600 },
       scrollBy: { value: scrollBy },
+      getBoundingClientRect: { value: () => makeRect(0, 200) },
     })
-    expect(screen.queryByRole('button', { name: 'scrollRight' })).toBeNull()
+    vi.spyOn(children[0], 'getBoundingClientRect').mockReturnValue(
+      makeRect(0, 100),
+    )
+    const lastChildRect = vi
+      .spyOn(children[1], 'getBoundingClientRect')
+      .mockReturnValue(makeRect(350, 450))
     fireEvent.scroll(row)
     expect(screen.queryByRole('button', { name: 'scrollLeft' })).toBeNull()
+    const scrollRight = screen.getByRole('button', { name: 'scrollRight' })
+    expect(scrollRight).toBeVisible()
+    expect(scrollRight.parentElement).toBe(row.parentElement)
     fireEvent.click(screen.getByRole('button', { name: 'scrollRight' }))
     expect(scrollBy).toHaveBeenCalledWith({ left: 200, behavior: 'smooth' })
-    row.scrollLeft = 400
+    vi.spyOn(children[0], 'getBoundingClientRect').mockReturnValue(
+      makeRect(-250, -150),
+    )
+    lastChildRect.mockReturnValue(makeRect(100, 200))
     fireEvent.scroll(row)
     expect(screen.queryByRole('button', { name: 'scrollRight' })).toBeNull()
-    vi.stubGlobal('matchMedia', () => ({ matches: true }))
+    document.documentElement.setAttribute('data-reduce-motion', 'true')
     fireEvent.click(screen.getByRole('button', { name: 'scrollLeft' }))
     expect(scrollBy).toHaveBeenLastCalledWith({
       left: -200,
       behavior: 'instant',
     })
+  })
+  it('detects left-side overflow in right-to-left layouts', () => {
+    render(
+      <PillScroller aria-label="Options" dir="rtl">
+        <button>First</button>
+        <button>Last</button>
+      </PillScroller>,
+    )
+    const row = screen.getByRole('group', { name: 'Options' })
+    const scrollBy = vi.fn()
+    const makeRect = (left: number, right: number) =>
+      ({
+        left,
+        right,
+        top: 0,
+        bottom: 20,
+        width: right - left,
+        height: 20,
+        x: left,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect
+    const [first, last] = Array.from(row.children)
+    Object.defineProperties(row, {
+      clientWidth: { value: 200 },
+      scrollBy: { value: scrollBy },
+      getBoundingClientRect: { value: () => makeRect(0, 200) },
+    })
+    vi.spyOn(first, 'getBoundingClientRect').mockReturnValue(makeRect(140, 200))
+    vi.spyOn(last, 'getBoundingClientRect').mockReturnValue(makeRect(-120, -20))
+
+    fireEvent.scroll(row)
+
+    expect(screen.getByRole('button', { name: 'scrollLeft' })).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'scrollRight' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'scrollLeft' }))
+    expect(scrollBy).toHaveBeenCalledWith({ left: -200, behavior: 'smooth' })
+  })
+  it('hides chevrons when all pills fit in the viewport', () => {
+    render(
+      <PillScroller aria-label="Options">
+        <button>Only option</button>
+      </PillScroller>,
+    )
+    const row = screen.getByRole('group', { name: 'Options' })
+    const rect = {
+      left: 0,
+      right: 200,
+      top: 0,
+      bottom: 20,
+      width: 200,
+      height: 20,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    } as DOMRect
+    Object.defineProperty(row, 'getBoundingClientRect', {
+      value: () => rect,
+    })
+    vi.spyOn(row.children[0], 'getBoundingClientRect').mockReturnValue(rect)
+
+    fireEvent.scroll(row)
+
+    expect(screen.queryByRole('button', { name: 'scrollLeft' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'scrollRight' })).toBeNull()
   })
   it('renders a single horizontally scrollable row instead of a wrapping grid', () => {
     render(

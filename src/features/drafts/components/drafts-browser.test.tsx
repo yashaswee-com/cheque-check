@@ -165,6 +165,14 @@ describe('DraftsBrowser', () => {
   it('reads filters from the URL and highlights the selected type', () => {
     state.query = 'type=party&q=acme&sort=oldest&page=2'
     mount(<DraftsBrowser />)
+    expect(screen.getByTestId('drafts-type-pills')).toHaveAttribute(
+      'data-slot',
+      'pill-scroller',
+    )
+    expect(screen.getByTestId('drafts-type-pills')).toHaveClass(
+      'overflow-x-auto',
+      'scroll-fade-x',
+    )
     expect(state.pageRequest).toHaveBeenCalledWith('b1', {
       types: ['party'],
       search: 'acme',
