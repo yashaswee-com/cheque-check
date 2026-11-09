@@ -226,37 +226,38 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-8 pb-20">
-      {/* Profile Section */}
-      <Link
-        href="/profile"
-        className="flex items-center gap-4 rounded-lg bg-canvas-parchment p-5 transition-colors hover:bg-muted/40 active:bg-muted/50 dark:bg-surface-tile-1"
-      >
-        <EntityAvatar
-          name={profile?.name || t('user')}
-          imageUrl={profile?.avatar_url}
-          size="lg"
-          className={cn('h-14 w-14', premiumRing)}
-        />
-        <div className="flex-1">
-          <p className="font-semibold text-lg leading-tight">
-            {profile?.name || t('user')}
-          </p>
-          <p className="text-xs text-muted-foreground font-semibold">
-            {profile?.email ?? tpa('noEmail')}
-          </p>
-          {membershipDuration && (
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {t('memberFor', { duration: membershipDuration })}
+      <div className="space-y-4 sm:space-y-5">
+        <Link
+          href="/profile"
+          className="flex items-center gap-4 rounded-lg bg-canvas-parchment p-5 transition-colors hover:bg-muted/40 active:bg-muted/50 dark:bg-surface-tile-1"
+        >
+          <EntityAvatar
+            name={profile?.name || t('user')}
+            imageUrl={profile?.avatar_url}
+            size="lg"
+            className={cn('h-14 w-14', premiumRing)}
+          />
+          <div className="flex-1">
+            <p className="font-semibold text-lg leading-tight">
+              {profile?.name || t('user')}
             </p>
-          )}
-        </div>
-        <HugeiconsIcon
-          icon={ChevronRight}
-          className="h-4 w-4 text-muted-foreground opacity-30"
-        />
-      </Link>
+            <p className="text-xs text-muted-foreground font-semibold">
+              {profile?.email ?? tpa('noEmail')}
+            </p>
+            {membershipDuration && (
+              <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('memberFor', { duration: membershipDuration })}
+              </p>
+            )}
+          </div>
+          <HugeiconsIcon
+            icon={ChevronRight}
+            className="h-4 w-4 text-muted-foreground opacity-30"
+          />
+        </Link>
 
-      <UsageCard alwaysShow />
+        <UsageCard alwaysShow />
+      </div>
 
       <div className="space-y-8">
         {sections.map((section: SettingsSection) => (

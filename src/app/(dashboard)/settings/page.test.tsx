@@ -71,12 +71,13 @@ afterEach(() => {
 })
 
 describe('settings page', () => {
-  it('places the always-visible usage card directly under the profile card', () => {
+  it('keeps the always-visible usage card close to the profile card', () => {
     renderPage()
     const profileLink = document.querySelector('a[href="/profile"]')!
     const usage = screen.getByTestId('usage-card')
     expect(usage).toHaveAttribute('data-always-show', 'true')
-    expect(profileLink.nextElementSibling).toBe(usage)
+    expect(profileLink.parentElement).toBe(usage.parentElement)
+    expect(profileLink.parentElement).toHaveClass('space-y-4')
   })
 
   it('renders every settings section, its links, and the logout action', () => {
