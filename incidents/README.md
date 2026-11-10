@@ -12,4 +12,5 @@ Incident records are organized by product feature. They preserve operator-report
 
 ## Notifications
 
+- [Sample voice test dispatcher unauthorized — 8 November 2026](notifications/2026-11-08-sample-voice-test-dispatcher-unauthorized.md)
 - [Signup push reconciliation TypeError — 10 November 2026](notifications/2026-11-10-signup-push-reconciliation-error.md)

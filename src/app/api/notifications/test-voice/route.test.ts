@@ -243,18 +243,34 @@ describe('test voice route', () => {
     expect(await response.json()).toEqual({ error: 'Carrier unavailable' })
   })
 
-  it('logs and returns an explicit failure when dispatcher call fails', async () => {
-    mocks.dispatcherResponse = { ok: false, status: 503 }
+  it('logs a rejected immediate dispatch and reports the still-pending job as queued', async () => {
+    mocks.dispatcherResponse = { ok: false, status: 401 }
+    mocks.job = { status: 'pending', last_error: null }
 
     const response = await POST(request())
 
-    expect(response.status).toBe(500)
-    expect(await response.json()).toEqual({
-      error: 'Unable to trigger test call',
-    })
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ success: true, queued: true })
+    const inserted = mocks.insert.mock.calls[0][0]
     expect(mocks.error).toHaveBeenCalledWith(
-      'Failed to trigger test voice call',
-      expect.objectContaining({ message: 'Dispatcher returned 503' }),
+      'Immediate test voice dispatch failed',
+      expect.objectContaining({ message: 'Dispatcher returned 401' }),
+      { jobId: inserted.id },
+    )
+  })
+
+  it('reports the job state after a dispatcher network failure', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new TypeError('fetch failed'))
+    mocks.job = { status: 'failed', last_error: 'Carrier unavailable' }
+
+    const response = await POST(request())
+
+    expect(response.status).toBe(502)
+    expect(await response.json()).toEqual({ error: 'Carrier unavailable' })
+    expect(mocks.error).toHaveBeenCalledWith(
+      'Immediate test voice dispatch failed',
+      expect.objectContaining({ message: 'fetch failed' }),
+      expect.any(Object),
     )
   })
 })

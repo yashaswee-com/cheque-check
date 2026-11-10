@@ -13,6 +13,26 @@ const RATE_LIMIT_REQUESTS = 1
 const RATE_LIMIT_WINDOW_SECONDS = 300
 const QUOTA_EXHAUSTED_ERROR = 'Voice reminder quota exhausted'
 
+async function dispatchNow(
+  serviceRoleKey: string,
+  userId: string,
+  jobId: string,
+) {
+  const response = await fetch(
+    `${publicEnv.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notifications-dispatcher`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({ userId, jobIds: [jobId] }),
+      signal: AbortSignal.timeout(60000),
+    },
+  )
+  if (!response.ok) throw new Error(`Dispatcher returned ${response.status}`)
+}
+
 async function testVoice() {
   try {
     const supabase = await createClient()
@@ -80,22 +100,12 @@ async function testVoice() {
 
     if (insertError) throw insertError
 
-    const dispatchResponse = await fetch(
-      `${publicEnv.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notifications-dispatcher`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${adminEnv.SUPABASE_SERVICE_ROLE_KEY}`,
-        },
-        body: JSON.stringify({ userId: user.id, jobIds: [jobId] }),
-        signal: AbortSignal.timeout(60000),
-      },
+    // The committed job remains claimable by the scheduled dispatcher, so a
+    // failed immediate dispatch is reported but the job's state decides the response.
+    await dispatchNow(adminEnv.SUPABASE_SERVICE_ROLE_KEY, user.id, jobId).catch(
+      (error) =>
+        logger.error('Immediate test voice dispatch failed', error, { jobId }),
     )
-
-    if (!dispatchResponse.ok) {
-      throw new Error(`Dispatcher returned ${dispatchResponse.status}`)
-    }
 
     const { data: job, error: jobError } = await admin
       .from(TABLES.NOTIFICATION_JOBS)
