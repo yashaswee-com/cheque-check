@@ -122,4 +122,10 @@ describe('explicit browser push lifecycle', () => {
     expect(mocks.register).not.toHaveBeenCalled()
     expect(localStorage.getItem('chequecheck-push-owner')).toBeNull()
   })
+  it('skips reconciliation when the service worker has no Push API', async () => {
+    getRegistration.mockResolvedValueOnce({})
+    await expect(pushService.reconcile(null)).resolves.toBeUndefined()
+    expect(mocks.owns).not.toHaveBeenCalled()
+    expect(unsubscribe).not.toHaveBeenCalled()
+  })
 })

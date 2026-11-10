@@ -35,7 +35,10 @@ async function existing() {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator))
     return null
   const worker = await navigator.serviceWorker.getRegistration('/')
-  return worker ? worker.pushManager.getSubscription() : null
+  const pushManager = worker?.pushManager
+  if (!pushManager || typeof pushManager.getSubscription !== 'function')
+    return null
+  return pushManager.getSubscription()
 }
 
 export const pushService = {
