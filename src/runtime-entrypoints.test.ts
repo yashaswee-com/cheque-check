@@ -62,6 +62,8 @@ describe('Next runtime entry points', () => {
       '/monitoring/events',
       '/_next/static/chunk.js',
       '/sw.js',
+      '/offline.html',
+      '/offline.js',
       '/logo.png',
     ])
       expect(matcher.test(path)).toBe(false)

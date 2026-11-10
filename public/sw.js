@@ -1,19 +1,51 @@
 // Service Worker for ChequeCheck
-// This file is currently minimal to satisfy PWA installability requirements.
-// It can be extended later with caching strategies.
-
-const CACHE_NAME = 'cheque-check-v1';
+const OFFLINE_CACHE_PREFIX = 'cheque-check-offline-';
+const OFFLINE_CACHE = `${OFFLINE_CACHE_PREFIX}v1`;
+const OFFLINE_ASSETS = ['/offline.html', '/offline.js'];
 
 self.addEventListener('install', (event) => {
-  // Use skipWaiting to ensure the new service worker takes over immediately
-  self.skipWaiting();
-  console.log('Service Worker: Installed');
+  event.waitUntil((async () => {
+    const cache = await caches.open(OFFLINE_CACHE);
+    await cache.addAll(OFFLINE_ASSETS);
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activated');
-  // Clean up old caches if needed in the future
-  event.waitUntil(clients.claim());
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys
+      .filter((key) => key.startsWith(OFFLINE_CACHE_PREFIX) && key !== OFFLINE_CACHE)
+      .map((key) => caches.delete(key)));
+    await clients.claim();
+  })());
+});
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+  if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (url.pathname === '/offline.js') {
+    event.respondWith((async () => {
+      const cache = await caches.open(OFFLINE_CACHE);
+      return (await cache.match('/offline.js')) || fetch(request);
+    })());
+    return;
+  }
+  // Never intercept API calls, assets, or Next.js RSC/prefetch requests.
+  if (request.mode !== 'navigate' || /^\/(?:api|monitoring|_next)(?:\/|$)/.test(url.pathname)) return;
+  event.respondWith((async () => {
+    try {
+      return await fetch(request);
+    } catch (error) {
+      if (request.signal.aborted) throw error;
+      const cache = await caches.open(OFFLINE_CACHE);
+      const fallback = await cache.match('/offline.html');
+      if (fallback) return fallback;
+      console.error('Offline fallback is unavailable');
+      throw error;
+    }
+  })());
 });
 
 self.addEventListener('push', (event) => {
@@ -50,7 +82,3 @@ self.addEventListener('notificationclick', (event) => {
     await clients.openWindow(target);
   })());
 });
-
-// No fetch handler: without a caching strategy, intercepting requests only
-// turns aborted or failed fetches (RSC prefetches, Turnstile, Supabase) into
-// FetchEvent network errors. Add one only alongside a real caching strategy.

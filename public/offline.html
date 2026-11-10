@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#172d24" />
+    <title>Offline | ChequeCheck</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+        background: #f7f8f5;
+        color: #172d24;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 1.5rem;
+      }
+      main {
+        width: 100%;
+        max-width: 32rem;
+        padding: clamp(1.25rem, 5vw, 2.5rem);
+        border: 1px solid #768b7f;
+        border-radius: 1rem;
+      }
+      .brand {
+        font-weight: 750;
+        letter-spacing: -0.03em;
+        font-size: 1.25rem;
+      }
+      h1 {
+        font-size: clamp(1.75rem, 6vw, 2.5rem);
+        line-height: 1.2;
+        margin-top: 2rem;
+      }
+      p {
+        line-height: 1.6;
+      }
+      label {
+        display: block;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      select,
+      button,
+      a {
+        font: inherit;
+      }
+      select,
+      button {
+        min-height: 2.75rem;
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid currentColor;
+      }
+      button {
+        margin-top: 1rem;
+        background: #172d24;
+        color: #fff;
+        cursor: pointer;
+      }
+      select {
+        max-width: 100%;
+        background: transparent;
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 3px solid #378a62;
+        outline-offset: 4px;
+      }
+      a {
+        color: inherit;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          background: #14221b;
+          color: #eef5ee;
+        }
+        button {
+          background: #d3efdc;
+          color: #14221b;
+        }
+      }
+    </style>
+    <script src="/offline.js" defer></script>
+  </head>
+  <body>
+    <main aria-labelledby="offline-title">
+      <div class="brand">ChequeCheck</div>
+      <label id="language-label" for="offline-language">Language</label>
+      <select id="offline-language">
+        <option value="en" lang="en">English</option>
+        <option value="hi" lang="hi">हिन्दी</option>
+        <option value="hi-en" lang="en">Hinglish</option>
+      </select>
+      <h1 id="offline-title">You're offline</h1>
+      <p id="offline-description">
+        ChequeCheck could not reach the network. Check your connection, then
+        retry to return to the page you requested.
+      </p>
+      <p id="offline-status" role="status" aria-live="polite"></p>
+      <p id="offline-privacy">
+        Your account and cheque data are not stored on this offline page.
+        Changes cannot be saved here.
+      </p>
+      <button id="offline-retry" type="button">Retry</button>
+      <noscript
+        ><p>
+          JavaScript is disabled. <a href="">Retry this page</a> after
+          reconnecting.
+        </p></noscript
+      >
+    </main>
+  </body>
+</html>

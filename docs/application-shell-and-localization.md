@@ -6,7 +6,7 @@ The authenticated shell centralizes navigation, onboarding, profile preferences,
 
 - Shared route classification lives in the navigation route registry ([route definitions](../src/lib/navigation-routes.ts#L1-L77)).
 - Locale resolution uses the locale cookie with English fallback ([request locale](../src/i18n/request.ts#L1-L17)).
-- The service worker supports push handling but does not cache application data for offline use ([worker](../public/sw.js#L1-L39)).
+- The service worker supports push handling and a generic offline navigation fallback, but never caches application data ([worker](../public/sw.js)).
 - Browser installation prompts are explicit and separate from push permission ([PWA registration](../src/components/pwa-registrar.tsx#L1-L28), [manifest](../public/site.webmanifest#L1-L17)).
 
 ## Shell and route policy
@@ -19,6 +19,12 @@ The app resolves the locale from the request and falls back to English if the co
 
 ## PWA behavior
 
-The app manifest defines its install metadata ([manifest](../public/site.webmanifest#L1-L17)). The registrar uses browser install support and explicit user interaction before requesting installation ([registrar](../src/components/pwa-registrar.tsx#L1-L28)). The service worker handles push events/clicks but contains no fetch caching handler; offline authenticated data caching is not implemented in the checked-in worker ([service worker](../public/sw.js#L1-L39)).
+The app manifest defines its install metadata ([manifest](../public/site.webmanifest#L1-L17)). The registrar uses browser install support and explicit user interaction before requesting installation ([registrar](../src/components/pwa-registrar.tsx#L1-L28)).
+
+The [service worker](../public/sw.js) precaches only the generic [offline document](../public/offline.html) and its [script](../public/offline.js). Failed same-origin GET document navigations show that fallback without redirecting the requested URL. Retry reloads that URL; visiting the fallback document directly retries the public homepage. Online/offline events update an accessible status without automatically reloading. Browser connectivity reports are advisory, not a server-readiness check.
+
+The standalone page offers English, Hindi, and Hinglish, initially selected from the browser language. It does not read app cookies, profile preferences, or storage. Offline assets bypass authentication middleware so signed-out users can install the fallback too. Updating the fallback assets requires bumping the worker's offline cache version.
+
+Only a successfully installed and activated controlling service worker provides this fallback. A first visit while offline, unsupported browsers, blocked service workers, or cleared/evicted caches are not covered. A failed precache does not activate the new worker. Already-loaded pages and forms remain in place; API, RSC/client-side navigation, prefetch, and cross-origin requests retain existing behavior. No account/cheque pages or user records are cached and no offline edits are queued. HTTP error responses are preserved rather than relabeled as offline. [Worker tests](../scripts/test/offline-service-worker.test.ts) and [page tests](../scripts/test/offline-page.test.ts) cover these boundaries and manual recovery.
 
 Installation and push permission are separate browser capabilities ([registrar](../src/components/pwa-registrar.tsx#L1-L28), [push service](../src/features/notifications/services/push.service.ts#L13-L57)). See [notifications](notifications.md) for push registration and delivery behavior.
