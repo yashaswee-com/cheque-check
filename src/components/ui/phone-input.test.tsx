@@ -11,10 +11,14 @@ import messages from '../../../messages/en.json'
 import { PhoneInput } from './phone-input'
 import { renderToString } from 'react-dom/server'
 
+const profile = vi.hoisted(() => ({
+  useProfile: vi.fn(() => ({ profile: { time_zone: 'Asia/Kolkata' } })),
+}))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
-  useProfile: () => ({ profile: { time_zone: 'Asia/Kolkata' } }),
+  useProfile: profile.useProfile,
 }))
 beforeEach(() => {
+  vi.clearAllMocks()
   vi.stubGlobal(
     'ResizeObserver',
     class {
@@ -95,4 +99,35 @@ it('keeps an unset phone value empty without reporting an edit', () => {
   )
   expect(screen.getByRole('textbox')).toHaveValue('')
   expect(change).not.toHaveBeenCalled()
+})
+
+it('locks the country for public auth without reading the user profile', () => {
+  const change = vi.fn()
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <label htmlFor="auth-phone">Phone</label>
+      <PhoneInput
+        id="auth-phone"
+        fixedCountry="IN"
+        onChange={change}
+        aria-invalid
+        aria-describedby="phone-error"
+        data-testid="auth-phone"
+      />
+      <p id="phone-error">Check your phone number</p>
+    </NextIntlClientProvider>,
+  )
+
+  expect(profile.useProfile).not.toHaveBeenCalled()
+  const country = screen.getByRole('button', { name: 'Select country' })
+  expect(country).toBeDisabled()
+  expect(country).toHaveTextContent('+91')
+  const input = screen.getByLabelText('Phone')
+  expect(input).toBe(screen.getByTestId('auth-phone'))
+  expect(input).toHaveAttribute('type', 'tel')
+  expect(input).toHaveAttribute('autocomplete', 'tel')
+  expect(input).toHaveAttribute('aria-invalid', 'true')
+  expect(input).toHaveAccessibleDescription('Check your phone number')
+  fireEvent.change(input, { target: { value: '9876543210' } })
+  expect(change).toHaveBeenLastCalledWith('+919876543210')
 })

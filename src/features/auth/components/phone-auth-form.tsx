@@ -8,6 +8,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PhoneInput } from '@/components/ui/phone-input'
 import { publicEnv } from '@/lib/env/client'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
@@ -255,25 +256,17 @@ export function PhoneAuthForm({
             className="flex items-center gap-2"
             data-testid="phone-auth-number-field"
           >
-            <span
-              className="flex h-12 shrink-0 items-center rounded-sm bg-canvas-parchment px-3 text-sm font-medium"
-              aria-label={t('countryCode')}
-            >
-              +91
-            </span>
-            <Input
+            <PhoneInput
               id={phoneId}
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel-national"
+              fixedCountry="IN"
               data-testid="phone-auth-number-input"
               placeholder={t('phonePlaceholder')}
               value={national}
-              maxLength={16}
-              onChange={(event) => {
-                setNational(event.target.value)
+              onChange={(value) => {
+                setNational(value)
                 setError(null)
               }}
+              disabled={pending !== null}
               aria-invalid={Boolean(error)}
               aria-describedby={error ? errorId : `${phoneId}-hint`}
               className="h-12 rounded-sm border-none bg-canvas-parchment"

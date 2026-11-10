@@ -56,6 +56,42 @@ function renderForm() {
 }
 
 describe('PhoneAuthForm signup name', () => {
+  it.each(['login', 'signup', 'link'] as const)(
+    'uses the India-locked shared input for %s and accepts formatted pasted numbers',
+    async (purpose) => {
+      mocks.sendPhoneOtp.mockResolvedValue({
+        ok: true,
+        phone: '+919876543210',
+        resendAfterSeconds: 60,
+      })
+      const user = userEvent.setup()
+      render(
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <PhoneAuthForm purpose={purpose} onVerified={vi.fn()} />
+        </NextIntlClientProvider>,
+      )
+      if (purpose === 'signup') {
+        await user.type(
+          screen.getByTestId('phone-auth-name-input'),
+          'Test User',
+        )
+      }
+      const country = screen.getByRole('button', {
+        name: messages.Common.selectCountry,
+      })
+      expect(country).toBeDisabled()
+      expect(country).toHaveTextContent('+91')
+      await user.click(screen.getByLabelText(messages.PhoneAuth.phoneLabel))
+      await user.paste('+91 98765 43210')
+      await user.click(screen.getByTestId('phone-auth-send-button'))
+      await screen.findByTestId('phone-auth-code-input')
+      expect(mocks.sendPhoneOtp).toHaveBeenCalledOnce()
+      expect(mocks.sendPhoneOtp).toHaveBeenCalledWith(
+        expect.objectContaining({ phone: '+919876543210', purpose }),
+      )
+    },
+  )
+
   it.each([
     'invalid_request',
     'invalid_phone',
@@ -222,6 +258,10 @@ describe('PhoneAuthForm signup name', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       messages.PhoneAuth.errors.unsupported_country,
     )
+    expect(mocks.sendPhoneOtp).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByTestId('phone-auth-number-input'), {
+      target: { value: '' },
+    })
     fireEvent.change(screen.getByTestId('phone-auth-number-input'), {
       target: { value: '9876543210' },
     })
@@ -306,7 +346,7 @@ describe('PhoneAuthForm signup name', () => {
       screen.getByRole('button', { name: messages.PhoneAuth.editNumber }),
     )
     expect(screen.getByTestId('phone-auth-number-input')).toHaveValue(
-      '9876543210',
+      '+91 98765 43210',
     )
   })
 

@@ -45,6 +45,14 @@ Google/Facebook buttons.
 
 ## Controls
 
+All editable phone fields use the shared `PhoneInput`. Login, signup, and
+login-phone linking lock its country selector to India (+91), independently
+of profile or browser timezone. These public forms do not load a profile to
+choose a country. Entity, onboarding, and voice-reminder fields retain their
+international country selectors and existing save-time normalization; no
+stored phone numbers are bulk-migrated. Backend OTP restrictions remain
+unchanged, including rejection of non-Indian numbers.
+
 | Layer         | Control                                                                 |
 | ------------- | ----------------------------------------------------------------------- |
 | Route         | +91 only, 10-digit mobile starting 6-9, normalised to E.164             |

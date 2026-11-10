@@ -153,9 +153,24 @@ export interface PhoneInputProps {
   disabled?: boolean
   className?: string
   'aria-invalid'?: boolean
+  'aria-describedby'?: string
+  'data-testid'?: string
+  fixedCountry?: Country
 }
 
-export function PhoneInput({
+export function PhoneInput(props: PhoneInputProps) {
+  if (props.fixedCountry) {
+    return <PhoneInputField {...props} defaultCountry={props.fixedCountry} />
+  }
+  return <ProfilePhoneInput {...props} />
+}
+
+function ProfilePhoneInput(props: PhoneInputProps) {
+  const defaultCountry = useDefaultPhoneCountry()
+  return <PhoneInputField {...props} defaultCountry={defaultCountry} />
+}
+
+function PhoneInputField({
   id,
   value,
   onChange,
@@ -164,8 +179,11 @@ export function PhoneInput({
   disabled,
   className,
   'aria-invalid': ariaInvalid,
-}: PhoneInputProps) {
-  const defaultCountry = useDefaultPhoneCountry()
+  'aria-describedby': ariaDescribedBy,
+  'data-testid': testId,
+  fixedCountry,
+  defaultCountry,
+}: PhoneInputProps & { defaultCountry: Country }) {
   const isLegacy = !!value && !value.startsWith('+')
   const normalized = isLegacy
     ? toE164(value, defaultCountry)
@@ -180,12 +198,17 @@ export function PhoneInput({
     <PhoneInputBase
       id={id}
       defaultCountry={defaultCountry}
+      countries={fixedCountry ? [fixedCountry] : undefined}
+      addInternationalOption={!fixedCountry}
+      countrySelectProps={{ readOnly: Boolean(fixedCountry) }}
       value={normalized}
       onChange={(v) => onChange(v ?? '')}
       onBlur={onBlur}
       placeholder={placeholder}
       disabled={disabled}
       aria-invalid={ariaInvalid}
+      aria-describedby={ariaDescribedBy}
+      data-testid={testId}
       countrySelectComponent={CountrySelect}
       inputComponent={NumberInput}
       className={cn(
