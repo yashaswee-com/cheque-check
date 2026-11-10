@@ -43,6 +43,8 @@ import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
 import { EditableAvatar } from '@/components/ui/editable-avatar'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { tagService } from '@/features/tags/services/tag.service'
+import { logger } from '@/lib/logger'
+import type { Tag } from '@/types'
 
 const BankSelector = dynamic(
   () => import('@/components/bank-selector').then((mod) => mod.BankSelector),
@@ -71,6 +73,26 @@ export default function CreateAccountPage() {
     auto: searchParams.get('auto') === 'true',
   }))
   const [tagIds, setTagIds] = useState<string[]>([])
+  const [createdAccountId, setCreatedAccountId] = useState<string | null>(null)
+  const [tagSaveState, setTagSaveState] = useState<
+    'idle' | 'pending' | 'error'
+  >('idle')
+  const saveAccountTags = async (accountId: string) => {
+    setTagSaveState('pending')
+    try {
+      const current = await tagService.getForEntity('account', accountId)
+      await tagService.syncForEntity(
+        'account',
+        accountId,
+        current.map((tag: Tag) => tag.id),
+        tagIds,
+      )
+      setTagSaveState('idle')
+    } catch (error) {
+      logger.error('Created account tags could not be saved', error)
+      setTagSaveState('error')
+    }
+  }
 
   const {
     form,
@@ -86,15 +108,8 @@ export default function CreateAccountPage() {
     returnTo,
     draftId: initialDraftId,
     onCreated: async (account) => {
-      await Promise.all(
-        tagIds.map((tagId) =>
-          tagService.attach({
-            tag_id: tagId,
-            entity_type: 'account',
-            entity_id: account.id,
-          }),
-        ),
-      )
+      setCreatedAccountId(account.id)
+      await saveAccountTags(account.id)
     },
   })
 
@@ -114,6 +129,20 @@ export default function CreateAccountPage() {
     if (prefill.auto)
       setValue('notes', 'Automatically Generated from Cheque Scan')
   }, [initialDraftId, prefill, setValue])
+
+  if (isSuccess && createdAccountId && tagSaveState !== 'idle') {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <TagSelector
+          businessId={activeBusiness?.id}
+          value={tagIds}
+          onChange={setTagIds}
+          saveState={tagSaveState}
+          onRetrySave={() => void saveAccountTags(createdAccountId)}
+        />
+      </div>
+    )
+  }
 
   if (isSuccess) {
     return (
@@ -402,6 +431,12 @@ export default function CreateAccountPage() {
                 value={tagIds}
                 onChange={setTagIds}
                 placeholder={tc('addTags')}
+                saveState={tagSaveState}
+                onRetrySave={
+                  createdAccountId
+                    ? () => void saveAccountTags(createdAccountId)
+                    : undefined
+                }
               />
             </div>
 

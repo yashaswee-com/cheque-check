@@ -85,6 +85,32 @@ describe('useEntityTags', () => {
     expect(service.getForEntity).not.toHaveBeenCalled()
     expect(service.syncForEntity).not.toHaveBeenCalled()
   })
+
+  it('shows a failed tag save and lets the user retry only that save', async () => {
+    const { result } = setup(() => useEntityTagsDraft('party', 'party-1'))
+    await waitFor(() =>
+      expect(result.current.tagIds).toEqual(['tag-a', 'tag-b']),
+    )
+    act(() => result.current.setTagIds(['tag-b']))
+    service.syncForEntity.mockRejectedValueOnce(new Error('Offline'))
+
+    await act(async () => {
+      expect(await result.current.commit()).toBe(false)
+    })
+    expect(result.current.saveState).toBe('error')
+
+    await act(async () => {
+      expect(await result.current.retry()).toBe(true)
+    })
+    expect(result.current.saveState).toBe('idle')
+    expect(service.syncForEntity).toHaveBeenCalledTimes(2)
+    expect(service.syncForEntity).toHaveBeenLastCalledWith(
+      'party',
+      'party-1',
+      ['tag-a', 'tag-b'],
+      ['tag-b'],
+    )
+  })
 })
 
 describe('useEntityTagsDraft', () => {

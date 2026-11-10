@@ -29,7 +29,8 @@ const mocks = vi.hoisted(() => ({
   exit: vi.fn(),
   continue: vi.fn(),
   toast: vi.fn(),
-  attach: vi.fn(),
+  getTags: vi.fn(),
+  syncTags: vi.fn(),
   upload: vi.fn(),
   validateImage: vi.fn(),
   requireAccess: vi.fn(),
@@ -186,6 +187,8 @@ vi.mock('@/features/tags/hooks/use-entity-tags', () => ({
       tagIds,
       setTagIds,
       commit: mocks.commit,
+      retry: vi.fn().mockResolvedValue(true),
+      saveState: 'idle',
       isDirty: tagIds.length > 0,
     }
   },
@@ -193,24 +196,45 @@ vi.mock('@/features/tags/hooks/use-entity-tags', () => ({
 vi.mock('@/features/parties/hooks/use-party-draft-tags', () => ({
   usePartyDraftTags: () => {
     const [tagIds, setTagIds] = useState<string[]>([])
-    return { tagIds, setTagIds, flush: mocks.flush }
+    return {
+      tagIds,
+      setTagIds,
+      flush: mocks.flush,
+      retry: vi.fn().mockResolvedValue(true),
+      saveState: 'idle',
+    }
   },
 }))
 vi.mock('@/features/tags/components/tag-selector', () => ({
   TagSelector: ({
     value,
     onChange,
+    saveState,
+    onRetrySave,
   }: {
     value: string[]
     onChange: (ids: string[]) => void
+    saveState?: 'idle' | 'pending' | 'error'
+    onRetrySave?: () => void
   }) => (
-    <button type="button" onClick={() => onChange(['tag-one', 'tag-two'])}>
-      Choose tags ({value.length})
-    </button>
+    <>
+      <button type="button" onClick={() => onChange(['tag-one', 'tag-two'])}>
+        Choose tags ({value.length})
+      </button>
+      {saveState === 'pending' && <p role="status">Saving tags</p>}
+      {saveState === 'error' && (
+        <div role="alert">
+          Could not save tags
+          <button type="button" onClick={onRetrySave}>
+            Retry tag save
+          </button>
+        </div>
+      )}
+    </>
   ),
 }))
 vi.mock('@/features/tags/services/tag.service', () => ({
-  tagService: { attach: mocks.attach },
+  tagService: { getForEntity: mocks.getTags, syncForEntity: mocks.syncTags },
 }))
 vi.mock('@/features/monetization/components/premium-gate', () => ({
   usePremiumAction: () => ({ requireAccess: mocks.requireAccess }),
@@ -338,10 +362,11 @@ beforeEach(() => {
   errors = {}
   parties = []
   mocks.trigger.mockResolvedValue(true)
-  mocks.commit.mockResolvedValue(undefined)
+  mocks.commit.mockResolvedValue(true)
   mocks.flush.mockResolvedValue(undefined)
   mocks.saveDraft.mockResolvedValue(undefined)
-  mocks.attach.mockResolvedValue(undefined)
+  mocks.getTags.mockResolvedValue([])
+  mocks.syncTags.mockResolvedValue(undefined)
   mocks.upload.mockResolvedValue('uploaded-avatar')
   mocks.validateImage.mockResolvedValue(undefined)
   mocks.requireAccess.mockReturnValue(true)
@@ -579,12 +604,13 @@ describe('account creation page', () => {
     change('ifsc_code', 'TEST0000001')
     fireEvent.click(screen.getByRole('button', { name: 'Choose tags (0)' }))
     fireEvent.click(screen.getByTestId('account-submit-button'))
-    await waitFor(() => expect(mocks.attach).toHaveBeenCalledTimes(2))
-    expect(mocks.attach).toHaveBeenCalledWith({
-      tag_id: 'tag-one',
-      entity_type: 'account',
-      entity_id: 'created',
-    })
+    await waitFor(() => expect(mocks.syncTags).toHaveBeenCalledOnce())
+    expect(mocks.syncTags).toHaveBeenCalledWith(
+      'account',
+      'created',
+      [],
+      ['tag-one', 'tag-two'],
+    )
     expect(mocks.submit).toHaveBeenCalledWith(
       expect.objectContaining({
         bank_id: 'bank',
@@ -850,16 +876,11 @@ describe.each([
     expect(mocks.delete).toHaveBeenCalledOnce()
   })
   it('does not save the entity when committing tags fails', async () => {
-    mocks.commit.mockRejectedValueOnce(new Error('Tag persistence failed'))
+    mocks.commit.mockResolvedValueOnce(false)
     const { container } = renderPage(<Component />)
     makeDirty()
     fireEvent.submit(container.querySelector('form')!)
-    await waitFor(() =>
-      expect(mocks.toast).toHaveBeenCalledWith({
-        title: messages.Common.error,
-        type: 'error',
-      }),
-    )
+    await waitFor(() => expect(mocks.commit).toHaveBeenCalledOnce())
     expect(mocks.submit).not.toHaveBeenCalled()
   })
   it('lets the form hook handle invalid fields without committing tags', async () => {
@@ -883,7 +904,7 @@ describe.each([
     expect(saveButton()).toHaveAttribute('aria-busy', 'true')
   })
   it('shows the spinner throughout tag persistence and prevents repeated form submissions', async () => {
-    const task = Promise.withResolvers<void>()
+    const task = Promise.withResolvers<boolean>()
     mocks.commit.mockReturnValueOnce(task.promise)
     const { container } = renderPage(<Component />)
     const form = container.querySelector('form')!
@@ -896,7 +917,7 @@ describe.each([
     fireEvent.submit(form)
     expect(mocks.commit).toHaveBeenCalledOnce()
     expect(mocks.submit).not.toHaveBeenCalled()
-    task.resolve()
+    task.resolve(true)
     await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
     await waitFor(() => expect(button).toBeEnabled())
   })

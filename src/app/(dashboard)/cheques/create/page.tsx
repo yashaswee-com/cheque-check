@@ -73,6 +73,7 @@ import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useDraftTags } from '@/features/tags/hooks/use-draft-tags'
 import { useOcrExtraction } from '@/features/cheques/hooks/use-ocr-extraction'
 import { DraftLeaveDialog, DraftSaveFab } from '@/features/drafts'
+import { logger } from '@/lib/logger'
 
 export default function CreateChequePage() {
   const validationMessage = useValidationMessage()
@@ -89,6 +90,7 @@ export default function CreateChequePage() {
   // Read once: autosave later writes a new draftId into the URL for the same form.
   const [initialDraftId] = useState(() => searchParams.get('draftId'))
   const photoInputRef = useRef<HTMLInputElement>(null)
+  const [createdChequeId, setCreatedChequeId] = useState<string | null>(null)
   const { activeBusiness } = useBusiness()
   const businessId = activeBusiness?.id
   const { profile } = useProfile()
@@ -112,7 +114,12 @@ export default function CreateChequePage() {
     draftId: initialDraftId,
     beforePublish: (id) => draftTags.flush(id),
     onCreated: async (cheque) => {
-      await draftTags.flush(cheque.id)
+      setCreatedChequeId(cheque.id)
+      try {
+        await draftTags.flush(cheque.id)
+      } catch (error) {
+        logger.error('Created cheque tags could not be saved', error)
+      }
     },
   })
   const draftTags = useDraftTags(draft.draftId)
@@ -291,6 +298,20 @@ export default function CreateChequePage() {
       </div>
     </div>
   )
+
+  if (isSuccess && draftTags.saveState !== 'idle' && createdChequeId) {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <TagSelector
+          businessId={businessId}
+          value={tagIds}
+          onChange={setTagIds}
+          saveState={draftTags.saveState}
+          onRetrySave={() => void draftTags.retry(createdChequeId)}
+        />
+      </div>
+    )
+  }
 
   if (isSuccess) {
     return (
@@ -677,6 +698,8 @@ export default function CreateChequePage() {
                 businessId={businessId}
                 value={tagIds}
                 onChange={setTagIds}
+                saveState={draftTags.saveState}
+                onRetrySave={() => void draftTags.retry()}
                 placeholder={t('addTags')}
               />
             </div>

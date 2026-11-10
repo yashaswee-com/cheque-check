@@ -43,13 +43,19 @@ beforeEach(() => {
   ]
 })
 
-function selector(onChange = vi.fn()) {
+function selector(
+  onChange = vi.fn(),
+  saveState: 'idle' | 'pending' | 'error' = 'idle',
+  onRetrySave = vi.fn(),
+) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <TagSelector
         businessId="business"
         value={['tag-1']}
         onChange={onChange}
+        saveState={saveState}
+        onRetrySave={onRetrySave}
       />
     </NextIntlClientProvider>,
   )
@@ -143,6 +149,24 @@ describe('Tag Selector modal backdrop', () => {
     expect(
       await screen.findByText(messages.SharedUI.noTags),
     ).toBeInTheDocument()
+  })
+  it('shows a pending pill and prevents tag changes while saving', () => {
+    selector(vi.fn(), 'pending')
+    expect(screen.getByRole('status')).toHaveTextContent(
+      messages.SharedUI.savingTags,
+    )
+    expect(screen.getByTestId('tag-selector-trigger')).toBeDisabled()
+  })
+  it('shows a clear failure and retries the tag save', () => {
+    const retry = vi.fn()
+    selector(vi.fn(), 'error', retry)
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      messages.SharedUI.saveTagsFailed,
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.SharedUI.retry }),
+    )
+    expect(retry).toHaveBeenCalledOnce()
   })
   it('dims only its own overlay, supports multiselect, Escape and focus return', async () => {
     const user = userEvent.setup()

@@ -21,7 +21,6 @@ import { useProfile } from '@/features/profile/hooks/use-profile'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { useValidationMessage } from '@/hooks/use-validation-message'
-import { toast } from '@/components/ui/toast'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useEntityTagsDraft } from '@/features/tags/hooks/use-entity-tags'
 import { DefaultAccountField } from '@/features/accounts/components/default-account-field'
@@ -88,12 +87,7 @@ export default function EditAccountPage() {
     setIsSubmitting(true)
     try {
       if (await form.trigger()) {
-        try {
-          await tagsDraft.commit()
-        } catch {
-          toast.add({ title: tc('error'), type: 'error' })
-          return
-        }
+        if (!(await tagsDraft.commit())) return
       }
       await onSubmit(event)
     } finally {
@@ -275,6 +269,8 @@ export default function EditAccountPage() {
               value={tagsDraft.tagIds}
               onChange={tagsDraft.setTagIds}
               placeholder={tc('addTags')}
+              saveState={tagsDraft.saveState}
+              onRetrySave={() => void tagsDraft.retry()}
             />
           </div>
         </FormSection>

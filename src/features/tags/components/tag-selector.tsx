@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import {
   Popover,
   PopoverContent,
@@ -37,6 +38,8 @@ interface TagSelectorProps {
   value: string[]
   onChange: (tagIds: string[]) => void
   placeholder?: string
+  saveState?: 'idle' | 'pending' | 'error'
+  onRetrySave?: () => void
 }
 
 export function TagSelector({
@@ -44,6 +47,8 @@ export function TagSelector({
   value,
   onChange,
   placeholder,
+  saveState = 'idle',
+  onRetrySave,
 }: TagSelectorProps) {
   const [open, setOpen] = useState(false)
   const [adding, setAdding] = useState(false)
@@ -95,6 +100,7 @@ export function TagSelector({
               variant="outline"
               data-testid="tag-selector-trigger"
               className="h-auto min-h-12 w-full justify-between gap-2 rounded-sm border-primary/10 py-2"
+              disabled={saveState === 'pending'}
             />
           }
         >
@@ -184,6 +190,7 @@ export function TagSelector({
                     aria-pressed={value.includes(tag.id)}
                     data-testid={`tag-selector-option-${tag.id}`}
                     className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-muted"
+                    disabled={saveState === 'pending'}
                     onClick={() => toggleTag(tag)}
                   >
                     <span className="flex items-center gap-2 text-sm font-medium">
@@ -218,6 +225,33 @@ export function TagSelector({
           </div>
         </PopoverContent>
       </Popover>
+      {saveState === 'pending' && (
+        <p
+          role="status"
+          className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"
+        >
+          <Spinner className="size-3" />
+          {t('savingTags')}
+        </p>
+      )}
+      {saveState === 'error' && (
+        <div
+          role="alert"
+          className="mt-2 flex flex-wrap items-center gap-2 text-xs text-destructive"
+        >
+          <span>{t('saveTagsFailed')}</span>
+          {onRetrySave && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onRetrySave}
+            >
+              {t('retry')}
+            </Button>
+          )}
+        </div>
+      )}
       <Sheet
         open={adding}
         onOpenChange={(next) => {

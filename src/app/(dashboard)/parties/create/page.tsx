@@ -40,6 +40,7 @@ import { useParties } from '@/features/parties/hooks/use-parties'
 import { findPossiblePartyDuplicates } from '@/features/parties/lib/party-duplicates'
 import { usePartyDraftTags } from '@/features/parties/hooks/use-party-draft-tags'
 import { PartyTypePicker } from '@/features/parties/components/party-type-picker'
+import { logger } from '@/lib/logger'
 import {
   Stepper,
   StepperIndicator,
@@ -65,6 +66,7 @@ export default function CreatePartyPage() {
   const partyDraftTagsRef = useRef<ReturnType<typeof usePartyDraftTags> | null>(
     null,
   )
+  const [createdPartyId, setCreatedPartyId] = useState<string | null>(null)
 
   const {
     form,
@@ -80,7 +82,12 @@ export default function CreatePartyPage() {
     returnTo,
     draftId: initialDraftId,
     onCreated: async (party) => {
-      await partyDraftTagsRef.current?.flush(party.id)
+      setCreatedPartyId(party.id)
+      try {
+        await partyDraftTagsRef.current?.flush(party.id)
+      } catch (error) {
+        logger.error('Created party tags could not be saved', error)
+      }
     },
   })
   const partyDraftTags = usePartyDraftTags(draft.draftId)
@@ -234,6 +241,20 @@ export default function CreatePartyPage() {
       return false
     }
     return true
+  }
+
+  if (isSuccess && partyDraftTags.saveState !== 'idle' && createdPartyId) {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <TagSelector
+          businessId={activeBusiness?.id}
+          value={tagIds}
+          onChange={setTagIds}
+          saveState={partyDraftTags.saveState}
+          onRetrySave={() => void partyDraftTags.retry(createdPartyId)}
+        />
+      </div>
+    )
   }
 
   if (isSuccess) {
@@ -545,6 +566,8 @@ export default function CreatePartyPage() {
                 value={tagIds}
                 onChange={setTagIds}
                 placeholder={tCommon('addTags')}
+                saveState={partyDraftTags.saveState}
+                onRetrySave={() => void partyDraftTags.retry()}
               />
             </div>
 

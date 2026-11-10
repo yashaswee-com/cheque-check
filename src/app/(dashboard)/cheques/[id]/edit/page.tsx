@@ -43,7 +43,6 @@ import { Party, AccountWithRelations } from '@/types'
 import { useLocale, useTranslations } from 'next-intl'
 import { useValidationMessage } from '@/hooks/use-validation-message'
 import { useProfile } from '@/features/profile/hooks/use-profile'
-import { toast } from '@/components/ui/toast'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useEntityTagsDraft } from '@/features/tags/hooks/use-entity-tags'
 import { useChequeNumberConflict } from '@/features/cheques/hooks/use-cheque-number-conflict'
@@ -134,12 +133,7 @@ export default function EditChequePage() {
       )
         return
       if (await form.trigger()) {
-        try {
-          await tagsDraft.commit()
-        } catch {
-          toast.add({ title: tCommon('error'), type: 'error' })
-          return
-        }
+        if (!(await tagsDraft.commit())) return
       }
       await onSubmit(event)
     } finally {
@@ -520,6 +514,8 @@ export default function EditChequePage() {
               value={tagsDraft.tagIds}
               onChange={tagsDraft.setTagIds}
               placeholder={t('addTags')}
+              saveState={tagsDraft.saveState}
+              onRetrySave={() => void tagsDraft.retry()}
             />
           </div>
         </FormSection>

@@ -97,6 +97,30 @@ describe('party draft tags', () => {
     expect(syncForEntity).not.toHaveBeenCalled()
   })
 
+  it('exposes failed autosaves and retries only the latest tag selection', async () => {
+    const failure = new Error('Offline')
+    syncForEntity.mockRejectedValueOnce(failure)
+    getForEntity.mockResolvedValue([{ id: 'existing-tag' }])
+    const { result } = renderHook(() => usePartyDraftTags('party-draft'))
+    await waitFor(() => expect(result.current.tagIds).toEqual(['existing-tag']))
+
+    act(() => result.current.setTagIds(['latest-tag']))
+    await waitFor(() => expect(result.current.saveState).toBe('error'))
+    expect(syncForEntity).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      expect(await result.current.retry()).toBe(true)
+    })
+    expect(result.current.saveState).toBe('idle')
+    expect(syncForEntity).toHaveBeenCalledTimes(2)
+    expect(syncForEntity).toHaveBeenLastCalledWith(
+      'party',
+      'party-draft',
+      ['existing-tag'],
+      ['latest-tag'],
+    )
+  })
+
   it.each(['hydrate', 'read-before-write', 'sync'] as const)(
     'retains the original %s rejection across selections and draft changes until remount',
     async (stage) => {

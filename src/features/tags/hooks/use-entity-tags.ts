@@ -56,19 +56,34 @@ export function useEntityTagsDraft(
     saveTags,
   } = useEntityTags(entityType, entityId)
   const [draft, setDraft] = useState<string[] | null>(null)
+  const [saveState, setSaveState] = useState<'idle' | 'pending' | 'error'>(
+    'idle',
+  )
   const isDirty =
     draft !== null &&
     (draft.length !== savedIds.length ||
       draft.some((tagId) => !savedIds.includes(tagId)))
+  const persist = async (ids: string[]) => {
+    setSaveState('pending')
+    try {
+      await saveTags(ids)
+      setSaveState('idle')
+      return true
+    } catch (error) {
+      logger.error('Entity tags could not be saved', error)
+      setSaveState('error')
+      return false
+    }
+  }
 
   return {
     tagIds: draft ?? savedIds,
     setTagIds: setDraft,
     isLoading,
     isDirty,
-    commit: async () => {
-      if (isDirty && draft) await saveTags(draft)
-    },
+    saveState,
+    commit: async () => (!isDirty || !draft ? true : persist(draft)),
+    retry: async () => (draft ? persist(draft) : true),
   }
 }
 

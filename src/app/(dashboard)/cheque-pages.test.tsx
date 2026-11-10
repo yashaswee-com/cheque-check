@@ -290,7 +290,13 @@ vi.mock('@/features/cheques/hooks/use-ocr-extraction', () => ({
 vi.mock('@/features/tags/hooks/use-draft-tags', () => ({
   useDraftTags: () => {
     const [tagIds, setTagIds] = useState<string[]>([])
-    return { tagIds, setTagIds, flush: mocks.flush }
+    return {
+      tagIds,
+      setTagIds,
+      flush: mocks.flush,
+      retry: vi.fn().mockResolvedValue(true),
+      saveState: 'idle',
+    }
   },
 }))
 vi.mock('@/features/tags/hooks/use-entity-tags', () => ({
@@ -301,6 +307,8 @@ vi.mock('@/features/tags/hooks/use-entity-tags', () => ({
       tagIds,
       setTagIds,
       commit: mocks.commit,
+      retry: vi.fn().mockResolvedValue(true),
+      saveState: 'idle',
       isDirty: tagIds.length > 0,
     }
   },
@@ -598,6 +606,8 @@ beforeEach(() => {
   listedCheques = [cheque]
   filteredCheques = listedCheques
   mocks.trigger.mockResolvedValue(true)
+  mocks.commit.mockResolvedValue(true)
+  mocks.flush.mockResolvedValue(undefined)
   mocks.require.mockReturnValue(true)
   mocks.verify.mockResolvedValue(true)
   mocks.duplicate.mockResolvedValue({ id: 'copy' })
@@ -1151,16 +1161,11 @@ describe('cheque edit page', () => {
     expect(mocks.require).not.toHaveBeenCalled()
   })
   it('stops entity persistence when committing tags fails', async () => {
-    mocks.commit.mockRejectedValueOnce(new Error('Offline'))
+    mocks.commit.mockResolvedValueOnce(false)
     const { container } = renderPage(<EditChequePage />)
     makeDirty()
     fireEvent.submit(container.querySelector('form')!)
-    await waitFor(() =>
-      expect(mocks.toast).toHaveBeenCalledWith({
-        title: messages.Common.error,
-        type: 'error',
-      }),
-    )
+    await waitFor(() => expect(mocks.commit).toHaveBeenCalledOnce())
     expect(mocks.submit).not.toHaveBeenCalled()
   })
   it('leaves invalid form handling to the hook without committing tags', async () => {

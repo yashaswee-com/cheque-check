@@ -116,6 +116,44 @@ describe('draft tags', () => {
     expect(service.syncForEntity).not.toHaveBeenCalled()
   })
 
+  it('exposes failed autosaves and retries only the latest tag selection', async () => {
+    const failure = new Error('Offline')
+    service.syncForEntity.mockRejectedValueOnce(failure)
+    const { result } = renderHook(() => useDraftTags('draft'))
+    await waitFor(() =>
+      expect(result.current.tagIds).toEqual(['copied-a', 'copied-b']),
+    )
+
+    act(() => result.current.setTagIds(['latest-tag']))
+    await waitFor(() => expect(result.current.saveState).toBe('error'))
+    expect(service.syncForEntity).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      expect(await result.current.retry()).toBe(true)
+    })
+    expect(result.current.saveState).toBe('idle')
+    expect(service.syncForEntity).toHaveBeenCalledTimes(2)
+    expect(service.syncForEntity).toHaveBeenLastCalledWith(
+      'cheque',
+      'draft',
+      ['copied-a', 'copied-b'],
+      ['latest-tag'],
+    )
+  })
+
+  it('retries failed hydration without overwriting existing tags', async () => {
+    service.getForEntity.mockRejectedValueOnce(new Error('Offline'))
+    const { result } = renderHook(() => useDraftTags('draft'))
+    await waitFor(() => expect(result.current.saveState).toBe('error'))
+
+    await act(async () => {
+      expect(await result.current.retry()).toBe(true)
+    })
+    expect(result.current.tagIds).toEqual(['copied-a', 'copied-b'])
+    expect(service.syncForEntity).not.toHaveBeenCalled()
+    expect(result.current.saveState).toBe('idle')
+  })
+
   it.each(['hydrate', 'read-before-write', 'sync'] as const)(
     'keeps the original %s rejection across queued writes and target changes until remount',
     async (stage) => {
