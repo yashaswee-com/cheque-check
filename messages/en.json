@@ -1019,6 +1019,7 @@
     "duplicateNumber": "A cheque with this number already exists for this account"
   },
   "Cheques": {
+    "aiScanDisabledHelp": "AI Scan Mode is off. Your image is saved; enter the cheque details manually.",
     "amountRange": "Amount range",
     "unknownBank": "Unknown bank",
     "noChequesMatch": "No cheques match these filters",
@@ -1300,6 +1301,10 @@
     "receivingMode": "Inward Cheque Tracking",
     "receivingModeDesc": "Track cheques your business receives alongside the cheques it issues. Turn on inward cheque workflows throughout the app.",
     "aiScanner": "AI Scanner - 30-Day Pack (250 scans)",
+    "aiScanMode": "AI Scan Mode",
+    "aiScanEnabledHelp": "AI reads details from uploaded cheque images. Turning this off skips AI OCR; a scan already running may finish.",
+    "aiScanDisabledHelp": "AI Scan Mode is off. Images and drafts are still saved; enter cheque details manually.",
+    "aiScanAccessRequired": "Available, unexpired scan credits are required to turn AI Scan Mode on.",
     "aiScannerDesc": "Scan a cheque and let AI read key details such as the amount, date, and party name, so you spend less time entering them.",
     "voiceReminder": "Voice Reminders - 30-Day Pack (100 calls)",
     "voiceReminderDesc": "Get scheduled calls about issued cheques approaching their deposit date, in your time zone.",

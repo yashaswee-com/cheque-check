@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger'
 import { createClient } from '@/lib/supabase/server'
+import { TABLES } from '@/lib/supabase/tables'
 import { getOpenAiEnv } from '@/lib/env/server'
 import { setRequestUser, withMonitoringRequest } from '@/lib/monitoring/server'
 import { parsePrivateMediaUrl, PRIVATE_CHEQUE_BUCKET } from '@/lib/storage'
@@ -70,6 +71,21 @@ async function extractCheque(req: Request): Promise<Response> {
 
     if (!user) return respondWithError('Unauthorized', 401)
     setRequestUser(user)
+
+    const { data: profile, error: profileError } = await supabase
+      .from(TABLES.PROFILES)
+      .select('ai_scan_enabled')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (profileError) throw profileError
+    if (!profile) return respondWithError('Active profile required.', 403)
+    if (!profile.ai_scan_enabled) {
+      return Response.json(
+        { error: 'AI Scan Mode is disabled.', code: 'AI_SCAN_DISABLED' },
+        { status: 403 },
+      )
+    }
 
     const result = await executeOcrWorkflow(imageUrl, user.id, {
       consumeRateLimit: async () => {

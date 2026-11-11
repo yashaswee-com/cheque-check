@@ -7,6 +7,7 @@ import { POST } from './route'
 
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
+  profile: vi.fn(),
   rpc: vi.fn(),
   createSignedUrl: vi.fn(),
   processImage: vi.fn(),
@@ -17,6 +18,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({
     auth: { getUser: mocks.getUser },
+    from: () => ({
+      select: () => ({
+        eq: () => ({ is: () => ({ maybeSingle: mocks.profile }) }),
+      }),
+    }),
     rpc: mocks.rpc,
     storage: { from: () => ({ createSignedUrl: mocks.createSignedUrl }) },
   }),
@@ -60,6 +66,10 @@ const request = (body: unknown) =>
 beforeEach(() => {
   vi.resetAllMocks()
   mocks.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
+  mocks.profile.mockResolvedValue({
+    data: { ai_scan_enabled: true },
+    error: null,
+  })
   mocks.rpc.mockImplementation(async (name: string) =>
     name === 'resolve_ai_scan_model'
       ? { data: [{ product_id: 'free', model: 'gpt-4o-mini' }], error: null }
@@ -73,6 +83,35 @@ beforeEach(() => {
 })
 
 describe('OCR shared contracts and client', () => {
+  it('rejects disabled mode before signing, quota, rate limits, or provider access', async () => {
+    mocks.profile.mockResolvedValue({
+      data: { ai_scan_enabled: false },
+      error: null,
+    })
+    const response = await POST(request({ imageUrl }))
+    expect(response.status).toBe(403)
+    expect(await response.json()).toEqual({
+      error: 'AI Scan Mode is disabled.',
+      code: 'AI_SCAN_DISABLED',
+    })
+    expect(mocks.rpc).not.toHaveBeenCalled()
+    expect(mocks.createSignedUrl).not.toHaveBeenCalled()
+    expect(mocks.getOpenAiEnv).not.toHaveBeenCalled()
+    expect(mocks.processImage).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { data: null, error: null },
+    { data: null, error: new Error('profile lookup failed') },
+  ])('fails closed for an unavailable active profile: %j', async (lookup) => {
+    mocks.profile.mockResolvedValue(lookup)
+    const response = await POST(request({ imageUrl }))
+    expect(response.status).toBe(lookup.error ? 500 : 403)
+    expect(mocks.rpc).not.toHaveBeenCalled()
+    expect(mocks.processImage).not.toHaveBeenCalled()
+    if (lookup.error) expect(mocks.error).toHaveBeenCalled()
+  })
+
   it.each(['consume_api_rate_limit', 'consume_user_quota'])(
     'logs %s failures and does not invoke OCR',
     async (endpoint) => {

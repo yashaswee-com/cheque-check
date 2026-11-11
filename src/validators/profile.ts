@@ -47,6 +47,7 @@ export const reminderTimesSchema = z
 
 export const closedProfileChoices = z
   .object({
+    ai_scan_enabled: z.boolean(),
     privacy_cover: z.boolean(),
     currency: currencySchema,
     date_format: dateFormatSchema,

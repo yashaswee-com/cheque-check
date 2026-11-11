@@ -65,7 +65,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }))
 
-function setup(initialBusinessId: string | undefined) {
+function setup(initialBusinessId: string | undefined, aiScanEnabled = true) {
   const client = new QueryClient()
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
@@ -83,6 +83,7 @@ function setup(initialBusinessId: string | undefined) {
         setValue: create.form.setValue,
         handleImageUpload: create.handleImageUpload,
         isLoadingDraft: create.draft.isLoadingDraft,
+        aiScanEnabled,
       })
       return { create, ocr }
     },
@@ -120,6 +121,21 @@ afterEach(() => {
 })
 
 describe('scan and draft integration', () => {
+  it('saves pending scan images as drafts without OCR when disabled', async () => {
+    mocks.getFile.mockReturnValueOnce(
+      new File(['image'], 'cheque.jpg', { type: 'image/jpeg' }),
+    )
+    mocks.createDraft.mockResolvedValue({ id: 'draft-1' })
+    const { result } = setup('business-1', false)
+    await waitFor(() =>
+      expect(result.current.create.draft.draftId).toBe('draft-1'),
+    )
+    expect(result.current.create.form.getValues('image_url')).toBe(
+      '/api/storage/private-cheque-images/u/image.jpg',
+    )
+    expect(mocks.fetch).not.toHaveBeenCalled()
+  })
+
   it('waits for business and persisted image reference before sending a pending scan to OCR', async () => {
     const file = new File(['image'], 'cheque.jpg', { type: 'image/jpeg' })
     mocks.getFile.mockReturnValueOnce(file).mockReturnValue(null)

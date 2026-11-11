@@ -466,7 +466,12 @@ export default function FeaturesPage() {
                   (quota?.limit ?? 0) - (quota?.used ?? 0),
                 )
                 const isVoice = addon.id === 'voice'
-                const paused = isVoice && !profile.voice_call_enabled
+                const paused = isVoice
+                  ? !profile.voice_call_enabled
+                  : profile.ai_scan_enabled === false
+                const scanAccess =
+                  remaining > 0 &&
+                  (!quota?.reset_at || new Date(quota.reset_at) > new Date())
                 const needsPhone =
                   isVoice && !isValidE164Phone(profile.phone ?? '')
                 const entitlementState = getEntitlementState(
@@ -644,7 +649,7 @@ export default function FeaturesPage() {
                           {t('topUpRequiresSubscription')}
                         </p>
                       )}
-                      {hasAccess && !isVoice && remaining > 0 && (
+                      {hasAccess && !isVoice && scanAccess && !paused && (
                         <Link
                           href="/cheques/create"
                           className="inline-flex min-h-11 items-center gap-1 text-sm text-primary hover:underline"
@@ -657,6 +662,46 @@ export default function FeaturesPage() {
                         </Link>
                       )}
                     </div>
+
+                    {!isVoice && (
+                      <div className="flex items-start justify-between gap-4 border-t p-5 @min-[640px]:p-6">
+                        <div className="space-y-1">
+                          <label
+                            htmlFor="ai-scan-enabled"
+                            className="text-sm font-semibold"
+                          >
+                            {t('aiScanMode')}
+                          </label>
+                          <p
+                            id="ai-scan-help"
+                            className="text-xs leading-relaxed text-muted-foreground"
+                          >
+                            {paused
+                              ? t('aiScanDisabledHelp')
+                              : t('aiScanEnabledHelp')}
+                          </p>
+                          {!scanAccess && (
+                            <p className="text-xs text-muted-foreground">
+                              {t('aiScanAccessRequired')}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex min-h-11 shrink-0 items-center">
+                          <Switch
+                            id="ai-scan-enabled"
+                            aria-label={t('aiScanMode')}
+                            aria-describedby="ai-scan-help"
+                            checked={!paused}
+                            disabled={
+                              saving !== null || (paused && !scanAccess)
+                            }
+                            onCheckedChange={(value) =>
+                              saveProfile('ai', { ai_scan_enabled: value })
+                            }
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {isVoice && hasAccess && (
                       <div className="space-y-5 border-t p-5 @min-[640px]:p-6">

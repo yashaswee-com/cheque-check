@@ -46,6 +46,15 @@ afterEach(() => {
 })
 
 describe('profile persistence', () => {
+  it('validates and persists the AI scan boolean without coercion', () => {
+    expect(toProfileUpdate({ ai_scan_enabled: false })).toMatchObject({
+      ai_scan_enabled: false,
+    })
+    expect(() =>
+      toProfileUpdate(JSON.parse('{"ai_scan_enabled":"false"}')),
+    ).toThrow()
+  })
+
   it('creates a missing phone-only profile without inventing an email or display name', async () => {
     mocks.getUser.mockResolvedValueOnce({ data: { user: { id: 'u1' } } })
     query.maybeSingle.mockResolvedValue({ data: null, error: null })

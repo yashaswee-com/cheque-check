@@ -190,6 +190,88 @@ beforeEach(() => {
 })
 
 describe('Features page', () => {
+  it('defaults AI mode on and allows turning it off without scan access', async () => {
+    renderPage()
+    const toggle = screen.getByRole('switch', {
+      name: messages.Features.aiScanMode,
+    })
+    expect(toggle).toBeChecked()
+    expect(toggle).not.toHaveAttribute('aria-disabled', 'true')
+    fireEvent.click(toggle)
+    await waitFor(() =>
+      expect(mocks.update).toHaveBeenCalledWith({ ai_scan_enabled: false }),
+    )
+  })
+
+  it('blocks enabling without credits, but enables with available unexpired credits', async () => {
+    profile.ai_scan_enabled = false
+    const view = renderPage()
+    expect(
+      screen.getByRole('switch', { name: messages.Features.aiScanMode }),
+    ).toHaveAttribute('aria-disabled', 'true')
+    quotas = [
+      {
+        id: 'ai',
+        user_id: 'user',
+        feature_id: FEATURE_IDS.AI_SCAN,
+        limit: 10,
+        used: 0,
+        reset_at: '2099-01-01T00:00:00Z',
+      },
+    ]
+    view.rerender(<FeaturesPage />)
+    const toggle = screen.getByRole('switch', {
+      name: messages.Features.aiScanMode,
+    })
+    expect(toggle).not.toHaveAttribute('aria-disabled', 'true')
+    fireEvent.click(toggle)
+    await waitFor(() =>
+      expect(mocks.update).toHaveBeenCalledWith({ ai_scan_enabled: true }),
+    )
+  })
+
+  it('does not enable with exhausted or expired credits', () => {
+    profile.ai_scan_enabled = false
+    quotas = [
+      {
+        id: 'ai',
+        user_id: 'user',
+        feature_id: FEATURE_IDS.AI_SCAN,
+        limit: 10,
+        used: 10,
+        reset_at: null,
+      },
+    ]
+    const view = renderPage()
+    expect(
+      screen.getByRole('switch', { name: messages.Features.aiScanMode }),
+    ).toHaveAttribute('aria-disabled', 'true')
+    quotas[0] = { ...quotas[0], used: 0, reset_at: '2000-01-01T00:00:00Z' }
+    view.rerender(<FeaturesPage />)
+    expect(
+      screen.getByRole('switch', { name: messages.Features.aiScanMode }),
+    ).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('keeps the saved AI switch on and reports a failed save', async () => {
+    mocks.update.mockRejectedValueOnce(new Error('Unable to save AI mode'))
+    renderPage()
+    fireEvent.click(
+      screen.getByRole('switch', { name: messages.Features.aiScanMode }),
+    )
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          description: 'Unable to save AI mode',
+        }),
+      ),
+    )
+    expect(
+      screen.getByRole('switch', { name: messages.Features.aiScanMode }),
+    ).toBeChecked()
+  })
+
   it('shows the loading state while access data is being fetched', () => {
     loading = true
     renderPage()
@@ -264,7 +346,10 @@ describe('Features page', () => {
   it('keeps locked purchase actions clear and sends the correct product', async () => {
     renderPage()
     expect(mocks.transactions).not.toHaveBeenCalled()
-    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('switch')).toHaveLength(1)
+    expect(
+      screen.getByRole('switch', { name: messages.Features.aiScanMode }),
+    ).toBeChecked()
     fireEvent.click(
       screen.getByRole('button', {
         name: messages.Features.getLifetimePremium,

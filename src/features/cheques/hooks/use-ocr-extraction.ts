@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { UseFormSetValue, UseFormWatch } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
@@ -32,6 +32,7 @@ interface UseOcrExtractionOptions {
   setValue: UseFormSetValue<ChequeFormValues>
   handleImageUpload: (file: File) => Promise<string | null>
   isLoadingDraft: boolean
+  aiScanEnabled: boolean | undefined
 }
 
 /** Cheque-scan OCR extraction + fuzzy-matching of the extracted party/account/bank onto existing records. */
@@ -45,12 +46,19 @@ export function useOcrExtraction({
   setValue,
   handleImageUpload,
   isLoadingDraft,
+  aiScanEnabled,
 }: UseOcrExtractionOptions) {
   const t = useTranslations('Cheques')
   const tCommon = useTranslations('Common')
   const queryClient = useQueryClient()
 
   const [isExtracting, setIsExtracting] = useState(false)
+  const extracting = useRef(false)
+  const scanEnabled = useRef(aiScanEnabled)
+  const processedImageParam = useRef<string | null>(null)
+  useEffect(() => {
+    scanEnabled.current = aiScanEnabled
+  }, [aiScanEnabled])
   const [unmatchedEntities, setUnmatchedEntities] =
     useState<UnmatchedEntities | null>(null)
   const [createOptions, setCreateOptions] = useState({
@@ -60,10 +68,20 @@ export function useOcrExtraction({
   const [isCreatingInline, setIsCreatingInline] = useState(false)
 
   const extractData = async (url: string) => {
-    if (!url || isExtracting) return
-
-    setIsExtracting(true)
+    if (!url || extracting.current) return
     setValue('image_url', url)
+    if (scanEnabled.current === false) return
+    if (scanEnabled.current === undefined) {
+      logger.error('OCR preference is unavailable')
+      toast.add({
+        title: tCommon('error'),
+        description: t('extractionFailed'),
+        type: 'error',
+      })
+      return
+    }
+    extracting.current = true
+    setIsExtracting(true)
 
     const toastId = toast.add({
       title: t('scan'),
@@ -80,6 +98,15 @@ export function useOcrExtraction({
 
       if (!response.ok) {
         const body = await response.json().catch(() => null)
+        if (body?.code === 'AI_SCAN_DISABLED') {
+          if (toastId) toast.close(toastId)
+          toast.add({
+            title: t('scan'),
+            description: t('aiScanDisabledHelp'),
+            type: 'info',
+          })
+          return
+        }
         throw new Error(
           body?.error || `Failed to extract data (${response.status})`,
         )
@@ -208,12 +235,13 @@ export function useOcrExtraction({
         type: 'error',
       })
     } finally {
+      extracting.current = false
       setIsExtracting(false)
     }
   }
 
   useEffect(() => {
-    if (!businessId || isLoadingDraft) return
+    if (!businessId || isLoadingDraft || aiScanEnabled === undefined) return
     const handlePendingScan = async () => {
       const pendingFile = ScanStore.getFile()
       if (pendingFile) {
@@ -223,15 +251,28 @@ export function useOcrExtraction({
     }
     handlePendingScan()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [businessId, isLoadingDraft])
+  }, [businessId, isLoadingDraft, aiScanEnabled])
 
   useEffect(() => {
-    if (imageUrlParam && !isExtracting) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (
+      imageUrlParam &&
+      aiScanEnabled !== undefined &&
+      processedImageParam.current !== imageUrlParam
+    ) {
+      processedImageParam.current = imageUrlParam
       extractData(imageUrlParam)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageUrlParam, parties, accounts, banks, setValue, t, tCommon])
+  }, [
+    imageUrlParam,
+    aiScanEnabled,
+    parties,
+    accounts,
+    banks,
+    setValue,
+    t,
+    tCommon,
+  ])
 
   const handleInlineCreate = async () => {
     if (!unmatchedEntities || !businessId) return

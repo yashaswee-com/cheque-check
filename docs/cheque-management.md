@@ -21,6 +21,14 @@ Drafts preserve incomplete values and are stored in the account, party, or chequ
 
 When a user uploads a cheque image on the create form, the application saves its reference in a new or existing draft before starting optical character recognition (OCR). If the draft cannot be saved, it restores the previous form image and does not start OCR; a user-visible error is shown ([upload handler](../src/features/cheques/hooks/use-create-cheque.ts#L247-L286), [pending scan](../src/features/cheques/hooks/use-ocr-extraction.ts#L215-L225)). The existing private-media policy still requires an active record reference ([storage policy](../supabase/migrations/20261021000000_lifecycle.sql#L419-L443)).
 
+## AI Scan Mode
+
+The AI scanner section on Features has a per-user AI Scan Mode switch. The saved profile preference syncs across devices through the existing profile reads (including refetch on window focus); it is not an instantaneous cross-device broadcast. Existing and new profiles default to enabled. Users may always disable scanning; re-enabling requires available, unexpired AI scan credits, enforced by the database as well as the UI.
+
+When disabled, camera/image uploads and draft persistence continue normally, while pending scans, image-URL scans, and direct OCR calls skip AI extraction. Existing form values are preserved for manual entry. The API rejects disabled-mode requests before rate-limit, quota, image-signing, or provider work. An already-started scan may finish. Profile lookup failures fail closed, and preference-save failures show an error without changing the saved switch.
+
+Apply [the AI Scan Mode migration](../supabase/migrations/20261111010000_ai_scan_mode.sql) before deploying the application change; the API requires the new profile column. No hosted migration or QA deployment is performed by a local code commit.
+
 ## Dashboard statistics
 
 Dashboard totals use a summary RPC and a bounded today-cheque page; status analytics are computed by SQL aggregates instead of downloading all records ([dashboard hook](../src/features/cheques/hooks/use-dashboard-cheques.ts#L10-L69), [analytics RPC](../supabase/migrations/20261102090000_cheque_analytics.sql#L1-L92)). The statistics implementation partitions eligible records into statuses and calculates clearance rate ([statistics helper](../src/features/cheques/lib/statistics.ts#L1-L58), [analytics SQL](../supabase/migrations/20261102090000_cheque_analytics.sql#L1-L92)).

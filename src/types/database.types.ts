@@ -276,6 +276,7 @@ export interface Database {
       }
       profiles: {
         Row: {
+          ai_scan_enabled: boolean
           privacy_cover: boolean
           appearance: 'light' | 'dark' | 'system'
           tour_status: 'pending' | 'completed' | 'skipped'

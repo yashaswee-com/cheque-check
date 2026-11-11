@@ -186,6 +186,7 @@ export default function CreateChequePage() {
     setValue,
     handleImageUpload,
     isLoadingDraft: draft.isLoadingDraft,
+    aiScanEnabled: profile ? profile.ai_scan_enabled !== false : undefined,
   })
 
   const partyOptions =
@@ -222,6 +223,11 @@ export default function CreateChequePage() {
       <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
         {t('photo')}
       </Label>
+      {profile?.ai_scan_enabled === false && (
+        <p className="text-xs text-muted-foreground" role="status">
+          {t('aiScanDisabledHelp')}
+        </p>
+      )}
       <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 bg-canvas-parchment/30 min-h-[140px] transition-colors hover:bg-canvas-parchment/50 border-primary/10 relative overflow-hidden">
         {watch('image_url' as any) ? (
           <div className="relative w-full aspect-video rounded-sm overflow-hidden border">

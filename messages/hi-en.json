@@ -1019,6 +1019,7 @@
     "duplicateNumber": "Is account mein is number ka cheque pehle se hai"
   },
   "Cheques": {
+    "aiScanDisabledHelp": "AI Scan Mode off hai. Image save hai; cheque details manually bharein.",
     "amountRange": "Amount range",
     "unknownBank": "Unknown bank",
     "noChequesMatch": "In filters se koi cheque match nahi karta",
@@ -1319,6 +1320,10 @@
     "receivingMode": "Inward Cheque Tracking",
     "receivingModeDesc": "Business ko mile cheques ko jaari kiye gaye cheques ke saath track karein. Puri app mein inward cheque workflow enable karein.",
     "aiScanner": "AI Scanner - 30-Day Pack (250 scans)",
+    "aiScanMode": "AI Scan Mode",
+    "aiScanEnabledHelp": "AI uploaded cheque ki details padhta hai. Off karne par AI OCR skip hoga; chal raha scan poora ho sakta hai.",
+    "aiScanDisabledHelp": "AI Scan Mode off hai. Images aur drafts save hote hain; cheque details manually bharein.",
+    "aiScanAccessRequired": "AI Scan Mode on karne ke liye available, unexpired scan credits chahiye.",
     "aiScannerDesc": "Cheque scan karein aur AI se amount, date aur party name jaise zaroori details read karwayein—isse manual entry mein kam waqt lagega.",
     "voiceReminder": "Voice Reminders - 30-Day Pack (100 calls)",
     "voiceReminderDesc": "Issued cheques ki deposit date paas aane par apne time zone mein scheduled calls paayein.",

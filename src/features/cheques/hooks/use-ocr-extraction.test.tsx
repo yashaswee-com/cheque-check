@@ -74,6 +74,8 @@ function setup({
   banks = [bank],
   imageUrlParam = null,
   upload = vi.fn().mockResolvedValue(null),
+  aiScanEnabled = true,
+  preferenceLoading = false,
 }: {
   businessId?: string
   type?: string
@@ -82,6 +84,8 @@ function setup({
   banks?: Bank[]
   imageUrlParam?: string | null
   upload?: (file: File) => Promise<string | null>
+  aiScanEnabled?: boolean
+  preferenceLoading?: boolean
 } = {}) {
   const queryClient = new QueryClient()
   const wrapper = ({ children }: { children: ReactNode }) => (
@@ -93,7 +97,7 @@ function setup({
     values[name] = value
   })
   const hook = renderHook(
-    () =>
+    ({ enabled }: { enabled: boolean | undefined }) =>
       useOcrExtraction({
         businessId,
         imageUrlParam,
@@ -104,8 +108,12 @@ function setup({
         setValue: setValue as never,
         handleImageUpload: upload,
         isLoadingDraft: false,
+        aiScanEnabled: enabled,
       }),
-    { wrapper },
+    {
+      wrapper,
+      initialProps: { enabled: preferenceLoading ? undefined : aiScanEnabled },
+    },
   )
   return { ...hook, queryClient, values, watch, setValue, upload }
 }
@@ -124,6 +132,88 @@ afterEach(() => {
 })
 
 describe('useOcrExtraction', () => {
+  it('waits for the preference before handling a pending scan and then saves without OCR', async () => {
+    const file = new File(['image'], 'pending.png', { type: 'image/png' })
+    mocks.getFile.mockReturnValueOnce(file)
+    const upload = vi.fn().mockResolvedValue('/pending.png')
+    const { rerender } = setup({ preferenceLoading: true, upload })
+    expect(mocks.getFile).not.toHaveBeenCalled()
+    rerender({ enabled: false })
+    await waitFor(() => expect(upload).toHaveBeenCalledWith(file))
+    expect(mocks.monitoredFetch).not.toHaveBeenCalled()
+  })
+
+  it('allows an in-flight scan to finish but blocks subsequent scans after disabling', async () => {
+    let finish!: (value: Response) => void
+    mocks.monitoredFetch.mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve
+        }),
+    )
+    const { result, rerender, values } = setup()
+    let pending!: Promise<void>
+    act(() => {
+      pending = result.current.extractData('/first.png')
+    })
+    rerender({ enabled: false })
+    await act(async () => {
+      finish(response(extraction()))
+      await pending
+    })
+    expect(values.amount).toBe(1250)
+    await act(async () => result.current.extractData('/second.png'))
+    expect(mocks.monitoredFetch).toHaveBeenCalledOnce()
+    expect(values.image_url).toBe('/second.png')
+  })
+
+  it('reports an unavailable preference for direct extraction without provider work', async () => {
+    const { result } = setup({ preferenceLoading: true })
+    await act(async () => result.current.extractData('/scan.png'))
+    expect(mocks.monitoredFetch).not.toHaveBeenCalled()
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      'OCR preference is unavailable',
+    )
+    expect(mocks.toastAdd).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'error' }),
+    )
+  })
+
+  it('preserves images and existing fields without calling OCR in disabled mode', async () => {
+    const { result, values, setValue } = setup({ aiScanEnabled: false })
+    values.amount = 999
+    await act(async () => result.current.extractData('/private/scan.png'))
+    expect(values.amount).toBe(999)
+    expect(setValue).toHaveBeenCalledWith('image_url', '/private/scan.png')
+    expect(mocks.monitoredFetch).not.toHaveBeenCalled()
+    expect(mocks.toastAdd).not.toHaveBeenCalled()
+  })
+
+  it('skips URL OCR and preserves the image in disabled mode', async () => {
+    const { values } = setup({
+      aiScanEnabled: false,
+      imageUrlParam: '/private/url.png',
+    })
+    await waitFor(() => expect(values.image_url).toBe('/private/url.png'))
+    expect(mocks.monitoredFetch).not.toHaveBeenCalled()
+  })
+
+  it('reports server-side disablement without applying OCR details', async () => {
+    mocks.monitoredFetch.mockResolvedValue(
+      response({ code: 'AI_SCAN_DISABLED' }, false, 403),
+    )
+    const { result, setValue } = setup()
+    await act(async () => result.current.extractData('/scan.png'))
+    expect(setValue).not.toHaveBeenCalledWith('amount', expect.anything())
+    expect(mocks.toastAdd).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        description: 'aiScanDisabledHelp',
+        type: 'info',
+      }),
+    )
+    expect(result.current.isExtracting).toBe(false)
+  })
+
   it('extracts cheque values and fuzzy-matches the payee and account number', async () => {
     const { result, setValue } = setup()
 
