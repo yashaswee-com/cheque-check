@@ -1,0 +1,68 @@
+name: Production Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: production
+    env:
+      HUSKY: 0
+    steps:
+      - name: Check Out Release Commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Validate Release Automation
+        run: npx vitest run scripts/test/database.test.ts scripts/test/production-release.test.ts
+
+      - name: Validate Production Configuration
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          SUPABASE_DB_URL: ${{ secrets.PROD_SUPABASE_DB_URL }}
+          CONFIRM_REF: ${{ vars.PROD_SUPABASE_PROJECT_REF }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+          VERCEL_REPO_ID: ${{ vars.VERCEL_REPO_ID }}
+        run: |
+          node scripts/production-deploy.mjs --check
+          npm run db:migrate -- --env prod --dry-run --operator github-actions
+          test -n "$CONFIRM_REF"
+
+      - name: Apply Production Database Migrations
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          SUPABASE_DB_URL: ${{ secrets.PROD_SUPABASE_DB_URL }}
+          CONFIRM_REF: ${{ vars.PROD_SUPABASE_PROJECT_REF }}
+        run: npm run db:migrate -- --env prod --confirm-ref "$CONFIRM_REF" --operator github-actions
+
+      - name: Deploy Migrated Commit And Wait For Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+          VERCEL_REPO_ID: ${{ vars.VERCEL_REPO_ID }}
+        run: node scripts/production-deploy.mjs
