@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
 import SettingsPage from './page'
 import { PremiumPromptProvider } from '@/features/monetization/components/premium-prompt'
+import { clearInstallPrompt } from '@/lib/pwa-install'
 
 const mocks = vi.hoisted(() => ({ logout: vi.fn() }))
 let profileLoading = false
@@ -55,6 +56,9 @@ function renderPage() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.stubGlobal('matchMedia', () => ({ matches: false }))
+  sessionStorage.clear()
+  clearInstallPrompt()
   profileLoading = false
   monetizationLoading = false
   hasPremium = false
@@ -68,9 +72,19 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
+  vi.unstubAllGlobals()
 })
 
 describe('settings page', () => {
+  it('places the inline install card immediately below the profile summary', () => {
+    renderPage()
+    const profileLink = document.querySelector('a[href="/profile"]')!
+    expect(profileLink.nextElementSibling).toBe(
+      screen.getByRole('region', { name: messages.PWA.title }),
+    )
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   it('keeps the always-visible usage card close to the profile card', () => {
     renderPage()
     const profileLink = document.querySelector('a[href="/profile"]')!

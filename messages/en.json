@@ -237,6 +237,12 @@
     }
   },
   "PWA": {
+    "inlineWaiting": "Waiting for the browser to confirm installation. This card will hide once installation is confirmed.",
+    "unavailable": "Automatic installation is not available in this browser right now. If no install option appears, try a supported browser.",
+    "declined": "Installation was declined. You can use your browser menu or try again when the browser offers installation.",
+    "androidInstructions": "In your browser menu, look for Install app or Add to Home screen, if available.",
+    "macSafariInstructions": "In Safari on supported macOS versions, choose File, then Add to Dock. If it is missing, this version may not support installation.",
+    "browserInstructions": "Look for Install app in your browser menu or address bar, if supported.",
     "waiting": "Waiting for installation confirmation. You can choose Later to continue without installing.",
     "title": "Install ChequeCheck",
     "description": "Add the app to your home screen for easier access.",

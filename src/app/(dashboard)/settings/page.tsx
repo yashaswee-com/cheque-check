@@ -43,6 +43,7 @@ import { version } from '../../../../package.json'
 import { ReplayTour } from '@/features/tour/components/replay-tour'
 import { UsageCard } from '@/features/monetization/components/free-usage-banner'
 import { usePremiumAvatarRing } from '@/features/monetization/hooks/use-premium-avatar-ring'
+import { PwaInstallCard } from '@/components/pwa-install-card'
 
 interface SettingsItem {
   name: string
@@ -265,6 +266,7 @@ export default function SettingsPage() {
           />
         </Link>
 
+        <PwaInstallCard variant="inline" />
         <UsageCard alwaysShow />
       </div>
 

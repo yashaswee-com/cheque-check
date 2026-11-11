@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   status: 'pending' as 'pending' | 'completed' | 'skipped',
   update: vi.fn(),
   push: vi.fn(),
+  pathname: '/dashboard',
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
   useProfile: () => ({
@@ -28,11 +29,15 @@ vi.mock('@/features/profile/hooks/use-profile', () => ({
     updateProfile: mocks.update,
   }),
 }))
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mocks.push }),
+  usePathname: () => mocks.pathname,
+}))
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.status = 'pending'
+  mocks.pathname = '/dashboard'
   mocks.update.mockResolvedValue(undefined)
   localStorage.clear()
   sessionStorage.clear()
@@ -242,6 +247,25 @@ describe('installation-before-tour sequencing', () => {
       }),
     )
   }
+  it.each(['/settings', '/settings/preferences'])(
+    'defers automatic installation on %s and resumes elsewhere',
+    async (pathname) => {
+      prompt('accepted')
+      mocks.pathname = pathname
+      const view = mount(<PostOnboardingTour />)
+      expect(screen.queryByRole('dialog')).toBeNull()
+      mocks.pathname = '/dashboard'
+      view.rerender(
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <PostOnboardingTour />
+        </NextIntlClientProvider>,
+      )
+      expect(
+        await screen.findByRole('dialog', { name: messages.PWA.title }),
+      ).toBeVisible()
+      expect(sessionStorage.getItem(INSTALL_DISMISSED_KEY)).toBeNull()
+    },
+  )
   it('waits for explicit install-card dismissal before showing tour', async () => {
     prompt('dismissed')
     mount(<PostOnboardingTour />)

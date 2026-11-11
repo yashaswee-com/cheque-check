@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect } from 'react'
-import { captureInstallPrompt, clearInstallPrompt } from '@/lib/pwa-install'
+import { captureInstallPrompt, confirmInstall } from '@/lib/pwa-install'
 
 export function PwaRegistrar() {
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', captureInstallPrompt)
-    window.addEventListener('appinstalled', clearInstallPrompt)
+    window.addEventListener('appinstalled', confirmInstall)
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const registerServiceWorker = async () => {
         try {
@@ -23,7 +23,7 @@ export function PwaRegistrar() {
     }
     return () => {
       window.removeEventListener('beforeinstallprompt', captureInstallPrompt)
-      window.removeEventListener('appinstalled', clearInstallPrompt)
+      window.removeEventListener('appinstalled', confirmInstall)
     }
   }, [])
 

@@ -237,6 +237,12 @@
     }
   },
   "PWA": {
+    "inlineWaiting": "Browser se installation confirmation ka intezar hai. Confirm hone par yeh card hide ho jayega.",
+    "unavailable": "Is browser mein abhi automatic installation available nahi hai. Install option na mile toh supported browser try karein.",
+    "declined": "Installation decline hua. Browser menu use karein ya browser dobara install option de toh try karein.",
+    "androidInstructions": "Browser menu mein Install app ya Add to Home screen option dekhein, agar available ho.",
+    "macSafariInstructions": "Supported macOS par Safari mein File, phir Add to Dock chunein. Option na mile toh is version mein installation supported nahi ho sakta.",
+    "browserInstructions": "Browser menu ya address bar mein Install app option dekhein, agar supported ho.",
     "waiting": "Installation confirmation ka intezar hai. Bina install kiye aage badhne ke liye Later chunein.",
     "title": "ChequeCheck install karein",
     "description": "Aasaan access ke liye app ko home screen par jodein.",
