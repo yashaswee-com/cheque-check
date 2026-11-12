@@ -3,6 +3,7 @@
 import { ArrowDown02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslations } from 'next-intl'
+import styles from './landing.module.css'
 
 type Locale = 'en' | 'hi' | 'hi-en'
 
@@ -14,7 +15,7 @@ export function LocalePicker({ locale }: { locale: Locale }) {
       <select
         id="public-locale"
         aria-label={t('nav.language')}
-        className="min-h-11 appearance-none rounded-md border bg-background py-2 pl-3 pr-8 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        className={styles.localeSelect}
         value={locale}
         onChange={(event) => {
           const nextLocale = event.currentTarget.value
@@ -28,10 +29,7 @@ export function LocalePicker({ locale }: { locale: Locale }) {
           </option>
         ))}
       </select>
-      <HugeiconsIcon
-        icon={ArrowDown02Icon}
-        className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-      />
+      <HugeiconsIcon icon={ArrowDown02Icon} className={styles.localeChevron} />
     </div>
   )
 }

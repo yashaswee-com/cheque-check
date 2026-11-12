@@ -36,7 +36,8 @@ vi.mock('next/navigation', () => ({
   },
 }))
 vi.mock('next/font/google', () => ({
-  Inter: () => ({ variable: 'font-sans' }),
+  IBM_Plex_Sans: () => ({ variable: 'font-ibm-plex' }),
+  Manrope: () => ({ variable: 'font-manrope' }),
 }))
 vi.mock('next/script', () => ({ default: () => null }))
 vi.mock('next-intl/server', () => ({
@@ -129,12 +130,12 @@ describe('application shell routes', () => {
     mocks.getUser.mockResolvedValue({ data: { user: null }, error: null })
     const page = await LandingPage()
     renderIntl(page)
-    expect(
-      screen.getByRole('heading', { name: 'public:landing.title' }),
-    ).toBeVisible()
-    for (const cta of screen.getAllByText('public:landing.primaryCta'))
+    expect(screen.getByRole('heading', { name: 'public:title' })).toBeVisible()
+    for (const cta of screen.getAllByText('public:primaryCta'))
       expect(cta).toBeVisible()
-    expect(screen.getByText('public:landing.secondaryCta')).toBeVisible()
+    expect(
+      screen.getByRole('figure', { name: 'public:videoLabel' }),
+    ).toBeVisible()
   })
 
   it('logs session lookup errors and still renders public landing actions', async () => {
@@ -148,7 +149,7 @@ describe('application shell routes', () => {
       error,
     )
     renderIntl(page)
-    for (const cta of screen.getAllByText('public:landing.primaryCta'))
+    for (const cta of screen.getAllByText('public:primaryCta'))
       expect(cta).toBeVisible()
     log.mockRestore()
   })
@@ -181,6 +182,7 @@ describe('application shell routes', () => {
 
     const layout = await RootLayout({ children: <p>Application content</p> })
     expect(layout.props.lang).toBe('hi')
+    expect(layout.props.className).toBe('font-ibm-plex font-manrope')
     const body = Children.toArray(layout.props.children).find(
       (child) =>
         typeof child === 'object' &&

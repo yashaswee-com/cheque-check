@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { IBM_Plex_Sans, Manrope } from 'next/font/google'
 import './globals.css'
 import Providers from '@/components/providers'
 import { Toaster } from '@/components/ui/toast'
@@ -15,9 +15,17 @@ import { APPEARANCE_BOOTSTRAP } from '@/features/profile/lib/appearance'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 
-const inter = Inter({
+const bodyFont = IBM_Plex_Sans({
   subsets: ['latin'],
-  variable: '--font-sans',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-ibm-plex',
+  display: 'swap',
+})
+
+const headingFont = Manrope({
+  subsets: ['latin'],
+  variable: '--font-manrope',
+  display: 'swap',
 })
 
 export const viewport: Viewport = {
@@ -64,7 +72,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${inter.variable}`}
+      className={`${bodyFont.variable} ${headingFont.variable}`}
       suppressHydrationWarning
     >
       <head>

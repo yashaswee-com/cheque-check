@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
@@ -6,52 +7,52 @@ import {
   Analytics01Icon,
   ArrowRight01Icon,
   BankIcon,
+  Call02Icon,
   CheckmarkCircle02Icon,
+  DeliveryBox01Icon,
+  Download01Icon,
   File02Icon,
-  Notification01Icon,
   ScanIcon,
-  SecurityLockIcon,
+  Shirt01Icon,
   UserGroupIcon,
+  Video01Icon,
 } from '@hugeicons/core-free-icons'
 import { createClient } from '@/lib/supabase/server'
 import { AppEntryLink } from '@/components/public-site/app-entry-link'
+import styles from '@/components/public-site/landing.module.css'
+import { IndustryMarquee } from '@/components/public-site/industry-marquee'
+import { PublicIcon } from '@/components/public-site/public-icon'
 
-const FEATURES = [
-  { key: 'cheques', icon: File02Icon },
-  { key: 'accounts', icon: BankIcon },
-  { key: 'parties', icon: UserGroupIcon },
-  { key: 'reports', icon: Analytics01Icon },
-] as const
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('PublicSite.landing')
+  return {
+    title: `${t('title')} | CHEQUE-CHECK`,
+    description: t('description'),
+  }
+}
 
 const STEPS = [
   { key: 'stepRecord', icon: ScanIcon },
-  { key: 'stepRemind', icon: Notification01Icon },
-  { key: 'stepTrack', icon: CheckmarkCircle02Icon },
+  { key: 'stepRemind', icon: Call02Icon },
+  { key: 'stepTrack', icon: Download01Icon },
 ] as const
 
-const PREVIEW = [
-  {
-    amount: '₹ 48,500',
-    status: 'previewDue',
-    tone: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  },
-  {
-    amount: '₹ 1,20,000',
-    status: 'previewPending',
-    tone: 'bg-primary/10 text-primary',
-  },
-  {
-    amount: '₹ 15,750',
-    status: 'previewCleared',
-    tone: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-  },
+const FEATURES = [
+  { key: 'cheques', icon: ScanIcon },
+  { key: 'reminders', icon: Call02Icon },
+  { key: 'accounts', icon: BankIcon },
+  { key: 'parties', icon: UserGroupIcon },
+  { key: 'reports', icon: Download01Icon },
 ] as const
 
-const primaryCta =
-  'inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+const PROBLEMS = [
+  { key: 'dates', icon: Call02Icon },
+  { key: 'accounts', icon: BankIcon },
+  { key: 'records', icon: File02Icon },
+] as const
 
 export default async function LandingPage() {
-  const t = await getTranslations('PublicSite')
+  const t = await getTranslations('PublicSite.landing')
   const supabase = await createClient()
   const {
     data: { user },
@@ -64,173 +65,384 @@ export default async function LandingPage() {
     redirect('/dashboard')
   }
 
-  return (
-    <main className="overflow-x-clip">
-      <section className="relative isolate border-b bg-linear-to-b from-primary/10 via-background to-background">
-        <div
-          aria-hidden="true"
-          className="absolute -top-24 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl sm:h-96 sm:w-96"
-        />
-        <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:px-8 lg:py-24">
-          <div className="space-y-6 text-center lg:text-left">
-            <p className="inline-flex items-center rounded-full border bg-card px-3 py-1 text-xs font-semibold text-primary sm:text-sm">
-              {t('landing.eyebrow')}
-            </p>
-            <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-              {t('landing.title')}
-            </h1>
-            <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground text-pretty sm:text-lg lg:mx-0">
-              {t('landing.description')}
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
-              <AppEntryLink href="/signup" className={primaryCta}>
-                {t('landing.primaryCta')}
-                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-              </AppEntryLink>
-              <Link
-                href="/features"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border bg-card px-6 font-semibold transition hover:bg-muted"
-              >
-                {t('landing.secondaryCta')}
-              </Link>
-            </div>
-            <ul className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground lg:justify-start">
-              {(['trustFree', 'trustReminders', 'trustSecure'] as const).map(
-                (item) => (
-                  <li key={item} className="inline-flex items-center gap-1.5">
-                    <HugeiconsIcon
-                      icon={
-                        item === 'trustSecure'
-                          ? SecurityLockIcon
-                          : CheckmarkCircle02Icon
-                      }
-                      className="size-4 text-primary"
-                    />
-                    {t(`landing.${item}`)}
-                  </li>
-                ),
-              )}
-            </ul>
-          </div>
+  const arrow = (
+    <HugeiconsIcon icon={ArrowRight01Icon} size={19} aria-hidden="true" />
+  )
 
+  return (
+    <main className={styles.landing}>
+      <section className={styles.hero} aria-labelledby="landing-title">
+        <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>
+            <span aria-hidden="true" className={styles.eyebrowLine} />
+            {t('eyebrow')}
+          </p>
+          <h1 id="landing-title" aria-label={t('title')}>
+            {t('titleLead')}
+            <br />
+            <span className={styles.marked}>{t('titleHighlight')}</span>
+          </h1>
+          <p className={styles.heroDescription}>{t('description')}</p>
+          <div className={styles.actions}>
+            <AppEntryLink href="/signup" className={styles.primaryCta}>
+              {t('primaryCta')}
+              {arrow}
+            </AppEntryLink>
+          </div>
+          <p className={styles.heroNote}>{t('heroNote')}</p>
+        </div>
+
+        <div className={styles.showcase}>
           <figure
-            aria-label={t('landing.previewLabel')}
-            data-testid="landing-preview"
-            className="mx-auto w-full max-w-sm rounded-3xl border bg-card p-5 shadow-xl shadow-primary/10"
+            id="product-demo"
+            aria-label={t('videoLabel')}
+            data-testid="landing-video"
+            className={styles.videoFrame}
           >
-            <figcaption className="mb-4 flex items-center justify-between text-sm font-semibold">
-              {t('landing.previewTitle')}
-              <HugeiconsIcon
-                icon={Notification01Icon}
-                className="size-5 text-primary"
-              />
+            <span className={styles.videoBadge}>CHEQUE—CHECK</span>
+            <div className={styles.videoPlaceholder}>
+              <span className={styles.videoIcon}>
+                <HugeiconsIcon
+                  icon={Video01Icon}
+                  size={32}
+                  aria-hidden="true"
+                />
+              </span>
+              <strong>{t('videoTitle')}</strong>
+              <p>{t('videoPending')}</p>
+            </div>
+            <figcaption className={styles.videoCaption}>
+              {t('videoFormat')}
             </figcaption>
-            <ul className="space-y-3">
-              {PREVIEW.map((row) => (
-                <li
-                  key={row.amount}
-                  className="flex items-center gap-3 rounded-2xl bg-muted/60 p-3"
-                >
-                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-                    <HugeiconsIcon icon={File02Icon} className="size-5" />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate font-semibold tabular-nums">
-                    {row.amount}
-                  </span>
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.tone}`}
-                  >
-                    {t(`landing.${row.status}`)}
-                  </span>
-                </li>
-              ))}
-            </ul>
           </figure>
         </div>
+        <ul className={styles.trust}>
+          {(['trustFree', 'trustReminders', 'trustLanguage'] as const).map(
+            (key) => (
+              <li key={key}>
+                <HugeiconsIcon
+                  icon={
+                    key === 'trustReminders'
+                      ? Call02Icon
+                      : CheckmarkCircle02Icon
+                  }
+                  size={16}
+                  aria-hidden="true"
+                />
+                {t(key)}
+              </li>
+            ),
+          )}
+        </ul>
+      </section>
+
+      <section className={styles.audience} aria-label={t('audienceLabel')}>
+        <p>{t('audienceTitle')}</p>
+        <IndustryMarquee />
       </section>
 
       <section
-        aria-labelledby="public-home-features"
-        className="mx-auto w-full max-w-7xl space-y-8 px-4 py-14 sm:px-6 sm:py-20 lg:px-8"
+        className={`${styles.section} ${styles.problemSection}`}
+        aria-labelledby="problem-title"
       >
-        <div className="mx-auto max-w-2xl space-y-2 text-center">
-          <h2
-            id="public-home-features"
-            className="text-2xl font-semibold tracking-tight sm:text-3xl"
-          >
-            {t('landing.sectionTitle')}
-          </h2>
-          <p className="text-muted-foreground">
-            {t('landing.sectionDescription')}
-          </p>
+        <div className={styles.sectionHeading}>
+          <p className={styles.eyebrow}>{t('problemEyebrow')}</p>
+          <h2 id="problem-title">{t('problemTitle')}</h2>
+          <p>{t('problemDescription')}</p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map(({ key, icon }) => (
-            <article
-              key={key}
-              className="space-y-3 rounded-2xl border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-            >
-              <span className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
-                <HugeiconsIcon icon={icon} className="size-5" />
+        <div className={styles.problemGrid}>
+          {PROBLEMS.map(({ key, icon }) => (
+            <article key={key} className={styles.problemCard}>
+              <span className={styles.featureIcon}>
+                <PublicIcon icon={icon} size={26} />
               </span>
-              <h3 className="font-semibold">{t(`landing.${key}`)}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {t(`landing.${key}Description`)}
-              </p>
+              <h3>{t(`problems.${key}Title`)}</h3>
+              <p>{t(`problems.${key}Description`)}</p>
             </article>
           ))}
         </div>
+        <p className={styles.problemClose}>{t('problemClose')}</p>
+      </section>
+
+      <section className={styles.section} aria-labelledby="how-title">
+        <div className={styles.sectionHeading}>
+          <p className={styles.eyebrow}>{t('howEyebrow')}</p>
+          <h2 id="how-title">{t('howTitle')}</h2>
+          <p>{t('howDescription')}</p>
+        </div>
+        <ol className={styles.steps}>
+          {STEPS.map(({ key, icon }, index) => (
+            <li key={key}>
+              <div className={styles.stepRail}>
+                <span>{index + 1}</span>
+              </div>
+              <div className={styles.stepContent}>
+                <PublicIcon icon={icon} size={26} />
+                <h3>{t(`${key}Title`)}</h3>
+                <p>{t(`${key}Description`)}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section
-        aria-labelledby="public-home-how"
-        className="border-y bg-muted/40"
+        className={`${styles.section} ${styles.bentoSection}`}
+        aria-labelledby="features-title"
       >
-        <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-          <h2
-            id="public-home-how"
-            className="text-center text-2xl font-semibold tracking-tight sm:text-3xl"
-          >
-            {t('landing.howTitle')}
-          </h2>
-          <ol className="grid gap-4 md:grid-cols-3">
-            {STEPS.map(({ key, icon }, index) => (
-              <li key={key} className="flex gap-4 rounded-2xl bg-card p-5">
-                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-                  <HugeiconsIcon icon={icon} className="size-5" />
+        <div className={styles.sectionHeading}>
+          <p className={styles.eyebrow}>{t('featureEyebrow')}</p>
+          <h2 id="features-title">{t('sectionTitle')}</h2>
+          <p>{t('sectionDescription')}</p>
+        </div>
+        <div className={styles.bento}>
+          {FEATURES.map(({ key, icon }) => (
+            <article
+              key={key}
+              className={styles.featureCard}
+              data-feature={key}
+            >
+              <div className={styles.featureCopy}>
+                <span className={styles.featureIcon}>
+                  <PublicIcon icon={icon} size={28} />
                 </span>
-                <div className="space-y-1">
-                  <h3 className="font-semibold">
-                    <span className="sr-only">{index + 1}. </span>
-                    {t(`landing.${key}Title`)}
-                  </h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {t(`landing.${key}Description`)}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
+                <h3>{t(key)}</h3>
+                <p>{t(`${key}Description`)}</p>
+              </div>
+              <div className={styles.featureVisual}>
+                {key === 'cheques' && (
+                  <div className={styles.scanVisual}>
+                    <span className={styles.scanLabel}>
+                      <PublicIcon icon={ScanIcon} size={18} />
+                      {t('scanExampleTitle')}
+                    </span>
+                    <div className={styles.chequeVisual} aria-hidden="true">
+                      <div>
+                        <span>{t('sampleParty')}</span>
+                        <span>№ 000128</span>
+                      </div>
+                      <strong>
+                        ₹48,500<span>.00</span>
+                      </strong>
+                      <div className={styles.chequeRule} />
+                      <span>{t('previewPending')}</span>
+                      <span className={styles.chequeSignature}>
+                        CHEQUE—CHECK
+                      </span>
+                    </div>
+                    <p>{t('scanExampleNote')}</p>
+                  </div>
+                )}
+                {key === 'reminders' && (
+                  <div className={styles.callVisual}>
+                    <span className={styles.callStatus}>
+                      {t('callExampleStatus')}
+                    </span>
+                    <span className={styles.callAvatar}>
+                      <PublicIcon icon={Call02Icon} size={32} />
+                    </span>
+                    <strong>{t('reminderExampleTitle')}</strong>
+                    <p>{t('reminderExampleDescription')}</p>
+                    <div className={styles.callWave} aria-hidden="true">
+                      {[12, 24, 16, 32, 20, 28, 12, 24, 16].map(
+                        (height, index) => (
+                          <span key={index} style={{ height }} />
+                        ),
+                      )}
+                    </div>
+                    <span className={styles.callNote}>
+                      {t('callExampleNote')}
+                    </span>
+                  </div>
+                )}
+                {key === 'accounts' && (
+                  <div className={styles.accountVisual} aria-hidden="true">
+                    <span>
+                      <span>A</span>
+                      {t('sampleBankA')}
+                    </span>
+                    <span>
+                      <span>B</span>
+                      {t('sampleBankB')}
+                    </span>
+                  </div>
+                )}
+                {key === 'parties' && (
+                  <div className={styles.avatarGroup} aria-hidden="true">
+                    <span>ST</span>
+                    <span>MT</span>
+                    <span>PK</span>
+                  </div>
+                )}
+                {key === 'reports' && (
+                  <div className={styles.downloadVisual}>
+                    <span className={styles.downloadIcon}>
+                      <PublicIcon icon={Download01Icon} size={28} />
+                    </span>
+                    <strong>{t('reportExampleTitle')}</strong>
+                    <p>{t('reportExampleNote')}</p>
+                    <div
+                      className={styles.downloadFormats}
+                      aria-label={t('reportFormats')}
+                    >
+                      <span>
+                        PDF{' '}
+                        <HugeiconsIcon
+                          icon={Download01Icon}
+                          size={16}
+                          aria-hidden="true"
+                        />
+                      </span>
+                      <span>
+                        Excel{' '}
+                        <HugeiconsIcon
+                          icon={Download01Icon}
+                          size={16}
+                          aria-hidden="true"
+                        />
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <span className={styles.visualCaption}>
+                  {t('illustrationLabel')}
+                </span>
+              </div>
+            </article>
+          ))}
+        </div>
+        <Link href="/features" className={styles.textLink}>
+          <HugeiconsIcon icon={Analytics01Icon} size={20} aria-hidden="true" />
+          {t('allFeatures')}
+          {arrow}
+        </Link>
+      </section>
+
+      <section
+        className={`${styles.section} ${styles.pricingSection}`}
+        aria-labelledby="pricing-title"
+      >
+        <div className={styles.pricingInner}>
+          <p className={styles.eyebrow}>{t('pricingEyebrow')}</p>
+          <h2 id="pricing-title">{t('pricingTitle')}</h2>
+          <p>{t('pricingDescription')}</p>
+          <Link href="/pricing" className={styles.primaryCta}>
+            <HugeiconsIcon icon={BankIcon} size={20} aria-hidden="true" />
+            {t('pricingCta')}
+            {arrow}
+          </Link>
+          <span className={styles.pricingNote}>{t('pricingNote')}</span>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-        <div className="flex flex-col items-center gap-5 rounded-3xl bg-primary px-6 py-12 text-center text-primary-foreground sm:px-12">
-          <h2 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
-            {t('landing.ctaTitle')}
-          </h2>
-          <p className="max-w-xl text-primary-foreground/80">
-            {t('landing.ctaDescription')}
-          </p>
-          <AppEntryLink
-            href="/signup"
-            data-testid="landing-final-cta"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-background px-6 font-semibold text-foreground transition hover:opacity-90"
-          >
-            {t('landing.primaryCta')}
-            <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-          </AppEntryLink>
+      <section className={styles.section} aria-labelledby="faq-title">
+        <div className={styles.sectionHeading}>
+          <p className={styles.eyebrow}>{t('faqEyebrow')}</p>
+          <h2 id="faq-title">{t('faqTitle')}</h2>
         </div>
+        <div className={styles.faq}>
+          {(
+            [
+              'accounting',
+              'bank',
+              'reminders',
+              'scan',
+              'bounce',
+              'mobile',
+            ] as const
+          ).map((key) => (
+            <details key={key}>
+              <summary>
+                {t(`faq.${key}Question`)}
+                <span aria-hidden="true">+</span>
+              </summary>
+              <p>{t(`faq.${key}Answer`)}</p>
+            </details>
+          ))}
+        </div>
+        <p className={styles.faqContact}>
+          {t('faqContact')}{' '}
+          <Link href="/contact" className={styles.textLink}>
+            <HugeiconsIcon icon={File02Icon} size={20} aria-hidden="true" />
+            {t('contactCta')}
+            {arrow}
+          </Link>
+        </p>
+      </section>
+
+      <section
+        className={`${styles.section} ${styles.scenarioSection}`}
+        aria-labelledby="scenarios-title"
+      >
+        <div className={styles.sectionHeading}>
+          <p className={styles.eyebrow}>{t('scenarioEyebrow')}</p>
+          <h2 id="scenarios-title">{t('scenarioTitle')}</h2>
+          <p>{t('scenarioDisclosure')}</p>
+        </div>
+        <p className={styles.swipeHint}>
+          {t('swipeHint')}
+          <span aria-hidden="true"> →</span>
+        </p>
+        <div
+          className={styles.scenarios}
+          role="region"
+          aria-label={t('swipeHint')}
+          tabIndex={0}
+        >
+          {(['owner', 'accountant', 'distributor'] as const).map(
+            (key, index) => (
+              <article key={key} className={styles.scenarioCard}>
+                <span className={styles.featureIcon}>
+                  <PublicIcon
+                    icon={
+                      index === 0
+                        ? Shirt01Icon
+                        : index === 1
+                          ? UserGroupIcon
+                          : DeliveryBox01Icon
+                    }
+                    size={26}
+                    aria-hidden="true"
+                  />
+                </span>
+                <h3>{t(`scenarios.${key}Need`)}</h3>
+                <p>{t(`scenarios.${key}Benefit`)}</p>
+                <div className={styles.scenarioPerson}>
+                  <span aria-hidden="true">0{index + 1}</span>
+                  <div>
+                    <strong>{t(`scenarios.${key}Role`)}</strong>
+                    <span>{t('scenarioLabel')}</span>
+                  </div>
+                </div>
+              </article>
+            ),
+          )}
+        </div>
+      </section>
+
+      <section
+        className={`${styles.section} ${styles.finalSection}`}
+        aria-labelledby="final-title"
+      >
+        <span className={styles.finalIcon}>
+          <HugeiconsIcon
+            icon={CheckmarkCircle02Icon}
+            size={36}
+            aria-hidden="true"
+          />
+        </span>
+        <p className={styles.eyebrow}>CHEQUE—CHECK</p>
+        <h2 id="final-title">{t('ctaTitle')}</h2>
+        <p>{t('ctaDescription')}</p>
+        <AppEntryLink
+          href="/signup"
+          data-testid="landing-final-cta"
+          className={styles.primaryCta}
+        >
+          {t('primaryCta')}
+          {arrow}
+        </AppEntryLink>
+        <span className={styles.finalNote}>{t('heroNote')}</span>
       </section>
     </main>
   )

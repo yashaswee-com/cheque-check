@@ -1,4 +1,5 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import english from '../../messages/en.json'
@@ -121,7 +122,7 @@ describe('public site pages', () => {
       ).toBeVisible()
       expect(
         screen.getByRole('figure', {
-          name: catalog.PublicSite.landing.previewLabel,
+          name: catalog.PublicSite.landing.videoLabel,
         }),
       ).toBeVisible()
       expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(9)
@@ -197,10 +198,17 @@ describe('public site pages', () => {
     ).toBeVisible()
   })
 
-  it('renders an accessible, responsive public navigation with a locale control', async () => {
+  it('keeps navigation and language selection in the three-dot menu', async () => {
+    const user = userEvent.setup()
     const layout = await PublicSiteLayout({ children: <p>Page content</p> })
     renderPage(layout)
     expect(screen.getByRole('banner')).toHaveClass('sticky', 'top-0', 'z-40')
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
+    const trigger = screen.getByRole('button', {
+      name: english.PublicSite.nav.navigation,
+    })
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    await user.click(trigger)
     const nav = screen.getByRole('navigation', {
       name: english.PublicSite.nav.navigation,
     })
@@ -209,10 +217,16 @@ describe('public site pages', () => {
         name: english.PublicSite.nav.features,
       }),
     ).toHaveAttribute('href', '/features')
-    expect(nav).toHaveClass('order-last', 'w-full', 'overflow-x-auto')
-    expect(nav).toHaveClass('md:order-none', 'md:w-auto')
-    expect(within(nav).getAllByRole('link')).toHaveLength(4)
-    const signIn = screen.getByRole('link', {
+    expect(within(nav).getAllByRole('link')).toHaveLength(5)
+    for (const link of within(nav).getAllByRole('link')) {
+      expect(link.querySelectorAll('svg')).toHaveLength(2)
+    }
+    expect(
+      within(nav).getByRole('link', {
+        name: /Cheque bounce calculator/,
+      }),
+    ).toHaveAttribute('href', '/cheque-bounce')
+    const signIn = within(screen.getByRole('dialog')).getByRole('link', {
       name: english.PublicSite.nav.signIn,
     })
     expect(signIn).toHaveAttribute('href', '/login')
@@ -222,6 +236,105 @@ describe('public site pages', () => {
         name: english.PublicSite.nav.language,
       }),
     ).toBeVisible()
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+  })
+
+  it('pauses and resumes the industry marquee without repeating accessible content', async () => {
+    renderPage(await LandingPage())
+    const pause = screen.getByRole('button', {
+      name: english.PublicSite.landing.marqueePause,
+    })
+    expect(
+      screen.getAllByText(english.PublicSite.landing.audience.textiles),
+    ).toHaveLength(2)
+    const track = screen.getByTestId('industry-marquee')
+    expect(track.querySelectorAll('ul[aria-hidden="true"]')).toHaveLength(1)
+    await userEvent.click(pause)
+    expect(
+      screen.getByRole('button', {
+        name: english.PublicSite.landing.marqueeResume,
+      }),
+    ).toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: english.PublicSite.landing.marqueeResume,
+      }),
+    )
+    expect(pause).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('highlights AI scanning, phone calls and Premium report downloads with safe example visuals', async () => {
+    renderPage(await LandingPage())
+    const copy = english.PublicSite.landing
+    const features = within(
+      screen.getByRole('region', { name: copy.sectionTitle }),
+    )
+    for (const key of ['cheques', 'reminders', 'reports'] as const) {
+      expect(features.getByRole('heading', { name: copy[key] })).toBeVisible()
+      expect(features.getByText(copy[`${key}Description`])).toBeVisible()
+    }
+    expect(screen.getByText(copy.callExampleNote)).toBeVisible()
+    expect(screen.getByText(copy.scanExampleNote)).toBeVisible()
+    expect(screen.getByText(copy.reportExampleNote)).toBeVisible()
+    expect(
+      within(screen.getByRole('region', { name: copy.howTitle })).getByRole(
+        'heading',
+        { name: copy.stepTrackTitle },
+      ),
+    ).toBeVisible()
+    expect(screen.getByText(copy.stepTrackDescription)).toBeVisible()
+    expect(screen.getByText(copy.eyebrow)).toBeVisible()
+    expect(screen.queryByText(/first 100 users/i)).not.toBeInTheDocument()
+  })
+
+  it('groups the footer links underneath icon-labeled section headings', async () => {
+    renderPage(await PublicSiteLayout({ children: <p>Page content</p> }))
+    const footer = screen.getByRole('contentinfo')
+    for (const group of ['product', 'resources', 'support'] as const) {
+      const section = within(footer).getByRole('region', {
+        name: english.PublicSite.footer[group],
+      })
+      expect(within(section).getByRole('heading')).toBeVisible()
+      for (const link of within(section).getAllByRole('link')) {
+        expect(link.querySelector('svg')).toBeInTheDocument()
+      }
+    }
+  })
+
+  it('presents the landing flow with honest sample content and existing pricing', async () => {
+    mocks.locale = 'hi-en'
+    renderPage(await LandingPage())
+    const copy = hinglish.PublicSite.landing
+    const headings = screen.getAllByRole('heading', { level: 2 })
+    expect(headings.map((heading) => heading.textContent)).toEqual([
+      copy.problemTitle,
+      copy.howTitle,
+      copy.sectionTitle,
+      copy.pricingTitle,
+      copy.faqTitle,
+      copy.scenarioTitle,
+      copy.ctaTitle,
+    ])
+    expect(screen.getByText(copy.videoPending)).toBeVisible()
+    expect(screen.queryByText(copy.sampleData)).not.toBeInTheDocument()
+    expect(screen.getByText(copy.scenarioDisclosure)).toBeVisible()
+    expect(screen.getAllByText(copy.scenarioLabel)).toHaveLength(3)
+    expect(screen.getByRole('link', { name: copy.pricingCta })).toHaveAttribute(
+      'href',
+      '/pricing',
+    )
+    expect(document.querySelector('#product-demo')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /play/i }),
+    ).not.toBeInTheDocument()
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    expect(document.querySelectorAll('details')).toHaveLength(6)
+    const question = screen.getByText(copy.faq.bounceQuestion)
+    await userEvent.click(question)
+    expect(question.closest('details')).toHaveAttribute('open')
+    expect(screen.getByText(copy.faq.bounceAnswer)).toBeVisible()
   })
 
   it('adds the status link to the public footer', async () => {

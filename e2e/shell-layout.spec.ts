@@ -69,9 +69,146 @@ test('public navigation stays visible while its page scrolls', async ({
   await page.goto('/features')
   await page.evaluate(() => window.scrollTo(0, 600))
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
-  expect((await page.getByRole('banner').boundingBox())?.y).toBe(0)
+  expect((await page.getByRole('banner').boundingBox())?.y).toBe(12)
+  await expect(page.getByRole('navigation')).toHaveCount(0)
+  await page.getByRole('button', { name: /navigation/i }).click()
   await expect(page.getByRole('navigation')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('navigation')).toHaveCount(0)
 })
+
+for (const viewport of [
+  { width: 320, height: 667 },
+  { width: 360, height: 740 },
+  { width: 390, height: 844 },
+  { width: 430, height: 932 },
+  { width: 1280, height: 900 },
+]) {
+  test(`public landing fits and works at ${viewport.width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport)
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Reject', exact: true }).click()
+    await expect(page.locator('h1')).toHaveText(
+      'Cheque ki date yaad nahi?Ab yaad rakhni bhi nahi.',
+    )
+    const heroCta = page.locator('main a[href="/signup"]').first()
+    await expect(heroCta).toBeInViewport()
+    expect(
+      await heroCta.evaluate((el) => el.getBoundingClientRect().height),
+    ).toBeGreaterThanOrEqual(44)
+    const preview = await page.getByTestId('landing-video').boundingBox()
+    expect(preview).not.toBeNull()
+    expect(preview!.y).toBeLessThan(viewport.height - 80)
+    expect(preview!.width / preview!.height).toBeCloseTo(9 / 16, 2)
+    await expect(page.locator('#product-demo button')).toHaveCount(0)
+    await expect(page.locator('#product-demo video')).toHaveCount(0)
+    const header = page.getByRole('banner')
+    expect((await header.boundingBox())!.x).toBeGreaterThan(0)
+    expect(
+      await header.evaluate((el) => getComputedStyle(el).borderRadius),
+    ).toBe('18px')
+    const headlineFont = await page
+      .locator('h1')
+      .evaluate((el) => getComputedStyle(el).fontFamily)
+    const bodyFont = await page
+      .locator('main p')
+      .first()
+      .evaluate((el) => getComputedStyle(el).fontFamily)
+    expect(headlineFont.toLowerCase()).toContain('manrope')
+    expect(bodyFont.toLowerCase()).toContain('ibm')
+    expect(
+      await page
+        .locator('main a[href="/signup"]')
+        .first()
+        .evaluate((el) => getComputedStyle(el).backgroundImage),
+    ).toContain('linear-gradient')
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBe(viewport.width)
+    await expect(page.locator('meta[name="viewport"]')).toHaveAttribute(
+      'content',
+      /user-scalable=yes/,
+    )
+    await page.getByRole('button', { name: 'Main navigation' }).click()
+    const menuBoxFull = await page.getByRole('dialog').boundingBox()
+    const headerBox = await page.getByRole('banner').boundingBox()
+    expect(menuBoxFull!.x).toBeCloseTo(headerBox!.x, 0)
+    expect(menuBoxFull!.y).toBeCloseTo(headerBox!.y, 0)
+    expect(menuBoxFull!.width).toBeCloseTo(headerBox!.width, 0)
+    const nav = page.getByRole('navigation')
+    await expect(nav.getByRole('link')).toHaveCount(5)
+    const menuBox = await nav.boundingBox()
+    expect(menuBox!.x).toBeGreaterThanOrEqual(0)
+    expect(menuBox!.x + menuBox!.width).toBeLessThanOrEqual(viewport.width)
+    const menuSignup = page
+      .getByRole('dialog')
+      .getByRole('link', { name: 'Shuru karein' })
+    await menuSignup.scrollIntoViewIfNeeded()
+    await expect(menuSignup).toBeInViewport()
+    await page
+      .getByRole('button', { name: 'Menu band karein' })
+      .scrollIntoViewIfNeeded()
+    await page.getByRole('button', { name: 'Menu band karein' }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(
+      page.getByRole('button', { name: 'Main navigation' }),
+    ).toBeFocused()
+    await page.getByRole('button', { name: 'Main navigation' }).click()
+    await page.keyboard.press('Escape')
+    await page
+      .getByText('Kya cheque bounce hone se guarantee ke saath bachaata hai?')
+      .click()
+    await expect(page.locator('details[open]')).toHaveCount(1)
+    await page.getByTestId('landing-final-cta').scrollIntoViewIfNeeded()
+    await expect(page.getByTestId('landing-final-cta')).toBeInViewport()
+    if (viewport.width < 736) {
+      const carousel = page.getByRole('region', {
+        name: 'Aur scenarios dekhne ke liye swipe karein',
+      })
+      await carousel.scrollIntoViewIfNeeded()
+      await carousel.focus()
+      await page.keyboard.press('ArrowRight')
+      await expect
+        .poll(() => carousel.evaluate((el) => el.scrollLeft))
+        .toBeGreaterThan(0)
+    }
+  })
+}
+
+for (const locale of [
+  {
+    value: 'en',
+    heading: 'Your business needs you. Your cheques need a system.',
+  },
+  {
+    value: 'hi',
+    heading: 'चेक की तारीख याद नहीं? अब याद रखनी भी नहीं।',
+  },
+]) {
+  test(`public landing switches to ${locale.value} and keeps the mobile layout`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 667 })
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Reject', exact: true }).click()
+    await page.getByRole('button', { name: 'Main navigation' }).click()
+    await page
+      .getByRole('combobox', { name: 'Bhasha' })
+      .selectOption(locale.value)
+    await expect(page.locator('h1')).toHaveAccessibleName(locale.heading)
+    await expect(page.locator('html')).toHaveAttribute('lang', locale.value)
+    await expect(
+      page.locator('main a[href="/signup"]').first(),
+    ).toBeInViewport()
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBe(320)
+    await page.reload()
+    await expect(page.locator('h1')).toHaveAccessibleName(locale.heading)
+  })
+}
 
 for (const viewport of [
   { width: 390, height: 844 },
@@ -87,13 +224,116 @@ for (const viewport of [
         () => document.documentElement.scrollWidth > window.innerWidth,
       ),
     ).toBe(false)
-    await expect(page.getByTestId('landing-preview')).toBeVisible()
+    await expect(page.getByTestId('landing-video')).toBeVisible()
     await page.getByTestId('public-sign-in').click()
     await expect(page).toHaveURL(/\/login$/)
     await expect(page.locator('#app-shell')).toBeVisible()
     await expect(page.locator('[data-public-site]')).toHaveCount(0)
+    expect(
+      await page
+        .locator('body')
+        .evaluate((el) => getComputedStyle(el).fontFamily.toLowerCase()),
+    ).toContain('ibm')
+    expect(
+      await page
+        .locator('h1')
+        .first()
+        .evaluate((el) => getComputedStyle(el).fontFamily.toLowerCase()),
+    ).toContain('manrope')
   })
 }
+
+test('public navigation keeps its light blue palette under a saved dark theme', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Reject', exact: true }).click()
+  await page.evaluate(() => document.documentElement.classList.add('dark'))
+  await page.getByRole('button', { name: 'Main navigation' }).click()
+  const picker = page.getByRole('combobox', { name: 'Bhasha' })
+  const colors = await picker.evaluate((el) => {
+    const style = getComputedStyle(el)
+    return {
+      color: style.color,
+      background: style.backgroundColor,
+      scheme: style.colorScheme,
+    }
+  })
+
+  expect(colors).toEqual({
+    color: 'rgb(0, 102, 204)',
+    background: 'rgb(255, 255, 255)',
+    scheme: 'light',
+  })
+  for (const link of await page
+    .getByRole('navigation')
+    .getByRole('link')
+    .all()) {
+    await expect(link.locator('svg')).toHaveCount(2)
+  }
+  expect(
+    await page
+      .getByRole('dialog')
+      .evaluate((el) => getComputedStyle(el).backgroundColor),
+  ).toBe('rgb(255, 255, 255)')
+})
+
+test('industry marquee moves, pauses, and respects reduced motion', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Reject', exact: true }).click()
+  const track = page.getByTestId('industry-marquee')
+  const transform = () => track.evaluate((el) => getComputedStyle(el).transform)
+  const initial = await transform()
+  await expect.poll(transform).not.toBe(initial)
+  await page.getByRole('button', { name: 'Chalti list rokein' }).click()
+  expect(
+    await track.evaluate((el) => getComputedStyle(el).animationPlayState),
+  ).toBe('paused')
+  const pausedTransform = await transform()
+  await track.evaluate(async () => {
+    for (let frame = 0; frame < 5; frame++) {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => resolve()),
+      )
+    }
+  })
+  expect(await transform()).toBe(pausedTransform)
+  await page.getByRole('button', { name: 'List phir chalaayein' }).click()
+  await page.mouse.move(0, 0)
+  await page.locator('h1').click()
+  expect(
+    await track.evaluate((el) => getComputedStyle(el).animationPlayState),
+  ).toBe('running')
+  await track.locator('..').hover()
+  expect(
+    await track.evaluate((el) => getComputedStyle(el).animationPlayState),
+  ).toBe('paused')
+  await page.mouse.move(0, 0)
+  await track.locator('..').focus()
+  expect(
+    await track.evaluate((el) => getComputedStyle(el).animationPlayState),
+  ).toBe('paused')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  expect(await track.evaluate((el) => getComputedStyle(el).animationName)).toBe(
+    'none',
+  )
+  await expect(
+    page.getByRole('button', { name: 'Chalti list rokein' }),
+  ).toHaveCount(0)
+  await expect(track.locator('ul[aria-hidden="true"]')).toBeHidden()
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.evaluate(() =>
+    document.documentElement.setAttribute('data-reduce-motion', ''),
+  )
+  expect(await track.evaluate((el) => getComputedStyle(el).animationName)).toBe(
+    'none',
+  )
+  await expect(track.locator('ul[aria-hidden="true"]')).toBeHidden()
+})
 
 for (const viewport of [
   { width: 390, height: 900 },

@@ -11,6 +11,8 @@ The authenticated shell centralizes navigation, onboarding, profile preferences,
 
 ## Shell and route policy
 
+The root layout self-hosts Manrope for headings and IBM Plex Sans for body text and numbers through `next/font`. Both public pages and the signed-in app use these families through the shared `font-heading` and `font-sans` theme tokens; unsupported scripts retain the system-font fallback.
+
 The dashboard layout mounts authenticated application providers and shell-level controls ([dashboard layout](../src/app/%28dashboard%29/layout.tsx#L1-L35)); root layout selects the public or authenticated shell from request context ([root layout](../src/app/layout.tsx#L40-L127)). Route classification is centralized for active tabs, business rows, create actions, and bottom navigation ([navigation registry](../src/lib/navigation-routes.ts#L1-L77)). The visible shell controls and route policy should be changed together when adding a route family ([navigation tests](../src/lib/navigation-routes.test.ts#L1-L82)).
 
 ## Preferences and localization

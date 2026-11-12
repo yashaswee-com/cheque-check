@@ -137,8 +137,8 @@ html[data-reduce-motion] .premium-crown-shine::after {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-heading: var(--font-heading);
+  --font-sans: var(--font-ibm-plex), system-ui, sans-serif;
+  --font-heading: var(--font-manrope), system-ui, sans-serif;
 
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -225,9 +225,6 @@ html[data-reduce-motion] .premium-crown-shine::after {
 
   --radius: 18px;
 
-  --font-sans: 'SF Pro Text', 'Inter', system-ui, -apple-system, sans-serif;
-  --font-heading:
-    'SF Pro Display', 'Inter', system-ui, -apple-system, sans-serif;
   --success: var(--color-emerald-500);
   --success-foreground: var(--color-emerald-900);
   --info: var(--color-violet-500);
