@@ -115,6 +115,9 @@ function ReportsContent() {
       const exportCheques = await loadExportCheques()
       const baseName = `cheques_report_${activeBusiness?.name || 'export'}`
       const presentation = {
+        businessName: activeBusiness?.name,
+        pdfLabels: tr.raw('pdfReport'),
+        includeInward: profile?.received_cheques_enabled !== false,
         preferences: profile,
         language: display.locale,
         title: tr('title'),

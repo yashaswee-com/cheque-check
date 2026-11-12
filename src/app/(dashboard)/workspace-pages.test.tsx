@@ -714,6 +714,8 @@ describe('reports page', () => {
         cheques,
         'cheques_report_export.pdf',
         expect.objectContaining({
+          businessName: undefined,
+          pdfLabels: messages.Reports.pdfReport,
           language: 'en-IN',
           preferences: expect.any(Object),
         }),
@@ -751,6 +753,8 @@ describe('reports page', () => {
         cheques,
         'cheques_report_Acme.pdf',
         expect.objectContaining({
+          businessName: 'Acme',
+          pdfLabels: messages.Reports.pdfReport,
           language: 'en-IN',
           preferences: expect.any(Object),
         }),

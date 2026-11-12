@@ -4,15 +4,10 @@ import {
   BrowserReportRepository,
   type ReportPresentation,
 } from './report.repository'
-import { saveTextPdf } from '@/lib/pdf-text'
+import { createBusinessOverviewPdf } from '../lib/business-overview-pdf'
 import hindi from '../../../../messages/hi.json'
 
-vi.mock('@/lib/pdf-text', () => ({ saveTextPdf: vi.fn() }))
-
 const pdf = vi.hoisted(() => ({
-  setFontSize: vi.fn(),
-  text: vi.fn(),
-  addPage: vi.fn(),
   save: vi.fn(),
 }))
 const excel = vi.hoisted(() => ({
@@ -23,14 +18,10 @@ const excel = vi.hoisted(() => ({
   writeFile: vi.fn(),
 }))
 const loaded = vi.hoisted(() => ({ pdf: vi.fn(), excel: vi.fn() }))
-vi.mock('jspdf', () => {
+vi.mock('../lib/business-overview-pdf', () => {
   loaded.pdf()
   return {
-    jsPDF: class {
-      constructor() {
-        return pdf
-      }
-    },
+    createBusinessOverviewPdf: vi.fn(async () => pdf),
   }
 })
 vi.mock('xlsx', () => {
@@ -111,26 +102,15 @@ function readBlob(blob: Blob) {
 }
 
 describe('BrowserReportRepository', () => {
-  it('exports preferred currency and dates with translated PDF labels', async () => {
+  it('passes full records and formatting preferences to the owner PDF renderer', async () => {
     await repository.exportToPDF([cheque], 'localized.pdf', presentation)
-    expect(saveTextPdf).toHaveBeenCalledWith(
-      [
-        hindi.Reports.title,
-        presentation.headers.join(' | '),
-        [
-          '000001',
-          hindi.Cheques.party,
-          '',
-          '€125.5',
-          '10/31/2026',
-          hindi.PremiumWorkspace.types.Outward,
-          hindi.PremiumWorkspace.statuses.Issued,
-          'Rent',
-        ].join(' | '),
-      ],
-      'localized.pdf',
-      hindi.PremiumWorkspace.page,
+    expect(createBusinessOverviewPdf).toHaveBeenCalledWith(
+      [cheque],
+      presentation,
     )
+    expect(pdf.save).toHaveBeenCalledWith('localized.pdf', {
+      returnPromise: true,
+    })
     expect(cheque.cheque_date).toBe('2026-10-31')
   })
   it('exports translated Excel cells and preferred currency formatting without turning amounts into text', async () => {
@@ -179,12 +159,7 @@ describe('BrowserReportRepository', () => {
     expect(loaded.pdf).not.toHaveBeenCalled()
     expect(loaded.excel).not.toHaveBeenCalled()
   })
-  it.each([
-    'exportToCSV',
-    'exportToJSON',
-    'exportToPDF',
-    'exportToExcel',
-  ] as const)(
+  it.each(['exportToCSV', 'exportToJSON', 'exportToExcel'] as const)(
     '%s does not create a download for an empty report',
     async (method) => {
       await repository[method]([], 'empty')
@@ -193,6 +168,20 @@ describe('BrowserReportRepository', () => {
       expect(excel.writeFile).not.toHaveBeenCalled()
     },
   )
+
+  it('explains an empty PDF export rather than silently reporting success', async () => {
+    await expect(repository.exportToPDF([], 'empty.pdf')).rejects.toThrow(
+      'No cheques',
+    )
+    await expect(
+      repository.exportToPDF([], 'empty.pdf', {
+        ...presentation,
+        pdfLabels: hindi.Reports.pdfReport,
+      }),
+    ).rejects.toThrow(hindi.Reports.pdfReport.empty)
+    expect(createBusinessOverviewPdf).not.toHaveBeenCalled()
+    expect(pdf.save).not.toHaveBeenCalled()
+  })
 
   it('downloads CSV with headers, monetary data, and optional-field fallbacks', async () => {
     await repository.exportToCSV([cheque], 'report.csv')
@@ -212,19 +201,15 @@ describe('BrowserReportRepository', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledOnce()
   })
 
-  it('paginates PDF reports and preserves cheque identifiers and amounts', async () => {
+  it('uses the owner PDF renderer even without optional presentation', async () => {
     await repository.exportToPDF(
       Array.from({ length: 33 }, () => cheque),
       'report.pdf',
     )
-    expect(pdf.setFontSize.mock.calls).toEqual([[16], [9]])
-    expect(pdf.text).toHaveBeenCalledWith('ChequeCheck Report', 14, 18)
-    expect(pdf.text).toHaveBeenCalledWith(
-      '1. #000001 | Unknown party | 125.5 | 2026-10-31 | Issued',
-      14,
-      30,
+    expect(createBusinessOverviewPdf).toHaveBeenCalledWith(
+      expect.arrayContaining([cheque]),
+      undefined,
     )
-    expect(pdf.addPage).toHaveBeenCalledOnce()
     expect(pdf.save).toHaveBeenCalledWith('report.pdf', { returnPromise: true })
   })
 
@@ -318,18 +303,13 @@ describe('BrowserReportRepository', () => {
       repository.exportToPDF([cheque], 'blocked.pdf'),
     ).rejects.toThrow('Save failed')
   })
-  it('preserves numbering and pagination across PDF formatting batches', async () => {
+  it('passes every cheque to the PDF renderer without a preview limit', async () => {
     await repository.exportToPDF(
       Array.from({ length: 1001 }, () => cheque),
       'complete.pdf',
     )
-    expect(
-      pdf.text.mock.calls.filter((call) => /^\d+\./.test(call[0])),
-    ).toHaveLength(1001)
-    expect(pdf.text).toHaveBeenCalledWith(
-      expect.stringContaining('1001. #000001'),
-      14,
-      expect.any(Number),
+    expect(vi.mocked(createBusinessOverviewPdf).mock.calls[0][0]).toHaveLength(
+      1001,
     )
   })
 })

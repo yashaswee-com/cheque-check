@@ -3,9 +3,12 @@ import {
   createPreferenceFormatter,
   type FormattingPreferences,
 } from '@/lib/preference-format'
-import { saveTextPdf } from '@/lib/pdf-text'
+import type { ReportPdfLabels } from '../lib/business-overview'
 
 export interface ReportPresentation {
+  businessName?: string
+  pdfLabels?: ReportPdfLabels
+  includeInward?: boolean
   preferences: FormattingPreferences | null
   language: string
   title: string
@@ -145,58 +148,15 @@ export class BrowserReportRepository implements IReportRepository {
     filename: string,
     presentation?: ReportPresentation,
   ): Promise<void> {
-    if (cheques.length === 0) return
-    if (presentation) {
-      const display = createPreferenceFormatter(
-        presentation.preferences,
-        presentation.language,
+    if (cheques.length === 0)
+      throw new Error(
+        presentation?.pdfLabels?.empty ??
+          'No cheques available for this report.',
       )
-      const lines = [presentation.title, presentation.headers.join(' | ')]
-      await eachBatch(cheques, (batch) => {
-        lines.push(
-          ...batch.map((cheque) =>
-            [
-              cheque.cheque_number,
-              cheque.party?.name || presentation.unknownParty,
-              cheque.account?.bank?.name || '',
-              display.currency(cheque.amount),
-              display.date(cheque.cheque_date),
-              presentation.types[cheque.type],
-              presentation.statuses[cheque.status],
-              cheque.notes || '',
-            ].join(' | '),
-          ),
-        )
-      })
-      await saveTextPdf(lines, filename, presentation.page)
-      return
-    }
-    const { jsPDF } = await import('jspdf')
-    const document = new jsPDF()
-    document.setFontSize(16)
-    document.text('ChequeCheck Report', 14, 18)
-    document.setFontSize(9)
-
-    let y = 30
-    await eachBatch(cheques, (batch, offset) =>
-      batch.forEach((cheque, index) => {
-        if (y > 275) {
-          document.addPage()
-          y = 18
-        }
-        const line = [
-          `#${cheque.cheque_number}`,
-          cheque.party?.name || 'Unknown party',
-          `${cheque.amount}`,
-          cheque.cheque_date,
-          cheque.status,
-        ].join(' | ')
-        document.text(`${offset + index + 1}. ${line}`, 14, y)
-        y += 8
-      }),
-    )
-
-    await document.save(filename, { returnPromise: true })
+    const { createBusinessOverviewPdf } =
+      await import('../lib/business-overview-pdf')
+    const pdf = await createBusinessOverviewPdf(cheques, presentation)
+    await pdf.save(filename, { returnPromise: true })
   }
 
   async exportToExcel(
