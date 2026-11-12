@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { NextRequest } from 'next/server'
+import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({ getUser: vi.fn() }))
@@ -9,12 +10,28 @@ vi.mock('@supabase/ssr', () => ({
 }))
 
 import { updateSession } from './middleware'
+import { config } from '@/proxy'
 
 beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: null } })
 })
 
 describe('public middleware access', () => {
+  it.each(['/assets/ad.mp4', '/assets/voice-reminder.mp3'])(
+    'serves the public demo %s without an auth redirect',
+    (url) => {
+      expect(unstable_doesMiddlewareMatch({ config, url })).toBe(false)
+    },
+  )
+
+  it.each([
+    '/assets/private.mp4',
+    '/assets/ad.mp4/details',
+    '/api/reports/export.mp4',
+    '/dashboard',
+  ])('keeps the proxy active for %s', (url) => {
+    expect(unstable_doesMiddlewareMatch({ config, url })).toBe(true)
+  })
   it.each(['/features', '/pricing', '/privacy', '/contact'])(
     'does not redirect signed-out visitors from %s',
     async (path) => {

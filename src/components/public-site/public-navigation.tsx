@@ -9,7 +9,7 @@ import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
 import { Popover, PopoverTitle, PopoverTrigger } from '@/components/ui/popover'
 import { LocalePicker } from './locale-picker'
 import { PUBLIC_NAV_GROUPS, PUBLIC_NAV_LINKS } from './navigation-links'
-import { AppEntryLink } from './app-entry-link'
+import { PublicBrand } from './public-brand'
 import { PublicIcon } from './public-icon'
 import styles from './landing.module.css'
 
@@ -49,7 +49,9 @@ export function PublicNavigation({
               {t('nav.navigation')}
             </PopoverTitle>
             <div className={styles.menuTop}>
-              <span className={styles.brand}>CHEQUE—CHECK</span>
+              <span className={styles.brand}>
+                <PublicBrand />
+              </span>
               <PopoverPrimitive.Close
                 className={styles.menuTrigger}
                 aria-label={t('nav.close')}
@@ -85,19 +87,6 @@ export function PublicNavigation({
                 </section>
               ))}
             </nav>
-            <div className={styles.menuActions}>
-              <AppEntryLink href="/login" className={styles.signIn}>
-                {t('nav.signIn')}
-              </AppEntryLink>
-              <AppEntryLink href="/signup" className={styles.primaryCta}>
-                {t('nav.getStarted')}
-                <HugeiconsIcon
-                  icon={ArrowRight01Icon}
-                  size={18}
-                  aria-hidden="true"
-                />
-              </AppEntryLink>
-            </div>
             <div className={styles.menuLocale}>
               <span>{t('nav.language')}</span>
               <LocalePicker locale={locale} />

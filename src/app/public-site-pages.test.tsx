@@ -226,11 +226,21 @@ describe('public site pages', () => {
         name: /Cheque bounce calculator/,
       }),
     ).toHaveAttribute('href', '/cheque-bounce')
-    const signIn = within(screen.getByRole('dialog')).getByRole('link', {
-      name: english.PublicSite.nav.signIn,
-    })
-    expect(signIn).toHaveAttribute('href', '/login')
-    expect(signIn).toHaveAttribute('data-app-entry')
+    expect(
+      document.querySelector('header a[href="/login"]'),
+    ).not.toBeInTheDocument()
+    expect(
+      document.querySelector('[role="dialog"] a[href="/signup"]'),
+    ).not.toBeInTheDocument()
+    expect(screen.getAllByText('Cheque Check')).toHaveLength(3)
+    expect(
+      within(screen.getByRole('banner'))
+        .getByRole('link', { name: 'Cheque Check' })
+        .querySelector('img'),
+    ).toHaveAttribute(
+      'src',
+      expect.stringContaining('android-chrome-192x192.png'),
+    )
     expect(
       screen.getByRole('combobox', {
         name: english.PublicSite.nav.language,
@@ -317,7 +327,7 @@ describe('public site pages', () => {
       copy.scenarioTitle,
       copy.ctaTitle,
     ])
-    expect(screen.getByText(copy.videoPending)).toBeVisible()
+    expect(screen.getByRole('button', { name: copy.videoPlay })).toBeVisible()
     expect(screen.queryByText(copy.sampleData)).not.toBeInTheDocument()
     expect(screen.getByText(copy.scenarioDisclosure)).toBeVisible()
     expect(screen.getAllByText(copy.scenarioLabel)).toHaveLength(3)
@@ -326,15 +336,52 @@ describe('public site pages', () => {
       '/pricing',
     )
     expect(document.querySelector('#product-demo')).toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: /play/i }),
-    ).not.toBeInTheDocument()
-    expect(document.querySelector('video')).not.toBeInTheDocument()
+    const video = document.querySelector('video')
+    expect(video).toHaveAttribute('preload', 'none')
+    expect(video).not.toHaveAttribute('src')
+    expect(video).toHaveAttribute('poster', '/assets/demo-poster.jpg')
+    expect(video).not.toHaveAttribute('autoplay')
+    expect(screen.getByRole('img', { name: copy.scanGifPending })).toBeVisible()
+    expect(screen.getByText(copy.reportSamplePending)).toBeVisible()
+    const trust = screen
+      .getByRole('region', { name: copy.title })
+      .querySelector('ul')!
+    expect(within(trust).getAllByRole('listitem')).toHaveLength(3)
+    expect(trust.querySelectorAll('svg')).toHaveLength(3)
+    expect(within(trust).getByText(copy.trustAi)).toBeVisible()
     expect(document.querySelectorAll('details')).toHaveLength(6)
     const question = screen.getByText(copy.faq.bounceQuestion)
     await userEvent.click(question)
     expect(question.closest('details')).toHaveAttribute('open')
     expect(screen.getByText(copy.faq.bounceAnswer)).toBeVisible()
+  })
+
+  it('only loads audio on play and surfaces playback failures with a retry', async () => {
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, 'play')
+      .mockRejectedValueOnce(new Error('Playback unavailable'))
+      .mockResolvedValue(undefined)
+    renderPage(await LandingPage())
+    const audio = document.querySelector('audio')!
+    expect(audio).not.toHaveAttribute('src')
+    expect(audio).toHaveAttribute('preload', 'none')
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: english.PublicSite.landing.audioPlay,
+      }),
+    )
+    expect(audio).toHaveAttribute('src', '/assets/voice-reminder.mp3')
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      english.PublicSite.landing.mediaError,
+    )
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: english.PublicSite.landing.audioPlay,
+      }),
+    )
+    expect(play).toHaveBeenCalledTimes(2)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    play.mockRestore()
   })
 
   it('adds the status link to the public footer', async () => {

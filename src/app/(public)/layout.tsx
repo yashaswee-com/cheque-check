@@ -3,12 +3,12 @@ import Link from 'next/link'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Analytics01Icon } from '@hugeicons/core-free-icons'
 import { PublicNavigation } from '@/components/public-site/public-navigation'
-import { AppEntryLink } from '@/components/public-site/app-entry-link'
 import { MetaPixelConsent } from '@/components/public-site/meta-pixel-consent'
 import styles from '@/components/public-site/landing.module.css'
 import { PUBLIC_NAV_LINKS } from '@/components/public-site/navigation-links'
 import { PUBLIC_NAV_GROUPS } from '@/components/public-site/navigation-links'
 import { PublicIcon } from '@/components/public-site/public-icon'
+import { PublicBrand } from '@/components/public-site/public-brand'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -36,38 +36,9 @@ export default async function PublicSiteLayout({
       <header className={`${styles.header} sticky top-0 z-40`}>
         <div className={styles.headerInner}>
           <Link href="/" className={styles.brand}>
-            <svg width="25" height="25" viewBox="0 0 28 28" aria-hidden="true">
-              <rect
-                x="2"
-                y="5"
-                width="24"
-                height="18"
-                rx="4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <path
-                d="m8 14 4 4 8-8M7 9h5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span>
-              CHEQUE<span className={styles.brandDivider}>—</span>CHECK
-            </span>
+            <PublicBrand />
           </Link>
           <div className="flex min-w-0 items-center gap-2">
-            <AppEntryLink
-              href="/login"
-              data-testid="public-sign-in"
-              className={styles.signIn}
-            >
-              {t('nav.signIn')}
-            </AppEntryLink>
             <PublicNavigation locale={locale as 'en' | 'hi' | 'hi-en'} />
           </div>
         </div>
@@ -77,7 +48,7 @@ export default async function PublicSiteLayout({
         <div className={styles.footerInner}>
           <div className={styles.footerIntro}>
             <Link href="/" className={styles.brand}>
-              CHEQUE—CHECK
+              <PublicBrand />
             </Link>
             <p>{t('footer.tagline')}</p>
           </div>

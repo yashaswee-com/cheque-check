@@ -50,9 +50,6 @@
     0 1px 3px color-mix(in srgb, var(--foreground) 7%, transparent);
 }
 
-.header:has([aria-expanded='true']) .signIn {
-  visibility: hidden;
-}
 .toneIcon {
   position: relative;
   display: inline-grid;
@@ -64,7 +61,7 @@
 .toneIcon::before {
   content: '';
   position: absolute;
-  inset: -4px 1px 1px -4px;
+  inset: -4px;
   border-radius: 35%;
   background: color-mix(in srgb, var(--primary) 14%, var(--background));
   z-index: -1;
@@ -88,28 +85,18 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   min-height: 44px;
   font-family: var(--font-manrope), system-ui, sans-serif;
-  font-size: 12px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.3px;
   white-space: nowrap;
 }
 
-.brand > svg {
+.brand > img {
   flex-shrink: 0;
-}
-.brandDivider {
-  padding: 0 1px;
-}
-.signIn {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  font-size: 14px;
-  padding: 0 4px;
-  white-space: nowrap;
+  border-radius: 8px;
 }
 .menuTrigger {
   display: grid;
@@ -150,20 +137,6 @@
   letter-spacing: 1px;
   color: var(--muted-foreground);
   margin: 0 8px 8px;
-}
-.menuActions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding-top: 20px;
-  border-top: 1px solid var(--blue-line);
-}
-.menuActions .signIn {
-  padding: 0 16px;
-}
-.menuActions .primaryCta {
-  font-size: 14px;
 }
 .menu nav {
   display: grid;
@@ -326,20 +299,17 @@
   letter-spacing: 1px;
   margin-bottom: 16px;
 }
-.hero .eyebrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+.earlyAccess {
+  display: inline-flex;
+  padding: 6px 12px;
+  border: 1px solid var(--blue-line);
+  border-radius: 9999px;
+  background: var(--blue-soft);
+  color: var(--primary);
   letter-spacing: 0.2px;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 600;
   margin-bottom: 12px;
-}
-.eyebrowLine {
-  width: 16px;
-  height: 1px;
-  background: currentColor;
-  flex-shrink: 0;
 }
 .marked {
   color: var(--primary);
@@ -376,11 +346,6 @@
   gap: 8px;
   color: var(--primary);
 }
-.heroNote {
-  font-size: 12px;
-  color: var(--muted-foreground);
-  margin-top: 8px;
-}
 .showcase {
   position: relative;
   margin: 24px -11px;
@@ -404,51 +369,78 @@
   right: -5px;
 }
 .videoFrame {
-  aspect-ratio: 9 / 16;
   width: min(100%, 290px);
   margin: auto;
   border: 1px solid var(--blue-line);
   border-radius: 18px;
-  padding: 24px 20px;
+  overflow: hidden;
   background: var(--background);
   display: flex;
   flex-direction: column;
   scroll-margin-top: 100px;
 }
-.videoBadge {
-  color: var(--primary);
-  font-size: 11px;
-  letter-spacing: 1px;
-  font-weight: 600;
+.videoPlayer {
+  position: relative;
+  aspect-ratio: 9 / 16;
 }
-.videoPlaceholder {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.videoPlayer video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.mediaPlay {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 10px;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid var(--blue-line);
+  border-radius: 9999px;
+  background: var(--background);
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
 }
-.videoIcon {
-  display: grid;
-  place-items: center;
+.videoPlayer .mediaPlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
   width: 64px;
   height: 64px;
-  border-radius: 18px;
-  background: var(--blue-soft);
-  color: var(--primary);
 }
-.videoPlaceholder strong {
-  font-family: var(--font-manrope), system-ui, sans-serif;
-  font-size: 21px;
-  font-weight: 700;
+.audioPlayer {
+  margin-top: 20px;
 }
-.videoPlaceholder p {
-  font-size: 14px;
+.audioPlayer audio {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+}
+.audioPlayer audio:not([controls]) {
+  display: none;
+}
+.mediaError,
+.mediaAccessibility {
+  margin: 12px auto 0;
+  max-width: 290px;
+  font-size: 12px;
   color: var(--muted-foreground);
-  max-width: 190px;
+  text-align: center;
+}
+.videoPlayer .mediaError {
+  position: absolute;
+  bottom: 12px;
+  inset-inline: 8px;
+  background: var(--background);
+  padding: 8px;
 }
 .videoCaption {
+  padding: 12px;
   font-size: 12px;
   color: var(--primary);
 }
@@ -459,6 +451,7 @@
   gap: 8px 16px;
   font-size: 12px;
   color: var(--muted-foreground);
+  margin-top: 16px;
 }
 .trust li {
   display: flex;
@@ -696,43 +689,22 @@
   margin-top: 20px;
   text-align: center;
 }
-.chequeVisual {
-  padding: 20px;
-  background: var(--card);
-  border: 1px solid var(--blue-line);
-  border-radius: 8px;
-}
-.chequeVisual > div:first-child {
+.gifPlaceholder {
+  min-height: 240px;
+  border: 1px dashed var(--blue-line);
+  border-radius: 12px;
   display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 10px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 24px;
+  text-align: center;
   color: var(--primary);
 }
-.chequeVisual > strong {
-  display: block;
-  font-size: 34px;
-  font-weight: 600;
-  margin: 12px 0;
-  letter-spacing: -1px;
-  color: var(--primary);
-  font-variant-numeric: tabular-nums;
-}
-.chequeVisual strong span {
-  font-size: 17px;
-}
-.chequeRule {
-  border-top: 1px solid var(--blue-line);
-  margin-bottom: 12px;
-}
-.chequeVisual > span {
-  font-size: 10px;
-}
-.chequeSignature {
-  display: block;
-  margin-top: 8px;
-  letter-spacing: 1px;
-  color: var(--primary);
+.gifPlaceholder > span:last-child {
+  font-size: 12px;
+  color: var(--muted-foreground);
 }
 .scanLabel {
   display: flex;
@@ -830,17 +802,21 @@
   justify-content: center;
   padding: 16px 4px;
 }
-.avatarGroup span {
-  width: 56px;
-  height: 56px;
-  display: grid;
-  place-items: center;
+.avatarGroup img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
   border: 3px solid var(--background);
   background: var(--blue-soft);
   color: var(--primary);
   border-radius: 50%;
-  font-size: 14px;
-  margin-left: -4px;
+  margin-inline: -4px;
+}
+.partyVisual > p {
+  text-align: center;
+  font-size: 12px;
+  margin-top: 16px;
+  color: var(--muted-foreground);
 }
 .downloadVisual {
   background: var(--card);
@@ -923,14 +899,14 @@
 .faq summary::-webkit-details-marker {
   display: none;
 }
-.faq summary span {
+.faq summary svg {
   color: var(--primary);
   font-size: 24px;
   font-weight: 400;
   flex-shrink: 0;
 }
-.faq details[open] summary span {
-  transform: rotate(45deg);
+.faq details[open] summary svg {
+  transform: rotate(180deg);
 }
 .faq details p {
   padding-bottom: 24px;
@@ -965,6 +941,16 @@
   scroll-snap-type: x mandatory;
   scrollbar-width: thin;
   scrollbar-color: var(--blue-line) transparent;
+}
+.scenarioScroller {
+  max-width: 1100px;
+  padding-inline: 12px;
+  margin: auto;
+}
+.scenarioScroller > div > button {
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--primary);
 }
 .scenarioCard {
   flex: 0 0 min(82vw, 320px);
@@ -1066,9 +1052,6 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 24px;
   }
-  .menuActions {
-    justify-content: flex-end;
-  }
   .footerInner {
     padding: 64px 32px 24px;
   }
@@ -1103,10 +1086,6 @@
   .heroCopy {
     margin: 0;
   }
-  .hero .eyebrow {
-    justify-content: flex-start;
-    font-size: 12px;
-  }
   .landing h1 {
     font-size: clamp(36px, 4vw, 52px);
     line-height: 1.15;
@@ -1129,13 +1108,9 @@
   }
   .videoFrame {
     width: min(100%, 290px);
-    padding: 24px 16px;
   }
   .trust {
-    grid-column: 1 / -1;
-    gap: 24px;
-    font-size: 14px;
-    margin-top: 8px;
+    justify-content: flex-start;
   }
   .section {
     padding: 80px 48px;

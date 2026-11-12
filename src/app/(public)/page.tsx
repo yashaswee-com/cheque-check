@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
@@ -6,6 +7,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Analytics01Icon,
   ArrowRight01Icon,
+  ArrowDown01Icon,
   BankIcon,
   Call02Icon,
   CheckmarkCircle02Icon,
@@ -15,13 +17,15 @@ import {
   ScanIcon,
   Shirt01Icon,
   UserGroupIcon,
-  Video01Icon,
 } from '@hugeicons/core-free-icons'
 import { createClient } from '@/lib/supabase/server'
 import { AppEntryLink } from '@/components/public-site/app-entry-link'
 import styles from '@/components/public-site/landing.module.css'
 import { IndustryMarquee } from '@/components/public-site/industry-marquee'
 import { PublicIcon } from '@/components/public-site/public-icon'
+import { PublicBrand } from '@/components/public-site/public-brand'
+import { DemoMedia } from '@/components/public-site/demo-media'
+import { PillScroller } from '@/components/ui/pill-scroller'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite.landing')
@@ -73,10 +77,7 @@ export default async function LandingPage() {
     <main className={styles.landing}>
       <section className={styles.hero} aria-labelledby="landing-title">
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>
-            <span aria-hidden="true" className={styles.eyebrowLine} />
-            {t('eyebrow')}
-          </p>
+          <p className={styles.earlyAccess}>{t('eyebrow')}</p>
           <h1 id="landing-title" aria-label={t('title')}>
             {t('titleLead')}
             <br />
@@ -89,7 +90,20 @@ export default async function LandingPage() {
               {arrow}
             </AppEntryLink>
           </div>
-          <p className={styles.heroNote}>{t('heroNote')}</p>
+          <ul className={styles.trust}>
+            {(['trustFree', 'trustReminders', 'trustAi'] as const).map(
+              (key) => (
+                <li key={key}>
+                  <HugeiconsIcon
+                    icon={CheckmarkCircle02Icon}
+                    size={16}
+                    aria-hidden="true"
+                  />
+                  {t(key)}
+                </li>
+              ),
+            )}
+          </ul>
         </div>
 
         <div className={styles.showcase}>
@@ -99,41 +113,15 @@ export default async function LandingPage() {
             data-testid="landing-video"
             className={styles.videoFrame}
           >
-            <span className={styles.videoBadge}>CHEQUE—CHECK</span>
-            <div className={styles.videoPlaceholder}>
-              <span className={styles.videoIcon}>
-                <HugeiconsIcon
-                  icon={Video01Icon}
-                  size={32}
-                  aria-hidden="true"
-                />
-              </span>
-              <strong>{t('videoTitle')}</strong>
-              <p>{t('videoPending')}</p>
-            </div>
+            <DemoMedia kind="video" />
             <figcaption className={styles.videoCaption}>
               {t('videoFormat')}
             </figcaption>
           </figure>
+          <p className={styles.mediaAccessibility}>
+            {t('videoCaptionsPending')}
+          </p>
         </div>
-        <ul className={styles.trust}>
-          {(['trustFree', 'trustReminders', 'trustLanguage'] as const).map(
-            (key) => (
-              <li key={key}>
-                <HugeiconsIcon
-                  icon={
-                    key === 'trustReminders'
-                      ? Call02Icon
-                      : CheckmarkCircle02Icon
-                  }
-                  size={16}
-                  aria-hidden="true"
-                />
-                {t(key)}
-              </li>
-            ),
-          )}
-        </ul>
       </section>
 
       <section className={styles.audience} aria-label={t('audienceLabel')}>
@@ -216,19 +204,14 @@ export default async function LandingPage() {
                       <PublicIcon icon={ScanIcon} size={18} />
                       {t('scanExampleTitle')}
                     </span>
-                    <div className={styles.chequeVisual} aria-hidden="true">
-                      <div>
-                        <span>{t('sampleParty')}</span>
-                        <span>№ 000128</span>
-                      </div>
-                      <strong>
-                        ₹48,500<span>.00</span>
-                      </strong>
-                      <div className={styles.chequeRule} />
-                      <span>{t('previewPending')}</span>
-                      <span className={styles.chequeSignature}>
-                        CHEQUE—CHECK
-                      </span>
+                    <div
+                      className={styles.gifPlaceholder}
+                      role="img"
+                      aria-label={t('scanGifPending')}
+                    >
+                      <PublicIcon icon={ScanIcon} size={40} />
+                      <strong>{t('scanGifTitle')}</strong>
+                      <span>{t('scanGifPending')}</span>
                     </div>
                     <p>{t('scanExampleNote')}</p>
                   </div>
@@ -253,25 +236,38 @@ export default async function LandingPage() {
                     <span className={styles.callNote}>
                       {t('callExampleNote')}
                     </span>
+                    <DemoMedia kind="audio" />
+                    <p className={styles.mediaAccessibility}>
+                      {t('audioTranscriptPending')}
+                    </p>
                   </div>
                 )}
                 {key === 'accounts' && (
-                  <div className={styles.accountVisual} aria-hidden="true">
+                  <div className={styles.accountVisual}>
                     <span>
-                      <span>A</span>
+                      <span aria-hidden="true">SBI</span>
                       {t('sampleBankA')}
                     </span>
                     <span>
-                      <span>B</span>
+                      <span aria-hidden="true">HDFC</span>
                       {t('sampleBankB')}
                     </span>
                   </div>
                 )}
                 {key === 'parties' && (
-                  <div className={styles.avatarGroup} aria-hidden="true">
-                    <span>ST</span>
-                    <span>MT</span>
-                    <span>PK</span>
+                  <div className={styles.partyVisual}>
+                    <div className={styles.avatarGroup}>
+                      {[1, 2].map((index) => (
+                        <Image
+                          key={index}
+                          src={`/assets/party-portrait-${index}.webp`}
+                          width={128}
+                          height={128}
+                          alt=""
+                        />
+                      ))}
+                    </div>
+                    <p>{t('partyPhotosNote')}</p>
                   </div>
                 )}
                 {key === 'reports' && (
@@ -302,6 +298,7 @@ export default async function LandingPage() {
                         />
                       </span>
                     </div>
+                    <p>{t('reportSamplePending')}</p>
                   </div>
                 )}
                 <span className={styles.visualCaption}>
@@ -354,7 +351,11 @@ export default async function LandingPage() {
             <details key={key}>
               <summary>
                 {t(`faq.${key}Question`)}
-                <span aria-hidden="true">+</span>
+                <HugeiconsIcon
+                  icon={ArrowDown01Icon}
+                  size={20}
+                  aria-hidden="true"
+                />
               </summary>
               <p>{t(`faq.${key}Answer`)}</p>
             </details>
@@ -379,44 +380,43 @@ export default async function LandingPage() {
           <h2 id="scenarios-title">{t('scenarioTitle')}</h2>
           <p>{t('scenarioDisclosure')}</p>
         </div>
-        <p className={styles.swipeHint}>
-          {t('swipeHint')}
-          <span aria-hidden="true"> →</span>
-        </p>
-        <div
-          className={styles.scenarios}
-          role="region"
-          aria-label={t('swipeHint')}
-          tabIndex={0}
-        >
-          {(['owner', 'accountant', 'distributor'] as const).map(
-            (key, index) => (
-              <article key={key} className={styles.scenarioCard}>
-                <span className={styles.featureIcon}>
-                  <PublicIcon
-                    icon={
-                      index === 0
-                        ? Shirt01Icon
-                        : index === 1
-                          ? UserGroupIcon
-                          : DeliveryBox01Icon
-                    }
-                    size={26}
-                    aria-hidden="true"
-                  />
-                </span>
-                <h3>{t(`scenarios.${key}Need`)}</h3>
-                <p>{t(`scenarios.${key}Benefit`)}</p>
-                <div className={styles.scenarioPerson}>
-                  <span aria-hidden="true">0{index + 1}</span>
-                  <div>
-                    <strong>{t(`scenarios.${key}Role`)}</strong>
-                    <span>{t('scenarioLabel')}</span>
+        <p className={styles.swipeHint}>{t('swipeHint')}</p>
+        <div className={styles.scenarioScroller}>
+          <PillScroller
+            className={styles.scenarios}
+            role="region"
+            aria-label={t('swipeHint')}
+            tabIndex={0}
+          >
+            {(['owner', 'accountant', 'distributor'] as const).map(
+              (key, index) => (
+                <article key={key} className={styles.scenarioCard}>
+                  <span className={styles.featureIcon}>
+                    <PublicIcon
+                      icon={
+                        index === 0
+                          ? Shirt01Icon
+                          : index === 1
+                            ? UserGroupIcon
+                            : DeliveryBox01Icon
+                      }
+                      size={26}
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <h3>{t(`scenarios.${key}Need`)}</h3>
+                  <p>{t(`scenarios.${key}Benefit`)}</p>
+                  <div className={styles.scenarioPerson}>
+                    <span aria-hidden="true">0{index + 1}</span>
+                    <div>
+                      <strong>{t(`scenarios.${key}Role`)}</strong>
+                      <span>{t('scenarioLabel')}</span>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ),
-          )}
+                </article>
+              ),
+            )}
+          </PillScroller>
         </div>
       </section>
 
@@ -431,7 +431,9 @@ export default async function LandingPage() {
             aria-hidden="true"
           />
         </span>
-        <p className={styles.eyebrow}>CHEQUE—CHECK</p>
+        <p className={styles.brand}>
+          <PublicBrand />
+        </p>
         <h2 id="final-title">{t('ctaTitle')}</h2>
         <p>{t('ctaDescription')}</p>
         <AppEntryLink

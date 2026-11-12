@@ -98,17 +98,34 @@ for (const viewport of [
     expect(
       await heroCta.evaluate((el) => el.getBoundingClientRect().height),
     ).toBeGreaterThanOrEqual(44)
-    const preview = await page.getByTestId('landing-video').boundingBox()
+    const preview = await page.locator('#product-demo video').boundingBox()
     expect(preview).not.toBeNull()
     expect(preview!.y).toBeLessThan(viewport.height - 80)
     expect(preview!.width / preview!.height).toBeCloseTo(9 / 16, 2)
-    await expect(page.locator('#product-demo button')).toHaveCount(0)
-    await expect(page.locator('#product-demo video')).toHaveCount(0)
+    await expect(page.locator('#product-demo button')).toHaveCount(1)
+    await expect(page.locator('#product-demo video')).not.toHaveAttribute('src')
+    await expect(page.getByRole('banner').getByRole('link')).toHaveCount(1)
+    await expect(
+      page.getByRole('banner').getByRole('link'),
+    ).toHaveAccessibleName('Cheque Check')
     const header = page.getByRole('banner')
     expect((await header.boundingBox())!.x).toBeGreaterThan(0)
     expect(
       await header.evaluate((el) => getComputedStyle(el).borderRadius),
     ).toBe('18px')
+    expect(
+      await page
+        .getByText('Early access · Aaj hi shuru karein')
+        .evaluate((el) => getComputedStyle(el).borderRadius),
+    ).toBe('9999px')
+    const iconInsets = await page
+      .locator('[data-feature="cheques"] [class*="toneIcon"]')
+      .first()
+      .evaluate((el) => {
+        const style = getComputedStyle(el, '::before')
+        return [style.top, style.right, style.bottom, style.left]
+      })
+    expect(iconInsets).toEqual(['-4px', '-4px', '-4px', '-4px'])
     const headlineFont = await page
       .locator('h1')
       .evaluate((el) => getComputedStyle(el).fontFamily)
@@ -142,11 +159,9 @@ for (const viewport of [
     const menuBox = await nav.boundingBox()
     expect(menuBox!.x).toBeGreaterThanOrEqual(0)
     expect(menuBox!.x + menuBox!.width).toBeLessThanOrEqual(viewport.width)
-    const menuSignup = page
-      .getByRole('dialog')
-      .getByRole('link', { name: 'Shuru karein' })
-    await menuSignup.scrollIntoViewIfNeeded()
-    await expect(menuSignup).toBeInViewport()
+    await expect(
+      page.getByRole('dialog').locator('a[href="/signup"], a[href="/login"]'),
+    ).toHaveCount(0)
     await page
       .getByRole('button', { name: 'Menu band karein' })
       .scrollIntoViewIfNeeded()
@@ -173,6 +188,13 @@ for (const viewport of [
       await expect
         .poll(() => carousel.evaluate((el) => el.scrollLeft))
         .toBeGreaterThan(0)
+      const scroller = page.locator('[class*="scenarioScroller"]')
+      await expect(
+        scroller.getByRole('button', { name: 'Baayin taraf scroll karein' }),
+      ).toBeVisible()
+      await scroller
+        .getByRole('button', { name: 'Daayin taraf scroll karein' })
+        .click()
     }
   })
 }
@@ -214,7 +236,7 @@ for (const viewport of [
   { width: 390, height: 844 },
   { width: 1280, height: 900 },
 ]) {
-  test(`landing sign in opens inside the app shell at ${viewport.width}px`, async ({
+  test(`landing signup opens inside the app shell at ${viewport.width}px`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport)
@@ -225,8 +247,8 @@ for (const viewport of [
       ),
     ).toBe(false)
     await expect(page.getByTestId('landing-video')).toBeVisible()
-    await page.getByTestId('public-sign-in').click()
-    await expect(page).toHaveURL(/\/login$/)
+    await page.locator('main a[href="/signup"]').first().click()
+    await expect(page).toHaveURL(/\/signup$/)
     await expect(page.locator('#app-shell')).toBeVisible()
     await expect(page.locator('[data-public-site]')).toHaveCount(0)
     expect(
@@ -277,6 +299,45 @@ test('public navigation keeps its light blue palette under a saved dark theme', 
       .getByRole('dialog')
       .evaluate((el) => getComputedStyle(el).backgroundColor),
   ).toBe('rgb(255, 255, 255)')
+})
+
+test('public landing loads media only on interaction and plays the supplied recordings', async ({
+  page,
+}) => {
+  const mediaRequests: string[] = []
+  page.on('request', (request) => {
+    if (/\/assets\/(ad\.mp4|voice-reminder\.mp3)/.test(request.url()))
+      mediaRequests.push(request.url())
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Reject', exact: true }).click()
+  const video = page.locator('#product-demo video')
+  const audio = page.locator('audio')
+  await expect(video).not.toHaveAttribute('src')
+  await expect(audio).not.toHaveAttribute('src')
+  expect(mediaRequests).toEqual([])
+  await page.getByRole('button', { name: 'App demo chalaayein' }).click()
+  await expect(video).toHaveAttribute('src', '/assets/ad.mp4')
+  await expect(video).toHaveAttribute('controls', '')
+  await expect
+    .poll(() => video.evaluate((el: HTMLVideoElement) => el.currentTime))
+    .toBeGreaterThan(0)
+  await video.evaluate((el: HTMLVideoElement) => el.pause())
+  await page.getByRole('button', { name: 'Reminder recording sunein' }).click()
+  await expect(audio).toHaveAttribute('src', '/assets/voice-reminder.mp3')
+  await expect
+    .poll(() => audio.evaluate((el: HTMLAudioElement) => el.currentTime))
+    .toBeGreaterThan(0)
+  await page.getByRole('button', { name: 'Reminder recording rokein' }).click()
+  await expect
+    .poll(() => audio.evaluate((el: HTMLAudioElement) => el.paused))
+    .toBe(true)
+  await expect(page.locator('main').getByRole('alert')).toHaveCount(0)
+  expect(mediaRequests.some((url) => url.endsWith('ad.mp4'))).toBe(true)
+  expect(mediaRequests.some((url) => url.endsWith('voice-reminder.mp3'))).toBe(
+    true,
+  )
 })
 
 test('industry marquee moves, pauses, and respects reduced motion', async ({
