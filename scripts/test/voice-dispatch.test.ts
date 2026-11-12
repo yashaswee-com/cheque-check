@@ -210,8 +210,12 @@ function makeOrchestrator(
     ...overrides,
   }
   const twilio = {
-    generateTwiML: vi.fn(() => '<Response/>'),
-    initiateCall: vi.fn(async () => twilioResult),
+    generateTwiML: vi.fn<(message: string, language?: string) => string>(
+      () => '<Response/>',
+    ),
+    initiateCall: vi.fn<
+      (to: string, twiml: string) => Promise<typeof twilioResult>
+    >(async () => twilioResult),
   }
   const orchestrator = new DispatcherOrchestrator(db as never, twilio as never)
   return { orchestrator, db, twilio }
@@ -265,7 +269,9 @@ describe('dispatcher eligibility', () => {
     await orchestrator.run(1)
 
     expect(twilio.generateTwiML).toHaveBeenCalledWith(
-      expect.stringContaining('total 14.50 euros'),
+      expect.stringContaining(
+        'दो cheques HDFC mein, total चौदह दशमलव पाँच यूरो',
+      ),
       'hi-en',
     )
     expect(twilio.generateTwiML).toHaveBeenCalledWith(
@@ -287,6 +293,104 @@ describe('dispatcher eligibility', () => {
     expect(voice.generateTwiML('Namaste Asha', 'hi-en')).toContain(
       'Dhanyavaad.',
     )
+  })
+
+  describe.each(['hi', 'hi-en'])('%s spoken reminder numbers', (language) => {
+    it.each([
+      [0, 'शून्य'],
+      [0.05, 'शून्य दशमलव शून्य पाँच'],
+      [1, 'एक'],
+      [1.01, 'एक दशमलव शून्य एक'],
+      [14.5, 'चौदह दशमलव पाँच'],
+      [999.999, 'एक हज़ार'],
+      [12521.05, 'बारह हज़ार पाँच सौ इक्कीस दशमलव शून्य पाँच'],
+      [1234567.89, 'बारह लाख चौंतीस हज़ार पाँच सौ सड़सठ दशमलव आठ नौ'],
+      [10000000, 'एक करोड़'],
+    ])('sends %s as Hindi words in escaped TwiML', async (amount, words) => {
+      const { orchestrator, twilio } = makeOrchestrator(reminder, {
+        fetchProfile: async () => ({
+          user_id: USER,
+          name: 'Asha & Co 2',
+          phone: '+919800000000',
+          language,
+          currency: '₹',
+          voice_call_enabled: true,
+          deleted_at: null,
+        }),
+        fetchCheques: async () => [
+          { id: 'c1', amount, account: { bank: { name: 'Bank <24>' } } },
+        ],
+      })
+      const voice = new TwilioVoiceService({
+        accountSid: 'test',
+        authToken: 'test',
+        fromNumber: '+919800000000',
+      })
+      twilio.generateTwiML.mockImplementation((message, locale) =>
+        voice.generateTwiML(message, locale),
+      )
+
+      expect(await orchestrator.run(1)).toMatchObject([{ status: 'sent' }])
+
+      const twiml = twilio.initiateCall.mock.calls[0][1]
+      const document = new DOMParser().parseFromString(twiml, 'text/xml')
+      expect(document.querySelector('parsererror')).toBeNull()
+      const say = document.querySelector('Say')
+      expect(say?.getAttribute('language')).toBe('hi-IN')
+      expect(say?.getAttribute('voice')).toBe('Polly.Aditi')
+      expect(say?.textContent).toContain(
+        `${words} भारतीय ${amount <= 1 ? 'रुपया' : 'रुपए'}`,
+      )
+      expect(say?.textContent).toContain(
+        language === 'hi' ? 'एक चेक' : 'एक cheque',
+      )
+      expect(say?.textContent).toContain('Asha & Co 2')
+      expect(say?.textContent).toContain('Bank <24>')
+    })
+
+    it.each([
+      ['$', 'यूएस डॉलर'],
+      ['€', 'यूरो'],
+      ['£', 'ब्रिटिश पाउंड'],
+    ])('keeps the selected %s currency', async (currency, unit) => {
+      const { orchestrator, twilio } = makeOrchestrator(reminder, {
+        fetchProfile: async () => ({
+          user_id: USER,
+          name: 'Asha',
+          phone: '+919800000000',
+          language,
+          currency,
+          voice_call_enabled: true,
+          deleted_at: null,
+        }),
+      })
+
+      await orchestrator.run(1)
+
+      expect(twilio.generateTwiML).toHaveBeenCalledWith(
+        expect.stringContaining(`दस ${unit}`),
+        language,
+      )
+    })
+  })
+
+  it('preserves English counts, amounts and voice language', async () => {
+    const { orchestrator, twilio } = makeOrchestrator(reminder)
+    await orchestrator.run(1)
+    expect(twilio.generateTwiML).toHaveBeenCalledWith(
+      expect.stringContaining(
+        '1 cheque hitting HDFC for a total of 10.00 Indian rupees',
+      ),
+      'en',
+    )
+    const voice = new TwilioVoiceService({
+      accountSid: 'test',
+      authToken: 'test',
+      fromNumber: '+919800000000',
+    })
+    expect(
+      voice.generateTwiML('1 cheque, 10.00 Indian rupees', 'en'),
+    ).toContain('language="en-IN">1 cheque, 10.00 Indian rupees</Say>')
   })
 
   it('passes the scope to the claim and reports the provider id', async () => {

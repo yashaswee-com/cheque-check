@@ -3,6 +3,7 @@ import { TwilioVoiceService } from '../../_shared/twilio-voice.service.ts'
 import { Logger } from '../../_shared/logger.ts'
 import { NOTIFICATION_PURPOSE } from '../../_shared/notifications.ts'
 import { WebPushService } from '../../_shared/web-push.service.ts'
+import { numberToHindiWords } from '../../_shared/hindi-numbers.ts'
 import {
   ClaimedJob,
   DispatchCheque,
@@ -23,11 +24,23 @@ function formatCurrency(
   currency: string | null,
   language: string,
 ) {
-  return new Intl.NumberFormat(language === 'hi' ? 'hi-IN' : 'en-IN', {
+  const usesHindi = language === 'hi' || language === 'hi-en'
+  const formatted = new Intl.NumberFormat(usesHindi ? 'hi-IN' : 'en-IN', {
     style: 'currency',
     currency: CURRENCY_CODES[currency ?? '₹'] ?? 'INR',
     currencyDisplay: 'name',
+    ...(usesHindi ? { minimumFractionDigits: 0 } : {}),
   }).format(amount)
+  if (!usesHindi) return formatted
+
+  // Spell out only generated amounts, never numbers in user or bank names.
+  return formatted.replace(/[\d,]+(?:\.\d+)?/g, (digits) => {
+    const [integer, fraction] = digits.replaceAll(',', '').split('.')
+    const words = numberToHindiWords(Number(integer))
+    return fraction
+      ? `${words} दशमलव ${Array.from(fraction, (digit) => numberToHindiWords(Number(digit))).join(' ')}`
+      : words
+  })
 }
 
 export interface TestModeConfig {
@@ -384,7 +397,7 @@ export class DispatcherOrchestrator {
       const bankSummaries = Object.entries(banks)
         .map(
           ([bank, data]) =>
-            `${bank} में ${data.count} चेक, कुल ${formatCurrency(data.total, currency, language)}`,
+            `${bank} में ${numberToHindiWords(data.count)} चेक, कुल ${formatCurrency(data.total, currency, language)}`,
         )
         .join(', और ')
 
@@ -395,7 +408,7 @@ export class DispatcherOrchestrator {
       const bankSummaries = Object.entries(banks)
         .map(
           ([bank, data]) =>
-            `${data.count} cheque${data.count > 1 ? 's' : ''} ${bank} mein, total ${formatCurrency(data.total, currency, language)}`,
+            `${numberToHindiWords(data.count)} cheque${data.count > 1 ? 's' : ''} ${bank} mein, total ${formatCurrency(data.total, currency, language)}`,
         )
         .join(', aur ')
 
