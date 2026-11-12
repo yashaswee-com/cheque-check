@@ -9,6 +9,11 @@ Cheque Check has browser-visible build settings, server-only application credent
 3. Keep production, QA, preview, and development destinations distinct. The public schema rejects local Supabase URLs for deployed labels; when observability is enabled, the monitoring schema rejects production telemetry settings on a preview deployment ([environment checks](../src/lib/env/schema.ts#L64-L109), [monitoring checks](../src/lib/env/schema.ts#L15-L61)).
 4. Rebuild when changing `NEXT_PUBLIC_*` values because the framework embeds public settings in the client build ([Next config](../next.config.ts#L1-L25), [public environment schema](../src/lib/env/schema.ts#L64-L110)).
 
+The full-width yellow-and-black diagonal QA strip is enabled only when `NEXT_PUBLIC_APP_ENV=qa` at build
+time, including preview builds configured with that value. Set this separately
+in the hosting environment and rebuild; production and development builds do
+not show it. Repository configuration does not establish hosted values.
+
 ## Variable groups
 
 - **Supabase client:** `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are browser-visible and required by the public schema ([schema](../src/lib/env/schema.ts#L64-L76)). RLS remains the data-access boundary ([server client](../src/lib/supabase/server.ts#L6-L24), [lifecycle policies](../supabase/migrations/20261021000000_lifecycle.sql#L36-L76)).

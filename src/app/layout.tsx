@@ -14,6 +14,7 @@ import { LaunchSplash } from '@/components/launch-splash'
 import { APPEARANCE_BOOTSTRAP } from '@/features/profile/lib/appearance'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { QaIndicator } from '@/components/qa-indicator'
 
 const bodyFont = IBM_Plex_Sans({
   subsets: ['latin'],
@@ -68,6 +69,7 @@ export default async function RootLayout({
   const locale = await getLocale()
   const messages = await getMessages()
   const t = await getTranslations('Common')
+  const isQa = process.env.NEXT_PUBLIC_APP_ENV === 'qa'
 
   return (
     <html
@@ -82,17 +84,24 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={
+        className={`${isQa ? 'qa-environment ' : ''}${
           isPublicSite
             ? 'min-h-screen bg-background font-sans text-foreground selection:bg-primary/10 antialiased'
             : 'bg-primary font-sans text-foreground selection:bg-primary/10 antialiased flex items-center justify-center min-h-[100dvh] overflow-hidden'
-        }
+        }`}
       >
         <PwaRegistrar />
         {!isPublicSite && <LaunchSplash />}
         <NextIntlClientProvider messages={messages}>
           {isPublicSite ? (
-            <div className="min-h-screen">{children}</div>
+            <div className="min-h-screen">
+              {isQa && (
+                <div className="sticky top-0 z-[110]">
+                  <QaIndicator />
+                </div>
+              )}
+              {children}
+            </div>
           ) : (
             <div
               id="app-shell"
@@ -105,6 +114,7 @@ export default async function RootLayout({
               <Suspense fallback={null}>
                 <ProgressBar />
               </Suspense>
+              {isQa && <QaIndicator />}
               <Providers>
                 <div
                   id="app-scroll-container"

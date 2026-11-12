@@ -36,7 +36,7 @@
 }
 
 .header {
-  top: 12px;
+  top: calc(12px + var(--environment-indicator-height, 0px));
   width: calc(100% - 24px);
   max-width: 1120px;
   margin: 12px auto 0;

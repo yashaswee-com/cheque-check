@@ -4,6 +4,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.qa-environment {
+  --environment-indicator-height: 8px;
+}
+
 @media (orientation: landscape) and (max-height: 600px) {
   body:has([data-auth-page]) .orientation-overlay {
     display: none;

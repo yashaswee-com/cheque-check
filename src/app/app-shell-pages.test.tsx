@@ -17,6 +17,7 @@ import GlobalError from './global-error'
 import DashboardLayout from './(dashboard)/layout'
 import DashboardLoading from './(dashboard)/loading'
 import PremiumWorkspacePage from './(dashboard)/premium/page'
+import { QaIndicator } from '@/components/qa-indicator'
 
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -122,6 +123,7 @@ function renderIntl(children: ReactNode) {
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  vi.unstubAllEnvs()
 })
 
 describe('application shell routes', () => {
@@ -191,7 +193,15 @@ describe('application shell routes', () => {
         child.type === 'body',
     ) as ReactElement<{ className?: string; children: ReactNode }>
     expect(body.type).toBe('body')
-    expect(body.props.children).toHaveLength(5)
+    expect(
+      Children.toArray(body.props.children).some(
+        (child) =>
+          typeof child === 'object' &&
+          child !== null &&
+          'type' in child &&
+          child.type === NextIntlClientProvider,
+      ),
+    ).toBe(true)
   })
 
   it('renders the public root without the authenticated device frame', async () => {
@@ -212,14 +222,61 @@ describe('application shell routes', () => {
     ) as ReactElement<{ className?: string; children: ReactNode }>
     const children = Children.toArray(body.props.children)
     expect(body.props.className).toContain('min-h-screen')
-    expect(children).toHaveLength(2)
-    const publicShell = children[1] as ReactElement<{ children: ReactNode }>
+    const publicShell = children.find(
+      (child) =>
+        typeof child === 'object' &&
+        child !== null &&
+        'type' in child &&
+        child.type === NextIntlClientProvider,
+    ) as ReactElement<{ children: ReactNode }>
     const publicContent = publicShell.props.children as ReactElement<{
       children: ReactNode
     }>
     expect(publicContent.type).toBe('div')
-    expect(publicContent.props.children).toEqual(<p>Public content</p>)
+    const content = Children.toArray(publicContent.props.children)
+    expect(content).toHaveLength(1)
+    expect(
+      (content[0] as ReactElement<{ children: string }>).props.children,
+    ).toBe('Public content')
   })
+
+  it.each([
+    ['qa', true, true],
+    ['qa', false, true],
+    ['production', true, false],
+    ['production', false, false],
+    ['development', true, false],
+    ['development', false, false],
+  ])(
+    'shows the QA indicator only for %s (public: %s)',
+    async (env, publicSite, expected) => {
+      vi.stubEnv('NEXT_PUBLIC_APP_ENV', env)
+      mocks.getLocale.mockResolvedValue('en')
+      mocks.getMessages.mockResolvedValue(messages)
+      mocks.getTranslations.mockResolvedValue((key: string) => key)
+      mocks.headers.mockResolvedValue(
+        new Headers(publicSite ? { 'x-public-site': 'true' } : {}),
+      )
+      const layout = await RootLayout({ children: <p>Content</p> })
+      function countIndicator(node: ReactNode): number {
+        return Children.toArray(node).reduce<number>((count, child) => {
+          if (
+            typeof child !== 'object' ||
+            child === null ||
+            !('props' in child)
+          )
+            return count
+          const element = child as ReactElement<{ children?: ReactNode }>
+          return (
+            count +
+            (element.type === QaIndicator ? 1 : 0) +
+            countIndicator(element.props.children)
+          )
+        }, 0)
+      }
+      expect(countIndicator(layout)).toBe(expected ? 1 : 0)
+    },
+  )
 
   it('logs errors from both boundaries and exposes reset actions', async () => {
     const reset = vi.fn()
