@@ -6,6 +6,8 @@ Login and signup provide a Back control to the public homepage; on the phone
 verification step it first returns to the phone field without clearing the
 number. Password recovery returns to login. Authentication content scrolls
 within the app shell and remains available in short landscape orientations.
+Login and signup omit static phone and OTP helper copy, retaining field labels,
+verification destination, resend state, and actionable errors.
 
 ## Quick reference
 

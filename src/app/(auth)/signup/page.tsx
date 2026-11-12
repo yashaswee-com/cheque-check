@@ -125,7 +125,6 @@ export default function SignupPage() {
             <PhoneAuthForm
               ref={phoneForm}
               purpose="signup"
-              showSignupHint
               onVerified={() => router.replace('/dashboard')}
             />
           ) : (

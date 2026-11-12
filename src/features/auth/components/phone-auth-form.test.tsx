@@ -118,10 +118,35 @@ describe('PhoneAuthForm signup name', () => {
       ).not.toBeInTheDocument()
       expect(country).toBeDisabled()
       expect(country).toHaveTextContent('+91')
+      expect(
+        screen.queryByText(messages.PhoneAuth.signupHint),
+      ).not.toBeInTheDocument()
+      if (purpose === 'link') {
+        expect(screen.getByText(messages.PhoneAuth.phoneHint)).toBeVisible()
+      } else {
+        expect(
+          screen.queryByText(messages.PhoneAuth.phoneHint),
+        ).not.toBeInTheDocument()
+        expect(
+          screen.getByTestId('phone-auth-number-input'),
+        ).not.toHaveAttribute('aria-describedby')
+      }
       await user.click(screen.getByLabelText(messages.PhoneAuth.phoneLabel))
       await user.paste('+91 98765 43210')
       await user.click(screen.getByTestId('phone-auth-send-button'))
       await screen.findByTestId('phone-auth-code-input')
+      if (purpose === 'link') {
+        expect(
+          screen.getByText(messages.PhoneAuth.codeExpiryHint),
+        ).toBeVisible()
+      } else {
+        expect(
+          screen.queryByText(messages.PhoneAuth.codeExpiryHint),
+        ).not.toBeInTheDocument()
+        expect(screen.getByTestId('phone-auth-code-input')).not.toHaveAttribute(
+          'aria-describedby',
+        )
+      }
       expect(
         screen.getByText(messages.PhoneAuth.codeLabel).querySelector('svg'),
       ).toHaveAttribute('aria-hidden', 'true')
@@ -279,12 +304,7 @@ describe('PhoneAuthForm signup name', () => {
     })
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
-        <PhoneAuthForm
-          purpose="login"
-          onVerified={vi.fn()}
-          onCancel={cancel}
-          showSignupHint
-        />
+        <PhoneAuthForm purpose="login" onVerified={vi.fn()} onCancel={cancel} />
       </NextIntlClientProvider>,
     )
     fireEvent.click(screen.getByTestId('phone-auth-send-button'))

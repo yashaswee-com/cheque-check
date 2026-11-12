@@ -45,7 +45,6 @@ interface PhoneAuthFormProps {
   purpose: PhoneAuthPurpose
   onVerified: (phone: string) => void
   onCancel?: () => void
-  showSignupHint?: boolean
   ref?: Ref<PhoneAuthFormHandle>
 }
 
@@ -57,7 +56,6 @@ export function PhoneAuthForm({
   purpose,
   onVerified,
   onCancel,
-  showSignupHint = false,
   ref,
 }: PhoneAuthFormProps) {
   const t = useTranslations('PhoneAuth')
@@ -300,15 +298,20 @@ export function PhoneAuthForm({
               }}
               disabled={pending !== null}
               aria-invalid={Boolean(error)}
-              aria-describedby={error ? errorId : `${phoneId}-hint`}
+              aria-describedby={
+                error
+                  ? errorId
+                  : purpose === 'link'
+                    ? `${phoneId}-hint`
+                    : undefined
+              }
               className="h-12 rounded-sm border-none bg-canvas-parchment"
             />
           </div>
-          <p id={`${phoneId}-hint`} className="text-xs text-muted-foreground">
-            {t('phoneHint')}
-          </p>
-          {showSignupHint && (
-            <p className="text-xs text-muted-foreground">{t('signupHint')}</p>
+          {purpose === 'link' && (
+            <p id={`${phoneId}-hint`} className="text-xs text-muted-foreground">
+              {t('phoneHint')}
+            </p>
           )}
         </div>
         {captcha}
@@ -365,7 +368,9 @@ export function PhoneAuthForm({
           }}
           disabled={pending !== null}
           aria-invalid={Boolean(error)}
-          aria-describedby={error ? errorId : `${codeId}-hint`}
+          aria-describedby={
+            error ? errorId : purpose === 'link' ? `${codeId}-hint` : undefined
+          }
           containerClassName="w-full has-[:disabled]:opacity-50"
           render={({ slots }) => (
             <div
@@ -392,9 +397,11 @@ export function PhoneAuthForm({
             </div>
           )}
         />
-        <p id={`${codeId}-hint`} className="text-xs text-muted-foreground">
-          {t('codeExpiryHint')}
-        </p>
+        {purpose === 'link' && (
+          <p id={`${codeId}-hint`} className="text-xs text-muted-foreground">
+            {t('codeExpiryHint')}
+          </p>
+        )}
       </div>
       {captcha}
       {errorBlock}
