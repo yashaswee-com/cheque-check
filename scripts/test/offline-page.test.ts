@@ -38,37 +38,42 @@ function page(language = 'en', pathname = '/cheques') {
 describe('standalone offline page', () => {
   it('shows accessible offline guidance without app JavaScript or user data', () => {
     page()
-    expect(screen.getByRole('main')).toHaveAccessibleName("You're offline")
+    expect(screen.getByRole('main')).toHaveAccessibleName('Aap offline hain')
     expect(screen.getByRole('status')).toHaveTextContent(
-      'No network connection',
+      'Network connection nahi hai',
     )
     expect(
-      screen.getByText(/account and cheque data are not stored/),
+      screen.getByText(
+        /account aur cheque ka data is offline page par store nahi hai/,
+      ),
     ).toBeVisible()
-    expect(screen.getByRole('combobox', { name: 'Language' })).toBeVisible()
+    expect(screen.getByRole('combobox', { name: 'Bhasha' })).toBeVisible()
   })
 
   it('announces reconnect and disconnect without automatic navigation', () => {
     const p = page()
     p.navigator.onLine = true
     p.handlers.online()
-    expect(screen.getByRole('status')).toHaveTextContent('Press Retry')
+    expect(screen.getByRole('status')).toHaveTextContent('Retry dabayein')
     expect(p.location.reload).not.toHaveBeenCalled()
     expect(p.location.replace).not.toHaveBeenCalled()
     p.navigator.onLine = false
     p.handlers.offline()
     expect(screen.getByRole('status')).toHaveTextContent(
-      'No network connection',
+      'Network connection nahi hai',
     )
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(p.location.reload).toHaveBeenCalledOnce()
   })
 
-  it('defaults to Hindi and switches all copy to Hinglish and English without storage', () => {
-    page('hi-IN')
+  it('defaults to Hinglish regardless of browser language and allows switching', () => {
+    page('en-US')
+    expect(document.documentElement.lang).toBe('en')
+    expect(screen.getByRole('heading')).toHaveTextContent('Aap offline hain')
+    const select = screen.getByRole('combobox')
+    fireEvent.change(select, { target: { value: 'hi' } })
     expect(document.documentElement.lang).toBe('hi')
     expect(screen.getByRole('heading')).toHaveTextContent('आप ऑफ़लाइन हैं')
-    const select = screen.getByRole('combobox')
     fireEvent.change(select, { target: { value: 'hi-en' } })
     expect(document.documentElement.lang).toBe('en')
     expect(screen.getByRole('heading')).toHaveTextContent('Aap offline hain')

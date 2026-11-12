@@ -24,20 +24,20 @@ describe('request locale contract', () => {
     },
   )
 
-  it('uses English when no cookie exists', async () => {
+  it('uses Hinglish when no cookie exists', async () => {
     const config = await requestConfig({
       requestLocale: Promise.resolve(undefined),
     })
-    expect(config.locale).toBe('en')
+    expect(config.locale).toBe('hi-en')
     expect(mocks.warn).not.toHaveBeenCalled()
   })
 
-  it('logs and uses English for an unsupported cookie', async () => {
+  it('logs and uses Hinglish for an unsupported cookie', async () => {
     mocks.get.mockReturnValue({ value: '../../unknown' })
     const config = await requestConfig({
       requestLocale: Promise.resolve(undefined),
     })
-    expect(config.locale).toBe('en')
+    expect(config.locale).toBe('hi-en')
     expect(config.messages).toHaveProperty('Common')
     expect(mocks.warn).toHaveBeenCalledOnce()
   })
@@ -49,10 +49,10 @@ describe('request locale contract', () => {
       const config = await requestConfig({
         requestLocale: Promise.resolve('hi'),
       })
-      expect(config.locale).toBe('en')
+      expect(config.locale).toBe('hi-en')
       expect(config.messages).toHaveProperty('Common')
       expect(mocks.warn).toHaveBeenCalledWith(
-        'Unsupported locale cookie; using English',
+        'Unsupported locale cookie; using Hinglish',
       )
     },
   )
@@ -62,7 +62,7 @@ describe('request locale contract', () => {
     const config = await requestConfig({
       requestLocale: Promise.resolve('hi'),
     })
-    expect(config.locale).toBe('en')
+    expect(config.locale).toBe('hi-en')
     expect(mocks.get).toHaveBeenCalledWith('NEXT_LOCALE')
     expect(mocks.warn).not.toHaveBeenCalled()
   })

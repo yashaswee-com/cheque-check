@@ -5,10 +5,10 @@ import { logger } from '@/lib/logger'
 
 export default getRequestConfig(async () => {
   const cookieStore = await cookies()
-  const requestedLocale = cookieStore.get('NEXT_LOCALE')?.value || 'en'
+  const requestedLocale = cookieStore.get('NEXT_LOCALE')?.value || 'hi-en'
   const result = localeSchema.safeParse(requestedLocale)
-  if (!result.success) logger.warn('Unsupported locale cookie; using English')
-  const locale = result.success ? result.data : 'en'
+  if (!result.success) logger.warn('Unsupported locale cookie; using Hinglish')
+  const locale = result.success ? result.data : 'hi-en'
 
   return {
     locale,

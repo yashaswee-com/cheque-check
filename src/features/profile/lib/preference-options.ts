@@ -43,10 +43,7 @@ export const LANGUAGE_OPTIONS = localeSchema.options.map((value) => ({
   value,
   label: languageLabels[value],
 }))
-// Preserve onboarding's existing two-language chooser.
-export const ONBOARDING_LANGUAGE_OPTIONS = LANGUAGE_OPTIONS.filter(
-  ({ value }) => value !== 'hi-en',
-)
+export const ONBOARDING_LANGUAGE_OPTIONS = LANGUAGE_OPTIONS
 export const TIMEZONE_OPTIONS = [
   { label: 'IST (UTC+5:30)', value: 'Asia/Kolkata' },
   { label: 'UTC', value: 'UTC' },

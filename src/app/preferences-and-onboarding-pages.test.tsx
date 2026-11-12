@@ -355,7 +355,7 @@ describe('onboarding page', () => {
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
     const preferences = screen.getAllByRole('combobox')
     expect(preferences[0]).toHaveValue('₹')
-    expect(preferences[1]).toHaveValue('en')
+    expect(preferences[1]).toHaveValue('hi-en')
     expect(preferences[2]).toHaveValue('dd/MM/yyyy')
     expect(preferences[3]).toHaveValue('12h')
     expect(preferences[4]).toHaveValue('Asia/Kolkata')

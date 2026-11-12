@@ -5,7 +5,7 @@ The authenticated shell centralizes navigation, onboarding, profile preferences,
 ## Quick reference
 
 - Shared route classification lives in the navigation route registry ([route definitions](../src/lib/navigation-routes.ts#L1-L77)).
-- Locale resolution uses the locale cookie with English fallback ([request locale](../src/i18n/request.ts#L1-L17)).
+- Locale resolution uses the locale cookie with Hinglish fallback ([request locale](../src/i18n/request.ts#L1-L17)).
 - The service worker supports push handling and a generic offline navigation fallback, but never caches application data ([worker](../public/sw.js)).
 - Browser installation prompts are explicit and separate from push permission ([PWA registration](../src/components/pwa-registrar.tsx#L1-L28), [manifest](../public/site.webmanifest#L1-L17)).
 
@@ -15,7 +15,7 @@ The dashboard layout mounts authenticated application providers and shell-level 
 
 ## Preferences and localization
 
-The app resolves the locale from the request and falls back to English if the cookie is unsupported ([locale resolution](../src/i18n/request.ts#L1-L17)). The catalog test checks message-key and placeholder compatibility across the shipped locales ([catalog tests](../src/i18n/catalogs.test.ts#L1-L70)). Profile preferences feed shared formatting context for dates, times, and amounts ([display-format hook](../src/features/profile/hooks/use-display-format.ts#L1-L19), [formatting implementation](../src/lib/preference-format.ts#L1-L27)).
+The app resolves the locale from the request and falls back to Hinglish if the cookie is missing or unsupported; a valid saved locale remains in effect ([locale resolution](../src/i18n/request.ts#L1-L17)). New profiles and onboarding default to Hinglish, while existing profile preferences are preserved. The catalog test checks message-key and placeholder compatibility across the shipped locales ([catalog tests](../src/i18n/catalogs.test.ts#L1-L70)). Profile preferences feed shared formatting context for dates, times, and amounts ([display-format hook](../src/features/profile/hooks/use-display-format.ts#L1-L19), [formatting implementation](../src/lib/preference-format.ts#L1-L27)).
 
 ## PWA behavior
 
@@ -23,7 +23,7 @@ The app manifest defines its install metadata ([manifest](../public/site.webmani
 
 The [service worker](../public/sw.js) precaches only the generic [offline document](../public/offline.html) and its [script](../public/offline.js). Failed same-origin GET document navigations show that fallback without redirecting the requested URL. Retry reloads that URL; visiting the fallback document directly retries the public homepage. Online/offline events update an accessible status without automatically reloading. Browser connectivity reports are advisory, not a server-readiness check.
 
-The standalone page offers English, Hindi, and Hinglish, initially selected from the browser language. It does not read app cookies, profile preferences, or storage. Offline assets bypass authentication middleware so signed-out users can install the fallback too. Updating the fallback assets requires bumping the worker's offline cache version.
+The standalone page offers English, Hindi, and Hinglish, initially selected as Hinglish. The temporary selection does not read app cookies, profile preferences, or storage. Offline assets bypass authentication middleware so signed-out users can install the fallback too. Updating the fallback assets requires bumping the worker's offline cache version.
 
 Only a successfully installed and activated controlling service worker provides this fallback. A first visit while offline, unsupported browsers, blocked service workers, or cleared/evicted caches are not covered. A failed precache does not activate the new worker. Already-loaded pages and forms remain in place; API, RSC/client-side navigation, prefetch, and cross-origin requests retain existing behavior. No account/cheque pages or user records are cached and no offline edits are queued. HTTP error responses are preserved rather than relabeled as offline. [Worker tests](../scripts/test/offline-service-worker.test.ts) and [page tests](../scripts/test/offline-page.test.ts) cover these boundaries and manual recovery.
 

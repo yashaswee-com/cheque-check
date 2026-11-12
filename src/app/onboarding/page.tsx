@@ -96,7 +96,7 @@ export default function OnboardingPage() {
     dateFormat: 'dd/MM/yyyy',
     timeFormat: '12h',
     timeZone: 'Asia/Kolkata',
-    language: 'en',
+    language: 'hi-en',
     remindersPerDay: '1',
     defaultReminderDays: '3',
   })
@@ -113,7 +113,7 @@ export default function OnboardingPage() {
       dateFormat: profile.date_format || 'dd/MM/yyyy',
       timeFormat: profile.time_format || '12h',
       timeZone: profile.time_zone || 'Asia/Kolkata',
-      language: profile.language || 'en',
+      language: profile.language || 'hi-en',
       remindersPerDay: profile.reminders_per_day.toString(),
       defaultReminderDays: profile.default_reminder_days.toString(),
     }))

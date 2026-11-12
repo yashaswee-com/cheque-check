@@ -26,10 +26,11 @@ describe('canonical profile options', () => {
     }
   })
 
-  it('preserves onboarding labels and its existing subset without a second definition', () => {
+  it('offers every supported language during onboarding', () => {
     expect(ONBOARDING_LANGUAGE_OPTIONS.map(({ value }) => value)).toEqual([
       'en',
       'hi',
+      'hi-en',
     ])
     for (const option of ONBOARDING_LANGUAGE_OPTIONS)
       expect(LANGUAGE_OPTIONS).toContain(option)

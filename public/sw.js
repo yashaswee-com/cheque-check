@@ -1,6 +1,6 @@
 // Service Worker for ChequeCheck
 const OFFLINE_CACHE_PREFIX = 'cheque-check-offline-';
-const OFFLINE_CACHE = `${OFFLINE_CACHE_PREFIX}v1`;
+const OFFLINE_CACHE = `${OFFLINE_CACHE_PREFIX}v2`;
 const OFFLINE_ASSETS = ['/offline.html', '/offline.js'];
 
 self.addEventListener('install', (event) => {

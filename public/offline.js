@@ -41,13 +41,7 @@ const offlineMessages = {
 }
 
 const languageSelect = document.getElementById('offline-language')
-const browserLanguage = navigator.language.toLowerCase()
-languageSelect.value =
-  browserLanguage === 'hi-en'
-    ? 'hi-en'
-    : browserLanguage.startsWith('hi')
-      ? 'hi'
-      : 'en'
+languageSelect.value = 'hi-en'
 
 function renderOfflinePage() {
   const copy = offlineMessages[languageSelect.value]

@@ -76,7 +76,7 @@ describe('offline service worker', () => {
     const waitUntil = vi.fn()
     w.handlers.install({ waitUntil })
     await waitUntil.mock.calls[0][0]
-    expect(w.storage.open).toHaveBeenCalledWith('cheque-check-offline-v1')
+    expect(w.storage.open).toHaveBeenCalledWith('cheque-check-offline-v2')
     expect(w.cache.addAll).toHaveBeenCalledWith([
       '/offline.html',
       '/offline.js',
@@ -100,9 +100,9 @@ describe('offline service worker', () => {
     const waitUntil = vi.fn()
     w.handlers.activate({ waitUntil })
     await waitUntil.mock.calls[0][0]
-    expect(w.storage.delete).toHaveBeenCalledExactlyOnceWith(
-      'cheque-check-offline-v0',
-    )
+    expect(w.storage.delete).toHaveBeenCalledTimes(2)
+    expect(w.storage.delete).toHaveBeenCalledWith('cheque-check-offline-v0')
+    expect(w.storage.delete).toHaveBeenCalledWith('cheque-check-offline-v1')
     expect(w.claim).toHaveBeenCalledOnce()
   })
 
