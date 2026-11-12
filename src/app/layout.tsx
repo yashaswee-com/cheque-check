@@ -120,7 +120,7 @@ export default async function RootLayout({
           )}
         </NextIntlClientProvider>
         {!isPublicSite && (
-          <div className="hidden [@media(orientation:landscape)_and_(max-height:600px)]:flex fixed inset-0 z-[9999] bg-primary flex-col items-center justify-center text-center p-6 text-white">
+          <div className="orientation-overlay hidden [@media(orientation:landscape)_and_(max-height:600px)]:flex fixed inset-0 z-[9999] bg-primary flex-col items-center justify-center text-center p-6 text-white">
             <div className="mb-6 animate-pulse">
               <svg
                 xmlns="http://www.w3.org/2000/svg"

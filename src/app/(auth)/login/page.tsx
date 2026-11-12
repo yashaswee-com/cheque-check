@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   UserIcon as User,
   Mail01Icon as Mail,
@@ -20,14 +20,18 @@ import {
 import { Button } from '@/components/ui/button'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { AuthFieldLabel } from '@/features/auth/components/auth-field-label'
 import { authService } from '@/features/auth/services/auth.service'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslations } from 'next-intl'
 import { publicEnv } from '@/lib/env/client'
-import { PhoneAuthForm } from '@/features/auth/components/phone-auth-form'
+import {
+  PhoneAuthForm,
+  type PhoneAuthFormHandle,
+} from '@/features/auth/components/phone-auth-form'
+import { AuthPageFrame } from '@/features/auth/components/auth-page-frame'
 import { toast } from '@/components/ui/toast'
 import { getAuthErrorMessageKey } from '@/features/auth/auth-error-message'
 import { useEmailAuthCaptcha } from '@/features/auth/components/use-email-auth-captcha'
@@ -59,6 +63,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
+  const phoneForm = useRef<PhoneAuthFormHandle>(null)
   const captcha = useEmailAuthCaptcha('email_login')
 
   const reportError = (error: unknown) => {
@@ -106,8 +111,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center bg-canvas-parchment min-[360px]:px-3 sm:px-6 dark:bg-black">
-      <div className="w-full max-w-sm space-y-8">
+    <AuthPageFrame
+      onBack={() => {
+        if (!phoneForm.current?.back()) router.push('/')
+      }}
+    >
+      <div className="space-y-6">
         <div className="flex flex-col items-center text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white shadow-sm overflow-hidden">
             <SkeletonImage
@@ -117,26 +126,26 @@ export default function LoginPage() {
               className="h-full w-full object-contain p-2"
             />
           </div>
-          <h1 className="mt-6 text-display-md font-semibold tracking-tight">
-            ChequeCheck
+          <h1 className="mt-4 font-heading text-display-md font-bold tracking-tight">
+            Cheque Check
           </h1>
-          <p className="text-body text-muted-foreground">
-            {t('loginSubtitle')}
-          </p>
+          <p className="text-body text-muted-foreground">{t('tagline')}</p>
         </div>
 
-        <div className="space-y-4 rounded-lg bg-white p-2 py-8 min-[360px]:px-4 sm:px-8 dark:bg-surface-tile-1 border border-primary/5">
+        <div className="space-y-4 rounded-[18px] border border-primary/15 bg-white p-4 shadow-[0_8px_24px_rgba(0,102,204,0.10)] sm:p-6 dark:bg-surface-tile-1">
           {PHONE_AUTH_ENABLED && usePhone ? (
             <PhoneAuthForm
+              ref={phoneForm}
               purpose="login"
               onVerified={() => router.replace(getPostLoginPath())}
             />
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">{t('email')}</Label>
+                <AuthFieldLabel htmlFor="email" icon={Mail}>
+                  {t('email')}
+                </AuthFieldLabel>
                 <Input
-                  leftIcon={Mail}
                   id="email"
                   type="email"
                   data-testid="login-email-input"
@@ -149,7 +158,9 @@ export default function LoginPage() {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">{t('password')}</Label>
+                  <AuthFieldLabel htmlFor="password" icon={Lock}>
+                    {t('password')}
+                  </AuthFieldLabel>
                   <Link
                     href="/forgot-password"
                     className="text-xs font-medium text-primary hover:underline"
@@ -159,7 +170,6 @@ export default function LoginPage() {
                 </div>
                 <div className="relative">
                   <Input
-                    leftIcon={Lock}
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     data-testid="login-password-input"
@@ -279,6 +289,6 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </AuthPageFrame>
   )
 }

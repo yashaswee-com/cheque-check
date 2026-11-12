@@ -9,6 +9,8 @@ import {
 } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../messages/en.json'
+import hindiMessages from '../../../messages/hi.json'
+import hinglishMessages from '../../../messages/hi-en.json'
 import LoginPage from './login/page'
 import SignupPage from './signup/page'
 import ForgotPasswordPage from './forgot-password/page'
@@ -101,6 +103,24 @@ afterEach(() => {
 })
 
 describe.each([
+  { locale: 'en', translations: messages },
+  { locale: 'hi', translations: hindiMessages },
+  { locale: 'hi-en', translations: hinglishMessages },
+])('shared authentication tagline ($locale)', ({ locale, translations }) => {
+  it.each([LoginPage, SignupPage, ForgotPasswordPage])(
+    'renders the localized tagline on %s',
+    (Component) => {
+      render(
+        <NextIntlClientProvider locale={locale} messages={translations}>
+          <Component />
+        </NextIntlClientProvider>,
+      )
+      expect(screen.getByText(translations.Auth.tagline)).toBeVisible()
+    },
+  )
+})
+
+describe.each([
   { kind: 'login', Component: LoginPage, submit: mocks.login },
   { kind: 'signup', Component: SignupPage, submit: mocks.signup },
 ])('$kind page', ({ kind, Component, submit }) => {
@@ -129,6 +149,11 @@ describe.each([
     expect(toggle.querySelector('svg')).toBeInTheDocument()
     expect(toggle).toHaveClass('h-12', 'rounded-sm', 'font-normal')
   })
+  it('returns to the public homepage using the back button', () => {
+    renderPage(<Component />)
+    fireEvent.click(screen.getByRole('button', { name: messages.Common.back }))
+    expect(mocks.push).toHaveBeenCalledWith('/')
+  })
   it('requires email/password and reveals the password without submitting', () => {
     const { container } = renderPage(<Component />)
     selectEmailAuthentication()
@@ -141,6 +166,21 @@ describe.each([
     fireEvent.click(container.querySelector('form button[type="button"]')!)
     expect(password).toHaveAttribute('type', 'password')
     expect(submit).not.toHaveBeenCalled()
+  })
+  it('places decorative field icons beside their labels, not inside inputs', () => {
+    renderPage(<Component />)
+    selectEmailAuthentication()
+    const labels = [
+      messages.Auth.email,
+      messages.Auth.password,
+      ...(kind === 'signup' ? [messages.Common.fullName] : []),
+    ]
+    for (const text of labels) {
+      const label = screen.getByText(text, { selector: 'label' })
+      expect(label.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+      const input = screen.getByLabelText(text)
+      expect(input.parentElement?.querySelector('svg')).not.toBeInTheDocument()
+    }
   })
   it('submits entered credentials and navigates only after authentication succeeds', async () => {
     renderPage(<Component />)
@@ -405,6 +445,11 @@ describe('login return path', () => {
 })
 
 describe('forgot password page', () => {
+  it('returns to login using the top back button', () => {
+    renderPage(<ForgotPasswordPage />)
+    fireEvent.click(screen.getByRole('button', { name: messages.Common.back }))
+    expect(mocks.push).toHaveBeenCalledWith('/login')
+  })
   it('requires a CAPTCHA token for recovery and consumes it after a thrown failure', async () => {
     mocks.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = 'public-site-key'
     mocks.reset.mockRejectedValueOnce(new Error('private provider details'))
@@ -440,6 +485,16 @@ describe('forgot password page', () => {
   it('requires an email and links back to login', () => {
     renderPage(<ForgotPasswordPage />)
     expect(screen.getByTestId('forgot-password-email-input')).toBeRequired()
+    expect(
+      screen
+        .getByText(messages.Auth.email, { selector: 'label' })
+        .querySelector('svg'),
+    ).toHaveAttribute('aria-hidden', 'true')
+    expect(
+      screen
+        .getByTestId('forgot-password-email-input')
+        .parentElement?.querySelector('svg'),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: messages.Auth.backToLogin }),
     ).toHaveAttribute('href', '/login')

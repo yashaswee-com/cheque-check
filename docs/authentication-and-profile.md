@@ -2,6 +2,11 @@
 
 Supabase Auth is the identity/session authority. The application adds email/password, OAuth, optional phone OTP, profile preferences, account deactivation, and an online application PIN without replacing database authorization ([session middleware](../src/lib/supabase/middleware.ts#L7-L68), [server client](../src/lib/supabase/server.ts#L6-L24), [lifecycle policies](../supabase/migrations/20261021000000_lifecycle.sql#L36-L76)).
 
+Login and signup provide a Back control to the public homepage; on the phone
+verification step it first returns to the phone field without clearing the
+number. Password recovery returns to login. Authentication content scrolls
+within the app shell and remains available in short landscape orientations.
+
 ## Quick reference
 
 - Phone OTP UI is opt-in through `NEXT_PUBLIC_PHONE_AUTH_ENABLED`; production phone sign-in also requires Turnstile configuration ([environment schema](../src/lib/env/schema.ts#L75-L108)).

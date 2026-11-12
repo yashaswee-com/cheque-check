@@ -10,7 +10,8 @@ import userEvent from '@testing-library/user-event'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
-import { PhoneAuthForm } from './phone-auth-form'
+import { createRef } from 'react'
+import { PhoneAuthForm, type PhoneAuthFormHandle } from './phone-auth-form'
 
 const mocks = vi.hoisted(() => ({
   sendPhoneOtp: vi.fn(),
@@ -56,6 +57,31 @@ function renderForm() {
 }
 
 describe('PhoneAuthForm signup name', () => {
+  it('returns from verification to the retained phone number before leaving', async () => {
+    mocks.sendPhoneOtp.mockResolvedValue({
+      ok: true,
+      phone: '+919876543210',
+      resendAfterSeconds: 60,
+    })
+    const ref = createRef<PhoneAuthFormHandle>()
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PhoneAuthForm ref={ref} purpose="login" onVerified={vi.fn()} />
+      </NextIntlClientProvider>,
+    )
+    expect(ref.current?.back()).toBe(false)
+    fireEvent.change(screen.getByTestId('phone-auth-number-input'), {
+      target: { value: '9876543210' },
+    })
+    fireEvent.click(screen.getByTestId('phone-auth-send-button'))
+    await screen.findByTestId('phone-auth-code-input')
+    act(() => expect(ref.current?.back()).toBe(true))
+    expect(screen.getByTestId('phone-auth-number-input')).toHaveValue(
+      '+91 98765 43210',
+    )
+    expect(ref.current?.back()).toBe(false)
+  })
+
   it.each(['login', 'signup', 'link'] as const)(
     'uses the India-locked shared input for %s and accepts formatted pasted numbers',
     async (purpose) => {
@@ -71,6 +97,9 @@ describe('PhoneAuthForm signup name', () => {
         </NextIntlClientProvider>,
       )
       if (purpose === 'signup') {
+        expect(
+          screen.getByText(messages.Common.fullName).querySelector('svg'),
+        ).toBeInTheDocument()
         await user.type(
           screen.getByTestId('phone-auth-name-input'),
           'Test User',
@@ -79,12 +108,23 @@ describe('PhoneAuthForm signup name', () => {
       const country = screen.getByRole('button', {
         name: messages.Common.selectCountry,
       })
+      expect(
+        screen.getByText(messages.PhoneAuth.phoneLabel).querySelector('svg'),
+      ).toHaveAttribute('aria-hidden', 'true')
+      expect(
+        screen
+          .getByTestId('phone-auth-number-field')
+          .querySelector(':scope > svg'),
+      ).not.toBeInTheDocument()
       expect(country).toBeDisabled()
       expect(country).toHaveTextContent('+91')
       await user.click(screen.getByLabelText(messages.PhoneAuth.phoneLabel))
       await user.paste('+91 98765 43210')
       await user.click(screen.getByTestId('phone-auth-send-button'))
       await screen.findByTestId('phone-auth-code-input')
+      expect(
+        screen.getByText(messages.PhoneAuth.codeLabel).querySelector('svg'),
+      ).toHaveAttribute('aria-hidden', 'true')
       expect(mocks.sendPhoneOtp).toHaveBeenCalledOnce()
       expect(mocks.sendPhoneOtp).toHaveBeenCalledWith(
         expect.objectContaining({ phone: '+919876543210', purpose }),

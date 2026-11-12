@@ -1,13 +1,27 @@
 'use client'
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type Ref,
+} from 'react'
 import { useTranslations } from 'next-intl'
 import { OTPInput, REGEXP_ONLY_DIGITS } from 'input-otp'
-import { PencilEdit01Icon, RefreshIcon } from '@hugeicons/core-free-icons'
+import {
+  CallIcon,
+  Key01Icon,
+  PencilEdit01Icon,
+  RefreshIcon,
+  UserIcon,
+} from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { AuthFieldLabel } from '@/features/auth/components/auth-field-label'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { publicEnv } from '@/lib/env/client'
 import { cn } from '@/lib/utils'
@@ -32,6 +46,11 @@ interface PhoneAuthFormProps {
   onVerified: (phone: string) => void
   onCancel?: () => void
   showSignupHint?: boolean
+  ref?: Ref<PhoneAuthFormHandle>
+}
+
+export interface PhoneAuthFormHandle {
+  back: () => boolean
 }
 
 export function PhoneAuthForm({
@@ -39,6 +58,7 @@ export function PhoneAuthForm({
   onVerified,
   onCancel,
   showSignupHint = false,
+  ref,
 }: PhoneAuthFormProps) {
   const t = useTranslations('PhoneAuth')
   const tc = useTranslations('Common')
@@ -202,6 +222,14 @@ export function PhoneAuthForm({
     focusField(phoneId)
   }
 
+  useImperativeHandle(ref, () => ({
+    back: () => {
+      if (step !== 'code') return false
+      if (!busy.current) editNumber()
+      return true
+    },
+  }))
+
   const errorMessage = error ? t(`errors.${error}`) : null
   const captcha =
     needsCaptcha && siteKey ? (
@@ -231,7 +259,9 @@ export function PhoneAuthForm({
       <form onSubmit={handleSend} className="space-y-4" noValidate>
         {purpose === 'signup' && (
           <div className="space-y-2">
-            <Label htmlFor={nameId}>{tc('fullName')}</Label>
+            <AuthFieldLabel htmlFor={nameId} icon={UserIcon}>
+              {tc('fullName')}
+            </AuthFieldLabel>
             <Input
               id={nameId}
               type="text"
@@ -251,7 +281,9 @@ export function PhoneAuthForm({
           </div>
         )}
         <div className="space-y-2">
-          <Label htmlFor={phoneId}>{t('phoneLabel')}</Label>
+          <AuthFieldLabel htmlFor={phoneId} icon={CallIcon}>
+            {t('phoneLabel')}
+          </AuthFieldLabel>
           <div
             className="flex items-center gap-2"
             data-testid="phone-auth-number-field"
@@ -310,7 +342,9 @@ export function PhoneAuthForm({
   return (
     <form onSubmit={handleVerify} className="space-y-4" noValidate>
       <div className="space-y-2">
-        <Label htmlFor={codeId}>{t('codeLabel')}</Label>
+        <AuthFieldLabel htmlFor={codeId} icon={Key01Icon}>
+          {t('codeLabel')}
+        </AuthFieldLabel>
         <p className="text-sm text-muted-foreground" aria-live="polite">
           {t('codeSentTo', { phone: maskPhone(phone) })}
         </p>

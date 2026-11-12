@@ -19,7 +19,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { AuthFieldLabel } from '@/features/auth/components/auth-field-label'
 import { authService } from '@/features/auth/services/auth.service'
 import Link from 'next/link'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -27,6 +27,8 @@ import { useTranslations } from 'next-intl'
 import { toast } from '@/components/ui/toast'
 import { getAuthErrorMessageKey } from '@/features/auth/auth-error-message'
 import { useEmailAuthCaptcha } from '@/features/auth/components/use-email-auth-captcha'
+import { AuthPageFrame } from '@/features/auth/components/auth-page-frame'
+import { useRouter } from 'next/navigation'
 
 export default function ForgotPasswordPage() {
   const t = useTranslations('Auth')
@@ -34,6 +36,7 @@ export default function ForgotPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
   const captcha = useEmailAuthCaptcha('email_reset')
+  const router = useRouter()
 
   const reportError = (error: unknown) => {
     toast.add({
@@ -67,8 +70,8 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center bg-canvas-parchment min-[360px]:px-3 sm:px-6 dark:bg-black">
-      <div className="w-full max-w-sm space-y-8">
+    <AuthPageFrame onBack={() => router.push('/login')}>
+      <div className="space-y-6">
         <div className="flex flex-col items-center text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white shadow-sm overflow-hidden">
             <SkeletonImage
@@ -78,17 +81,13 @@ export default function ForgotPasswordPage() {
               className="h-full w-full object-contain p-2"
             />
           </div>
-          <h1 className="mt-6 text-display-md font-semibold tracking-tight">
+          <h1 className="mt-4 font-heading text-display-md font-bold tracking-tight">
             Reset Password
           </h1>
-          <p className="text-body text-muted-foreground">
-            {sent
-              ? 'Check your email for the reset link'
-              : 'Enter your email to receive a reset link'}
-          </p>
+          <p className="text-body text-muted-foreground">{t('tagline')}</p>
         </div>
 
-        <div className="space-y-4 rounded-lg bg-white p-2 py-8 min-[360px]:px-4 sm:px-8 dark:bg-surface-tile-1 border border-primary/5">
+        <div className="space-y-4 rounded-[18px] border border-primary/15 bg-white p-4 shadow-[0_8px_24px_rgba(0,102,204,0.10)] sm:p-6 dark:bg-surface-tile-1">
           {sent ? (
             <div
               className="space-y-6 text-center"
@@ -111,9 +110,10 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleReset} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">{t('email')}</Label>
+                <AuthFieldLabel htmlFor="email" icon={Mail}>
+                  {t('email')}
+                </AuthFieldLabel>
                 <Input
-                  leftIcon={Mail}
                   id="email"
                   type="email"
                   data-testid="forgot-password-email-input"
@@ -145,6 +145,6 @@ export default function ForgotPasswordPage() {
           )}
         </div>
       </div>
-    </div>
+    </AuthPageFrame>
   )
 }

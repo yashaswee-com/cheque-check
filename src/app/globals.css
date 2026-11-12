@@ -4,6 +4,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@media (orientation: landscape) and (max-height: 600px) {
+  body:has([data-auth-page]) .orientation-overlay {
+    display: none;
+  }
+}
+
 .button-click-shimmer > span {
   background: linear-gradient(
     110deg,
