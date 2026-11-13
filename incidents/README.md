@@ -14,3 +14,7 @@ Incident records are organized by product feature. They preserve operator-report
 
 - [Sample voice test dispatcher unauthorized — 8 November 2026](notifications/2026-11-08-sample-voice-test-dispatcher-unauthorized.md)
 - [Signup push reconciliation TypeError — 10 November 2026](notifications/2026-11-10-signup-push-reconciliation-error.md)
+
+## Observability
+
+- [Vercel analytics script SyntaxErrors — 7 November 2026](observability/2026-11-07-vercel-analytics-script-syntax-errors.md)
