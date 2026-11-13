@@ -11,6 +11,7 @@ import PublicPricingPage from './(public)/pricing/page'
 import PublicPrivacyPage from './(public)/privacy/page'
 import PublicSiteLayout from './(public)/layout'
 import ChequeBouncePage from './(public)/cheque-bounce/page'
+import { PREMIUM_FEATURES } from '@/features/monetization/lib/premium-access'
 
 const catalogs = { en: english, hi: hindi, 'hi-en': hinglish }
 const mocks = vi.hoisted(() => ({
@@ -130,6 +131,18 @@ describe('public site pages', () => {
         screen.queryByText(catalog.PublicSite.landing.videoCaptionsPending),
       ).not.toBeInTheDocument()
       expect(screen.getByText(catalog.PublicSite.landing.eyebrow)).toBeVisible()
+      expect(
+        screen.getByRole('heading', {
+          name: catalog.PublicSite.comparison.free,
+        }),
+      ).toBeVisible()
+      expect(
+        screen.getByRole('heading', {
+          name: catalog.PublicSite.comparison.premium,
+        }),
+      ).toBeVisible()
+      expect(screen.queryByRole('table')).not.toBeInTheDocument()
+      expect(screen.getByText('₹300.00')).toBeVisible()
       expect(document.querySelector('main')?.textContent).not.toMatch(
         /CHEQUE-CHECK|ChequeCheck/,
       )
@@ -191,6 +204,119 @@ describe('public site pages', () => {
       }),
     ).toBeVisible()
   })
+
+  it.each([
+    ['en', english],
+    ['hi', hindi],
+    ['hi-en', hinglish],
+  ] as const)(
+    'compares every Premium feature in %s without bundling credits',
+    async (locale, catalog) => {
+      mocks.locale = locale
+      renderPage(await PublicPricingPage(), locale)
+      const table = screen.getByRole('table', {
+        name: catalog.PublicSite.comparison.tableTitle,
+      })
+      for (const feature of PREMIUM_FEATURES.filter(
+        (feature) => feature !== 'unlimited-cheques',
+      )) {
+        const row = within(table).getByRole('row', {
+          name: new RegExp(
+            catalog.Premium.features[feature].replace(
+              /[.*+?^${}()|[\]\\]/g,
+              '\\$&',
+            ),
+          ),
+        })
+        expect(
+          within(row).getByText(catalog.PublicSite.comparison.notIncluded),
+        ).toBeVisible()
+        expect(
+          within(row).getByText(catalog.PublicSite.comparison.included),
+        ).toBeVisible()
+      }
+      expect(
+        within(table).getByText(catalog.PublicSite.comparison.freeLimit),
+      ).toBeVisible()
+      expect(
+        within(table).getByText(catalog.PublicSite.comparison.unlimited),
+      ).toBeVisible()
+      expect(
+        within(table).getAllByText(catalog.PublicSite.comparison.separate),
+      ).toHaveLength(2)
+      expect(
+        screen.getByText(catalog.PublicSite.comparison.offer),
+      ).toBeVisible()
+    },
+  )
+
+  it('shows live-priced usage packs separately from Premium', async () => {
+    mocks.listProducts.mockResolvedValue([
+      {
+        id: 'lifetime_premium',
+        name: 'Premium',
+        amount: 49900,
+        currency: 'INR',
+        transaction_type: 'lifetime',
+      },
+      {
+        id: 'ai_scanner_30d',
+        name: 'AI Scanner pack',
+        amount: 7900,
+        currency: 'INR',
+        transaction_type: 'subscription',
+      },
+    ])
+    renderPage(await PublicPricingPage())
+    expect(screen.getByText('₹499.00')).toBeVisible()
+    const addons = screen.getByRole('region', {
+      name: english.PublicSite.comparison.addons,
+    })
+    expect(within(addons).getByText('₹79.00')).toBeVisible()
+    expect(within(addons).queryByText('₹499.00')).not.toBeInTheDocument()
+    expect(
+      within(addons).getByRole('link', {
+        name: english.PublicSite.pricing.purchase,
+      }),
+    ).toHaveAttribute('href', '/features/catalog?purchase=ai_scanner_30d')
+  })
+
+  it('keeps Free available without inventing a Premium price for an empty catalogue', async () => {
+    mocks.listProducts.mockResolvedValue([])
+    renderPage(await PublicPricingPage())
+    expect(screen.getByText('₹0')).toBeVisible()
+    expect(
+      screen.getByText(english.PublicSite.comparison.premiumUnavailable),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('link', { name: english.PublicSite.pricing.purchase }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('link', {
+        name: english.PublicSite.comparison.startFree,
+      }),
+    ).toHaveAttribute('data-app-entry')
+  })
+
+  it.each(['pricing', 'landing'] as const)(
+    'reports catalogue failures on %s without hiding Free',
+    async (route) => {
+      mocks.listProducts.mockRejectedValue(new Error('catalogue unavailable'))
+      renderPage(
+        await (route === 'pricing' ? PublicPricingPage() : LandingPage()),
+      )
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        english.PublicSite.pricing.loadingError,
+      )
+      expect(mocks.logError).toHaveBeenCalledOnce()
+      expect(screen.getByText('₹0')).toBeVisible()
+      expect(
+        screen.queryByRole('link', {
+          name: english.PublicSite.pricing.purchase,
+        }),
+      ).not.toBeInTheDocument()
+    },
+  )
 
   it('renders the cheque bounce tool page with the timeline calculator', async () => {
     const page = await ChequeBouncePage()
@@ -322,7 +448,9 @@ describe('public site pages', () => {
     ).toBeVisible()
     expect(screen.getByText(copy.stepTrackDescription)).toBeVisible()
     expect(screen.getByText(copy.eyebrow)).toBeVisible()
-    expect(screen.getByText('Free for first 100 Users')).toBeVisible()
+    expect(
+      screen.getByText('3 months of Premium free for the first 100 new users'),
+    ).toBeVisible()
   })
 
   it('groups the footer links underneath icon-labeled section headings', async () => {

@@ -4,6 +4,8 @@ import { logger } from '@/lib/logger'
 import { AppEntryLink } from '@/components/public-site/app-entry-link'
 import { publicPricingService } from '@/features/public-site/services/public-pricing.service'
 import type { PublicProduct } from '@/features/public-site/repositories/public-pricing.repository'
+import { PlanComparison } from '@/components/public-site/plan-comparison'
+import { PRODUCT_IDS } from '@/features/monetization/constants'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite')
@@ -39,41 +41,46 @@ export default async function PublicPricingPage() {
           {t('pricing.description')}
         </p>
       </header>
-      {loadFailed ? (
-        <p role="alert" className="rounded-xl border bg-card p-6">
-          {t('pricing.loadingError')}
-        </p>
-      ) : products.length === 0 ? (
-        <p className="rounded-xl border bg-card p-6">{t('pricing.empty')}</p>
-      ) : (
-        <section
-          aria-label={t('pricing.title')}
-          className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {products.map((product) => (
-            <article
-              key={product.id}
-              className="flex flex-col gap-5 rounded-xl border bg-card p-6"
-            >
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-primary">
-                  {t(
-                    `pricing.${product.transaction_type === 'lifetime' ? 'oneTime' : product.transaction_type === 'subscription' ? 'subscription' : 'topUp'}`,
-                  )}
-                </p>
-                <h2 className="text-xl font-semibold">{product.name}</h2>
-                <p className="text-3xl font-semibold tracking-tight">
-                  {price(product)}
-                </p>
-              </div>
-              <AppEntryLink
-                href={`/features/catalog?purchase=${encodeURIComponent(product.id)}`}
-                className="mt-auto inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-center font-semibold text-primary-foreground hover:opacity-90"
-              >
-                {t('pricing.purchase')}
-              </AppEntryLink>
-            </article>
-          ))}
+      <PlanComparison products={products} detailed loadFailed={loadFailed} />
+      {products.some(({ id }) => id !== PRODUCT_IDS.LIFETIME_PREMIUM) && (
+        <section className="space-y-4" aria-labelledby="usage-products-title">
+          <h2
+            id="usage-products-title"
+            className="font-heading text-2xl font-bold"
+          >
+            {t('comparison.addons')}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t('comparison.addonsNote')}
+          </p>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {products
+              .filter(({ id }) => id !== PRODUCT_IDS.LIFETIME_PREMIUM)
+              .map((product) => (
+                <article
+                  key={product.id}
+                  className="flex flex-col gap-5 rounded-xl border bg-card p-6"
+                >
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-primary">
+                      {t(
+                        `pricing.${product.transaction_type === 'lifetime' ? 'oneTime' : product.transaction_type === 'subscription' ? 'subscription' : 'topUp'}`,
+                      )}
+                    </p>
+                    <h3 className="text-xl font-semibold">{product.name}</h3>
+                    <p className="text-3xl font-semibold tracking-tight">
+                      {price(product)}
+                    </p>
+                  </div>
+                  <AppEntryLink
+                    href={`/features/catalog?purchase=${encodeURIComponent(product.id)}`}
+                    className="mt-auto inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-center font-semibold text-primary-foreground hover:opacity-90"
+                  >
+                    {t('pricing.purchase')}
+                  </AppEntryLink>
+                </article>
+              ))}
+          </div>
         </section>
       )}
       <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">

@@ -130,7 +130,7 @@ for (const viewport of [
     ).toBe('18px')
     expect(
       await page
-        .getByText('Pehle 100 users ke liye free')
+        .getByText('Pehle 100 naye users ko 3 mahine Premium free')
         .evaluate((el) => getComputedStyle(el).borderRadius),
     ).toBe('9999px')
     const iconBacking = await page

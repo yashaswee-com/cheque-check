@@ -26,6 +26,10 @@ import { PublicIcon } from '@/components/public-site/public-icon'
 import { PublicBrand } from '@/components/public-site/public-brand'
 import { DemoMedia } from '@/components/public-site/demo-media'
 import { PillScroller } from '@/components/ui/pill-scroller'
+import { PlanComparison } from '@/components/public-site/plan-comparison'
+import { publicPricingService } from '@/features/public-site/services/public-pricing.service'
+import type { PublicProduct } from '@/features/public-site/repositories/public-pricing.repository'
+import { logger } from '@/lib/logger'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite.landing')
@@ -72,6 +76,14 @@ export default async function LandingPage() {
   const arrow = (
     <HugeiconsIcon icon={ArrowRight01Icon} size={19} aria-hidden="true" />
   )
+  let products: PublicProduct[] = []
+  let pricingFailed = false
+  try {
+    products = await publicPricingService.listProducts()
+  } catch (error) {
+    pricingFailed = true
+    logger.error('Landing pricing catalogue could not be loaded', error)
+  }
 
   return (
     <main className={styles.landing}>
@@ -320,6 +332,11 @@ export default async function LandingPage() {
           <p className={styles.eyebrow}>{t('pricingEyebrow')}</p>
           <h2 id="pricing-title">{t('pricingTitle')}</h2>
           <p>{t('pricingDescription')}</p>
+        </div>
+        <div className="mx-auto my-8 max-w-4xl">
+          <PlanComparison products={products} loadFailed={pricingFailed} />
+        </div>
+        <div className={styles.pricingInner}>
           <Link href="/pricing" className={styles.primaryCta}>
             <HugeiconsIcon icon={BankIcon} size={20} aria-hidden="true" />
             {t('pricingCta')}
