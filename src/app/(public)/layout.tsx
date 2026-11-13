@@ -1,14 +1,19 @@
 import type { Viewport } from 'next'
 import Link from 'next/link'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { Analytics01Icon } from '@hugeicons/core-free-icons'
+import { Analytics01Icon, Login01Icon } from '@hugeicons/core-free-icons'
 import { PublicNavigation } from '@/components/public-site/public-navigation'
 import { MetaPixelConsent } from '@/components/public-site/meta-pixel-consent'
 import styles from '@/components/public-site/landing.module.css'
 import { PUBLIC_NAV_LINKS } from '@/components/public-site/navigation-links'
-import { PUBLIC_NAV_GROUPS } from '@/components/public-site/navigation-links'
+import {
+  PUBLIC_NAV_GROUPS,
+  PUBLIC_NAV_GROUP_ICONS,
+} from '@/components/public-site/navigation-links'
 import { PublicIcon } from '@/components/public-site/public-icon'
 import { PublicBrand } from '@/components/public-site/public-brand'
+import { PublicHeader } from '@/components/public-site/public-header'
+import { AppEntryLink } from '@/components/public-site/app-entry-link'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -33,16 +38,25 @@ export default async function PublicSiteLayout({
       data-public-site
       className={`${styles.site} flex min-h-screen flex-col`}
     >
-      <header className={`${styles.header} sticky top-0 z-40`}>
+      <PublicHeader>
         <div className={styles.headerInner}>
           <Link href="/" className={styles.brand}>
             <PublicBrand />
           </Link>
           <div className="flex min-w-0 items-center gap-2">
+            <AppEntryLink
+              href="/login"
+              className={styles.signIn}
+              aria-label={t('nav.signIn')}
+              title={t('nav.signIn')}
+            >
+              <PublicIcon icon={Login01Icon} size={20} />
+              <span>{t('nav.signIn')}</span>
+            </AppEntryLink>
             <PublicNavigation locale={locale as 'en' | 'hi' | 'hi-en'} />
           </div>
         </div>
-      </header>
+      </PublicHeader>
       <div className="flex-1">{children}</div>
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
@@ -59,7 +73,10 @@ export default async function PublicSiteLayout({
                 className={styles.footerGroup}
                 aria-labelledby={`footer-${group}`}
               >
-                <h2 id={`footer-${group}`}>{t(`footer.${group}`)}</h2>
+                <h2 id={`footer-${group}`}>
+                  <PublicIcon icon={PUBLIC_NAV_GROUP_ICONS[group]} size={18} />
+                  {t(`footer.${group}`)}
+                </h2>
                 <ul>
                   {PUBLIC_NAV_LINKS.filter((link) => link.group === group).map(
                     ({ href, labelKey, icon }) => (

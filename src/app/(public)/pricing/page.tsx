@@ -7,7 +7,7 @@ import type { PublicProduct } from '@/features/public-site/repositories/public-p
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite')
-  return { title: `${t('pricing.title')} | ChequeCheck` }
+  return { title: `${t('pricing.title')} | Cheque Check` }
 }
 
 function price(product: PublicProduct) {

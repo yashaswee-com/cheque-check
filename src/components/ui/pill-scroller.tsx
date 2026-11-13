@@ -12,8 +12,9 @@ function PillScroller({
   children,
   onScroll,
   ref,
+  floatingControls = false,
   ...props
-}: React.ComponentProps<'div'>) {
+}: React.ComponentProps<'div'> & { floatingControls?: boolean }) {
   const t = useTranslations('SharedUI')
   const elementRef = React.useRef<HTMLDivElement>(null)
   const [overflow, setOverflow] = React.useState({ left: false, right: false })
@@ -58,13 +59,21 @@ function PillScroller({
     })
   }
   return (
-    <div className="flex min-w-0 items-center gap-1">
+    <div
+      className={cn(
+        'relative flex min-w-0 items-center',
+        !floatingControls && 'gap-1',
+      )}
+    >
       {overflow.left && (
         <button
           type="button"
           aria-label={t('scrollLeft')}
           onClick={() => scroll(-1)}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-background shadow-sm"
+          className={cn(
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-background shadow-sm',
+            floatingControls && 'absolute left-0 top-1/2 z-10 -translate-y-1/2',
+          )}
         >
           <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" />
         </button>
@@ -94,7 +103,11 @@ function PillScroller({
           type="button"
           aria-label={t('scrollRight')}
           onClick={() => scroll(1)}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-background shadow-sm"
+          className={cn(
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-background shadow-sm',
+            floatingControls &&
+              'absolute right-0 top-1/2 z-10 -translate-y-1/2',
+          )}
         >
           <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
         </button>

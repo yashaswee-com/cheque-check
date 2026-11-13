@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import english from '../../messages/en.json'
 import hindi from '../../messages/hi.json'
 import hinglish from '../../messages/hi-en.json'
-import LandingPage from './(public)/page'
+import LandingPage, { generateMetadata } from './(public)/page'
 import PublicFeaturesPage from './(public)/features/page'
 import PublicPricingPage from './(public)/pricing/page'
 import PublicPrivacyPage from './(public)/privacy/page'
@@ -126,6 +126,20 @@ describe('public site pages', () => {
         }),
       ).toBeVisible()
       expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(9)
+      expect(
+        screen.queryByText(catalog.PublicSite.landing.videoCaptionsPending),
+      ).not.toBeInTheDocument()
+      expect(screen.getByText(catalog.PublicSite.landing.eyebrow)).toBeVisible()
+      expect(document.querySelector('main')?.textContent).not.toMatch(
+        /CHEQUE-CHECK|ChequeCheck/,
+      )
+      expect((await generateMetadata()).title).toMatch(/ \| Cheque Check$/)
+      const finalSection = screen.getByRole('region', {
+        name: catalog.PublicSite.landing.ctaTitle,
+      })
+      expect(within(finalSection).getByText('Cheque Check')).toBeVisible()
+      expect(finalSection.querySelector('img')).toBeInTheDocument()
+      expect(finalSection.querySelectorAll('svg')).toHaveLength(1)
     },
   )
 
@@ -226,9 +240,21 @@ describe('public site pages', () => {
         name: /Cheque bounce calculator/,
       }),
     ).toHaveAttribute('href', '/cheque-bounce')
-    expect(
-      document.querySelector('header a[href="/login"]'),
-    ).not.toBeInTheDocument()
+    const signIn = within(screen.getByRole('banner')).getByRole('link', {
+      name: english.PublicSite.nav.signIn,
+    })
+    expect(signIn).toHaveAttribute('href', '/login')
+    expect(signIn).toHaveAttribute('data-app-entry')
+    expect(signIn.querySelector('svg')).toBeInTheDocument()
+    for (const group of ['product', 'resources', 'support'] as const) {
+      expect(
+        within(nav)
+          .getByRole('heading', {
+            name: english.PublicSite.footer[group],
+          })
+          .querySelector('svg'),
+      ).toBeInTheDocument()
+    }
     expect(
       document.querySelector('[role="dialog"] a[href="/signup"]'),
     ).not.toBeInTheDocument()
@@ -296,7 +322,7 @@ describe('public site pages', () => {
     ).toBeVisible()
     expect(screen.getByText(copy.stepTrackDescription)).toBeVisible()
     expect(screen.getByText(copy.eyebrow)).toBeVisible()
-    expect(screen.queryByText(/first 100 users/i)).not.toBeInTheDocument()
+    expect(screen.getByText('Free for first 100 Users')).toBeVisible()
   })
 
   it('groups the footer links underneath icon-labeled section headings', async () => {
@@ -307,6 +333,9 @@ describe('public site pages', () => {
         name: english.PublicSite.footer[group],
       })
       expect(within(section).getByRole('heading')).toBeVisible()
+      expect(
+        within(section).getByRole('heading').querySelector('svg'),
+      ).toBeInTheDocument()
       for (const link of within(section).getAllByRole('link')) {
         expect(link.querySelector('svg')).toBeInTheDocument()
       }

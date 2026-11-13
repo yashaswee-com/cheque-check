@@ -30,3 +30,9 @@ export const PUBLIC_NAV_LINKS = [
 ] as const
 
 export const PUBLIC_NAV_GROUPS = ['product', 'resources', 'support'] as const
+
+export const PUBLIC_NAV_GROUP_ICONS = {
+  product: Analytics01Icon,
+  resources: Calculator01Icon,
+  support: SecurityLockIcon,
+} as const

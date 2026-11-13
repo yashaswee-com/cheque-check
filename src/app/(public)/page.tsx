@@ -30,7 +30,7 @@ import { PillScroller } from '@/components/ui/pill-scroller'
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite.landing')
   return {
-    title: `${t('title')} | CHEQUE-CHECK`,
+    title: `${t('title')} | Cheque Check`,
     description: t('description'),
   }
 }
@@ -118,9 +118,6 @@ export default async function LandingPage() {
               {t('videoFormat')}
             </figcaption>
           </figure>
-          <p className={styles.mediaAccessibility}>
-            {t('videoCaptionsPending')}
-          </p>
         </div>
       </section>
 
@@ -383,6 +380,7 @@ export default async function LandingPage() {
         <p className={styles.swipeHint}>{t('swipeHint')}</p>
         <div className={styles.scenarioScroller}>
           <PillScroller
+            floatingControls
             className={styles.scenarios}
             role="region"
             aria-label={t('swipeHint')}
@@ -424,13 +422,6 @@ export default async function LandingPage() {
         className={`${styles.section} ${styles.finalSection}`}
         aria-labelledby="final-title"
       >
-        <span className={styles.finalIcon}>
-          <HugeiconsIcon
-            icon={CheckmarkCircle02Icon}
-            size={36}
-            aria-hidden="true"
-          />
-        </span>
         <p className={styles.brand}>
           <PublicBrand />
         </p>

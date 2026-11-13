@@ -1791,14 +1791,14 @@
     },
     "footer": {
       "tagline": "Clear, organized cheque management for your business.",
-      "copyright": "ChequeCheck",
+      "copyright": "Cheque Check",
       "product": "Product",
       "resources": "Tools and resources",
       "support": "Support and privacy"
     },
     "cookieConsent": {
       "title": "Optional marketing cookies",
-      "description": "With your permission, Meta Pixel measures visits to public ChequeCheck pages. Meta may receive browser and device information and the public page viewed. We do not send account, cheque, contact form, or payment details. You can change this choice anytime in Cookie settings.",
+      "description": "With your permission, Meta Pixel measures visits to public Cheque Check pages. Meta may receive browser and device information and the public page viewed. We do not send account, cheque, contact form, or payment details. You can change this choice anytime in Cookie settings.",
       "accept": "Accept",
       "reject": "Reject",
       "manage": "Cookie settings",
@@ -1835,7 +1835,7 @@
       "stepTrackDescription": "Get your cheque records as PDF or Excel reports. Report downloads require Premium access.",
       "ctaTitle": "Ready to keep every cheque in view?",
       "ctaDescription": "Create your free account and set up your business in a few steps.",
-      "eyebrow": "Early access · Start today",
+      "eyebrow": "Free for first 100 Users",
       "title": "Your business needs you. Your cheques need a system.",
       "titleLead": "Your business needs you.",
       "titleHighlight": "Your cheques need a system.",
@@ -1901,7 +1901,7 @@
       "featureEyebrow": "SMALL DETAILS. MORE PEACE OF MIND.",
       "reminders": "Not just a notification. A phone call.",
       "remindersDescription": "Set phone-call reminders for cheque dates to help plan deposits and arrange funds. Calls require settings, eligibility and available credits; delivery depends on service availability.",
-      "reminderExampleTitle": "CHEQUE-CHECK reminder",
+      "reminderExampleTitle": "Cheque Check reminder",
       "reminderExampleDescription": "Listen to an example of a cheque reminder phone call.",
       "sampleBankA": "State Bank of India",
       "sampleBankB": "HDFC Bank",
@@ -1915,7 +1915,7 @@
       "faqTitle": "Straight questions. Clear answers.",
       "faq": {
         "accountingQuestion": "Is this Tally or accounting software?",
-        "accountingAnswer": "No. CHEQUE-CHECK helps organize cheque records, dates, parties and bank accounts. It does not replace your accounting software.",
+        "accountingAnswer": "No. Cheque Check helps organize cheque records, dates, parties and bank accounts. It does not replace your accounting software.",
         "bankQuestion": "Do I need to connect my bank account?",
         "bankAnswer": "No. You add bank account records and cheque details yourself. This is not a bank-balance sync or money-transfer app.",
         "remindersQuestion": "How do reminders work?",
@@ -1925,7 +1925,7 @@
         "bounceQuestion": "Does it guarantee cheques won't bounce?",
         "bounceAnswer": "No. Records and reminders help with planning, but arranging funds, depositing cheques and updating their status remain your responsibility. The app does not verify bank clearance.",
         "mobileQuestion": "Can I use it on my phone?",
-        "mobileAnswer": "Yes. Open CHEQUE-CHECK in your phone's browser. You can choose Hindi, Hinglish or English."
+        "mobileAnswer": "Yes. Open Cheque Check in your phone's browser. You can choose Hindi, Hinglish or English."
       },
       "faqContact": "Something else on your mind?",
       "contactCta": "Talk to us",
@@ -1957,7 +1957,7 @@
     },
     "pricing": {
       "title": "Pricing",
-      "description": "Current products and prices from the active ChequeCheck catalogue.",
+      "description": "Current products and prices from the active Cheque Check catalogue.",
       "loadingError": "Pricing is unavailable right now. Please try again later.",
       "empty": "There are no products available at this time.",
       "purchase": "Sign in to continue",
@@ -1971,7 +1971,7 @@
       "updated": "Last Updated: {date}"
     },
     "contact": {
-      "title": "Contact ChequeCheck",
+      "title": "Contact Cheque Check",
       "description": "Send a private message to our support team. We do not send email from this form.",
       "name": "Name",
       "email": "Email",
@@ -1985,7 +1985,7 @@
       "failure": "We could not send your message. Please try again.",
       "rateLimited": "Too many messages were sent. Please wait before trying again.",
       "whatsapp": "Contact us on WhatsApp",
-      "whatsappText": "Hello, I need help with ChequeCheck."
+      "whatsappText": "Hello, I need help with Cheque Check."
     }
   }
 }

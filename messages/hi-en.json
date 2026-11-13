@@ -1791,14 +1791,14 @@
     },
     "footer": {
       "tagline": "Aapke business ke liye clear aur organized cheque management.",
-      "copyright": "ChequeCheck",
+      "copyright": "Cheque Check",
       "product": "Product",
       "resources": "Tools aur resources",
       "support": "Support aur privacy"
     },
     "cookieConsent": {
       "title": "Optional marketing cookies",
-      "description": "Aapki permission ke baad Meta Pixel public ChequeCheck pages ke visits measure karta hai. Meta ko browser/device info aur dekha gaya public page mil sakta hai. Hum account, cheque, contact form ya payment details nahi bhejte. Cookie settings mein aap yeh choice kabhi bhi badal sakte hain.",
+      "description": "Aapki permission ke baad Meta Pixel public Cheque Check pages ke visits measure karta hai. Meta ko browser/device info aur dekha gaya public page mil sakta hai. Hum account, cheque, contact form ya payment details nahi bhejte. Cookie settings mein aap yeh choice kabhi bhi badal sakte hain.",
       "accept": "Accept",
       "reject": "Reject",
       "manage": "Cookie settings",
@@ -1835,7 +1835,7 @@
       "stepTrackDescription": "Cheque records ki report download karein. Report downloads ke liye Premium access zaroori hai.",
       "ctaTitle": "Har cheque par nazar rakhne ke liye ready hain?",
       "ctaDescription": "Apna free account banaayein aur kuch steps mein business set up karein.",
-      "eyebrow": "Early access · Aaj hi shuru karein",
+      "eyebrow": "Pehle 100 users ke liye free",
       "title": "Cheque ki date yaad nahi? Ab yaad rakhni bhi nahi.",
       "titleLead": "Cheque ki date yaad nahi?",
       "titleHighlight": "Ab yaad rakhni bhi nahi.",
@@ -1901,7 +1901,7 @@
       "featureEyebrow": "CHHOTI DETAILS. BADA SUKOON.",
       "reminders": "Sirf notification nahi. Phone call.",
       "remindersDescription": "Cheque ki date ke liye phone-call reminder set karein, taaki funds aur deposit ki planning mein madad mile. Calls ke liye settings, eligibility aur available credits zaroori hain; delivery service availability par depend karti hai.",
-      "reminderExampleTitle": "CHEQUE-CHECK reminder",
+      "reminderExampleTitle": "Cheque Check reminder",
       "reminderExampleDescription": "Suniye cheque reminder phone call ka ek example.",
       "sampleBankA": "State Bank of India",
       "sampleBankB": "HDFC Bank",
@@ -1915,7 +1915,7 @@
       "faqTitle": "Seedhe sawaal. Seedhe jawaab.",
       "faq": {
         "accountingQuestion": "Kya yeh Tally ya accounting software hai?",
-        "accountingAnswer": "Nahi. CHEQUE-CHECK cheques ka record, dates, parties aur bank accounts organize karne ka saathi hai. Yeh aapke accounting software ki jagah nahi leta.",
+        "accountingAnswer": "Nahi. Cheque Check cheques ka record, dates, parties aur bank accounts organize karne ka saathi hai. Yeh aapke accounting software ki jagah nahi leta.",
         "bankQuestion": "Kya mera bank account connect karna padega?",
         "bankAnswer": "Nahi. Aap bank account ka record aur cheque details khud add karte hain. Yeh bank balance sync ya payment transfer karne ka app nahi hai.",
         "remindersQuestion": "Reminders kaise milenge?",
@@ -1925,7 +1925,7 @@
         "bounceQuestion": "Kya cheque bounce hone se guarantee ke saath bachaata hai?",
         "bounceAnswer": "Nahi. Records aur reminders planning mein madad karte hain, lekin funds arrange karna, cheque deposit karna aur status update karna aapki zimmedaari hai. App bank clearance verify nahi karta.",
         "mobileQuestion": "Kya phone par use kar sakta hoon?",
-        "mobileAnswer": "Haan. Phone ke browser mein CHEQUE-CHECK kholkar use karein. Hindi, Hinglish aur English mein se apni bhasha chun sakte hain."
+        "mobileAnswer": "Haan. Phone ke browser mein Cheque Check kholkar use karein. Hindi, Hinglish aur English mein se apni bhasha chun sakte hain."
       },
       "faqContact": "Kuch aur poochhna hai?",
       "contactCta": "Humse baat karein",
@@ -1957,7 +1957,7 @@
     },
     "pricing": {
       "title": "Pricing",
-      "description": "Active ChequeCheck catalogue ke current products aur prices.",
+      "description": "Active Cheque Check catalogue ke current products aur prices.",
       "loadingError": "Abhi pricing available nahi hai. Baad mein phir try karein.",
       "empty": "Is waqt koi product available nahi hai.",
       "purchase": "Aage badhne ke liye sign in karein",
@@ -1971,7 +1971,7 @@
       "updated": "Aakhri update: {date}"
     },
     "contact": {
-      "title": "ChequeCheck se contact karein",
+      "title": "Cheque Check se contact karein",
       "description": "Hamari support team ko private message bhejein. Is form se email nahi bheja jata.",
       "name": "Naam",
       "email": "Email",
@@ -1985,7 +1985,7 @@
       "failure": "Message nahi bheja ja saka. Phir try karein.",
       "rateLimited": "Bahut saare messages bheje gaye hain. Thodi der baad try karein.",
       "whatsapp": "WhatsApp par contact karein",
-      "whatsappText": "Hello, mujhe ChequeCheck ke liye help chahiye."
+      "whatsappText": "Hello, mujhe Cheque Check ke liye help chahiye."
     }
   }
 }

@@ -8,7 +8,11 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
 import { Popover, PopoverTitle, PopoverTrigger } from '@/components/ui/popover'
 import { LocalePicker } from './locale-picker'
-import { PUBLIC_NAV_GROUPS, PUBLIC_NAV_LINKS } from './navigation-links'
+import {
+  PUBLIC_NAV_GROUPS,
+  PUBLIC_NAV_GROUP_ICONS,
+  PUBLIC_NAV_LINKS,
+} from './navigation-links'
 import { PublicBrand } from './public-brand'
 import { PublicIcon } from './public-icon'
 import styles from './landing.module.css'
@@ -66,7 +70,13 @@ export function PublicNavigation({
                   className={styles.menuGroup}
                   aria-label={t(`footer.${group}`)}
                 >
-                  <h2>{t(`footer.${group}`)}</h2>
+                  <h2>
+                    <PublicIcon
+                      icon={PUBLIC_NAV_GROUP_ICONS[group]}
+                      size={16}
+                    />
+                    {t(`footer.${group}`)}
+                  </h2>
                   {PUBLIC_NAV_LINKS.filter((link) => link.group === group).map(
                     ({ href, labelKey, icon }) => (
                       <Link

@@ -3,7 +3,7 @@ import { getLocale, getTranslations } from 'next-intl/server'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite')
-  return { title: `${t('privacy.title')} | ChequeCheck` }
+  return { title: `${t('privacy.title')} | Cheque Check` }
 }
 
 export default async function PublicPrivacyPage() {

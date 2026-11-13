@@ -26,60 +26,69 @@ afterEach(() => {
 })
 
 describe('PillScroller', () => {
-  it('shows physical overflow directions and scrolls a visible width', () => {
-    render(
-      <PillScroller aria-label="Options">
-        <button>One</button>
-        <button>Two</button>
-      </PillScroller>,
-    )
-    const row = screen.getByRole('group', { name: 'Options' })
-    const scrollBy = vi.fn()
-    const makeRect = (left: number, right: number) =>
-      ({
-        left,
-        right,
-        top: 0,
-        bottom: 20,
-        width: right - left,
-        height: 20,
-        x: left,
-        y: 0,
-        toJSON: () => ({}),
-      }) as DOMRect
-    const children = Array.from(row.children)
-    Object.defineProperties(row, {
-      clientWidth: { value: 200 },
-      scrollWidth: { value: 600 },
-      scrollBy: { value: scrollBy },
-      getBoundingClientRect: { value: () => makeRect(0, 200) },
-    })
-    vi.spyOn(children[0], 'getBoundingClientRect').mockReturnValue(
-      makeRect(0, 100),
-    )
-    const lastChildRect = vi
-      .spyOn(children[1], 'getBoundingClientRect')
-      .mockReturnValue(makeRect(350, 450))
-    fireEvent.scroll(row)
-    expect(screen.queryByRole('button', { name: 'scrollLeft' })).toBeNull()
-    const scrollRight = screen.getByRole('button', { name: 'scrollRight' })
-    expect(scrollRight).toBeVisible()
-    expect(scrollRight.parentElement).toBe(row.parentElement)
-    fireEvent.click(screen.getByRole('button', { name: 'scrollRight' }))
-    expect(scrollBy).toHaveBeenCalledWith({ left: 200, behavior: 'smooth' })
-    vi.spyOn(children[0], 'getBoundingClientRect').mockReturnValue(
-      makeRect(-250, -150),
-    )
-    lastChildRect.mockReturnValue(makeRect(100, 200))
-    fireEvent.scroll(row)
-    expect(screen.queryByRole('button', { name: 'scrollRight' })).toBeNull()
-    document.documentElement.setAttribute('data-reduce-motion', 'true')
-    fireEvent.click(screen.getByRole('button', { name: 'scrollLeft' }))
-    expect(scrollBy).toHaveBeenLastCalledWith({
-      left: -200,
-      behavior: 'instant',
-    })
-  })
+  it.each([false, true])(
+    'shows physical overflow directions and scrolls a visible width (floating: %s)',
+    (floatingControls) => {
+      render(
+        <PillScroller aria-label="Options" floatingControls={floatingControls}>
+          <button>One</button>
+          <button>Two</button>
+        </PillScroller>,
+      )
+      const row = screen.getByRole('group', { name: 'Options' })
+      const scrollBy = vi.fn()
+      const makeRect = (left: number, right: number) =>
+        ({
+          left,
+          right,
+          top: 0,
+          bottom: 20,
+          width: right - left,
+          height: 20,
+          x: left,
+          y: 0,
+          toJSON: () => ({}),
+        }) as DOMRect
+      const children = Array.from(row.children)
+      Object.defineProperties(row, {
+        clientWidth: { value: 200 },
+        scrollWidth: { value: 600 },
+        scrollBy: { value: scrollBy },
+        getBoundingClientRect: { value: () => makeRect(0, 200) },
+      })
+      vi.spyOn(children[0], 'getBoundingClientRect').mockReturnValue(
+        makeRect(0, 100),
+      )
+      const lastChildRect = vi
+        .spyOn(children[1], 'getBoundingClientRect')
+        .mockReturnValue(makeRect(350, 450))
+      fireEvent.scroll(row)
+      expect(screen.queryByRole('button', { name: 'scrollLeft' })).toBeNull()
+      const scrollRight = screen.getByRole('button', { name: 'scrollRight' })
+      expect(scrollRight).toBeVisible()
+      expect(scrollRight.parentElement).toBe(row.parentElement)
+      if (floatingControls) {
+        expect(scrollRight).toHaveClass('absolute', 'right-0')
+        expect(row.parentElement).not.toHaveClass('gap-1')
+      } else {
+        expect(scrollRight).not.toHaveClass('absolute')
+      }
+      fireEvent.click(screen.getByRole('button', { name: 'scrollRight' }))
+      expect(scrollBy).toHaveBeenCalledWith({ left: 200, behavior: 'smooth' })
+      vi.spyOn(children[0], 'getBoundingClientRect').mockReturnValue(
+        makeRect(-250, -150),
+      )
+      lastChildRect.mockReturnValue(makeRect(100, 200))
+      fireEvent.scroll(row)
+      expect(screen.queryByRole('button', { name: 'scrollRight' })).toBeNull()
+      document.documentElement.setAttribute('data-reduce-motion', 'true')
+      fireEvent.click(screen.getByRole('button', { name: 'scrollLeft' }))
+      expect(scrollBy).toHaveBeenLastCalledWith({
+        left: -200,
+        behavior: 'instant',
+      })
+    },
+  )
   it('detects left-side overflow in right-to-left layouts', () => {
     render(
       <PillScroller aria-label="Options" dir="rtl">

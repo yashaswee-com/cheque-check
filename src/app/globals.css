@@ -4,6 +4,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html:has([data-public-site]),
+body:has([data-public-site]) {
+  overscroll-behavior: none;
+  background: #ffffff;
+}
+
+body:has([data-public-site]) {
+  overflow-x: clip;
+}
+
 .qa-environment {
   --environment-indicator-height: 8px;
 }

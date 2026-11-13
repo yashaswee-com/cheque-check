@@ -69,12 +69,24 @@ test('public navigation stays visible while its page scrolls', async ({
   await page.goto('/features')
   await page.evaluate(() => window.scrollTo(0, 600))
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
-  expect((await page.getByRole('banner').boundingBox())?.y).toBe(12)
+  const qaHeight = (await page.getByTestId('qa-indicator').count()) ? 8 : 0
+  expect((await page.getByRole('banner').boundingBox())?.y).toBe(12 + qaHeight)
   await expect(page.getByRole('navigation')).toHaveCount(0)
   await page.getByRole('button', { name: /navigation/i }).click()
   await expect(page.getByRole('navigation')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('navigation')).toHaveCount(0)
+})
+
+test('floating header sign-in opens the authentication app shell', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Reject', exact: true }).click()
+  await page.getByRole('banner').locator('a[href="/login"]').click()
+  await expect(page).toHaveURL(/\/login$/)
+  await expect(page.locator('#app-shell')).toBeVisible()
+  await expect(page.locator('[data-public-site]')).toHaveCount(0)
 })
 
 for (const viewport of [
@@ -104,10 +116,13 @@ for (const viewport of [
     expect(preview!.width / preview!.height).toBeCloseTo(9 / 16, 2)
     await expect(page.locator('#product-demo button')).toHaveCount(1)
     await expect(page.locator('#product-demo video')).not.toHaveAttribute('src')
-    await expect(page.getByRole('banner').getByRole('link')).toHaveCount(1)
+    await expect(page.getByRole('banner').getByRole('link')).toHaveCount(2)
     await expect(
-      page.getByRole('banner').getByRole('link'),
+      page.getByRole('banner').getByRole('link', { name: 'Cheque Check' }),
     ).toHaveAccessibleName('Cheque Check')
+    const signIn = page.getByRole('banner').locator('a[href="/login"]')
+    await expect(signIn).toHaveAttribute('data-app-entry', 'true')
+    await expect(signIn.locator('svg')).toHaveCount(1)
     const header = page.getByRole('banner')
     expect((await header.boundingBox())!.x).toBeGreaterThan(0)
     expect(
@@ -115,17 +130,47 @@ for (const viewport of [
     ).toBe('18px')
     expect(
       await page
-        .getByText('Early access · Aaj hi shuru karein')
+        .getByText('Pehle 100 users ke liye free')
         .evaluate((el) => getComputedStyle(el).borderRadius),
     ).toBe('9999px')
-    const iconInsets = await page
+    const iconBacking = await page
       .locator('[data-feature="cheques"] [class*="toneIcon"]')
       .first()
       .evaluate((el) => {
-        const style = getComputedStyle(el, '::before')
-        return [style.top, style.right, style.bottom, style.left]
+        return getComputedStyle(el, '::before').content
       })
-    expect(iconInsets).toEqual(['-4px', '-4px', '-4px', '-4px'])
+    expect(iconBacking).toBe('none')
+    const featureIconStyle = await page
+      .locator('[data-feature="cheques"] [class*="featureIcon"]')
+      .evaluate((el) => ({
+        border: getComputedStyle(el).borderTopWidth,
+        background: getComputedStyle(el).backgroundColor,
+      }))
+    expect(featureIconStyle).toEqual({
+      border: '0px',
+      background: 'rgba(0, 0, 0, 0)',
+    })
+    expect(
+      await header.evaluate((el) => getComputedStyle(el).borderTopWidth),
+    ).toBe('0px')
+    expect(
+      await header
+        .getByRole('link', { name: 'Cheque Check' })
+        .evaluate((el) => getComputedStyle(el).color),
+    ).toBe('rgb(0, 0, 0)')
+    expect(
+      await page
+        .locator('html')
+        .evaluate((el) => getComputedStyle(el).overscrollBehavior),
+    ).toBe('none')
+    expect(
+      await page
+        .locator('body')
+        .evaluate((el) => getComputedStyle(el).backgroundColor),
+    ).toBe('rgb(255, 255, 255)')
+    await expect(
+      page.getByText('Awaaz waala demo: captions abhi available nahi hain.'),
+    ).toHaveCount(0)
     const headlineFont = await page
       .locator('h1')
       .evaluate((el) => getComputedStyle(el).fontFamily)
@@ -183,6 +228,11 @@ for (const viewport of [
         name: 'Aur scenarios dekhne ke liye swipe karein',
       })
       await carousel.scrollIntoViewIfNeeded()
+      expect(
+        await carousel.evaluate((el) =>
+          Math.abs(el.clientWidth - el.parentElement!.clientWidth),
+        ),
+      ).toBeLessThanOrEqual(1)
       await carousel.focus()
       await page.keyboard.press('ArrowRight')
       await expect
@@ -192,6 +242,11 @@ for (const viewport of [
       await expect(
         scroller.getByRole('button', { name: 'Baayin taraf scroll karein' }),
       ).toBeVisible()
+      expect(
+        await scroller
+          .getByRole('button', { name: 'Baayin taraf scroll karein' })
+          .evaluate((el) => getComputedStyle(el).position),
+      ).toBe('absolute')
       await scroller
         .getByRole('button', { name: 'Daayin taraf scroll karein' })
         .click()

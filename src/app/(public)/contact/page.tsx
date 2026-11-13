@@ -5,7 +5,7 @@ import { getWhatsAppSupportLink } from '@/lib/whatsapp'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite')
-  return { title: `${t('contact.title')} | ChequeCheck` }
+  return { title: `${t('contact.title')} | Cheque Check` }
 }
 
 export default async function PublicContactPage() {
