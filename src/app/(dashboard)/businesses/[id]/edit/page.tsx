@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useEditBusiness } from '@/features/businesses/hooks/use-edit-business'
 import { Button } from '@/components/ui/button'
+import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useParams } from 'next/navigation'
@@ -140,9 +141,7 @@ export default function EditBusinessPage() {
               className="h-14 bg-canvas-parchment border-none text-lg font-semibold rounded-sm"
             />
             {errors.name && (
-              <p className="text-xs text-destructive ml-1">
-                {validationMessage(errors.name.message)}
-              </p>
+              <FieldError>{validationMessage(errors.name.message)}</FieldError>
             )}
           </div>
 
@@ -174,9 +173,7 @@ export default function EditBusinessPage() {
               className="h-14 bg-canvas-parchment border-none rounded-sm"
             />
             {errors.email && (
-              <p className="text-xs text-destructive ml-1">
-                {validationMessage(errors.email.message)}
-              </p>
+              <FieldError>{validationMessage(errors.email.message)}</FieldError>
             )}
           </div>
 
@@ -202,9 +199,7 @@ export default function EditBusinessPage() {
               )}
             />
             {errors.phone && (
-              <p className="text-xs text-destructive ml-1">
-                {validationMessage(errors.phone.message)}
-              </p>
+              <FieldError>{validationMessage(errors.phone.message)}</FieldError>
             )}
           </div>
         </FormSection>
@@ -242,32 +237,35 @@ export default function EditBusinessPage() {
         </FormSection>
       </form>
 
-      <DeleteConfirmationDialog
-        title={t('deleteConfirmTitle')}
-        description={t('deleteConfirmDesc')}
-        confirmName={business?.name || ''}
-        onDelete={async () => {
-          guard.bypass(onDelete)
-        }}
-        trigger={
-          <Button
-            type="button"
-            variant="ghost"
-            data-testid="business-delete-trigger"
-            className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
-          >
-            <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
-            {t('deleteBusiness')}
-          </Button>
-        }
-      />
-
       <EditSaveBar
         formId="business-edit-form"
         label={t('updateBusiness')}
         isDirty={isDirty}
         isSaving={isSaving || isSubmitting}
         testId="business-edit-submit-button"
+        secondaryAction={
+          <DeleteConfirmationDialog
+            title={t('deleteConfirmTitle')}
+            description={t('deleteConfirmDesc')}
+            confirmName={business?.name || ''}
+            onDelete={async () => {
+              guard.bypass(onDelete)
+            }}
+            trigger={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t('deleteBusiness')}
+                disabled={isSaving || isSubmitting}
+                data-testid="business-delete-trigger"
+                className="size-12 rounded-full text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <HugeiconsIcon icon={Trash2} className="h-5 w-5" />
+              </Button>
+            }
+          />
+        }
       />
       <UnsavedChangesDialog {...guard.dialogProps} />
     </div>

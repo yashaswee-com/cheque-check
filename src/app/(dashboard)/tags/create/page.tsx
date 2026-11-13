@@ -8,12 +8,19 @@ import { useTags } from '@/features/tags/hooks/use-tags'
 import { TagForm } from '@/features/tags/components/tag-form'
 import { nextTagColor } from '@/features/tags/lib/tag-colors'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
+import { useCallback, useState } from 'react'
 
 export default function CreateTagPage() {
   const t = useTranslations('Tags')
   const router = useRouter()
   const { activeBusiness } = useBusiness()
   const { tags, isLoading, createTag, isCreating } = useTags(activeBusiness?.id)
+  const [canSubmit, setCanSubmit] = useState(false)
+  const onStateChange = useCallback(
+    (state: { canSubmit: boolean }) => setCanSubmit(state.canSubmit),
+    [],
+  )
 
   if (!activeBusiness || isLoading) {
     return (
@@ -28,6 +35,9 @@ export default function CreateTagPage() {
   return (
     <div className="max-w-2xl pb-20">
       <TagForm
+        formId="tag-create-form"
+        hideSubmit
+        onStateChange={onStateChange}
         defaultValues={{ name: '', color: nextTagColor(tags) }}
         submitLabel={t('createTag')}
         isSaving={isCreating}
@@ -43,6 +53,13 @@ export default function CreateTagPage() {
             toast.add({ title: t('saveFailed'), type: 'error' })
           }
         }}
+      />
+      <EditSaveBar
+        formId="tag-create-form"
+        label={t('createTag')}
+        isDirty={canSubmit}
+        isSaving={isCreating}
+        testId="tag-form-submit-button"
       />
     </div>
   )

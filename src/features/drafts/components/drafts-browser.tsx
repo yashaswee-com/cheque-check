@@ -278,7 +278,9 @@ export function DraftsBrowser() {
                       className={filterPillClassName(selected)}
                     >
                       <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-                      <span className="text-sm font-bold">{option.label}</span>
+                      <span className="text-sm font-normal">
+                        {option.label}
+                      </span>
                       {selected && (
                         <HugeiconsIcon
                           icon={Tick02Icon}
@@ -309,9 +311,9 @@ export function DraftsBrowser() {
               className={filterPillClassName(selected)}
             >
               <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-              <span className="text-sm font-bold">{option.label}</span>
+              <span className="text-sm font-normal">{option.label}</span>
               {option.count !== undefined && (
-                <span className="text-xs font-semibold tabular-nums opacity-70">
+                <span className="text-xs font-normal tabular-nums opacity-70">
                   {option.count}
                 </span>
               )}

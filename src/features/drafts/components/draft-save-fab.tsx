@@ -14,6 +14,7 @@ interface DraftSaveFabProps {
   status: DraftSaveStatus
   hasUserChanges: boolean
   onSave: () => void
+  docked?: boolean
 }
 
 // Idle+no-changes = disabled/silver (nothing to save yet); saving = spinner;
@@ -22,6 +23,7 @@ export function DraftSaveFab({
   status,
   hasUserChanges,
   onSave,
+  docked = false,
 }: DraftSaveFabProps) {
   const isSaving = status === 'saving'
   const isSaved = status === 'saved'
@@ -39,7 +41,10 @@ export function DraftSaveFab({
       aria-label={t('saveDraft')}
       data-testid="draft-save-button"
       className={cn(
-        'fixed bottom-6 right-6 z-40 flex h-16 w-16 items-center justify-center rounded-full border-4 border-white shadow-lg transition-colors active:scale-95 disabled:active:scale-100 dark:border-zinc-900',
+        'flex shrink-0 items-center justify-center rounded-full transition-colors active:scale-95 disabled:active:scale-100',
+        docked
+          ? 'relative h-12 w-12'
+          : 'fixed bottom-6 right-6 z-40 h-16 w-16 border-4 border-white shadow-lg dark:border-zinc-900',
         isSaving && 'bg-zinc-700 text-white',
         !isSaving && isSaved && 'bg-primary text-white',
         !isSaving && !isSaved && hasUserChanges && 'bg-zinc-700 text-white',

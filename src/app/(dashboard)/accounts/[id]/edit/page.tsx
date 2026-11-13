@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useEditAccount } from '@/features/accounts/hooks/use-edit-account'
 import { Button } from '@/components/ui/button'
+import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useParams } from 'next/navigation'
@@ -144,9 +145,9 @@ export default function EditAccountPage() {
               className="h-14 bg-canvas-parchment border-none rounded-sm"
             />
             {errors.account_name && (
-              <p className="text-xs text-destructive ml-1">
+              <FieldError>
                 {validationMessage(errors.account_name.message)}
-              </p>
+              </FieldError>
             )}
           </div>
           <ThemeColorRow
@@ -176,9 +177,9 @@ export default function EditAccountPage() {
               className="rounded-sm"
             />
             {errors.bank_id && (
-              <p className="text-xs text-destructive ml-1">
+              <FieldError>
                 {validationMessage(errors.bank_id.message)}
-              </p>
+              </FieldError>
             )}
           </div>
           <div className="space-y-2">
@@ -197,9 +198,9 @@ export default function EditAccountPage() {
               className="h-14 bg-canvas-parchment border-none rounded-sm"
             />
             {errors.account_number && (
-              <p className="text-xs text-destructive ml-1">
+              <FieldError>
                 {validationMessage(errors.account_number.message)}
-              </p>
+              </FieldError>
             )}
           </div>
 
@@ -222,9 +223,9 @@ export default function EditAccountPage() {
               className="h-14 bg-canvas-parchment border-none rounded-sm"
             />
             {errors.opening_balance && (
-              <p className="text-xs text-destructive ml-1">
+              <FieldError>
                 {validationMessage(errors.opening_balance.message)}
-              </p>
+              </FieldError>
             )}
           </div>
 
@@ -254,9 +255,9 @@ export default function EditAccountPage() {
               className="h-14 bg-canvas-parchment border-none uppercase rounded-sm"
             />
             {errors.ifsc_code && (
-              <p className="text-xs text-destructive ml-1">
+              <FieldError>
                 {validationMessage(errors.ifsc_code.message)}
-              </p>
+              </FieldError>
             )}
           </div>
 
@@ -276,32 +277,35 @@ export default function EditAccountPage() {
         </FormSection>
       </form>
 
-      <DeleteConfirmationDialog
-        title={t('deleteConfirmTitle')}
-        description={t('deleteConfirmDesc')}
-        confirmName={account?.account_name || 'Account'}
-        onDelete={async () => {
-          guard.bypass(onDelete)
-        }}
-        trigger={
-          <Button
-            type="button"
-            variant="ghost"
-            data-testid="account-delete-trigger"
-            className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
-          >
-            <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
-            {t('deleteAccount')}
-          </Button>
-        }
-      />
-
       <EditSaveBar
         formId="account-edit-form"
         label={t('updateAccount')}
         isDirty={isDirty}
         isSaving={isSaving || isSubmitting}
         testId="account-edit-submit-button"
+        secondaryAction={
+          <DeleteConfirmationDialog
+            title={t('deleteConfirmTitle')}
+            description={t('deleteConfirmDesc')}
+            confirmName={account?.account_name || 'Account'}
+            onDelete={async () => {
+              guard.bypass(onDelete)
+            }}
+            trigger={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t('deleteAccount')}
+                disabled={isSaving || isSubmitting}
+                data-testid="account-delete-trigger"
+                className="size-12 rounded-full text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <HugeiconsIcon icon={Trash2} className="h-5 w-5" />
+              </Button>
+            }
+          />
+        }
       />
       <UnsavedChangesDialog {...guard.dialogProps} />
     </div>

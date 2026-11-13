@@ -4,6 +4,8 @@ import { useCreateCheque } from '@/features/cheques/hooks/use-create-cheque'
 import { useParties } from '@/features/parties/hooks/use-parties'
 import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { Button } from '@/components/ui/button'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
+import { FieldError } from '@/components/ui/field-error'
 import { Spinner } from '@/components/ui/spinner'
 import { Input } from '@/components/ui/input'
 import { DigitSlotsInput } from '@/components/ui/digit-slots-input'
@@ -16,7 +18,6 @@ import { useSearchParams } from 'next/navigation'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowLeft01Icon as ArrowLeft,
-  ArrowRight01Icon as ArrowRight,
   Tick02Icon as Check,
   Camera01Icon as Camera,
   Cancel01Icon as X,
@@ -333,11 +334,11 @@ export default function CreateChequePage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-8 pb-20">
-      <div className="flex flex-col gap-4">
+    <div className="max-w-2xl space-y-3 pb-24">
+      <div className="flex flex-col gap-3">
         <Stepper
           value={step}
-          className="w-full max-w-xl mx-auto space-y-8"
+          className="w-full max-w-xl mx-auto space-y-3"
           indicators={{
             completed: <HugeiconsIcon icon={Check} className="size-3.5" />,
           }}
@@ -384,34 +385,26 @@ export default function CreateChequePage() {
                 </StepperItem>
               ))}
             </StepperNav>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={nextStep}
-              disabled={
-                step === 3 ||
-                (step === 1 && !watch('amount')) ||
-                (step === 2 && (!watch('party_id') || !watch('account_id')))
-              }
-              className="rounded-full h-8 w-8 shrink-0 hover:bg-canvas-parchment"
-            >
-              <HugeiconsIcon icon={ArrowRight} className="h-4 w-4" />
-            </Button>
           </div>
         </Stepper>
       </div>
 
       <DraftLeaveDialog {...draft.leaveDialogProps} />
-      <DraftSaveFab
-        status={draft.status}
-        hasUserChanges={draft.hasUserChanges}
-        onSave={() => void draft.saveDraft()}
-      />
 
-      <form onSubmit={onSubmit} className="space-y-8">
+      <form
+        id="cheque-create-form"
+        onSubmit={(event) => {
+          if (step < 3) {
+            event.preventDefault()
+            void nextStep()
+          } else {
+            void onSubmit(event)
+          }
+        }}
+        className="space-y-3"
+      >
         {step === 1 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             {cameFromScan && photoWidget}
 
             <div className="space-y-2">
@@ -467,11 +460,17 @@ export default function CreateChequePage() {
               <CurrencyPrefixInput
                 currency={currency}
                 id="amount"
+                autoFocus={!cameFromScan}
+                inputMode="decimal"
                 type="number"
                 min={0}
                 step="any"
                 data-testid="cheque-amount-input"
                 {...register('amount', { valueAsNumber: true })}
+                aria-invalid={!!errors.amount}
+                aria-describedby={
+                  errors.amount ? 'cheque-amount-error' : undefined
+                }
                 className="h-12 font-semibold rounded-sm"
               />
               <div className="flex flex-col gap-1 ml-1">
@@ -482,14 +481,9 @@ export default function CreateChequePage() {
                   {amountInWords}
                 </p>
               </div>
-              <p
-                className={cn(
-                  'text-xs text-destructive ml-1 min-h-4',
-                  !errors.amount && 'invisible',
-                )}
-              >
-                {validationMessage(errors.amount?.message) || '\u00A0'}
-              </p>
+              <FieldError id="cheque-amount-error">
+                {validationMessage(errors.amount?.message)}
+              </FieldError>
             </div>
 
             <div className="space-y-2">
@@ -515,33 +509,18 @@ export default function CreateChequePage() {
                   />
                 )}
               />
-              <p
-                className={cn(
-                  'text-xs text-destructive ml-1 min-h-4',
-                  !errors.cheque_number && 'invisible',
-                )}
-              >
-                {validationMessage(errors.cheque_number?.message) || '\u00A0'}
-              </p>
+              <FieldError>
+                {validationMessage(errors.cheque_number?.message)}
+              </FieldError>
               {numberConflictWarning}
             </div>
 
             {!cameFromScan && photoWidget}
-
-            <Button
-              type="button"
-              data-testid="cheque-step1-continue"
-              className="w-full rounded-full h-14 text-lg"
-              onClick={nextStep}
-            >
-              {tCommon('continue')}{' '}
-              <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-            </Button>
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
               <Label
                 required
@@ -561,14 +540,9 @@ export default function CreateChequePage() {
                 }
                 className="h-14 bg-canvas-parchment border-none rounded-sm"
               />
-              <p
-                className={cn(
-                  'text-xs text-destructive ml-1 min-h-4',
-                  !errors.party_id && 'invisible',
-                )}
-              >
-                {validationMessage(errors.party_id?.message) || '\u00A0'}
-              </p>
+              <FieldError>
+                {validationMessage(errors.party_id?.message)}
+              </FieldError>
             </div>
 
             <div className="space-y-2">
@@ -595,32 +569,16 @@ export default function CreateChequePage() {
                 }
                 className="h-14 bg-canvas-parchment border-none rounded-sm"
               />
-              <p
-                className={cn(
-                  'text-xs text-destructive ml-1 min-h-4',
-                  !errors.account_id && 'invisible',
-                )}
-              >
-                {validationMessage(errors.account_id?.message) || '\u00A0'}
-              </p>
+              <FieldError>
+                {validationMessage(errors.account_id?.message)}
+              </FieldError>
               {numberConflictWarning}
             </div>
-
-            <Button
-              type="button"
-              data-testid="cheque-step2-continue"
-              className="w-full rounded-full h-14 text-lg"
-              onClick={nextStep}
-              disabled={!watch('party_id') || !watch('account_id')}
-            >
-              {tCommon('continue')}{' '}
-              <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-            </Button>
           </div>
         )}
 
         {step === 3 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
               <Label
                 required
@@ -639,9 +597,9 @@ export default function CreateChequePage() {
                 className="h-12 rounded-sm"
               />
               {errors.cheque_date && (
-                <p className="text-xs text-destructive ml-1">
+                <FieldError>
                   {validationMessage(errors.cheque_date.message)}
-                </p>
+                </FieldError>
               )}
             </div>
 
@@ -674,9 +632,9 @@ export default function CreateChequePage() {
                 )}
               />
               {errors.deposit_date && (
-                <p className="text-xs text-destructive ml-1">
+                <FieldError>
                   {validationMessage(errors.deposit_date.message)}
-                </p>
+                </FieldError>
               )}
             </div>
 
@@ -710,7 +668,7 @@ export default function CreateChequePage() {
               />
             </div>
 
-            <div className="rounded-lg bg-primary/5 p-6 space-y-4 border border-primary/10">
+            <div className="rounded-lg bg-primary/5 p-4 space-y-3 border border-primary/10">
               <div className="flex items-center gap-2">
                 <HugeiconsIcon
                   icon={ReceiptText}
@@ -783,19 +741,29 @@ export default function CreateChequePage() {
             </div>
 
             {numberConflictWarning}
-            <Button
-              type="submit"
-              data-testid="cheque-submit-button"
-              className="w-full rounded-full h-14 text-lg"
-              disabled={isSaving}
-              loading={isSaving || form.formState.isSubmitting}
-            >
-              {t('saveAction')}{' '}
-              <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
-            </Button>
           </div>
         )}
       </form>
+
+      <EditSaveBar
+        formId="cheque-create-form"
+        label={step < 3 ? tCommon('continue') : t('saveAction')}
+        isContinue={step < 3}
+        secondaryAction={
+          <DraftSaveFab
+            docked
+            status={draft.status}
+            hasUserChanges={draft.hasUserChanges}
+            onSave={() => void draft.saveDraft()}
+          />
+        }
+        disabled={step === 2 && (!watch('party_id') || !watch('account_id'))}
+        isDirty={true}
+        isSaving={isSaving || form.formState.isSubmitting}
+        testId={
+          step < 3 ? `cheque-step${step}-continue` : 'cheque-submit-button'
+        }
+      />
 
       <Dialog
         open={!!unmatchedEntities}
@@ -804,10 +772,7 @@ export default function CreateChequePage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{t('newEntitiesFound')}</DialogTitle>
-            <DialogDescription>
-              We found a party and/or account on the cheque that aren&apos;t in
-              your business. Would you like to create them?
-            </DialogDescription>
+            <DialogDescription>{t('newEntitiesDescription')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
@@ -831,11 +796,13 @@ export default function CreateChequePage() {
                       htmlFor="create-party"
                       className="text-sm font-semibold"
                     >
-                      Create Party: {unmatchedEntities.payee_name}
+                      {t('createPartyFromScan', {
+                        name: unmatchedEntities.payee_name,
+                      })}
                     </label>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    This name was extracted as the payee.
+                    {t('payeeExtracted')}
                   </p>
                 </div>
               </div>
@@ -865,13 +832,16 @@ export default function CreateChequePage() {
                         htmlFor="create-account"
                         className="text-sm font-semibold"
                       >
-                        Create Account:{' '}
-                        {unmatchedEntities.account_name ||
-                          unmatchedEntities.account_number}
+                        {t('createAccountFromScan', {
+                          name:
+                            unmatchedEntities.account_name ||
+                            unmatchedEntities.account_number ||
+                            '',
+                        })}
                       </label>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Extracted account details from the scan.
+                      {t('accountExtracted')}
                     </p>
                   </div>
                 </div>
@@ -883,7 +853,7 @@ export default function CreateChequePage() {
                       className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2"
                     >
                       <HugeiconsIcon icon={Bank} className="h-3 w-3" />
-                      Select Bank
+                      {tCommon('selectBank')}
                     </Label>
                     <BankSelector
                       value={unmatchedEntities.bank_id}
@@ -907,7 +877,7 @@ export default function CreateChequePage() {
               onClick={() => setUnmatchedEntities(null)}
             >
               <HugeiconsIcon icon={Trash} className="h-4 w-4" />
-              Skip
+              {tCommon('skip')}
             </Button>
             <Button
               className="flex-1 rounded-full gap-2"
@@ -919,7 +889,7 @@ export default function CreateChequePage() {
               }
             >
               <HugeiconsIcon icon={Check} className="h-4 w-4" />
-              Create Selected
+              {t('createSelected')}
             </Button>
           </DialogFooter>
         </DialogContent>

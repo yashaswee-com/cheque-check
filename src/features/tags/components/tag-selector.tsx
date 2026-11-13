@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowDown01Icon as ChevronDown,
+  Search01Icon as Search,
   CheckmarkCircle01Icon as Check,
   PlusSignIcon as Plus,
 } from '@hugeicons/core-free-icons'
@@ -141,6 +142,7 @@ export function TagSelector({
           <div className="space-y-3">
             <div className="flex gap-2">
               <Input
+                leftIcon={Search}
                 value={paged.query}
                 data-testid="tag-selector-create-input"
                 onChange={(event) => paged.setQuery(event.target.value)}

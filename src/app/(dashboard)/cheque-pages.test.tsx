@@ -118,7 +118,9 @@ function useChequeForm(options?: {
       },
     },
     step,
-    nextStep: () => setStep((s) => s + 1),
+    nextStep: () => {
+      if (!Object.keys(errors).length) setStep((s) => s + 1)
+    },
     prevStep: () => setStep((s) => s - 1),
     cheque: {
       ...cheque,
@@ -208,6 +210,7 @@ vi.mock('@/features/cheques/hooks/use-cheques', () => ({
   }),
 }))
 vi.mock('@/features/cheques/hooks/use-cheque-list', () => ({
+  useChequeAmountBounds: () => ({ data: { min: 0, max: 0 } }),
   useChequeList: (
     business: string | undefined,
     native: { status?: string; from?: string; to?: string },
@@ -657,7 +660,7 @@ describe('cheque draft status presentation', () => {
       ),
     ),
   )(
-    'keeps only the FAB on step $step with status $status (resumed=$resumed)',
+    'docks the draft action on step $step with status $status (resumed=$resumed)',
     ({ step, resumed, status }) => {
       initialStep = step
       draftStatus = status
@@ -673,7 +676,11 @@ describe('cheque draft status presentation', () => {
       }
       const button = screen.getByRole('button', { name: 'Save draft' })
       expect(button).toHaveAttribute('data-testid', 'draft-save-button')
-      expect(button).toHaveClass('fixed', 'bottom-6', 'right-6')
+      expect(button).toHaveClass('relative', 'h-12', 'w-12')
+      expect(button).not.toHaveClass('fixed')
+      expect(button.parentElement).toBe(
+        screen.getByTestId(`cheque-step${step}-continue`).parentElement,
+      )
       if (status === 'saving') expect(button).toBeDisabled()
       else expect(button).toBeEnabled()
     },
@@ -857,9 +864,22 @@ describe('cheque creation page', () => {
     }
     renderPage(<CreateChequePage />)
     expect(screen.getByText('Amount required')).toBeVisible()
+    const amount = screen.getByTestId('cheque-amount-input')
+    expect(amount).toHaveAttribute('aria-invalid', 'true')
+    expect(amount).toHaveAttribute('aria-describedby', 'cheque-amount-error')
+    expect(amount).toHaveClass(
+      'aria-invalid:border-destructive',
+      'aria-invalid:ring-destructive/50',
+    )
+    fireEvent.click(screen.getByTestId('cheque-step1-continue'))
+    expect(amount).toHaveAttribute('aria-invalid', 'true')
     expect(screen.getByText('Six digits required')).toBeVisible()
     expect(screen.getByText(messages.Drafts.duplicateNumber)).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+    expect(screen.getByTestId('draft-save-button').parentElement).toBe(
+      screen.getByTestId('cheque-step1-continue').parentElement,
+    )
+    expect(screen.getByTestId('draft-save-button')).not.toHaveClass('fixed')
     expect(mocks.save).toHaveBeenCalledOnce()
   })
   it('saves before opening related creation pages with a safe draft return destination', () => {

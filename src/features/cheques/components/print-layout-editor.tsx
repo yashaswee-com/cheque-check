@@ -28,6 +28,7 @@ import {
 } from '@/features/monetization/components/premium-controls'
 import { savePrintLayout } from '@/features/premium-workspace/services/workspace.service'
 import { toast } from '@/components/ui/toast'
+import { HashtagIcon as Hash } from '@hugeicons/core-free-icons'
 
 const fields: Array<keyof PrintLayout> = [
   'payeeX',
@@ -200,6 +201,7 @@ function PrintLayoutForm({
             <label key={key} className="space-y-1 text-xs font-semibold">
               {t(`printFields.${key}`)} (mm)
               <Input
+                leftIcon={Hash}
                 type="number"
                 min="0"
                 max={key.endsWith('X') ? 210 : 297}

@@ -116,6 +116,9 @@ describe('BankSelector', () => {
     expect(screen.getByTestId('bank-selector-trigger')).toHaveTextContent(
       'Bank 4999',
     )
+    expect(screen.getByTestId('bank-selector-trigger')).toHaveClass(
+      'font-normal',
+    )
     open()
     expect(await screen.findAllByTestId('bank-option')).toHaveLength(50)
     fireEvent.click(screen.getByRole('button', { name: 'nextPage' }))
@@ -126,6 +129,7 @@ describe('BankSelector', () => {
     })
     const option = (await screen.findAllByTestId('bank-option'))[0]
     expect(option).toHaveTextContent('Bank 4999')
+    expect(option.querySelector('.font-normal')).toBeInTheDocument()
     fireEvent.click(option)
     expect(change).toHaveBeenCalledWith('bank4999')
   })

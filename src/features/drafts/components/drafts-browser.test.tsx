@@ -232,9 +232,11 @@ describe('DraftsBrowser', () => {
     fireEvent.click(
       screen.getByRole('button', { name: messages.Common.sortAndFilter }),
     )
-    fireEvent.click(
-      await screen.findByRole('button', { name: messages.Drafts.sortOldest }),
-    )
+    const sortOption = await screen.findByRole('button', {
+      name: messages.Drafts.sortOldest,
+    })
+    expect(sortOption.querySelector('span')).toHaveClass('font-normal')
+    fireEvent.click(sortOption)
     expect(state.replace).toHaveBeenCalledWith('/drafts?sort=oldest', {
       scroll: false,
     })

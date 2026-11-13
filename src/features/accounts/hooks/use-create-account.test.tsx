@@ -201,6 +201,17 @@ describe('useCreateAccount', () => {
     expect(mocks.draft.goBack).toHaveBeenCalledOnce()
   })
 
+  it('advances only once when validation is submitted concurrently', async () => {
+    const { result } = setup()
+    setValidAccount(result)
+    await act(async () => {
+      await Promise.all([result.current.nextStep(), result.current.nextStep()])
+    })
+    expect(result.current.step).toBe(2)
+    expect(mocks.create).not.toHaveBeenCalled()
+    expect(mocks.publish).not.toHaveBeenCalled()
+  })
+
   it('publishes a resumed draft, links it to the cheque draft, and returns to the caller', async () => {
     const onCreated = vi.fn()
     const returnTo = '/cheques/new?draftId=cheque-draft-1'

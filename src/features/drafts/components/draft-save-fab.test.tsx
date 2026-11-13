@@ -10,6 +10,18 @@ vi.mock('next-intl', () => ({
 afterEach(cleanup)
 
 describe('DraftSaveFab', () => {
+  it('fits beside the primary form action without floating over it', () => {
+    render(
+      <DraftSaveFab docked status="idle" hasUserChanges onSave={vi.fn()} />,
+    )
+    expect(screen.getByTestId('draft-save-button')).toHaveClass(
+      'relative',
+      'h-12',
+      'w-12',
+      'shrink-0',
+    )
+    expect(screen.getByTestId('draft-save-button')).not.toHaveClass('fixed')
+  })
   it.each([
     { status: 'idle', hasUserChanges: false, disabled: true },
     { status: 'idle', hasUserChanges: true, disabled: false },

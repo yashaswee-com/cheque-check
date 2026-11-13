@@ -169,7 +169,7 @@ function useListMock(
 }
 vi.mock('@/features/cheques/hooks/use-cheque-list', () => ({
   useChequeList: useListMock,
-  useChequeAmountCeiling: () => ({ data: 0 }),
+  useChequeAmountBounds: () => ({ data: { min: 0, max: 0 } }),
 }))
 vi.mock('@/features/accounts/hooks/use-banks', () => ({
   useBanks: () => ({ data: [], isPending: false, error: null }),

@@ -22,7 +22,7 @@ export function DraftsLink({ entity }: { entity: DraftEntity }) {
   return (
     <Link
       href={DRAFT_LIST_PATHS[entity]}
-      className="flex items-center justify-between rounded-lg border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary"
+      className="flex items-center justify-between rounded-lg border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm font-normal text-primary"
     >
       <span className="flex items-center gap-2">
         <HugeiconsIcon icon={DraftIcon} className="h-4 w-4" />
@@ -61,7 +61,7 @@ export function DraftsSummaryCard() {
           className="h-4 w-4 shrink-0 text-primary"
         />
         <div className="min-w-0">
-          <p className="truncate text-xs font-semibold text-primary">
+          <p className="truncate text-xs font-normal text-primary">
             {t('pendingSummary', { count: total })}
           </p>
           <p className="truncate text-[10px] text-muted-foreground">

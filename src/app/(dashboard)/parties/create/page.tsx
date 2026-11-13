@@ -2,6 +2,8 @@
 
 import { useCreateParty } from '@/features/parties/hooks/use-create-party'
 import { Button } from '@/components/ui/button'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
+import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -9,13 +11,12 @@ import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowLeft01Icon as ArrowLeft,
-  ArrowRight01Icon as ArrowRight,
   Tick02Icon as Check,
   UserIcon as User,
   Location01Icon as MapPin,
   Mail01Icon as Mail,
   Note01Icon as Note,
-  Camera01Icon as Camera,
+  PencilEdit02Icon as Edit,
 } from '@hugeicons/core-free-icons'
 import {
   PARTY_THEME_COLORS,
@@ -271,7 +272,7 @@ export default function CreatePartyPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-8 pb-20">
+    <div className="max-w-2xl space-y-3 pb-24">
       <Stepper
         value={step}
         className="w-full max-w-xl mx-auto space-y-8"
@@ -279,7 +280,7 @@ export default function CreatePartyPage() {
           completed: <HugeiconsIcon icon={Check} className="size-3.5" />,
         }}
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           <Button
             type="button"
             variant="ghost"
@@ -316,17 +317,6 @@ export default function CreatePartyPage() {
               </StepperItem>
             ))}
           </StepperNav>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => nextStep()}
-            disabled={step === 3 || isSaving || isAvatarUploading}
-            aria-label={t('continue')}
-            className="rounded-full h-8 w-8 shrink-0"
-          >
-            <HugeiconsIcon icon={ArrowRight} className="h-4 w-4" />
-          </Button>
         </div>
       </Stepper>
       <DraftLeaveDialog
@@ -335,15 +325,21 @@ export default function CreatePartyPage() {
           if (await saveDraftAndFlushTags()) await draft.saveDraftAndExit()
         }}
       />
-      <DraftSaveFab
-        status={draft.status}
-        hasUserChanges={draft.hasUserChanges}
-        onSave={() => void saveDraftAndFlushTags()}
-      />
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form
+        id="party-create-form"
+        onSubmit={(event) => {
+          if (step < 3) {
+            event.preventDefault()
+            void nextStep()
+          } else {
+            void handleSubmit(event)
+          }
+        }}
+        className="space-y-3"
+      >
         {step === 1 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
               <Label
                 required
@@ -360,8 +356,12 @@ export default function CreatePartyPage() {
                   leftIcon={User}
                   id="name"
                   {...register('name')}
+                  aria-invalid={!!errors.name}
+                  aria-describedby={
+                    errors.name ? 'party-name-error' : undefined
+                  }
                   placeholder={t('enterFullName')}
-                  className="min-w-0 flex-1 h-14 bg-canvas-parchment border-none text-lg font-semibold rounded-sm"
+                  className="min-w-0 flex-1 h-14 bg-canvas-parchment border-none text-lg rounded-sm"
                 />
                 <PremiumButton
                   feature="contact-import"
@@ -376,9 +376,9 @@ export default function CreatePartyPage() {
                 </PremiumButton>
               </div>
               {errors.name && (
-                <p className="text-xs text-destructive ml-1">
+                <FieldError id="party-name-error">
                   {validationMessage(errors.name.message)}
-                </p>
+                </FieldError>
               )}
             </div>
 
@@ -405,9 +405,9 @@ export default function CreatePartyPage() {
                 )}
               />
               {errors.contact && (
-                <p className="text-xs text-destructive ml-1">
+                <FieldError>
                   {validationMessage(errors.contact.message)}
-                </p>
+                </FieldError>
               )}
             </div>
 
@@ -426,30 +426,15 @@ export default function CreatePartyPage() {
               value={watch('party_type')}
               onChange={(value) => setUserValue('party_type', value)}
             />
-
-            <Button
-              type="button"
-              data-testid="party-step1-continue"
-              onClick={() => nextStep()}
-              className="w-full rounded-full h-14 text-lg"
-            >
-              {t('continue')}
-              <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-            </Button>
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <h2 className="font-semibold">{t('optionalDetails')}</h2>
             <div className="flex justify-center">
               <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => avatarInputRef.current?.click()}
-                  aria-label={t('addPhoto')}
-                  className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary ring-2 ring-white shadow-sm transition-transform active:scale-95"
-                >
+                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary ring-2 ring-white shadow-sm">
                   {avatarPreview || watch('avatar_url') ? (
                     <img
                       src={avatarPreview ?? watch('avatar_url') ?? undefined}
@@ -459,10 +444,16 @@ export default function CreatePartyPage() {
                   ) : (
                     <HugeiconsIcon icon={User} className="h-8 w-8" />
                   )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  aria-label={t('addPhoto')}
+                  disabled={isAvatarUploading}
+                  className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white ring-2 ring-white"
+                >
+                  <HugeiconsIcon icon={Edit} className="h-3.5 w-3.5" />
                 </button>
-                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white ring-2 ring-white">
-                  <HugeiconsIcon icon={Camera} className="h-3.5 w-3.5" />
-                </span>
                 <input
                   ref={avatarInputRef}
                   type="file"
@@ -495,9 +486,9 @@ export default function CreatePartyPage() {
                 className="h-12 bg-canvas-parchment border-none rounded-sm"
               />
               {errors.email && (
-                <p className="text-xs text-destructive ml-1">
+                <FieldError>
                   {validationMessage(errors.email.message)}
-                </p>
+                </FieldError>
               )}
             </div>
             <div className="space-y-2">
@@ -515,31 +506,11 @@ export default function CreatePartyPage() {
                 className="h-12 bg-canvas-parchment border-none rounded-sm"
               />
             </div>
-            <Button
-              type="button"
-              data-testid="party-step2-continue"
-              onClick={() => nextStep()}
-              disabled={isAvatarUploading}
-              className="w-full rounded-full h-14 text-lg"
-            >
-              {t('continue')}
-              <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              data-testid="party-step2-skip"
-              onClick={() => nextStep()}
-              disabled={isAvatarUploading}
-              className="w-full rounded-full"
-            >
-              {t('skipOptionalDetails')}
-            </Button>
           </div>
         )}
 
         {step === 3 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <h2 className="font-semibold">{t('optionalDetails')}</h2>
             <div className="space-y-2">
               <Label
@@ -594,22 +565,26 @@ export default function CreatePartyPage() {
                 </div>
               </div>
             </div>
-
-            <Button
-              type="submit"
-              data-testid="party-submit-button"
-              className="w-full rounded-full h-14 text-lg"
-              disabled={isSaving || isAvatarUploading}
-              loading={
-                isSaving || isAvatarUploading || form.formState.isSubmitting
-              }
-            >
-              {t('createParty')}
-              <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
-            </Button>
           </div>
         )}
       </form>
+
+      <EditSaveBar
+        formId="party-create-form"
+        label={step < 3 ? t('continue') : t('newParty')}
+        isContinue={step < 3}
+        secondaryAction={
+          <DraftSaveFab
+            docked
+            status={draft.status}
+            hasUserChanges={draft.hasUserChanges}
+            onSave={() => void saveDraftAndFlushTags()}
+          />
+        }
+        isDirty={true}
+        isSaving={isSaving || isAvatarUploading || form.formState.isSubmitting}
+        testId={step < 3 ? `party-step${step}-continue` : 'party-submit-button'}
+      />
     </div>
   )
 }

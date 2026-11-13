@@ -6,6 +6,7 @@ import {
   Tick02Icon as Check,
   ArrowUpDownIcon as ChevronsUpDown,
   BankIcon as Landmark,
+  TextFontIcon as TextIcon,
   PlusSignCircleIcon as PlusCircle,
   Delete02Icon as Trash,
 } from '@hugeicons/core-free-icons'
@@ -36,6 +37,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
+import { FieldError } from '@/components/ui/field-error'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toast'
 import { DeleteConfirmationDialog } from '@/components/ui/delete-dialog'
@@ -164,7 +166,7 @@ export function BankSelector({
               data-testid="bank-selector-trigger"
               className={cn(
                 buttonVariants({ variant: 'outline' }),
-                'w-full min-w-0 justify-between h-14 rounded-2xl bg-canvas-parchment border-none px-4 text-lg font-medium cursor-pointer',
+                'w-full min-w-0 justify-between h-14 rounded-2xl bg-canvas-parchment border-none px-4 text-lg font-normal cursor-pointer',
                 className?.includes('rounded-sm') && 'rounded-sm',
                 className,
               )}
@@ -249,9 +251,9 @@ export function BankSelector({
                         imageUrl={bank.logo_url}
                         size="sm"
                       />
-                      <span className="truncate font-medium">{bank.name}</span>
+                      <span className="truncate font-normal">{bank.name}</span>
                       {bank.abbreviation && (
-                        <span className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <span className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-normal uppercase tracking-wider text-muted-foreground">
                           {bank.abbreviation}
                         </span>
                       )}
@@ -273,7 +275,7 @@ export function BankSelector({
             <Button
               type="button"
               variant="ghost"
-              className="w-full justify-start gap-2 text-primary font-semibold"
+              className="w-full justify-start gap-2 text-primary font-normal"
               disabled={!!error || isPending}
               onClick={() => {
                 setName(trimmedQuery)
@@ -336,6 +338,7 @@ export function BankSelector({
               {tb('name')}
             </Label>
             <Input
+              leftIcon={Landmark}
               id={nameId}
               value={name}
               maxLength={120}
@@ -348,16 +351,13 @@ export function BankSelector({
               disabled={create.isPending}
             />
             {nameError && (
-              <p
-                id={`${nameId}-error`}
-                role="alert"
-                className="text-sm text-destructive"
-              >
+              <FieldError id={`${nameId}-error`} className="text-sm">
                 {nameError}
-              </p>
+              </FieldError>
             )}
             <Label htmlFor={abbreviationId}>{tb('abbreviation')}</Label>
             <Input
+              leftIcon={TextIcon}
               id={abbreviationId}
               value={abbreviation}
               maxLength={10}
@@ -374,13 +374,9 @@ export function BankSelector({
               disabled={create.isPending}
             />
             {abbreviationError && (
-              <p
-                id={`${abbreviationId}-error`}
-                role="alert"
-                className="text-sm text-destructive"
-              >
+              <FieldError id={`${abbreviationId}-error`} className="text-sm">
                 {abbreviationError}
-              </p>
+              </FieldError>
             )}
             <FilterPillSection title={tb('bankType')}>
               {BANK_TYPES.map((type) => (
@@ -392,7 +388,7 @@ export function BankSelector({
                   onClick={() => setBankType(bankType === type ? null : type)}
                   className={filterPillClassName(bankType === type)}
                 >
-                  <span className="text-sm font-bold">
+                  <span className="text-sm font-normal">
                     {tb(`types.${type}`)}
                   </span>
                 </button>

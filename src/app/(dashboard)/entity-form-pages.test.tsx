@@ -437,7 +437,7 @@ describe.each([
       ),
     ),
   )(
-    'keeps only the FAB on step $step with status $status (resumed=$resumed)',
+    'docks the draft action on step $step with status $status (resumed=$resumed)',
     ({ step, resumed, status }) => {
       initialStep = step
       draftStatus = status
@@ -453,7 +453,9 @@ describe.each([
       }
       const button = screen.getByRole('button', { name: 'Save draft' })
       expect(button).toHaveAttribute('data-testid', 'draft-save-button')
-      expect(button).toHaveClass('fixed', 'bottom-6', 'right-6')
+      expect(button).toHaveClass('relative', 'h-12', 'w-12')
+      expect(button).not.toHaveClass('fixed')
+      expect(button.closest('[data-testid="edit-save-bar"]')).not.toBeNull()
       if (status === 'saving') expect(button).toBeDisabled()
       else expect(button).toBeEnabled()
     },
@@ -953,7 +955,7 @@ describe('party creation page', () => {
     expect(document.getElementById('name')).toBeNull()
     expect(document.getElementById('address')).toBeVisible()
     expect(document.getElementById('notes')).toBeNull()
-    fireEvent.click(screen.getByTestId('party-step2-skip'))
+    fireEvent.click(screen.getByTestId('party-step2-continue'))
     expect(document.getElementById('notes')).toBeVisible()
     expect(document.getElementById('email')).toBeNull()
     expect(screen.getByText('New Customer')).toBeVisible()
@@ -967,7 +969,7 @@ describe('party creation page', () => {
     expect(document.getElementById('name')).toHaveValue('New Customer')
     expect(document.getElementById('contact')).toHaveValue('+919876543210')
     fireEvent.click(screen.getByTestId('party-step1-continue'))
-    fireEvent.click(screen.getByTestId('party-step2-skip'))
+    fireEvent.click(screen.getByTestId('party-step2-continue'))
     fireEvent.click(screen.getByTestId('party-submit-button'))
     await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
   })
@@ -981,7 +983,7 @@ describe('party creation page', () => {
     const swatch = within(theme).getAllByRole('button')[1]
     fireEvent.click(swatch)
     expect(swatch).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(screen.getByTestId('party-step2-skip'))
+    fireEvent.click(screen.getByTestId('party-step2-continue'))
     expect(screen.queryByTestId('party-theme-color')).not.toBeInTheDocument()
     expect(document.getElementById('notes')).toBeVisible()
   })
@@ -1017,7 +1019,7 @@ describe('party creation page', () => {
       screen.getByRole('button', { name: '#FF9500', hidden: true }),
     )
     expect(values.color).toBe('#FF9500')
-    fireEvent.click(screen.getByTestId('party-step2-skip'))
+    fireEvent.click(screen.getByTestId('party-step2-continue'))
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
     expect(mocks.flush).toHaveBeenCalledWith('draft')
@@ -1033,7 +1035,7 @@ describe('party creation page', () => {
     const { container } = renderPage(<CreatePartyPage />)
     expect(document.getElementById('name')).toHaveValue('Restored name')
     fireEvent.click(screen.getByTestId('party-step1-continue'))
-    fireEvent.click(screen.getByTestId('party-step2-skip'))
+    fireEvent.click(screen.getByTestId('party-step2-continue'))
     fireEvent.submit(container.querySelector('form')!)
     await waitFor(() =>
       expect(mocks.toast).toHaveBeenCalledWith(

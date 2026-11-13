@@ -81,32 +81,36 @@ export default function EditTagPage() {
           }
         }}
       />
-      <DeleteConfirmationDialog
-        title={t('deleteConfirmTitle')}
-        description={t('deleteConfirmDesc')}
-        confirmName={tag.name}
-        onDelete={async () => {
-          await deleteTag(tag.id)
-          guard.bypass(() => router.push('/tags'))
-        }}
-        trigger={
-          <Button
-            type="button"
-            variant="ghost"
-            data-testid="tag-delete-trigger"
-            className="h-14 w-full rounded-full text-muted-foreground transition-colors hover:text-destructive"
-          >
-            <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />
-            {t('deleteTag')}
-          </Button>
-        }
-      />
       <EditSaveBar
         formId="tag-edit-form"
         label={t('updateTag')}
         isDirty={formState.canSubmit}
         isSaving={isUpdating}
         testId="tag-form-submit-button"
+        secondaryAction={
+          <DeleteConfirmationDialog
+            title={t('deleteConfirmTitle')}
+            description={t('deleteConfirmDesc')}
+            confirmName={tag.name}
+            onDelete={async () => {
+              await deleteTag(tag.id)
+              guard.bypass(() => router.push('/tags'))
+            }}
+            trigger={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t('deleteTag')}
+                disabled={isUpdating}
+                data-testid="tag-delete-trigger"
+                className="size-12 rounded-full text-muted-foreground transition-colors hover:text-destructive"
+              >
+                <HugeiconsIcon icon={Trash2} className="h-5 w-5" />
+              </Button>
+            }
+          />
+        }
       />
       <UnsavedChangesDialog {...guard.dialogProps} />
     </div>

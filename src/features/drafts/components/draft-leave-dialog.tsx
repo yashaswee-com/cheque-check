@@ -1,6 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  Delete02Icon as DeleteIcon,
+  FloppyDiskIcon as SaveIcon,
+  PencilEdit02Icon as EditIcon,
+} from '@hugeicons/core-free-icons'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import {
@@ -51,28 +57,31 @@ export function DraftLeaveDialog({
         </SheetHeader>
         <div className="flex flex-col gap-2 pt-4">
           <Button
-            className="w-full rounded-full"
+            className="w-full justify-center gap-2 rounded-full"
             onClick={() => run('save')}
             loading={pendingAction === 'save'}
             disabled={isPending}
           >
+            <HugeiconsIcon icon={SaveIcon} className="size-4" />
             {t('saveDraft')}
           </Button>
           <Button
             variant="destructive"
-            className="w-full rounded-full"
+            className="w-full justify-center gap-2 rounded-full"
             onClick={() => run('discard')}
             loading={pendingAction === 'discard'}
             disabled={isPending}
           >
+            <HugeiconsIcon icon={DeleteIcon} className="size-4" />
             {t('discard')}
           </Button>
           <Button
             variant="ghost"
-            className="w-full rounded-full"
+            className="w-full justify-center gap-2 rounded-full"
             onClick={onCancel}
             disabled={isPending}
           >
+            <HugeiconsIcon icon={EditIcon} className="size-4" />
             {t('keepEditing')}
           </Button>
         </div>

@@ -31,6 +31,15 @@ it('saves and discards asynchronously, blocks dismissal while busy and permits c
       />
     </NextIntlClientProvider>,
   )
+  for (const label of [
+    messages.Drafts.saveDraft,
+    messages.Drafts.discard,
+    messages.Drafts.keepEditing,
+  ]) {
+    expect(
+      screen.getByRole('button', { name: label }).querySelector('svg'),
+    ).toBeInTheDocument()
+  }
   fireEvent.click(
     screen.getByRole('button', { name: messages.Drafts.saveDraft }),
   )

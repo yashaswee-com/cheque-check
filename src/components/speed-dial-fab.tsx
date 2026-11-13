@@ -111,7 +111,7 @@ export function SpeedDialFab({
                   title={action.premiumFeature ? tp('marker') : undefined}
                   onClick={() => runAction(action)}
                   className={cn(
-                    'flex h-auto items-center gap-3 rounded-full border-0 bg-background py-1.5 pl-4 pr-1.5 text-sm font-semibold shadow-lg ring-1 ring-border transition-transform hover:bg-background active:scale-95 disabled:opacity-50',
+                    'flex h-auto items-center gap-3 rounded-full border-0 bg-background py-1.5 pl-4 pr-1.5 text-sm font-normal shadow-lg ring-1 ring-border transition-transform hover:bg-background active:scale-95 disabled:opacity-50',
                     action.destructive && 'text-destructive',
                   )}
                 >

@@ -2,6 +2,8 @@
 
 import { useCreateBusiness } from '@/features/businesses/hooks/use-create-business'
 import { Button } from '@/components/ui/button'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
+import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
@@ -19,7 +21,6 @@ import {
   Location01Icon as Location,
   TextFontIcon as TextIcon,
   ArrowLeft01Icon as ArrowLeft,
-  ArrowRight01Icon as ArrowRight,
   Tick02Icon as Check,
   Building03Icon as Building2,
   Location01Icon as MapPin,
@@ -83,15 +84,15 @@ export default function CreateBusinessPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-8 pb-20">
+    <div className="max-w-2xl space-y-3 pb-24">
       <Stepper
         value={step}
-        className="w-full max-w-xl mx-auto space-y-8"
+        className="w-full max-w-xl mx-auto space-y-3"
         indicators={{
           completed: <HugeiconsIcon icon={Check} className="size-3.5" />,
         }}
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -133,23 +134,24 @@ export default function CreateBusinessPage() {
               </StepperItem>
             ))}
           </StepperNav>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={nextStep}
-            disabled={step === 3 || (step === 1 && !watch('name'))}
-            className="rounded-full h-8 w-8 shrink-0 hover:bg-canvas-parchment"
-          >
-            <HugeiconsIcon icon={ArrowRight} className="h-4 w-4" />
-          </Button>
         </div>
       </Stepper>
 
-      <form onSubmit={onSubmit} className="space-y-8">
+      <form
+        id="business-create-form"
+        onSubmit={(event) => {
+          if (step < 3) {
+            event.preventDefault()
+            void nextStep()
+          } else {
+            void onSubmit(event)
+          }
+        }}
+        className="space-y-3"
+      >
         {step === 1 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-            <div className="space-y-4" data-testid="business-step1-fields">
+          <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
+            <div className="space-y-3" data-testid="business-step1-fields">
               <div className="space-y-2" data-testid="business-logo-field">
                 <div className="flex flex-col items-center gap-3 py-2">
                   <EditableAvatar
@@ -188,9 +190,9 @@ export default function CreateBusinessPage() {
                   />
                 </div>
                 {errors.name && (
-                  <p className="text-xs text-destructive ml-1">
+                  <FieldError>
                     {validationMessage(errors.name.message)}
-                  </p>
+                  </FieldError>
                 )}
               </div>
 
@@ -204,22 +206,11 @@ export default function CreateBusinessPage() {
                 testId="business-theme-color-field"
               />
             </div>
-
-            <Button
-              type="button"
-              className="w-full rounded-full h-14 text-lg"
-              onClick={nextStep}
-              disabled={!watch('name')}
-              data-testid="business-step1-continue"
-            >
-              {tc('continue')}{' '}
-              <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-            </Button>
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
               <Label
                 htmlFor="email"
@@ -242,9 +233,9 @@ export default function CreateBusinessPage() {
                 />
               </div>
               {errors.email && (
-                <p className="text-xs text-destructive ml-1">
+                <FieldError>
                   {validationMessage(errors.email.message)}
-                </p>
+                </FieldError>
               )}
             </div>
 
@@ -270,27 +261,16 @@ export default function CreateBusinessPage() {
                 )}
               />
               {errors.phone && (
-                <p className="text-xs text-destructive ml-1">
+                <FieldError>
                   {validationMessage(errors.phone.message)}
-                </p>
+                </FieldError>
               )}
             </div>
-
-            <Button
-              type="button"
-              className="w-full rounded-full h-14 text-lg"
-              onClick={nextStep}
-              disabled={!watch('email')}
-              data-testid="business-step2-continue"
-            >
-              {tc('continue')}{' '}
-              <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-            </Button>
           </div>
         )}
 
         {step === 3 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
               <Label
                 htmlFor="address"
@@ -340,20 +320,23 @@ export default function CreateBusinessPage() {
                 </div>
               </div>
             </div>
-
-            <Button
-              type="submit"
-              className="w-full rounded-full h-14 text-lg"
-              disabled={isSaving}
-              loading={isSaving || form.formState.isSubmitting}
-              data-testid="business-submit-button"
-            >
-              {t('newBusiness')}{' '}
-              <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
-            </Button>
           </div>
         )}
       </form>
+
+      <EditSaveBar
+        formId="business-create-form"
+        label={step < 3 ? tc('continue') : t('newBusiness')}
+        isContinue={step < 3}
+        disabled={
+          step === 1 ? !watch('name') : step === 2 ? !watch('email') : false
+        }
+        isDirty={true}
+        isSaving={isSaving || form.formState.isSubmitting}
+        testId={
+          step < 3 ? `business-step${step}-continue` : 'business-submit-button'
+        }
+      />
     </div>
   )
 }

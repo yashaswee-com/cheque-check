@@ -77,7 +77,7 @@ export function DraftCard({
           offset < -50 ? 'opacity-100' : 'opacity-0',
         )}
       >
-        <span className="font-bold text-destructive uppercase">
+        <span className="font-normal text-destructive uppercase">
           {tc('delete')}
         </span>
         <HugeiconsIcon icon={Trash} className="ml-2 h-5 w-5 text-destructive" />

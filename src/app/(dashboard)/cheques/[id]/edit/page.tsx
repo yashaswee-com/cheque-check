@@ -11,6 +11,7 @@ import { useEditCheque } from '@/features/cheques/hooks/use-edit-cheque'
 import { useParties } from '@/features/parties/hooks/use-parties'
 import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { Button } from '@/components/ui/button'
+import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { DigitSlotsInput } from '@/components/ui/digit-slots-input'
 import { Controller } from 'react-hook-form'
@@ -250,14 +251,7 @@ export default function EditChequePage() {
             >
               {numberToIndianWords(watch('amount') || 0, currency, locale)}
             </p>
-            <p
-              className={cn(
-                'text-xs text-destructive ml-1 min-h-4',
-                !errors.amount && 'invisible',
-              )}
-            >
-              {validationMessage(errors.amount?.message) || '\u00A0'}
-            </p>
+            <FieldError>{validationMessage(errors.amount?.message)}</FieldError>
           </div>
 
           <div className="space-y-2">
@@ -283,14 +277,9 @@ export default function EditChequePage() {
                 />
               )}
             />
-            <p
-              className={cn(
-                'text-xs text-destructive ml-1 min-h-4',
-                !errors.cheque_number && 'invisible',
-              )}
-            >
-              {validationMessage(errors.cheque_number?.message) || '\u00A0'}
-            </p>
+            <FieldError>
+              {validationMessage(errors.cheque_number?.message)}
+            </FieldError>
             {numberConflictWarning}
             {cheque?.cheque_number_legacy && (
               <p
@@ -387,14 +376,9 @@ export default function EditChequePage() {
               placeholder={t('partyPlaceholder')}
               className="h-14 bg-canvas-parchment border-none rounded-sm"
             />
-            <p
-              className={cn(
-                'text-xs text-destructive ml-1 min-h-4',
-                !errors.party_id && 'invisible',
-              )}
-            >
-              {validationMessage(errors.party_id?.message) || '\u00A0'}
-            </p>
+            <FieldError>
+              {validationMessage(errors.party_id?.message)}
+            </FieldError>
           </div>
 
           <div className="space-y-2">
@@ -411,14 +395,9 @@ export default function EditChequePage() {
               placeholder={t('accountPlaceholder')}
               className="h-14 bg-canvas-parchment border-none rounded-sm"
             />
-            <p
-              className={cn(
-                'text-xs text-destructive ml-1 min-h-4',
-                !errors.account_id && 'invisible',
-              )}
-            >
-              {validationMessage(errors.account_id?.message) || '\u00A0'}
-            </p>
+            <FieldError>
+              {validationMessage(errors.account_id?.message)}
+            </FieldError>
             {numberConflictWarning}
           </div>
         </FormSection>
@@ -441,14 +420,9 @@ export default function EditChequePage() {
               value={watch('cheque_date') || ''}
               className="h-12 rounded-sm"
             />
-            <p
-              className={cn(
-                'text-xs text-destructive ml-1 min-h-4',
-                !errors.cheque_date && 'invisible',
-              )}
-            >
-              {validationMessage(errors.cheque_date?.message) || '\u00A0'}
-            </p>
+            <FieldError>
+              {validationMessage(errors.cheque_date?.message)}
+            </FieldError>
           </div>
 
           <div className="space-y-2">
@@ -479,14 +453,9 @@ export default function EditChequePage() {
                 </>
               )}
             />
-            <p
-              className={cn(
-                'text-xs text-destructive ml-1 min-h-4',
-                !errors.deposit_date && 'invisible',
-              )}
-            >
-              {validationMessage(errors.deposit_date?.message) || '\u00A0'}
-            </p>
+            <FieldError>
+              {validationMessage(errors.deposit_date?.message)}
+            </FieldError>
           </div>
 
           <div className="space-y-2">
@@ -521,32 +490,35 @@ export default function EditChequePage() {
         </FormSection>
       </form>
 
-      <DeleteConfirmationDialog
-        title={t('deleteConfirmTitle')}
-        description={t('deleteConfirmDesc')}
-        confirmName={cheque?.cheque_number || 'Cheque'}
-        onDelete={async () => {
-          guard.bypass(onDelete)
-        }}
-        trigger={
-          <Button
-            type="button"
-            variant="ghost"
-            data-testid="cheque-edit-delete-trigger"
-            className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
-          >
-            <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
-            {t('deleteAction')}
-          </Button>
-        }
-      />
-
       <EditSaveBar
         formId="cheque-edit-form"
         label={t('updateAction')}
         isDirty={isDirty}
         isSaving={isBusy}
         testId="cheque-edit-submit-button"
+        secondaryAction={
+          <DeleteConfirmationDialog
+            title={t('deleteConfirmTitle')}
+            description={t('deleteConfirmDesc')}
+            confirmName={cheque?.cheque_number || 'Cheque'}
+            onDelete={async () => {
+              guard.bypass(onDelete)
+            }}
+            trigger={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t('deleteAction')}
+                disabled={isBusy}
+                data-testid="cheque-edit-delete-trigger"
+                className="size-12 rounded-full text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <HugeiconsIcon icon={Trash2} className="h-5 w-5" />
+              </Button>
+            }
+          />
+        }
       />
       <UnsavedChangesDialog {...guard.dialogProps} />
     </div>

@@ -78,7 +78,7 @@ export function useCreateBusiness({
       isValid = await trigger(['email', 'phone'])
     }
 
-    if (isValid) setStep((s) => Math.min(s + 1, 3))
+    if (isValid) setStep((s) => (s === step ? Math.min(s + 1, 3) : s))
   }
 
   const prevStep = () => setStep((s) => Math.max(s - 1, 1))

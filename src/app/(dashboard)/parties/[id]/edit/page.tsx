@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useEditParty } from '@/features/parties/hooks/use-edit-party'
 import { Button } from '@/components/ui/button'
+import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useParams } from 'next/navigation'
@@ -133,9 +134,7 @@ export default function EditPartyPage() {
               className="h-14 bg-canvas-parchment border-none text-lg font-semibold rounded-sm"
             />
             {errors.name && (
-              <p className="text-xs text-destructive ml-1">
-                {validationMessage(errors.name.message)}
-              </p>
+              <FieldError>{validationMessage(errors.name.message)}</FieldError>
             )}
           </div>
 
@@ -162,9 +161,9 @@ export default function EditPartyPage() {
               )}
             />
             {errors.contact && (
-              <p className="text-xs text-destructive ml-1">
+              <FieldError>
                 {validationMessage(errors.contact.message)}
-              </p>
+              </FieldError>
             )}
           </div>
 
@@ -229,9 +228,7 @@ export default function EditPartyPage() {
               className="h-14 bg-canvas-parchment border-none rounded-sm"
             />
             {errors.email && (
-              <p className="text-xs text-destructive ml-1">
-                {validationMessage(errors.email.message)}
-              </p>
+              <FieldError>{validationMessage(errors.email.message)}</FieldError>
             )}
           </div>
 
@@ -285,32 +282,35 @@ export default function EditPartyPage() {
         </FormSection>
       </form>
 
-      <DeleteConfirmationDialog
-        title={t('deleteConfirmTitle')}
-        description={t('deleteConfirmDesc')}
-        confirmName={party?.name || ''}
-        onDelete={async () => {
-          guard.bypass(onDelete)
-        }}
-        trigger={
-          <Button
-            type="button"
-            variant="ghost"
-            data-testid="party-delete-trigger"
-            className="w-full rounded-full h-14 text-muted-foreground hover:text-destructive transition-colors"
-          >
-            <HugeiconsIcon icon={Trash2} className="mr-2 h-5 w-5" />{' '}
-            {t('deleteParty')}
-          </Button>
-        }
-      />
-
       <EditSaveBar
         formId="party-edit-form"
         label={t('updateParty')}
         isDirty={isDirty}
         isSaving={isSaving || isSubmitting}
         testId="party-edit-submit-button"
+        secondaryAction={
+          <DeleteConfirmationDialog
+            title={t('deleteConfirmTitle')}
+            description={t('deleteConfirmDesc')}
+            confirmName={party?.name || ''}
+            onDelete={async () => {
+              guard.bypass(onDelete)
+            }}
+            trigger={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t('deleteParty')}
+                disabled={isSaving || isSubmitting}
+                data-testid="party-delete-trigger"
+                className="size-12 rounded-full text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <HugeiconsIcon icon={Trash2} className="h-5 w-5" />
+              </Button>
+            }
+          />
+        }
       />
       <UnsavedChangesDialog {...guard.dialogProps} />
     </div>

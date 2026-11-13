@@ -3,6 +3,8 @@
 import { useCreateAccount } from '@/features/accounts/hooks/use-create-account'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Button } from '@/components/ui/button'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
+import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
 import { Label } from '@/components/ui/label'
@@ -11,7 +13,6 @@ import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowLeft01Icon as ArrowLeft,
-  ArrowRight01Icon as ArrowRight,
   Tick02Icon as Check,
   CreditCardIcon as CreditCard,
   UserIcon as User,
@@ -158,7 +159,7 @@ export default function CreateAccountPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-8 pb-20">
+    <div className="max-w-2xl space-y-3 pb-24">
       {prefill.auto && !initialDraftId && (
         <div className="bg-primary/5 border border-primary/10 rounded-sm p-4 animate-in fade-in slide-in-from-top-2 duration-500">
           <p className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
@@ -170,12 +171,12 @@ export default function CreateAccountPage() {
 
       <Stepper
         value={step}
-        className="w-full max-w-xl mx-auto space-y-8"
+        className="w-full max-w-xl mx-auto space-y-3"
         indicators={{
           completed: <HugeiconsIcon icon={Check} className="size-3.5" />,
         }}
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -217,29 +218,25 @@ export default function CreateAccountPage() {
               </StepperItem>
             ))}
           </StepperNav>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={nextStep}
-            disabled={step === 3 || (step === 1 && !watch('account_name'))}
-            className="rounded-full h-8 w-8 shrink-0 hover:bg-canvas-parchment"
-          >
-            <HugeiconsIcon icon={ArrowRight} className="h-4 w-4" />
-          </Button>
         </div>
       </Stepper>
 
       <DraftLeaveDialog {...draft.leaveDialogProps} />
-      <DraftSaveFab
-        status={draft.status}
-        hasUserChanges={draft.hasUserChanges}
-        onSave={() => void draft.saveDraft()}
-      />
 
-      <form onSubmit={onSubmit} className="space-y-8">
+      <form
+        id="account-create-form"
+        onSubmit={(event) => {
+          if (step < 3) {
+            event.preventDefault()
+            void nextStep()
+          } else {
+            void onSubmit(event)
+          }
+        }}
+        className="space-y-3"
+      >
         {step === 1 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="flex justify-center">
               <EditableAvatar
                 name={watch('account_name') || t('accountName')}
@@ -249,7 +246,7 @@ export default function CreateAccountPage() {
                 onDelete={async () => setUserValue('logo_url', null)}
               />
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="space-y-2">
                 <Label
                   required
@@ -272,9 +269,9 @@ export default function CreateAccountPage() {
                   />
                 </div>
                 {errors.account_name && (
-                  <p className="text-xs text-destructive ml-1">
+                  <FieldError>
                     {validationMessage(errors.account_name.message)}
-                  </p>
+                  </FieldError>
                 )}
               </div>
 
@@ -286,22 +283,11 @@ export default function CreateAccountPage() {
                 testId="account-theme-color"
               />
             </div>
-
-            <Button
-              type="button"
-              data-testid="account-step1-continue"
-              className="w-full rounded-full h-14 text-lg"
-              onClick={nextStep}
-              disabled={!watch('account_name')}
-            >
-              {tc('continue')}{' '}
-              <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-            </Button>
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
               <Label
                 required
@@ -315,9 +301,9 @@ export default function CreateAccountPage() {
                 className="rounded-sm"
               />
               {errors.bank_id && (
-                <p className="text-xs text-destructive ml-1">
+                <FieldError>
                   {validationMessage(errors.bank_id.message)}
-                </p>
+                </FieldError>
               )}
             </div>
 
@@ -343,9 +329,9 @@ export default function CreateAccountPage() {
                 />
               </div>
               {errors.account_number && (
-                <p className="text-xs text-destructive ml-1">
+                <FieldError>
                   {validationMessage(errors.account_number.message)}
-                </p>
+                </FieldError>
               )}
             </div>
 
@@ -368,9 +354,9 @@ export default function CreateAccountPage() {
                 className="h-14 bg-canvas-parchment border-none rounded-sm"
               />
               {errors.opening_balance && (
-                <p className="text-xs text-destructive ml-1">
+                <FieldError>
                   {validationMessage(errors.opening_balance.message)}
-                </p>
+                </FieldError>
               )}
             </div>
             <DefaultAccountField
@@ -379,22 +365,11 @@ export default function CreateAccountPage() {
               checked={watch('is_default') ?? false}
               onCheckedChange={(checked) => setUserValue('is_default', checked)}
             />
-
-            <Button
-              type="button"
-              data-testid="account-step2-continue"
-              className="w-full rounded-full h-14 text-lg"
-              onClick={nextStep}
-              disabled={!watch('bank_id') || !watch('account_number')}
-            >
-              {tc('continue')}{' '}
-              <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-            </Button>
           </div>
         )}
 
         {step === 3 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
               <Label
                 htmlFor="ifsc_code"
@@ -416,9 +391,9 @@ export default function CreateAccountPage() {
                 />
               </div>
               {errors.ifsc_code && (
-                <p className="text-xs text-destructive ml-1">
+                <FieldError>
                   {validationMessage(errors.ifsc_code.message)}
-                </p>
+                </FieldError>
               )}
             </div>
 
@@ -439,20 +414,35 @@ export default function CreateAccountPage() {
                 }
               />
             </div>
-
-            <Button
-              type="submit"
-              data-testid="account-submit-button"
-              className="w-full rounded-full h-14 text-lg"
-              disabled={isSaving}
-              loading={isSaving || form.formState.isSubmitting}
-            >
-              {t('addAccount')}{' '}
-              <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
-            </Button>
           </div>
         )}
       </form>
+
+      <EditSaveBar
+        formId="account-create-form"
+        label={step < 3 ? tc('continue') : t('addAccount')}
+        isContinue={step < 3}
+        secondaryAction={
+          <DraftSaveFab
+            docked
+            status={draft.status}
+            hasUserChanges={draft.hasUserChanges}
+            onSave={() => void draft.saveDraft()}
+          />
+        }
+        disabled={
+          step === 1
+            ? !watch('account_name')
+            : step === 2
+              ? !watch('bank_id') || !watch('account_number')
+              : false
+        }
+        isDirty={true}
+        isSaving={isSaving || form.formState.isSubmitting}
+        testId={
+          step < 3 ? `account-step${step}-continue` : 'account-submit-button'
+        }
+      />
     </div>
   )
 }

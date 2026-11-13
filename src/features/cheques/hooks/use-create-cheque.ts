@@ -300,7 +300,7 @@ export function useCreateCheque(
       isValid = await trigger(['party_id', 'account_id'])
     }
 
-    if (isValid) setStep((s) => Math.min(s + 1, 3))
+    if (isValid) setStep((s) => (s === step ? Math.min(s + 1, 3) : s))
   }
 
   const prevStep = () => setStep((s) => Math.max(s - 1, 1))
