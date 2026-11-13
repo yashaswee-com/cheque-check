@@ -4,6 +4,7 @@ import {
   Quota,
   SupabaseMonetizationRepository,
   Transaction,
+  type PaymentProduct,
 } from '@/features/monetization/repositories/monetization.repository'
 
 let defaultMonetizationService: MonetizationService | undefined
@@ -23,6 +24,10 @@ export class MonetizationService {
     private readonly repository: IMonetizationRepository = new SupabaseMonetizationRepository(),
   ) {}
 
+  getProducts(): Promise<PaymentProduct[]> {
+    return this.repository.getProducts()
+  }
+
   async getEntitlements(): Promise<Entitlement[]> {
     return this.repository.getEntitlements()
   }
@@ -36,7 +41,7 @@ export class MonetizationService {
   }
 }
 
-export const monetizationService = new Proxy(
+export const monetizationService: MonetizationService = new Proxy(
   Object.create(MonetizationService.prototype),
   {
     get(_target, property, receiver) {

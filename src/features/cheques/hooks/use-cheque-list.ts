@@ -111,6 +111,15 @@ export function useChequeAmountCeiling(businessId: string | undefined) {
   })
 }
 
+export function useChequeAmountBounds(businessId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.cheques.amountBounds(businessId),
+    queryFn: () => chequeService.getAmountBounds(businessId!),
+    enabled: !!businessId,
+    staleTime: 60_000,
+  })
+}
+
 export function useChequeSearch(
   businessId: string | undefined,
   search: string,

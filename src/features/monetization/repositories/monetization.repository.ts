@@ -4,6 +4,11 @@ import type {
   EntitlementStatus,
   FeatureId,
 } from '@/features/monetization/constants'
+import type { Database } from '@/types/database.types'
+export type PaymentProduct = Pick<
+  Database['public']['Tables']['payment_products']['Row'],
+  'id' | 'amount' | 'currency' | 'entitlement_days' | 'quota_increment'
+>
 
 export interface Entitlement {
   id: string
@@ -38,6 +43,7 @@ export interface Transaction {
 }
 
 export interface IMonetizationRepository {
+  getProducts(): Promise<PaymentProduct[]>
   getEntitlements(): Promise<Entitlement[]>
   getQuotas(): Promise<Quota[]>
   getTransactions(): Promise<Transaction[]>
@@ -47,6 +53,15 @@ export class SupabaseMonetizationRepository
   extends SupabaseRepository
   implements IMonetizationRepository
 {
+  async getProducts(): Promise<PaymentProduct[]> {
+    return this.handle(
+      this.supabase
+        .from(TABLES.PAYMENT_PRODUCTS)
+        .select('id, amount, currency, entitlement_days, quota_increment')
+        .eq('active', true),
+    )
+  }
+
   async getEntitlements(): Promise<Entitlement[]> {
     const { data: userData } = await this.supabase.auth.getUser()
     const user = userData?.user

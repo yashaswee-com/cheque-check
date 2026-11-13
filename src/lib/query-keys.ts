@@ -75,6 +75,8 @@ export const queryKeys = {
       ['cheque-pages', businessId] as const,
     amountCeiling: (businessId: string | undefined) =>
       ['cheque-pages', businessId, 'amount-ceiling'] as const,
+    amountBounds: (businessId: string | undefined) =>
+      ['cheque-pages', businessId, 'amount-bounds'] as const,
     page: (request: import('@/types/cheque-list').ChequeListRequest) =>
       ['cheque-pages', request.businessId, request] as const,
     list: (businessId: string | undefined) => ['cheques', businessId] as const,
@@ -102,6 +104,7 @@ export const queryKeys = {
     detail: () => ['profile'] as const,
   },
   monetization: {
+    products: () => ['payment-products'] as const,
     freeUsageAll: () => ['free-usage'] as const,
     freeUsage: (userId?: string) => ['free-usage', userId] as const,
     transactions: () => ['transactions'] as const,

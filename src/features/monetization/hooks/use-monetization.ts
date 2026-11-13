@@ -12,6 +12,13 @@ import {
   resolvePremiumState,
 } from '../lib/premium-access'
 
+export function usePaymentProducts() {
+  return useQuery({
+    queryKey: queryKeys.monetization.products(),
+    queryFn: () => monetizationService.getProducts(),
+  })
+}
+
 export function useMonetization() {
   const {
     data: entitlements,

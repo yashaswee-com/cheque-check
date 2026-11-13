@@ -328,6 +328,7 @@ describe('production CRUD repositories at the Supabase boundary', () => {
     expect(boundary.query.order).toHaveBeenLastCalledWith('amount', {
       ascending: false,
     })
+
     expect(boundary.query.limit).toHaveBeenLastCalledWith(1)
     boundary.result.data = []
     expect(await repository.getAmountCeiling('business-1')).toBe(0)
@@ -347,6 +348,56 @@ describe('production CRUD repositories at the Supabase boundary', () => {
       'cheque_list_page',
       expect.objectContaining({ requested_account: 'account-1' }),
     )
+  })
+
+  it('reads exact amount bounds using two bounded, business-scoped queries', async () => {
+    for (const amount of [125.25, 123456.75]) {
+      boundary.query.then.mockImplementationOnce((resolve) =>
+        Promise.resolve(resolve({ data: [{ amount }], error: null })),
+      )
+    }
+    expect(
+      await new SupabaseChequeRepository().getAmountBounds('business-1'),
+    ).toEqual({ min: 125.25, max: 123456.75 })
+    expect(boundary.query.limit).toHaveBeenCalledTimes(2)
+    expect(boundary.query.limit).toHaveBeenCalledWith(1)
+    expect(boundary.query.order).toHaveBeenCalledWith('amount', {
+      ascending: true,
+    })
+    expect(boundary.query.order).toHaveBeenCalledWith('amount', {
+      ascending: false,
+    })
+    expect(boundary.query.eq).toHaveBeenCalledWith('business_id', 'business-1')
+    expect(boundary.query.eq).toHaveBeenCalledWith('is_draft', false)
+    expect(boundary.query.is).toHaveBeenCalledWith('deleted_at', null)
+  })
+
+  it('propagates amount-bound database failures without inventing a range', async () => {
+    boundary.result.error = { message: 'Unavailable', code: 'XX000' }
+    await expect(
+      new SupabaseChequeRepository().getAmountBounds('business-1'),
+    ).rejects.toThrow()
+  })
+
+  it('reads active payment product prices, currencies and pack metadata', async () => {
+    const products = [
+      {
+        id: 'ai_scanner_30d',
+        amount: 7250,
+        currency: 'INR',
+        entitlement_days: 45,
+        quota_increment: 375,
+      },
+    ]
+    boundary.result.data = products
+    expect(await new SupabaseMonetizationRepository().getProducts()).toEqual(
+      products,
+    )
+    expect(boundary.from).toHaveBeenCalledWith(TABLES.PAYMENT_PRODUCTS)
+    expect(boundary.query.select).toHaveBeenCalledWith(
+      'id, amount, currency, entitlement_days, quota_increment',
+    )
+    expect(boundary.query.eq).toHaveBeenCalledWith('active', true)
   })
 
   it('fetches only selected page relations in server order and preserves complete metadata', async () => {

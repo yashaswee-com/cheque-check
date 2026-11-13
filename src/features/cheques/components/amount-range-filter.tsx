@@ -2,10 +2,13 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { Money03Icon } from '@hugeicons/core-free-icons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
-import { useChequeAmountCeiling } from '@/features/cheques/hooks/use-cheque-list'
+import { useChequeAmountBounds } from '@/features/cheques/hooks/use-cheque-list'
+import { FieldError } from '@/components/ui/field-error'
+import { Button } from '@/components/ui/button'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 
 /** Rounds the slider to ~100 stops so large ledgers stay easy to drag. */
@@ -33,14 +36,21 @@ export function AmountRangeFilter({
 }) {
   const t = useTranslations('Cheques')
   const display = useDisplayFormat()
-  const ceiling = useChequeAmountCeiling(businessId)
+  const bounds = useChequeAmountBounds(businessId)
   const signature = `${min}|${max}`
   const [draft, setDraft] = useState<{ base: string; value: number[] }>()
-  const scale = ceiling.data ? amountSliderScale(ceiling.data) : null
+  const scale =
+    bounds.data && bounds.data.max > bounds.data.min
+      ? {
+          ...amountSliderScale(bounds.data.max),
+          min: bounds.data.min,
+          max: bounds.data.max,
+        }
+      : null
   const clamp = (value: number) =>
-    Math.min(Math.max(value, 0), scale?.max ?? value)
+    Math.min(Math.max(value, scale?.min ?? 0), scale?.max ?? value)
   const committed = [
-    clamp(toNumber(min) ?? 0),
+    clamp(toNumber(min) ?? scale?.min ?? 0),
     clamp(toNumber(max) ?? scale?.max ?? 0),
   ]
   // Hold the dragged value until the URL catches up to avoid a visual snap-back.
@@ -48,23 +58,35 @@ export function AmountRangeFilter({
 
   return (
     <div className="space-y-3" data-testid="amount-range-filter">
-      <h3 className="text-sm font-semibold">{t('amountRange')}</h3>
+      <h3 className="text-sm font-normal">{t('amountRange')}</h3>
+      {bounds.error && (
+        <div className="space-y-2">
+          <FieldError>{t('amountBoundsFailed')}</FieldError>
+          <Button variant="outline" onClick={() => bounds.refetch()}>
+            {t('retryAmountBounds')}
+          </Button>
+        </div>
+      )}
       {scale && (
         <div className="space-y-1 px-1">
           <Slider
-            min={0}
+            min={scale.min}
             max={scale.max}
-            step={scale.step}
+            step={Math.min(scale.step, scale.max - scale.min)}
             value={value}
-            thumbCollisionBehavior="none"
+            thumbCollisionBehavior="push"
             thumbLabels={[t('filter_min_amount'), t('filter_max_amount')]}
             onValueChange={(next) =>
-              setDraft({ base: signature, value: [...(next as number[])] })
+              setDraft({
+                base: signature,
+                value: Array.isArray(next) ? next : [next],
+              })
             }
             onValueCommitted={(next) => {
-              const [low, high] = next as number[]
+              if (!Array.isArray(next)) return
+              const [low, high] = next
               if (low !== committed[0])
-                onChange('min_amount', low > 0 ? String(low) : '')
+                onChange('min_amount', low > scale.min ? String(low) : '')
               if (high !== committed[1])
                 onChange('max_amount', high < scale.max ? String(high) : '')
             }}
@@ -84,7 +106,11 @@ export function AmountRangeFilter({
             <Label htmlFor={`filter-${key}`}>{t(`filter_${key}`)}</Label>
             <Input
               id={`filter-${key}`}
+              leftIcon={Money03Icon}
               inputMode="decimal"
+              type="number"
+              min={0}
+              step="any"
               enableMic={false}
               value={key === 'min_amount' ? min : max}
               onChange={(event) => onChange(key, event.target.value)}

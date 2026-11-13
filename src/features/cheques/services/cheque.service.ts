@@ -45,6 +45,10 @@ export class ChequeService {
     return this.repository.getAmountCeiling(businessId)
   }
 
+  getAmountBounds(businessId: string) {
+    return this.repository.getAmountBounds(businessId)
+  }
+
   getBusinessSummaries(today: string) {
     return this.repository.getBusinessSummaries(today)
   }

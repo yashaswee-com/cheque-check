@@ -11,7 +11,10 @@ import { NextIntlClientProvider, type AbstractIntlMessages } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import type { Profile } from '@/types'
-import type { Quota } from '@/features/monetization/repositories/monetization.repository'
+import type {
+  Quota,
+  PaymentProduct,
+} from '@/features/monetization/repositories/monetization.repository'
 import type { PhoneInputProps } from '@/components/ui/phone-input'
 import { FEATURE_IDS, PRODUCT_IDS } from '@/features/monetization/constants'
 import { queryKeys } from '@/lib/query-keys'
@@ -41,6 +44,8 @@ let processing = false
 let premiumState: PremiumState | null = null
 let finitePremium = false
 let resolvedEntitlementState: string | null = null
+let catalogOverrides: PaymentProduct[] | null = null
+let catalogError: Error | null = null
 
 type TestMessages = typeof messages | typeof hindi | typeof hinglish
 
@@ -67,6 +72,48 @@ vi.mock('@/features/monetization/hooks/use-monetization', () => ({
     error: accessError,
     getEntitlementState: (id: string) =>
       resolvedEntitlementState ?? (subscribed.includes(id) ? 'active' : 'free'),
+  }),
+  usePaymentProducts: () => ({
+    data: catalogOverrides ?? [
+      {
+        id: PRODUCT_IDS.LIFETIME_PREMIUM,
+        amount: 30000,
+        currency: 'INR',
+        entitlement_days: null,
+        quota_increment: null,
+      },
+      {
+        id: PRODUCT_IDS.AI_SCANNER_30D,
+        amount: 5000,
+        currency: 'INR',
+        entitlement_days: 30,
+        quota_increment: 250,
+      },
+      {
+        id: PRODUCT_IDS.VOICE_REMINDER_30D,
+        amount: 5000,
+        currency: 'INR',
+        entitlement_days: 30,
+        quota_increment: 100,
+      },
+      {
+        id: PRODUCT_IDS.AI_SCAN_250,
+        amount: 5000,
+        currency: 'INR',
+        entitlement_days: null,
+        quota_increment: 250,
+      },
+      {
+        id: PRODUCT_IDS.VOICE_REMINDER_100,
+        amount: 5000,
+        currency: 'INR',
+        entitlement_days: null,
+        quota_increment: 100,
+      },
+    ],
+    isLoading: false,
+    error: catalogError,
+    refetch: vi.fn(),
   }),
 }))
 vi.mock('@/features/monetization/hooks/use-premium-access', () => ({
@@ -177,6 +224,8 @@ beforeEach(() => {
   premiumState = null
   finitePremium = false
   resolvedEntitlementState = null
+  catalogOverrides = null
+  catalogError = null
   subscribed = []
   quotas = []
   entitlements = []
@@ -190,6 +239,73 @@ beforeEach(() => {
 })
 
 describe('Features page', () => {
+  it('uses catalog price, currency, duration and quota rather than fixed amounts', () => {
+    catalogOverrides = [
+      {
+        id: PRODUCT_IDS.LIFETIME_PREMIUM,
+        amount: 42500,
+        currency: 'INR',
+        entitlement_days: null,
+        quota_increment: null,
+      },
+      {
+        id: PRODUCT_IDS.AI_SCANNER_30D,
+        amount: 7250,
+        currency: 'USD',
+        entitlement_days: 45,
+        quota_increment: 375,
+      },
+    ]
+    renderPage()
+    expect(screen.getByText('₹425 one-time')).toBeVisible()
+    expect(screen.getByText('$72.5 / 45 days')).toBeVisible()
+    expect(screen.getByText('375 scans included per period')).toBeVisible()
+    expect(
+      screen.queryByRole('heading', { name: /30-Day Pack/ }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(voiceCard()).getByRole('button', {
+        name: messages.Features.enableAddon,
+      }),
+    ).toBeDisabled()
+  })
+
+  it('uses the catalog credit count and price for a top-up', () => {
+    subscribed = [FEATURE_IDS.VOICE_REMINDER_SUB]
+    catalogOverrides = [
+      {
+        id: PRODUCT_IDS.VOICE_REMINDER_100,
+        amount: 7250,
+        currency: 'INR',
+        entitlement_days: null,
+        quota_increment: 175,
+      },
+    ]
+    renderPage()
+    expect(
+      within(voiceCard()).getByRole('button', {
+        name: `${messages.ProductNames.voice_reminder_100} · 175 calls · ₹72.5`,
+      }),
+    ).toBeEnabled()
+  })
+
+  it('reports catalog failures and blocks unpriced purchases', () => {
+    catalogOverrides = []
+    catalogError = new Error('Catalog unavailable')
+    renderPage()
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      messages.Features.priceLoadFailed,
+    )
+    expect(
+      screen.getByRole('button', {
+        name: messages.Features.getLifetimePremium,
+      }),
+    ).toBeDisabled()
+    for (const button of screen.getAllByRole('button', {
+      name: messages.Features.enableAddon,
+    }))
+      expect(button).toBeDisabled()
+  })
   it('defaults AI mode on and allows turning it off without scan access', async () => {
     renderPage()
     const toggle = screen.getByRole('switch', {
@@ -298,12 +414,12 @@ describe('Features page', () => {
       screen.getByRole('switch', { name: messages.Features.receivingMode }),
     ).toBeInTheDocument()
   })
-  it('links to transactions without fetching payment activity on Features', () => {
+  it('omits the promotional header and does not fetch payment activity on Features', () => {
     renderPage()
     expect(mocks.transactions).not.toHaveBeenCalled()
     expect(
-      screen.getByRole('button', { name: messages.Settings.transactions }),
-    ).toHaveAttribute('href', '/settings/transactions')
+      screen.queryByText(messages.Features.pageTitle),
+    ).not.toBeInTheDocument()
     expect(
       screen.queryByText(messages.Features.activityTitle),
     ).not.toBeInTheDocument()
@@ -389,21 +505,36 @@ describe('Features page', () => {
     ).toHaveAttribute('href', '/reports')
   })
 
-  it('keeps phone setup visible while voice reminders are off', () => {
+  it('hides phone setup and test calls until voice reminders are enabled', async () => {
     subscribed = [FEATURE_IDS.VOICE_REMINDER_SUB]
     voiceCredits()
-    renderPage()
+    const view = renderPage()
     const card = within(voiceCard())
     expect(card.getByText(messages.Features.paused)).toBeInTheDocument()
     expect(
-      card.getByLabelText(messages.Features.yourPhoneNumber),
-    ).toBeInTheDocument()
+      card.queryByLabelText(messages.Features.yourPhoneNumber),
+    ).not.toBeInTheDocument()
     expect(
-      card.getByRole('button', { name: messages.Features.sendTestCall }),
-    ).toBeDisabled()
+      card.queryByRole('button', { name: messages.Features.sendTestCall }),
+    ).not.toBeInTheDocument()
     expect(
       card.getByText(messages.Features.voicePausedHelp),
     ).toBeInTheDocument()
+    fireEvent.click(
+      card.getByRole('switch', { name: messages.Features.enableService }),
+    )
+    await waitFor(() =>
+      expect(mocks.update).toHaveBeenCalledWith({ voice_call_enabled: true }),
+    )
+    view.rerender(<FeaturesPage />)
+    expect(
+      within(voiceCard()).getByLabelText(messages.Features.yourPhoneNumber),
+    ).toBeVisible()
+    expect(
+      within(voiceCard()).getByRole('button', {
+        name: messages.Features.sendTestCall,
+      }),
+    ).toBeEnabled()
   })
 
   it('shows phone setup rather than ready when reminders are on without a saved number', () => {
@@ -572,7 +703,7 @@ describe('Features page', () => {
     ).toBeDisabled()
     fireEvent.click(
       card.getByRole('button', {
-        name: `${messages.ProductNames.voice_reminder_100} · ₹50`,
+        name: `${messages.ProductNames.voice_reminder_100} · 100 calls · ₹50`,
       }),
     )
     expect(mocks.payment).toHaveBeenCalledWith(
@@ -607,7 +738,7 @@ describe('Features page', () => {
     ).not.toBeInTheDocument()
     expect(
       scanner.getByRole('button', {
-        name: `${messages.ProductNames.ai_scan_250} · ₹50`,
+        name: `${messages.ProductNames.ai_scan_250} · 250 scans · ₹50`,
       }),
     ).toBeEnabled()
   })
@@ -722,12 +853,19 @@ describe('Features page', () => {
     fetchMock.mockRestore()
   })
 
-  it('refreshes entitlements and quotas without fetching payment history', async () => {
+  it('refreshes entitlements and quotas after checkout without a refresh-status control', async () => {
     const { client } = renderPage()
     const invalidate = vi.spyOn(client, 'invalidateQueries')
+    expect(
+      screen.queryByRole('button', { name: messages.Features.refreshStatus }),
+    ).not.toBeInTheDocument()
     fireEvent.click(
-      screen.getByRole('button', { name: messages.Features.refreshStatus }),
+      screen.getByRole('button', {
+        name: messages.Features.getLifetimePremium,
+      }),
     )
+    const checkout = mocks.payment.mock.calls.at(-1)?.[0]
+    await checkout.onSuccess()
     await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(2))
     for (const key of ['entitlements', 'quotas']) {
       expect(invalidate).toHaveBeenCalledWith(
@@ -801,7 +939,7 @@ describe('Features page', () => {
     ).toBeDisabled()
     expect(
       screen.getByRole('button', {
-        name: `${messages.ProductNames.voice_reminder_100} · ₹50`,
+        name: `${messages.ProductNames.voice_reminder_100} · 100 calls · ₹50`,
       }),
     ).toBeDisabled()
   })
@@ -813,11 +951,14 @@ describe('Features page', () => {
     'renders localized management without activity in %s',
     async (locale, translations) => {
       subscribed = [FEATURE_IDS.VOICE_REMINDER_SUB]
+      profile.voice_call_enabled = true
       voiceCredits()
       renderPage(locale, translations)
       expect(mocks.transactions).not.toHaveBeenCalled()
       expect(
-        screen.getByRole('heading', { name: translations.Features.pageTitle }),
+        screen.getByRole('heading', {
+          name: translations.Features.addOnServices,
+        }),
       ).toBeInTheDocument()
       expect(
         screen.getByLabelText(translations.Features.yourPhoneNumber),

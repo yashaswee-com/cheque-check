@@ -116,6 +116,7 @@ it('shows icons for every cheque search sort and status option', async () => {
     ).getAllByRole('button')
     for (const option of options) {
       expect(option.querySelector('svg')).toBeInTheDocument()
+      expect(option.querySelector('span')).toHaveClass('font-normal')
     }
   }
 })

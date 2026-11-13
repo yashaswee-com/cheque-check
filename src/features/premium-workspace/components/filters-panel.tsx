@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { Search01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { canBulkTransition, filterCheques } from '../logic'
 import { premiumWorkspaceService } from '../service'
 import type {
@@ -69,13 +72,17 @@ export function FiltersPanel({
         {t(mode === 'bulk' ? 'bulkHelp' : 'viewsHelp')}
       </p>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <TextField
-          label={t('search')}
-          value={filters.search ?? ''}
-          onChange={(e) =>
-            updateFilters({ ...filters, search: e.target.value })
-          }
-        />
+        <div className="grid min-w-0 gap-1.5">
+          <Label htmlFor="filters-search">{t('search')}</Label>
+          <Input
+            id="filters-search"
+            leftIcon={Search01Icon}
+            value={filters.search ?? ''}
+            onChange={(e) =>
+              updateFilters({ ...filters, search: e.target.value })
+            }
+          />
+        </div>
         <SelectField
           label={t('fields.status')}
           value={filters.status ?? ''}

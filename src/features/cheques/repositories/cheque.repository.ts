@@ -21,6 +21,7 @@ const RELATIONS =
   '*, party:parties(name, contact, color, icon, avatar_url), account:accounts(account_name, logo_url, color, icon, bank:banks(name, logo_url))'
 
 export interface IChequeRepository {
+  getAmountBounds(businessId: string): Promise<{ min: number; max: number }>
   getAll(businessId: string): Promise<ChequeWithRelations[]>
   getPage(request: ChequeListRequest): Promise<ChequePage<ChequeWithRelations>>
   getAmountCeiling(businessId: string): Promise<number>
@@ -95,6 +96,30 @@ export class SupabaseChequeRepository
     )
     const amount = Number(rows[0]?.amount ?? 0)
     return Number.isFinite(amount) && amount > 0 ? amount : 0
+  }
+
+  async getAmountBounds(
+    businessId: string,
+  ): Promise<{ min: number; max: number }> {
+    const read = (ascending: boolean) =>
+      this.handle(
+        this.supabase
+          .from(TABLES.CHEQUES)
+          .select('amount')
+          .eq('business_id', businessId)
+          .is('deleted_at', null)
+          .eq('is_draft', false)
+          .order('amount', { ascending })
+          .limit(1),
+      )
+    const [lowest, highest] = await Promise.all([read(true), read(false)])
+    const min = Number(lowest[0]?.amount ?? 0)
+    const max = Number(highest[0]?.amount ?? 0)
+    if (!Number.isFinite(min) || !Number.isFinite(max) || min < 0 || max < min)
+      throw new DatabaseError(
+        'Invalid cheque amount bounds returned from the database',
+      )
+    return { min, max }
   }
 
   async getPage(

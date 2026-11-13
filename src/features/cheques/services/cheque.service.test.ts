@@ -27,6 +27,7 @@ function makeRepository(overrides: Partial<IChequeRepository> = {}) {
     getBusinessSummaries: vi.fn(),
     getSummary: vi.fn(),
     getAmountCeiling: vi.fn().mockResolvedValue(0),
+    getAmountBounds: vi.fn().mockResolvedValue({ min: 0, max: 0 }),
     getAll: vi.fn().mockResolvedValue([row]),
     getById: vi.fn().mockResolvedValue(row),
     create: vi.fn().mockResolvedValue(row),

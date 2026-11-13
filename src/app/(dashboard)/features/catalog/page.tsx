@@ -11,13 +11,17 @@ import { useTranslations } from 'next-intl'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { useQueryClient } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowRight01Icon, RefreshIcon } from '@hugeicons/core-free-icons'
+import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
 import { useProfile } from '@/features/profile/hooks/use-profile'
-import { useMonetization } from '@/features/monetization/hooks/use-monetization'
+import {
+  useMonetization,
+  usePaymentProducts,
+} from '@/features/monetization/hooks/use-monetization'
 import { useRazorpay } from '@/features/monetization/hooks/use-razorpay'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { FieldError } from '@/components/ui/field-error'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { toast } from '@/components/ui/toast'
 import { isValidE164Phone } from '@/lib/phone'
@@ -29,6 +33,7 @@ import type { Profile } from '@/types'
 import { usePremiumAccess } from '@/features/monetization/hooks/use-premium-access'
 import { PREMIUM_FEATURES } from '@/features/monetization/lib/premium-access'
 import { PremiumMark } from '@/features/monetization/components/premium-mark'
+import type { PaymentProduct } from '@/features/monetization/repositories/monetization.repository'
 
 function FeatureStatus({
   children,
@@ -52,7 +57,6 @@ function FeatureStatus({
 
 export default function FeaturesPage() {
   const t = useTranslations('Features')
-  const ts = useTranslations('Settings')
   const referrals = useTranslations('Referrals')
   const tc = useTranslations('Common')
   const productNames = useTranslations('ProductNames')
@@ -71,11 +75,22 @@ export default function FeaturesPage() {
     getEntitlementState,
   } = useMonetization()
   const { processPayment, isProcessing } = useRazorpay()
+  const productsQuery = usePaymentProducts()
+  const products = productsQuery.data ?? []
+  const formatPrice = (product: PaymentProduct) =>
+    display.number(product.amount / 100, {
+      style: 'currency',
+      currency: product.currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    })
+  const lifetimeProduct = products.find(
+    (product) => product.id === PRODUCT_IDS.LIFETIME_PREMIUM,
+  )
   const processPaymentRef = useRef(processPayment)
   const [profilePhone, setProfilePhone] = useState<string>()
   const [saving, setSaving] = useState<string | null>(null)
   const [isSendingTestCall, setIsSendingTestCall] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
   const [phoneError, setPhoneError] = useState(false)
   const purchaseProcessed = useRef<string | null>(null)
   const refreshInProgress = useRef(false)
@@ -119,7 +134,6 @@ export default function FeaturesPage() {
   const refreshAccess = useCallback(async () => {
     if (refreshInProgress.current) return
     refreshInProgress.current = true
-    setIsRefreshing(true)
     try {
       await Promise.all([
         queryClient.invalidateQueries(
@@ -135,7 +149,6 @@ export default function FeaturesPage() {
       notifyError(error)
     } finally {
       refreshInProgress.current = false
-      setIsRefreshing(false)
     }
   }, [notifyError, queryClient])
 
@@ -194,24 +207,22 @@ export default function FeaturesPage() {
   const addons = [
     {
       id: 'ai',
-      name: productNames(PRODUCT_IDS.AI_SCANNER_30D),
+      name: t('aiScanner'),
       description: t('aiScannerDesc'),
       productId: PRODUCT_IDS.AI_SCANNER_30D,
       topUpProductId: PRODUCT_IDS.AI_SCAN_250,
       subscriptionId: FEATURE_IDS.AI_SCANNER_SUB,
       quotaId: FEATURE_IDS.AI_SCAN,
-      count: 250,
       unit: t('scans'),
     },
     {
       id: 'voice',
-      name: productNames(PRODUCT_IDS.VOICE_REMINDER_30D),
+      name: t('voiceReminder'),
       description: t('voiceReminderDesc'),
       productId: PRODUCT_IDS.VOICE_REMINDER_30D,
       topUpProductId: PRODUCT_IDS.VOICE_REMINDER_100,
       subscriptionId: FEATURE_IDS.VOICE_REMINDER_SUB,
       quotaId: FEATURE_IDS.VOICE_REMINDER,
-      count: 100,
       unit: t('calls'),
     },
   ] as const
@@ -221,36 +232,6 @@ export default function FeaturesPage() {
       className="@container mx-auto w-full min-w-0 max-w-5xl space-y-10 pb-24 pt-2"
       data-testid="features-page"
     >
-      <header className="flex flex-col gap-5 @min-[640px]:flex-row @min-[640px]:items-start @min-[640px]:justify-between">
-        <div className="max-w-2xl space-y-3">
-          <p className="text-sm font-semibold text-primary">
-            {t('pageEyebrow')}
-          </p>
-          <h1 className="font-heading text-[28px] font-semibold leading-[1.1] tracking-tight @min-[420px]:text-[34px] @min-[640px]:text-[40px]">
-            {t('pageTitle')}
-          </h1>
-          <p className="text-[17px] leading-relaxed text-muted-foreground">
-            {t('pageDescription')}
-          </p>
-          <Button
-            variant="outline"
-            size="pill"
-            loading={isRefreshing}
-            onClick={refreshAccess}
-          >
-            <HugeiconsIcon icon={RefreshIcon} className="size-4" />
-            {t('refreshStatus')}
-          </Button>
-        </div>
-        <Button
-          render={<Link href="/settings/transactions" />}
-          variant="outline"
-          size="pill"
-        >
-          {ts('transactions')}
-        </Button>
-      </header>
-
       {isLoading || isLoadingProfile ? (
         <div role="status" className="rounded-lg bg-canvas-parchment p-6">
           {t('loading')}
@@ -308,7 +289,13 @@ export default function FeaturesPage() {
                 ) : (
                   <>
                     <p className="text-2xl font-semibold tracking-tight">
-                      {t('receivingPrice')}
+                      {lifetimeProduct
+                        ? t('catalogOneTimePrice', {
+                            price: formatPrice(lifetimeProduct),
+                          })
+                        : productsQuery.isLoading
+                          ? t('loading')
+                          : t('priceUnavailable')}
                     </p>
                     <Button
                       loading={isProcessing}
@@ -317,7 +304,8 @@ export default function FeaturesPage() {
                       disabled={
                         isProcessing ||
                         premium.isLoading ||
-                        premium.state === 'error'
+                        premium.state === 'error' ||
+                        !lifetimeProduct
                       }
                       onClick={() =>
                         processPayment({
@@ -445,19 +433,36 @@ export default function FeaturesPage() {
           </section>
 
           <section aria-labelledby="addons-title" className="space-y-5">
-            <div className="space-y-2">
+            <div className="space-y-2 text-center">
               <h2
                 id="addons-title"
                 className="text-2xl font-semibold tracking-tight"
               >
                 {t('addOnServices')}
               </h2>
-              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              <p className="mx-auto max-w-2xl text-sm leading-relaxed text-muted-foreground">
                 {t('addOnServicesDescription')}
               </p>
             </div>
+            {productsQuery.error && (
+              <div role="alert" className="space-y-2 text-center">
+                <p>{t('priceLoadFailed')}</p>
+                <Button
+                  variant="outline"
+                  onClick={() => productsQuery.refetch()}
+                >
+                  {t('tryAgain')}
+                </Button>
+              </div>
+            )}
             <div className="grid items-start gap-5 @min-[640px]:grid-cols-2">
               {addons.map((addon) => {
+                const product = products.find(
+                  (product) => product.id === addon.productId,
+                )
+                const topUpProduct = products.find(
+                  (product) => product.id === addon.topUpProductId,
+                )
                 const subscribed = !!checkEntitlement(addon.subscriptionId)
                 const quota = getQuota(addon.quotaId)
                 const hasAccess = subscribed || (quota?.limit ?? 0) > 0
@@ -500,6 +505,8 @@ export default function FeaturesPage() {
                   <article
                     key={addon.id}
                     aria-labelledby={`${addon.id}-title`}
+                    id={isVoice ? 'voice-reminders' : undefined}
+                    data-tour={isVoice ? 'voice-reminders' : undefined}
                     className="min-w-0 rounded-lg border bg-card"
                   >
                     <div className="space-y-5 p-5 @min-[640px]:p-6">
@@ -530,14 +537,23 @@ export default function FeaturesPage() {
                       {!subscribed && (
                         <div className="space-y-1">
                           <p className="text-[17px] font-semibold">
-                            {t('monthlyPrice')}
+                            {product?.entitlement_days != null
+                              ? t('catalogPeriodPrice', {
+                                  price: formatPrice(product),
+                                  days: product.entitlement_days,
+                                })
+                              : productsQuery.isLoading
+                                ? t('loading')
+                                : t('priceUnavailable')}
                           </p>
-                          <p className="text-sm text-muted-foreground">
-                            {t('includedUsage', {
-                              count: addon.count,
-                              unit: addon.unit,
-                            })}
-                          </p>
+                          {product?.quota_increment != null && (
+                            <p className="text-sm text-muted-foreground">
+                              {t('includedUsage', {
+                                count: product.quota_increment,
+                                unit: addon.unit,
+                              })}
+                            </p>
+                          )}
                         </div>
                       )}
 
@@ -615,7 +631,7 @@ export default function FeaturesPage() {
                           size="pill"
                           variant="outline"
                           className="h-auto min-h-11 w-full whitespace-normal py-3 font-normal"
-                          disabled={isProcessing}
+                          disabled={isProcessing || !topUpProduct}
                           onClick={() =>
                             processPayment({
                               productId: addon.topUpProductId,
@@ -623,15 +639,27 @@ export default function FeaturesPage() {
                             })
                           }
                         >
-                          {productNames(addon.topUpProductId)} ·{' '}
-                          {display.currency(50, '₹')}
+                          {productNames(addon.topUpProductId)}
+                          {topUpProduct?.quota_increment != null && (
+                            <>
+                              {' '}
+                              · {display.number(
+                                topUpProduct.quota_increment,
+                              )}{' '}
+                              {addon.unit}
+                            </>
+                          )}{' '}
+                          ·{' '}
+                          {topUpProduct
+                            ? formatPrice(topUpProduct)
+                            : t('priceUnavailable')}
                         </Button>
                       ) : (
                         <Button
                           loading={isProcessing}
                           size="pill"
                           className="h-auto min-h-11 w-full whitespace-normal py-3 font-normal"
-                          disabled={isProcessing}
+                          disabled={isProcessing || !product}
                           onClick={() =>
                             processPayment({
                               productId: addon.productId,
@@ -733,93 +761,102 @@ export default function FeaturesPage() {
                             />
                           </div>
                         </div>
-                        <form
-                          className="space-y-3"
-                          onSubmit={(event) => {
-                            event.preventDefault()
-                            if (!validPhone) {
-                              setPhoneError(true)
-                              return
-                            }
-                            setPhoneError(false)
-                            void saveProfile('phone', { phone })
-                          }}
-                        >
-                          <label
-                            htmlFor="voice-phone"
-                            className="text-sm font-semibold"
-                          >
-                            {t('yourPhoneNumber')}
-                          </label>
-                          <PhoneInput
-                            id="voice-phone"
-                            value={phone}
-                            onChange={(value) => {
-                              setProfilePhone(value)
-                              setPhoneError(false)
-                            }}
-                            disabled={saving !== null || isSendingTestCall}
-                            aria-invalid={
-                              phoneError || (!!phone && !validPhone)
-                            }
-                            className="h-12 rounded-md"
-                          />
-                          <p className="text-xs leading-relaxed text-muted-foreground">
-                            {t('countryCodeHelp')}
-                          </p>
-                          {(phoneError || (!!phone && !validPhone)) && (
-                            <p
-                              role="alert"
-                              className="text-sm text-destructive"
+                        {profile.voice_call_enabled && (
+                          <>
+                            <form
+                              className="space-y-3"
+                              onSubmit={(event) => {
+                                event.preventDefault()
+                                if (!validPhone) {
+                                  setPhoneError(true)
+                                  return
+                                }
+                                setPhoneError(false)
+                                void saveProfile('phone', { phone })
+                              }}
                             >
-                              {tc('invalidPhone')}
-                            </p>
-                          )}
-                          {(phoneChanged || needsPhone) && (
-                            <Button
-                              type="submit"
-                              loading={saving === 'phone'}
-                              variant="outline"
-                              size="pill"
-                              className="w-full font-normal"
-                              disabled={
-                                saving !== null ||
-                                !phoneChanged ||
-                                isSendingTestCall
-                              }
-                            >
-                              {t('savePhone')}
-                            </Button>
-                          )}
-                        </form>
-                        <div className="space-y-2">
-                          <Button
-                            loading={isSendingTestCall}
-                            variant="outline"
-                            size="pill"
-                            className="w-full font-normal"
-                            disabled={
-                              isSendingTestCall ||
-                              saving !== null ||
-                              !profile.voice_call_enabled ||
-                              !validPhone ||
-                              phoneChanged ||
-                              remainingCalls === 0
-                            }
-                            onClick={sendTestCall}
-                          >
-                            {t('sendTestCall')}
-                          </Button>
-                          <p className="text-xs leading-relaxed text-muted-foreground">
-                            {phoneChanged
-                              ? t('saveBeforeTest')
-                              : !validPhone
-                                ? t('saveValidPhone')
-                                : !profile.voice_call_enabled
-                                  ? t('enableBeforeTest')
-                                  : t('testCallHelp')}
-                          </p>
-                        </div>
+                              <label
+                                htmlFor="voice-phone"
+                                className="text-sm font-semibold"
+                              >
+                                {t('yourPhoneNumber')}
+                              </label>
+                              <PhoneInput
+                                id="voice-phone"
+                                value={phone}
+                                onChange={(value) => {
+                                  setProfilePhone(value)
+                                  setPhoneError(false)
+                                }}
+                                disabled={saving !== null || isSendingTestCall}
+                                aria-invalid={
+                                  phoneError || (!!phone && !validPhone)
+                                }
+                                aria-describedby={
+                                  phoneError || (!!phone && !validPhone)
+                                    ? 'voice-phone-error'
+                                    : undefined
+                                }
+                                className="h-12 rounded-md"
+                              />
+                              <p className="text-xs leading-relaxed text-muted-foreground">
+                                {t('countryCodeHelp')}
+                              </p>
+                              {(phoneError || (!!phone && !validPhone)) && (
+                                <FieldError
+                                  id="voice-phone-error"
+                                  className="text-sm"
+                                >
+                                  {tc('invalidPhone')}
+                                </FieldError>
+                              )}
+                              {(phoneChanged || needsPhone) && (
+                                <Button
+                                  type="submit"
+                                  loading={saving === 'phone'}
+                                  variant="outline"
+                                  size="pill"
+                                  className="w-full font-normal"
+                                  disabled={
+                                    saving !== null ||
+                                    !phoneChanged ||
+                                    isSendingTestCall
+                                  }
+                                >
+                                  {t('savePhone')}
+                                </Button>
+                              )}
+                            </form>
+                            <div className="space-y-2">
+                              <Button
+                                loading={isSendingTestCall}
+                                variant="outline"
+                                size="pill"
+                                className="w-full font-normal"
+                                disabled={
+                                  isSendingTestCall ||
+                                  saving !== null ||
+                                  !profile.voice_call_enabled ||
+                                  !validPhone ||
+                                  phoneChanged ||
+                                  remainingCalls === 0
+                                }
+                                onClick={sendTestCall}
+                              >
+                                {t('sendTestCall')}
+                              </Button>
+                              <p className="text-xs leading-relaxed text-muted-foreground">
+                                {phoneChanged
+                                  ? t('saveBeforeTest')
+                                  : !validPhone
+                                    ? t('saveValidPhone')
+                                    : !profile.voice_call_enabled
+                                      ? t('enableBeforeTest')
+                                      : t('testCallHelp')}
+                              </p>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                   </article>

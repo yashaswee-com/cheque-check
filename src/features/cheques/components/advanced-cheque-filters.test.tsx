@@ -13,9 +13,11 @@ vi.mock('@/features/accounts/hooks/use-banks', () => ({
     data: [{ id: bank, name: 'Custom Bank', abbreviation: 'CB' }],
   }),
 }))
-const ceiling = vi.hoisted(() => ({ data: 125_000 as number | undefined }))
+const bounds = vi.hoisted(() => ({
+  data: { min: 0, max: 125_000 } as { min: number; max: number } | undefined,
+}))
 vi.mock('@/features/cheques/hooks/use-cheque-list', () => ({
-  useChequeAmountCeiling: () => ceiling,
+  useChequeAmountBounds: () => bounds,
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
   useProfile: () => ({ profile: { time_zone: 'Asia/Kolkata' } }),
@@ -43,7 +45,7 @@ vi.mock('@/components/ui/combobox', () => ({
 }))
 afterEach(() => {
   cleanup()
-  ceiling.data = 125_000
+  bounds.data = { min: 0, max: 125_000 }
 })
 
 function Harness({ initial = '' }: { initial?: string }) {
@@ -109,7 +111,7 @@ it('drives min and max amount from the two-thumb slider and the inputs', () => {
   fireEvent.keyDown(high, { key: 'End' })
   expect(screen.getByTestId('query')).toHaveTextContent('min_amount=1000')
   expect(screen.getByTestId('query')).not.toHaveTextContent('max_amount')
-  fireEvent.change(screen.getByRole('textbox', { name: 'Maximum amount' }), {
+  fireEvent.change(screen.getByRole('spinbutton', { name: 'Maximum amount' }), {
     target: { value: '2000' },
   })
   expect(screen.getAllByRole('slider', { hidden: true })[1]).toHaveAttribute(
@@ -119,10 +121,27 @@ it('drives min and max amount from the two-thumb slider and the inputs', () => {
 })
 
 it('falls back to amount inputs when the business has no cheques yet', () => {
-  ceiling.data = 0
+  bounds.data = { min: 0, max: 0 }
   render(<Harness />)
   expect(screen.queryByRole('slider', { hidden: true })).not.toBeInTheDocument()
-  expect(screen.getByRole('textbox', { name: 'Minimum amount' })).toBeVisible()
+  expect(
+    screen.getByRole('spinbutton', { name: 'Minimum amount' }),
+  ).toBeVisible()
+})
+
+it('uses exact cheque minimum and maximum amounts, including decimal bounds', () => {
+  bounds.data = { min: 125.25, max: 123456.75 }
+  render(<Harness />)
+  const [low, high] = screen.getAllByRole('slider', { hidden: true })
+  expect(low).toHaveAttribute('min', '125.25')
+  expect(high).toHaveAttribute('max', '123456.75')
+  expect(low).toHaveAttribute('aria-valuenow', '125.25')
+  expect(high).toHaveAttribute('aria-valuenow', '123456.75')
+  const input = screen.getByRole('spinbutton', { name: 'Minimum amount' })
+  expect(input).toHaveAttribute('min', '0')
+  expect(input).toHaveAttribute('step', 'any')
+  fireEvent.change(input, { target: { value: 'letters' } })
+  expect(input).toHaveValue(null)
 })
 
 it('combines live status, single party type, decimal bounds and removable bank selections', () => {
@@ -167,7 +186,7 @@ it('combines live status, single party type, decimal bounds and removable bank s
     'aria-pressed',
     'false',
   )
-  fireEvent.change(screen.getByRole('textbox', { name: 'Minimum amount' }), {
+  fireEvent.change(screen.getByRole('spinbutton', { name: 'Minimum amount' }), {
     target: { value: '100.25' },
   })
   fireEvent.change(screen.getByLabelText('Bank'), { target: { value: bank } })
@@ -186,7 +205,7 @@ it('combines live status, single party type, decimal bounds and removable bank s
     screen.getByRole('button', { name: 'Remove Custom Bank filter' }),
   )
   expect(screen.getByTestId('query')).not.toHaveTextContent('bank_ids')
-  fireEvent.change(screen.getByRole('textbox', { name: 'Maximum amount' }), {
+  fireEvent.change(screen.getByRole('spinbutton', { name: 'Maximum amount' }), {
     target: { value: '99' },
   })
   expect(screen.getByTestId('valid')).toHaveTextContent('false')

@@ -138,7 +138,7 @@ export function ChequeFilterBar({
                   className={filterPillClassName(sortBy === option.value)}
                 >
                   <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-                  <span className="font-bold text-sm">{option.label}</span>
+                  <span className="font-normal text-sm">{option.label}</span>
                 </button>
               ))}
             </FilterPillSection>
@@ -154,7 +154,7 @@ export function ChequeFilterBar({
                   className={filterPillClassName(sortOrder === option.value)}
                 >
                   <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-                  <span className="font-bold text-sm">{option.label}</span>
+                  <span className="font-normal text-sm">{option.label}</span>
                 </button>
               ))}
             </FilterPillSection>
@@ -171,7 +171,7 @@ export function ChequeFilterBar({
                     className={filterPillClassName(filter === s.value)}
                   >
                     <HugeiconsIcon icon={s.icon} className="h-4 w-4" />
-                    <span className="font-bold text-sm">
+                    <span className="font-normal text-sm">
                       {tCommon(s.value.toLowerCase() as never)}
                     </span>
                     {filter === s.value && (
