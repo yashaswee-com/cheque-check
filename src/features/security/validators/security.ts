@@ -35,10 +35,12 @@ export const securityActionSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('password'),
     password: z.string().min(1).max(1024),
+    captchaToken: z.string().min(1).max(4096).optional(),
   }),
   z.object({
     action: z.literal('sendOtp'),
     channel: z.enum(['email', 'phone']),
+    captchaToken: z.string().min(1).max(4096).optional(),
   }),
   z.object({
     action: z.literal('otp'),

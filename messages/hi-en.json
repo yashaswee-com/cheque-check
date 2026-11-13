@@ -55,6 +55,8 @@
     "unavailable": "App security unavailable hai. Locked rahein aur online retry karein.",
     "rate_limited": "Bahut requests. Thoda rukkar retry karein.",
     "verification_failed": "Account verification fail hui. Password ya code check karein.",
+    "captcha_failed": "Security check complete karke dobara try karein.",
+    "delivery_failed": "Verification code nahi bhej paaye. Baad mein retry karein ya doosra verification method use karein.",
     "fresh_auth_required": "Fresh verification expire ya use ho gayi. Dobara verify karein.",
     "identity_unavailable": "Recovery ke liye supported verified identity nahi hai. PIN se pehle verified email link karein ya enabled phone login use karein.",
     "invalid_input": "Valid six-digit PIN ya verification code bharein.",

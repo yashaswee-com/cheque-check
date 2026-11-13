@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label'
 import { logger } from '@/lib/logger'
 import { InfoPopover } from '@/components/ui/info-popover'
 import { cn } from '@/lib/utils'
+import { useEmailAuthCaptcha } from '@/features/auth/components/use-email-auth-captcha'
 
 type PinMode = 'on' | 'off' | 'change'
 const modeTitle = { on: 'turnOn', off: 'turnOff', change: 'changePin' } as const
@@ -40,6 +41,8 @@ export function PinSettings({
 }) {
   const t = useTranslations('Security')
   const actions = usePinActions()
+  const captcha = useEmailAuthCaptcha('security_pin')
+  const captchaPending = captcha.required && !captcha.token
   const getStatus = actions.status
   const [status, setStatus] = useState<SecurityStatus | null>(null)
   const [proof, setProof] = useState<string | null>(null)
@@ -80,8 +83,21 @@ export function PinSettings({
     try {
       await task()
     } catch (error) {
-      logger.error('PIN preference action failed', error)
-      setError(error instanceof SecurityError ? error.code : 'unavailable')
+      const code = error instanceof SecurityError ? error.code : 'unavailable'
+      if (
+        error instanceof SecurityError &&
+        [
+          'captcha_failed',
+          'rate_limited',
+          'verification_failed',
+          'fresh_auth_required',
+        ].includes(code)
+      ) {
+        logger.warn('PIN preference verification rejected', { code })
+      } else {
+        logger.error('PIN preference action failed', error, { code })
+      }
+      setError(code)
       if (
         error instanceof SecurityError &&
         error.code === 'fresh_auth_required'
@@ -92,6 +108,7 @@ export function PinSettings({
     }
   }
   const clearFlow = () => {
+    captcha.reset()
     setPin('')
     setConfirm('')
     setPassword('')
@@ -141,14 +158,23 @@ export function PinSettings({
           {t('freshAuth')} {t('passwordlessHelp')}
         </InfoPopover>
       </div>
+      {captcha.challenge}
       {usePassword && (
         <form
           onSubmit={(event) => {
             event.preventDefault()
+            if (captchaPending) {
+              setError('captcha_failed')
+              return
+            }
             void perform(async () => {
-              const result = await actions.password(password)
-              setProof(result.proof)
-              setPassword('')
+              try {
+                const result = await actions.password(password, captcha.token)
+                setProof(result.proof)
+                setPassword('')
+              } finally {
+                captcha.reset()
+              }
             })
           }}
           className="space-y-2"
@@ -167,7 +193,7 @@ export function PinSettings({
           <Button
             type="submit"
             className="w-full"
-            disabled={busy || !status || noIdentity}
+            disabled={busy || !status || noIdentity || captchaPending}
           >
             {t('authenticate')}
           </Button>
@@ -180,14 +206,18 @@ export function PinSettings({
               <Button
                 key={channel}
                 variant="outline"
-                disabled={busy}
+                disabled={busy || captchaPending}
                 onClick={() =>
                   void perform(async () => {
-                    await actions.sendOtp(channel)
-                    setSent(channel)
-                    setUsePassword(false)
-                    setPassword('')
-                    setToken('')
+                    try {
+                      await actions.sendOtp(channel, captcha.token)
+                      setSent(channel)
+                      setUsePassword(false)
+                      setPassword('')
+                      setToken('')
+                    } finally {
+                      captcha.reset()
+                    }
                   })
                 }
               >
@@ -200,6 +230,7 @@ export function PinSettings({
             variant="ghost"
             disabled={busy}
             onClick={() => {
+              captcha.reset()
               setUsePassword(true)
               setSent(null)
               setToken('')

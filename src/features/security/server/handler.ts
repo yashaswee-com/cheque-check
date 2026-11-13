@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import type { AuthError } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { TABLES } from '@/lib/supabase/tables'
@@ -18,6 +19,35 @@ const failure = (error: string, status: number) =>
   )
 const json = (body: unknown) =>
   NextResponse.json(body, { headers: { 'Cache-Control': 'no-store' } })
+
+function authFailure(error: AuthError, delivery = false) {
+  const context = {
+    operation: delivery ? 'security.otp_send' : 'security.reauthenticate',
+    code: error.code,
+    status: error.status,
+  }
+  if (error.code === 'captcha_failed') {
+    logger.warn('Security CAPTCHA verification failed', context)
+    return failure('captcha_failed', 400)
+  }
+  if (
+    error.status === 429 ||
+    [
+      'over_email_send_rate_limit',
+      'over_sms_send_rate_limit',
+      'over_request_rate_limit',
+    ].includes(error.code ?? '')
+  ) {
+    logger.warn('Security verification rate limited', context)
+    return failure('rate_limited', 429)
+  }
+  logger.error('Security account verification failed', undefined, context)
+  return failure(
+    delivery ? 'delivery_failed' : 'verification_failed',
+    delivery ? 503 : 403,
+  )
+}
+
 export async function handleSecurity(request: Request) {
   try {
     if (request.method === 'POST') {
@@ -141,13 +171,22 @@ export async function handleSecurity(request: Request) {
         return failure('identity_unavailable', 409)
       const { error } = await supabase.auth.signInWithOtp(
         action.channel === 'email'
-          ? { email: user.email!, options: { shouldCreateUser: false } }
-          : { phone: user.phone!, options: { shouldCreateUser: false } },
+          ? {
+              email: user.email!,
+              options: {
+                shouldCreateUser: false,
+                captchaToken: action.captchaToken,
+              },
+            }
+          : {
+              phone: user.phone!,
+              options: {
+                shouldCreateUser: false,
+                captchaToken: action.captchaToken,
+              },
+            },
       )
-      if (error) {
-        logger.error('Security verification delivery failed', error)
-        return failure('verification_failed', error.status === 429 ? 429 : 503)
-      }
+      if (error) return authFailure(error, true)
       return json({ sent: true })
     }
     if (
@@ -161,16 +200,24 @@ export async function handleSecurity(request: Request) {
       action.action === 'password'
         ? await supabase.auth.signInWithPassword(
             email
-              ? { email: user.email!, password: action.password }
-              : { phone: user.phone!, password: action.password },
+              ? {
+                  email: user.email!,
+                  password: action.password,
+                  options: { captchaToken: action.captchaToken },
+                }
+              : {
+                  phone: user.phone!,
+                  password: action.password,
+                  options: { captchaToken: action.captchaToken },
+                },
           )
         : await supabase.auth.verifyOtp(
             action.channel === 'email'
               ? { email: user.email!, token: action.token, type: 'email' }
               : { phone: user.phone!, token: action.token, type: 'sms' },
           )
-    if (error || !data.user || data.user.id !== user.id) {
-      if (error) logger.error('Security reauthentication failed', error)
+    if (error) return authFailure(error)
+    if (!data.user || data.user.id !== user.id) {
       return failure('verification_failed', 403)
     }
     const proof = randomSecret()

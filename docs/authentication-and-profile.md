@@ -34,4 +34,16 @@ PINs are six-digit online credentials; server-side derivation uses PBKDF2-HMAC-S
 
 ## Verification limits
 
+PIN setup and recovery reuse the Turnstile security check when
+`NEXT_PUBLIC_TURNSTILE_SITE_KEY` is configured. A fresh, single-use CAPTCHA
+token is forwarded to Supabase for each email/phone OTP send or password
+reauthentication, and the challenge resets after success or failure. OTP-code
+verification itself does not require another CAPTCHA. Keep the public site
+key and allowed hostnames aligned with the target project's Auth CAPTCHA
+configuration; enabling CAPTCHA in Supabase without configuring the app's
+site key prevents these requests from succeeding. CAPTCHA rejection returns
+`captcha_failed` (400), rate limiting returns `rate_limited` (429), and OTP
+delivery failures return `delivery_failed` (503). Provider failures log only
+machine-readable code/status metadata, not contacts or CAPTCHA tokens.
+
 The repository can show the configured flows and policy code, but it does not prove that hosted Auth providers, OTP templates, CAPTCHA, ban behavior, or delivery settings are enabled. Verify those in each target Supabase project ([environment and deployment boundary](environment-and-secrets.md#deployment-state), [Auth local configuration](../supabase/config.toml#L205-L220), [phone flow](../src/features/auth/server/phone-auth.ts#L141-L215)).

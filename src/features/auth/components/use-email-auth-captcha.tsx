@@ -5,9 +5,9 @@ import { useTranslations } from 'next-intl'
 import { publicEnv } from '@/lib/env/client'
 import { TurnstileWidget } from './turnstile-widget'
 
-/** Email auth shares Supabase's CAPTCHA policy regardless of the phone flag. */
+/** Email auth and PIN reauthentication share Supabase's CAPTCHA policy. */
 export function useEmailAuthCaptcha(
-  action: 'email_signup' | 'email_login' | 'email_reset',
+  action: 'email_signup' | 'email_login' | 'email_reset' | 'security_pin',
 ) {
   const t = useTranslations('PhoneAuth')
   const siteKey = publicEnv.NEXT_PUBLIC_TURNSTILE_SITE_KEY

@@ -17,6 +17,7 @@ import { SecurityError } from './types'
 import { PIN_CHANGED_EVENT } from './hooks/use-pin-security'
 import { queryKeys } from '@/lib/query-keys'
 import { renderToString } from 'react-dom/server'
+import { logger } from '@/lib/logger'
 const mocks = vi.hoisted(() => ({
   owner: 'user',
   status: vi.fn(),
@@ -30,6 +31,14 @@ const mocks = vi.hoisted(() => ({
   signOut: vi.fn(),
   replace: vi.fn(),
   mounted: vi.fn(),
+  siteKey: '',
+}))
+vi.mock('@/lib/env/client', () => ({
+  publicEnv: {
+    get NEXT_PUBLIC_TURNSTILE_SITE_KEY() {
+      return mocks.siteKey
+    },
+  },
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
   useProfile: () => ({ profile: { user_id: mocks.owner }, isLoading: false }),
@@ -43,7 +52,7 @@ vi.mock('@/features/auth/services/auth.service', () => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mocks.replace }),
 }))
-vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
+vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn() } }))
 const revision = '10000000-0000-4000-8000-000000000001'
 const enabled = {
   enabled: true,
@@ -57,6 +66,7 @@ let client: QueryClient
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.owner = 'user'
+  mocks.siteKey = ''
   mocks.status.mockResolvedValue(enabled)
   mocks.verify.mockResolvedValue({ status: 'unlocked', revision })
   mocks.password.mockResolvedValue({ proof: 'a'.repeat(64) })
@@ -393,7 +403,7 @@ describe('fresh-auth PIN management', () => {
       await waitFor(() =>
         expect(mocks.set).toHaveBeenCalledWith('a'.repeat(64), '654321'),
       )
-      expect(mocks.sendOtp).toHaveBeenCalledWith(channel)
+      expect(mocks.sendOtp).toHaveBeenCalledWith(channel, undefined)
       expect(mocks.otp).toHaveBeenCalledWith(channel, '123456')
       expect(mocks.password).not.toHaveBeenCalled()
     },
@@ -422,16 +432,14 @@ describe('fresh-auth PIN management', () => {
     ).not.toBeInTheDocument()
   })
   it('reports failed OTP delivery and verification without granting a mutation proof', async () => {
-    mocks.sendOtp.mockRejectedValueOnce(
-      new SecurityError('verification_failed'),
-    )
+    mocks.sendOtp.mockRejectedValueOnce(new SecurityError('delivery_failed'))
     mount(<PinSettings />)
     await begin('Change passcode')
     fireEvent.click(
       await screen.findByRole('button', { name: 'Send verified-email code' }),
     )
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Account verification failed',
+      'Could not send the verification code',
     )
     expect(
       screen.queryByLabelText('Authentication code'),
@@ -449,6 +457,122 @@ describe('fresh-auth PIN management', () => {
     )
     expect(screen.queryByLabelText('New six-digit PIN')).not.toBeInTheDocument()
     expect(mocks.set).not.toHaveBeenCalled()
+  })
+  it.each([
+    ['email', 'Send verified-email code'],
+    ['phone', 'Send verified-phone code'],
+  ] as const)(
+    'requires a fresh CAPTCHA for %s sends and retries without blocking OTP-code verification',
+    async (channel, name) => {
+      mocks.siteKey = 'site-key'
+      mocks.status.mockResolvedValue({
+        ...enabled,
+        emailOtp: channel === 'email',
+        phoneOtp: channel === 'phone',
+      })
+      const renderWidget = vi.fn<NonNullable<Window['turnstile']>['render']>(
+        () => 'widget',
+      )
+      const remove = vi.fn()
+      vi.stubGlobal('turnstile', { render: renderWidget, remove })
+      mocks.sendOtp.mockRejectedValueOnce(new SecurityError('captcha_failed'))
+      mount(<PinSettings />)
+      await begin('Change passcode')
+      const send = screen.getByRole('button', { name })
+      expect(send).toBeDisabled()
+      fireEvent.click(send)
+      expect(mocks.sendOtp).not.toHaveBeenCalled()
+      await waitFor(() => expect(renderWidget).toHaveBeenCalledOnce())
+      expect(renderWidget.mock.calls[0][1].action).toBe('security_pin')
+      act(() => renderWidget.mock.calls[0][1].callback('expired-captcha'))
+      expect(send).toBeEnabled()
+      act(() => renderWidget.mock.calls[0][1]['expired-callback']())
+      expect(send).toBeDisabled()
+      act(() => renderWidget.mock.calls[0][1].callback('error-captcha'))
+      act(() => renderWidget.mock.calls[0][1]['error-callback']())
+      expect(send).toBeDisabled()
+      act(() => renderWidget.mock.calls[0][1].callback('first-captcha'))
+      fireEvent.click(send)
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        messages.Security.captcha_failed,
+      )
+      expect(mocks.sendOtp).toHaveBeenCalledWith(channel, 'first-captcha')
+      expect(logger.warn).toHaveBeenCalledWith(
+        'PIN preference verification rejected',
+        { code: 'captcha_failed' },
+      )
+      expect(logger.error).not.toHaveBeenCalled()
+      await waitFor(() => expect(renderWidget).toHaveBeenCalledTimes(2))
+      expect(remove).toHaveBeenCalled()
+      expect(send).toBeDisabled()
+      act(() => renderWidget.mock.calls[1][1].callback('retry-captcha'))
+      fireEvent.click(send)
+      const code = await screen.findByLabelText('Authentication code')
+      expect(mocks.sendOtp).toHaveBeenLastCalledWith(channel, 'retry-captcha')
+      await waitFor(() => expect(renderWidget).toHaveBeenCalledTimes(3))
+      expect(send).toBeDisabled()
+      fireEvent.change(code, { target: { value: '123456' } })
+      const verify = screen.getByRole('button', { name: 'Verify account' })
+      expect(verify).toBeEnabled()
+      fireEvent.click(verify)
+      expect(
+        await screen.findByLabelText('New six-digit PIN'),
+      ).toBeInTheDocument()
+      expect(mocks.otp).toHaveBeenCalledWith(channel, '123456')
+    },
+  )
+  it('requires and resets CAPTCHA tokens for password verification after both failure and success', async () => {
+    mocks.siteKey = 'site-key'
+    const renderWidget = vi.fn<NonNullable<Window['turnstile']>['render']>(
+      () => 'widget',
+    )
+    vi.stubGlobal('turnstile', { render: renderWidget, remove: vi.fn() })
+    mocks.password.mockRejectedValueOnce(
+      new SecurityError('verification_failed'),
+    )
+    mount(<PinSettings />)
+    await begin('Change passcode')
+    await waitFor(() => expect(renderWidget).toHaveBeenCalledOnce())
+    act(() => renderWidget.mock.calls[0][1].callback('unused-captcha'))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Use an app password instead' }),
+    )
+    await waitFor(() => expect(renderWidget).toHaveBeenCalledTimes(2))
+    const password = screen.getByLabelText('Account password')
+    fireEvent.change(password, { target: { value: 'account-password' } })
+    const verify = screen.getByRole('button', { name: 'Verify account' })
+    expect(verify).toBeDisabled()
+    fireEvent.submit(password.closest('form')!)
+    expect(mocks.password).not.toHaveBeenCalled()
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      messages.Security.captcha_failed,
+    )
+    act(() => renderWidget.mock.calls[1][1].callback('password-captcha'))
+    fireEvent.click(verify)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      messages.Security.verification_failed,
+    )
+    expect(mocks.password).toHaveBeenCalledWith(
+      'account-password',
+      'password-captcha',
+    )
+    await waitFor(() => expect(renderWidget).toHaveBeenCalledTimes(3))
+    expect(verify).toBeDisabled()
+    act(() => renderWidget.mock.calls[2][1].callback('retry-password-captcha'))
+    fireEvent.click(verify)
+    expect(
+      await screen.findByLabelText('New six-digit PIN'),
+    ).toBeInTheDocument()
+    expect(mocks.password).toHaveBeenLastCalledWith(
+      'account-password',
+      'retry-password-captcha',
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await begin('Change passcode')
+    await waitFor(() => expect(renderWidget).toHaveBeenCalledTimes(4))
+    expect(
+      screen.getByRole('button', { name: 'Send verified-email code' }),
+    ).toBeDisabled()
   })
   it('expired fresh proof requires new verification instead of optimistic success', async () => {
     mocks.set.mockRejectedValue(new SecurityError('fresh_auth_required'))

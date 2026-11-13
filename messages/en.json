@@ -55,6 +55,8 @@
     "unavailable": "App security is unavailable. Stay locked and retry online.",
     "rate_limited": "Too many requests. Please wait and retry.",
     "verification_failed": "Account verification failed. Check your password or code.",
+    "captcha_failed": "Complete the security check and try again.",
+    "delivery_failed": "Could not send the verification code. Please retry later or use another verification method.",
     "fresh_auth_required": "Fresh verification expired or was already used. Verify your account again.",
     "identity_unavailable": "No supported verified identity is available for recovery. Link a verified email, or use enabled phone authentication before setting a PIN.",
     "invalid_input": "Enter a valid six-digit PIN or authentication code.",

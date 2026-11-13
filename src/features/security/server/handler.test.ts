@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { handleSecurity } from './handler'
+import { logger } from '@/lib/logger'
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   profile: vi.fn(),
@@ -38,7 +39,7 @@ vi.mock('@/lib/env/client', () => ({
     },
   },
 }))
-vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
+vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn() } }))
 vi.mock('./crypto', () => ({
   pinDigest: mocks.digest,
   randomSecret: () => 'c'.repeat(64),
@@ -126,7 +127,7 @@ describe('authenticated PIN verification and recovery API', () => {
       ).toBe(200)
       expect(mocks.signInWithOtp).toHaveBeenCalledWith({
         [channel]: channel === 'email' ? 'google@test.invalid' : '919876543210',
-        options: { shouldCreateUser: false },
+        options: { shouldCreateUser: false, captchaToken: undefined },
       })
       const proof = await handleSecurity(
         request({ action: 'otp', channel, token: '123456' }),
@@ -235,6 +236,7 @@ describe('authenticated PIN verification and recovery API', () => {
     expect(mocks.signInWithPassword).toHaveBeenCalledWith({
       email: 'user@test.invalid',
       password: 'account-password',
+      options: { captchaToken: undefined },
     })
     expect(mocks.rpc).toHaveBeenCalledWith('security_pin_proof', {
       requested_user: 'user',
@@ -262,7 +264,7 @@ describe('authenticated PIN verification and recovery API', () => {
     )
     expect(mocks.signInWithOtp).toHaveBeenCalledWith({
       email: 'user@test.invalid',
-      options: { shouldCreateUser: false },
+      options: { shouldCreateUser: false, captchaToken: undefined },
     })
     expect(mocks.rate).toHaveBeenCalledWith('consume_api_rate_limit', {
       requested_endpoint: 'security-otp-send',
@@ -301,6 +303,149 @@ describe('authenticated PIN verification and recovery API', () => {
         .status,
     ).toBe(200)
   })
+  it.each(['email', 'phone'] as const)(
+    'forwards CAPTCHA tokens for %s OTP sends and password reauthentication',
+    async (channel) => {
+      mocks.phoneEnabled = 'true'
+      const contact = channel === 'email' ? 'user@test.invalid' : '919876543210'
+      mocks.getUser.mockResolvedValue({
+        data: {
+          user: {
+            id: 'user',
+            [channel]: contact,
+            [`${channel}_confirmed_at`]: '2026-01-01',
+          },
+        },
+        error: null,
+      })
+      expect(
+        (
+          await handleSecurity(
+            request({
+              action: 'sendOtp',
+              channel,
+              captchaToken: 'send-captcha',
+            }),
+          )
+        ).status,
+      ).toBe(200)
+      expect(mocks.signInWithOtp).toHaveBeenCalledWith({
+        [channel]: contact,
+        options: { shouldCreateUser: false, captchaToken: 'send-captcha' },
+      })
+      expect(
+        (
+          await handleSecurity(
+            request({
+              action: 'password',
+              password: 'account-password',
+              captchaToken: 'password-captcha',
+            }),
+          )
+        ).status,
+      ).toBe(200)
+      expect(mocks.signInWithPassword).toHaveBeenCalledWith({
+        [channel]: contact,
+        password: 'account-password',
+        options: { captchaToken: 'password-captcha' },
+      })
+    },
+  )
+  it.each(['sendOtp', 'password'] as const)(
+    'reports CAPTCHA rejection as 400, not an outage, for %s',
+    async (action) => {
+      const error = {
+        code: 'captcha_failed',
+        status: 400,
+        message: 'Private provider details',
+      }
+      const provider =
+        action === 'sendOtp' ? mocks.signInWithOtp : mocks.signInWithPassword
+      provider.mockResolvedValueOnce({ data: { user: null }, error })
+      const response = await handleSecurity(
+        request(
+          action === 'sendOtp'
+            ? { action, channel: 'email' }
+            : { action, password: 'account-password' },
+        ),
+      )
+      expect(response.status).toBe(400)
+      expect(await response.json()).toEqual({ error: 'captcha_failed' })
+      expect(response.headers.get('cache-control')).toBe('no-store')
+      expect(mocks.rpc).not.toHaveBeenCalled()
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Security CAPTCHA verification failed',
+        {
+          operation:
+            action === 'sendOtp'
+              ? 'security.otp_send'
+              : 'security.reauthenticate',
+          code: 'captcha_failed',
+          status: 400,
+        },
+      )
+      expect(logger.error).not.toHaveBeenCalled()
+    },
+  )
+  it.each([
+    ['over_email_send_rate_limit', 422],
+    ['over_sms_send_rate_limit', 422],
+    ['over_request_rate_limit', 429],
+    ['unknown', 429],
+  ])(
+    'maps provider rate limiting (%s) to a retryable 429',
+    async (code, status) => {
+      mocks.signInWithOtp.mockResolvedValueOnce({ error: { code, status } })
+      const response = await handleSecurity(
+        request({ action: 'sendOtp', channel: 'email' }),
+      )
+      expect(response.status).toBe(429)
+      expect(await response.json()).toEqual({ error: 'rate_limited' })
+      expect(mocks.rpc).not.toHaveBeenCalled()
+    },
+  )
+  it('distinguishes delivery outages from invalid passwords or codes', async () => {
+    mocks.signInWithOtp.mockResolvedValueOnce({
+      error: {
+        code: 'unexpected_failure',
+        status: 500,
+        message: 'Private details',
+      },
+    })
+    const response = await handleSecurity(
+      request({ action: 'sendOtp', channel: 'email' }),
+    )
+    expect(response.status).toBe(503)
+    expect(await response.json()).toEqual({ error: 'delivery_failed' })
+    expect(logger.error).toHaveBeenCalledWith(
+      'Security account verification failed',
+      undefined,
+      {
+        operation: 'security.otp_send',
+        code: 'unexpected_failure',
+        status: 500,
+      },
+    )
+    expect(mocks.rpc).not.toHaveBeenCalled()
+  })
+  it.each(['sendOtp', 'password'] as const)(
+    'rejects empty or oversized CAPTCHA tokens before calling Auth for %s',
+    async (action) => {
+      for (const captchaToken of ['', 'x'.repeat(4097)]) {
+        const response = await handleSecurity(
+          request(
+            action === 'sendOtp'
+              ? { action, channel: 'email', captchaToken }
+              : { action, password: 'account-password', captchaToken },
+          ),
+        )
+        expect(response.status).toBe(400)
+        expect(await response.json()).toEqual({ error: 'invalid_input' })
+      }
+      expect(mocks.signInWithOtp).not.toHaveBeenCalled()
+      expect(mocks.signInWithPassword).not.toHaveBeenCalled()
+    },
+  )
   it('requires valid fresh proof for setup, removal and reset without altering profile or entity records', async () => {
     mocks.rpc.mockResolvedValueOnce({ data: null, error: { code: 'P0001' } })
     expect(

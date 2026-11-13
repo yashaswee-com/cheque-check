@@ -39,10 +39,14 @@ async function request<T>(
 export const securityRepository = {
   status: () => request(securityStatusSchema),
   verify: (pin: string) => request(pinResultSchema, { action: 'verify', pin }),
-  password: (password: string) =>
-    request(proofResponseSchema, { action: 'password', password }),
-  sendOtp: (channel: 'email' | 'phone') =>
-    request(sentResponseSchema, { action: 'sendOtp', channel }),
+  password: (password: string, captchaToken?: string) =>
+    request(proofResponseSchema, {
+      action: 'password',
+      password,
+      captchaToken,
+    }),
+  sendOtp: (channel: 'email' | 'phone', captchaToken?: string) =>
+    request(sentResponseSchema, { action: 'sendOtp', channel, captchaToken }),
   otp: (channel: 'email' | 'phone', token: string) =>
     request(proofResponseSchema, { action: 'otp', channel, token }),
   set: (proof: string, pin: string) =>
