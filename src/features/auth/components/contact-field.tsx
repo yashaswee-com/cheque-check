@@ -16,7 +16,6 @@ export function ContactField({
   value,
   placeholder,
   verified,
-  hint,
   testId,
   children,
 }: {
@@ -26,7 +25,6 @@ export function ContactField({
   value: string
   placeholder: string
   verified: boolean
-  hint?: ReactNode
   testId: string
   children?: ReactNode
 }) {
@@ -39,19 +37,22 @@ export function ContactField({
       >
         {label}
       </Label>
-      <div className="relative">
-        <Input
-          id={id}
-          leftIcon={icon}
-          readOnly
-          value={value}
-          placeholder={placeholder}
-          className="h-14 rounded-sm border-none bg-canvas-parchment pr-28 text-base font-semibold dark:bg-surface-tile-1"
-        />
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <Input
+            id={id}
+            leftIcon={icon}
+            enableMic={false}
+            readOnly
+            value={value}
+            placeholder={placeholder}
+            className="h-14 rounded-sm border-none bg-canvas-parchment pr-3 text-base font-normal dark:bg-surface-tile-1"
+          />
+        </div>
         {verified && (
           <Badge
             data-testid={`${testId}-verified`}
-            className="absolute right-3 top-1/2 -translate-y-1/2 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+            className="shrink-0 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
           >
             <HugeiconsIcon
               icon={CheckmarkBadge01Icon}
@@ -61,7 +62,6 @@ export function ContactField({
           </Badge>
         )}
       </div>
-      {hint && <p className="ml-1 text-xs text-muted-foreground">{hint}</p>}
       {children}
     </section>
   )

@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useTranslations } from 'next-intl'
 import { Combobox } from '@/components/ui/combobox'
 import { Label } from '@/components/ui/label'
+import { FieldError } from '@/components/ui/field-error'
 
 interface PreferenceFieldProps {
   id: string
@@ -53,7 +54,7 @@ export function PreferenceField({
       <Label
         htmlFor={id}
         required
-        className="ml-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground"
+        className="ml-1 text-[11px] font-medium uppercase tracking-widest text-muted-foreground"
       >
         {label}
       </Label>
@@ -63,18 +64,14 @@ export function PreferenceField({
         options={options}
         value={supported ? (value ?? '') : ''}
         allowDeselect={false}
+        showSelectedAvatar={false}
         onValueChange={(next) => void select(next)}
-        className="h-14 rounded-sm border-none bg-canvas-parchment text-lg dark:bg-surface-tile-1"
+        className="h-14 rounded-sm border-none bg-canvas-parchment text-lg font-normal **:font-normal dark:bg-surface-tile-1"
       />
       {message && (
-        <p
-          id={messageId}
-          role="alert"
-          data-testid={`${id}-message`}
-          className="ml-1 text-xs text-destructive"
-        >
-          {message}
-        </p>
+        <div data-testid={`${id}-message`}>
+          <FieldError id={messageId}>{message}</FieldError>
+        </div>
       )}
     </div>
   )

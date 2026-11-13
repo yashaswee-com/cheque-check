@@ -13,7 +13,7 @@ export function ProfileContacts() {
   const phoneFirst = data?.loginMethod === 'phone'
   return (
     <div
-      className="space-y-6"
+      className="space-y-5 rounded-lg border border-border/70 bg-card p-4"
       data-testid="profile-contacts"
       data-login-method={phoneFirst ? 'phone' : 'email'}
     >

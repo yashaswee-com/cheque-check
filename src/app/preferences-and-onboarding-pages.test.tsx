@@ -71,6 +71,29 @@ vi.mock('@/components/ui/phone-input', () => ({
     />
   ),
 }))
+vi.mock('@/components/ui/location-input', () => ({
+  LocationInput: ({
+    value,
+    onChange,
+    placeholder,
+    id,
+    'data-testid': testId,
+  }: {
+    value: string
+    onChange: (value: string) => void
+    placeholder: string
+    id?: string
+    'data-testid'?: string
+  }) => (
+    <input
+      id={id}
+      data-testid={testId}
+      placeholder={placeholder}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  ),
+}))
 vi.mock('@/components/ui/combobox', () => ({
   Combobox: ({
     options,
@@ -177,18 +200,24 @@ describe('onboarding page', () => {
     )
     fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
   }
-  it('keeps every brand color swatch on a single non-wrapping row', () => {
+  function advanceThroughTerms() {
+    fireEvent.click(screen.getByTestId('onboarding-step4-continue'))
+    expect(screen.getByTestId('onboarding-next-button')).toBeDisabled()
+    expect(screen.getByText(messages.Onboarding.termsRequired)).toBeVisible()
+    fireEvent.click(screen.getByTestId('onboarding-accept-terms-checkbox'))
+    expect(screen.getByTestId('onboarding-next-button')).toBeEnabled()
+  }
+  it('omits optional business color, email and logo customization from onboarding', () => {
     renderPage(<OnboardingPage />)
-    const row = screen.getByTestId('onboarding-brand-colors')
-    expect(row).toHaveClass('flex-nowrap')
-    expect(row).not.toHaveClass('flex-wrap')
-    const swatches = row.querySelectorAll('button')
-    expect(swatches).toHaveLength(7)
-    swatches.forEach((swatch) =>
-      expect(swatch).toHaveClass('size-10', 'shrink-0'),
-    )
-    fireEvent.click(swatches[1])
-    expect(swatches[1]).toHaveAttribute('aria-pressed', 'true')
+    expect(
+      screen.queryByTestId('onboarding-brand-colors'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByPlaceholderText(
+        messages.Onboarding.businessEmailPlaceholder,
+      ),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Upload logo' })).toBeNull()
   })
   it('requires a business name and valid optional phone, while preserving values on back navigation', () => {
     renderPage(<OnboardingPage />)
@@ -221,12 +250,6 @@ describe('onboarding page', () => {
     fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
       target: { value: 'Acme' },
     })
-    fireEvent.click(
-      document.querySelector('button[style*="background-color"]')!,
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Upload logo' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Remove logo' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Upload logo' }))
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
     const preferences = screen.getAllByRole('combobox')
     preferences.forEach((select) => {
@@ -234,10 +257,6 @@ describe('onboarding page', () => {
       if (option) fireEvent.change(select, { target: { value: option.value } })
     })
     fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
-    fireEvent.change(
-      screen.getByPlaceholderText(messages.Onboarding.businessEmailPlaceholder),
-      { target: { value: 'acme@example.test' } },
-    )
     fireEvent.change(
       screen.getByPlaceholderText(messages.Onboarding.businessPhonePlaceholder),
       { target: { value: '+919876543210' } },
@@ -247,18 +266,28 @@ describe('onboarding page', () => {
       { target: { value: 'Warehouse Road' } },
     )
     fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
-    const reminders = screen.getAllByRole('combobox')
-    fireEvent.change(reminders[0], { target: { value: '2' } })
-    fireEvent.change(reminders[1], { target: { value: '7' } })
-    fireEvent.click(screen.getByTestId('onboarding-step4-finish'))
+    const advancedWarning = screen.getByTestId('onboarding-advanced-warning')
+    const dailyFrequency = screen.getByTestId('onboarding-daily-frequency')
+    expect(
+      advancedWarning.compareDocumentPosition(dailyFrequency) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    fireEvent.change(advancedWarning, {
+      target: { value: '7' },
+    })
+    fireEvent.change(dailyFrequency, {
+      target: { value: '2' },
+    })
+    advanceThroughTerms()
+    fireEvent.click(screen.getByTestId('onboarding-next-button'))
     await waitFor(() => expect(mocks.celebrate).toHaveBeenCalledOnce())
     expect(mocks.create).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Acme',
-        email: 'acme@example.test',
+        email: null,
         phone: '+919876543210',
         address: 'Warehouse Road',
-        logo_url: 'business-logo',
+        logo_url: null,
         color: expect.any(String),
       }),
     )
@@ -269,7 +298,10 @@ describe('onboarding page', () => {
         default_reminder_days: 7,
       }),
     )
-    expect(screen.getByText(messages.Onboarding.allSet)).toBeVisible()
+    expect(
+      screen.queryByText(messages.Onboarding.allSet),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText(messages.Onboarding.successMessage)).toBeVisible()
     fireEvent.click(screen.getByTestId('onboarding-enter-dashboard'))
     expect(mocks.push).toHaveBeenCalledWith('/dashboard')
   })
@@ -277,19 +309,21 @@ describe('onboarding page', () => {
     mocks.create.mockRejectedValueOnce(new Error('Business creation failed'))
     renderPage(<OnboardingPage />)
     reachFinalStep()
-    fireEvent.click(screen.getByTestId('onboarding-step4-finish'))
+    advanceThroughTerms()
+    fireEvent.click(screen.getByTestId('onboarding-next-button'))
     await waitFor(() =>
       expect(alert).toHaveBeenCalledWith('Business creation failed'),
     )
     expect(mocks.update).not.toHaveBeenCalled()
     expect(mocks.celebrate).not.toHaveBeenCalled()
-    expect(screen.getByTestId('onboarding-step4-finish')).toBeEnabled()
+    expect(screen.getByTestId('onboarding-next-button')).toBeEnabled()
   })
   it('reports profile persistence failure after business activation and permits retry', async () => {
     mocks.update.mockRejectedValueOnce(new Error('Preferences failed'))
     renderPage(<OnboardingPage />)
     reachFinalStep()
-    fireEvent.click(screen.getByTestId('onboarding-step4-finish'))
+    advanceThroughTerms()
+    fireEvent.click(screen.getByTestId('onboarding-next-button'))
     await waitFor(() =>
       expect(alert).toHaveBeenCalledWith('Preferences failed'),
     )
@@ -307,7 +341,8 @@ describe('onboarding page', () => {
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
     fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
     fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
-    fireEvent.click(screen.getByTestId('onboarding-step4-finish'))
+    advanceThroughTerms()
+    fireEvent.click(screen.getByTestId('onboarding-next-button'))
 
     await waitFor(() =>
       expect(alert).toHaveBeenCalledWith(messages.Common.error),
@@ -361,11 +396,10 @@ describe('onboarding page', () => {
     expect(preferences[4]).toHaveValue('Asia/Kolkata')
   })
 
-  it('orders logo, preferences, contact and notification steps without a heading back control', () => {
+  it('orders preferences, contact, notifications and terms steps', () => {
     renderPage(<OnboardingPage />)
     const heading = screen.getByTestId('onboarding-heading')
     expect(heading).toHaveTextContent(messages.Onboarding.welcome)
-    expect(screen.getByRole('button', { name: 'Upload logo' })).toBeVisible()
     fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
       target: { value: 'Acme' },
     })
@@ -376,7 +410,10 @@ describe('onboarding page', () => {
     expect(heading).toHaveTextContent(messages.Onboarding.businessDetails)
     fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
     expect(heading).toHaveTextContent(messages.Onboarding.notifications)
+    fireEvent.click(screen.getByTestId('onboarding-step4-continue'))
+    expect(heading).toHaveTextContent(messages.Onboarding.acceptTerms)
     expect(screen.getByTestId('onboarding-next-button')).toBeDisabled()
+    expect(screen.getByText(messages.Onboarding.termsRequired)).toBeVisible()
   })
 
   it('marks all five personalization selectors required and blocks progress when any is cleared', () => {
@@ -394,7 +431,8 @@ describe('onboarding page', () => {
     ]
     for (const id of ids) {
       const label = document.querySelector(`label[for="onboarding-${id}"]`)
-      expect(label?.querySelector('.text-destructive')).toHaveTextContent('*')
+      expect(label).toHaveAttribute('data-required', 'true')
+      expect(label).toHaveClass("after:content-['*']")
       expect(label?.parentElement).toHaveClass('min-w-0')
     }
     expect(screen.getByTestId('onboarding-preferences')).toHaveClass(
@@ -537,19 +575,19 @@ describe('notification preferences page', () => {
     expect(screen.getAllByText('13:00').length).toBeGreaterThan(0)
   })
 
-  it('persists the daily frequency and places reminder times directly under it', () => {
+  it('places advanced warning before frequency and keeps reminder times below frequency', () => {
     renderPage(<NotificationsPage />)
     const schedule = screen.getByTestId('notifications-reminder-schedule')
+    const warning = screen.getByTestId('notifications-reminder-days')
     const frequency = screen.getByTestId('notifications-daily-frequency')
     const firstTime = screen.getByTestId('reminder-time-1')
-    const warning = screen.getByTestId('notifications-reminder-days')
     expect(schedule).toContainElement(frequency)
     expect(
-      frequency.compareDocumentPosition(firstTime) &
+      warning.compareDocumentPosition(frequency) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
     expect(
-      firstTime.compareDocumentPosition(warning) &
+      frequency.compareDocumentPosition(firstTime) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
     fireEvent.change(frequency, { target: { value: '2' } })
@@ -627,7 +665,7 @@ describe('general preferences page', () => {
     const fields = screen.getByTestId('preferences-fields')
     expect(fields.querySelectorAll('label')).toHaveLength(5)
     for (const label of fields.querySelectorAll('label'))
-      expect(label.textContent).toContain('*')
+      expect(label).toHaveAttribute('data-required', 'true')
   })
 
   it.each([

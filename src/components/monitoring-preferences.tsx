@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { SettingSwitchRow } from '@/components/ui/setting-switch-row'
+import { InfoPopover } from '@/components/ui/info-popover'
 import { monitoringConfig } from '@/lib/monitoring/config'
 import {
   readTrackingPreference,
@@ -32,7 +33,11 @@ export function MonitoringPreferences() {
       id="monitoring-preference"
       data-testid="monitoring-preference"
       label={t('trackingLabel')}
-      description={t('trackingDescription')}
+      info={
+        <InfoPopover title={t('trackingLabel')}>
+          {t('trackingDescription')}
+        </InfoPopover>
+      }
       checked={
         allowed && monitoringConfig.enabled && monitoringConfig.policyApproved
       }

@@ -19,7 +19,10 @@ import {
 import { Button } from '@/components/ui/button'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
 import { Input } from '@/components/ui/input'
-import { AuthFieldLabel } from '@/features/auth/components/auth-field-label'
+import {
+  AUTH_FIELD_INPUT_CLASS,
+  AuthField,
+} from '@/features/auth/components/auth-field-label'
 import { authService } from '@/features/auth/services/auth.service'
 import Link from 'next/link'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -109,10 +112,12 @@ export default function ForgotPasswordPage() {
             </div>
           ) : (
             <form onSubmit={handleReset} className="space-y-4">
-              <div className="space-y-2">
-                <AuthFieldLabel htmlFor="email" icon={Mail}>
-                  {t('email')}
-                </AuthFieldLabel>
+              <AuthField
+                htmlFor="email"
+                icon={Mail}
+                label={t('email')}
+                required
+              >
                 <Input
                   id="email"
                   type="email"
@@ -121,9 +126,10 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-12 bg-canvas-parchment border-none rounded-sm"
+                  autoComplete="email"
+                  className={AUTH_FIELD_INPUT_CLASS}
                 />
-              </div>
+              </AuthField>
               {captcha.challenge}
               <Button
                 type="submit"

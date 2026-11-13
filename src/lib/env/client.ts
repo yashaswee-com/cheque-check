@@ -17,6 +17,7 @@ const result = publicEnvSchema.safeParse({
     process.env.NEXT_PUBLIC_MARKETING_ANALYTICS_ENABLED,
   NEXT_PUBLIC_META_PIXEL_ID: process.env.NEXT_PUBLIC_META_PIXEL_ID || undefined,
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+  NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
 })
 
 if (!result.success) {

@@ -71,6 +71,8 @@ it('preserves the appearance trigger, its dimensions and nearby controls while s
     </>,
   )
   const trigger = screen.getByLabelText('Appearance')
+  expect(trigger).toHaveClass('font-normal')
+  expect(trigger.querySelector('.rounded-full')).toBeNull()
   const neighbor = screen.getByRole('button', { name: 'Next setting' })
   const classes = trigger.className
   fireEvent.click(trigger)

@@ -17,6 +17,7 @@ import { useTimeFormatOptions } from '@/features/profile/hooks/use-time-format-o
 import { AppearancePreference } from '@/features/profile/components/appearance-preference'
 import { PreferenceField } from '@/features/profile/components/preference-field'
 import { PrivacyPreference } from '@/features/security/components/privacy-preference'
+import { InfoPopover } from '@/components/ui/info-popover'
 
 export default function PreferencesPage() {
   const t = useTranslations('Onboarding')
@@ -45,9 +46,8 @@ export default function PreferencesPage() {
   return (
     <div className="max-w-2xl space-y-8 pb-20">
       <AppearancePreference />
-      <PrivacyPreference />
       <div
-        className="grid grid-cols-1 gap-6 md:grid-cols-2"
+        className="grid grid-cols-1 gap-4 md:grid-cols-2"
         data-testid="preferences-fields"
       >
         <PreferenceField
@@ -91,7 +91,11 @@ export default function PreferencesPage() {
         <SettingSwitchRow
           id="reduce-motion"
           label={ts('reduceMotion')}
-          description={ts('reduceMotionDesc')}
+          info={
+            <InfoPopover title={ts('reduceMotion')}>
+              {ts('reduceMotionDesc')}
+            </InfoPopover>
+          }
           checked={profile.reduce_motion}
           onCheckedChange={(checked) =>
             savePreference({ reduce_motion: checked })
@@ -101,6 +105,10 @@ export default function PreferencesPage() {
 
       <div className="border-t border-border/50 pt-6">
         <MonitoringPreferences />
+      </div>
+
+      <div className="border-t border-border/50 pt-6">
+        <PrivacyPreference />
       </div>
     </div>
   )

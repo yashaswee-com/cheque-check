@@ -5,6 +5,7 @@ import { usePinGate } from '../hooks/use-pin-security'
 import { PinSettings } from './pin-settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { LockPasswordIcon as Lock } from '@hugeicons/core-free-icons'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
@@ -107,6 +108,7 @@ export function PinGate({ children }: { children: React.ReactNode }) {
                     <Label htmlFor="unlock-pin">{t('enterPin')}</Label>
                     <Input
                       id="unlock-pin"
+                      leftIcon={Lock}
                       autoFocus
                       type="password"
                       inputMode="numeric"

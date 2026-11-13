@@ -76,6 +76,7 @@ export const publicEnvSchema = z
       .regex(/^\d{5,30}$/)
       .default('1782530103005623'),
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: optionalString,
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: optionalString,
     NEXT_PUBLIC_LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .optional(),

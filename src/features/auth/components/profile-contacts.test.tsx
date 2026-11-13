@@ -38,6 +38,7 @@ describe('ProfileContacts', () => {
   it('leads with the read-only email for email and Google sign-ins', () => {
     state.data = { loginMethod: 'email' }
     render(<ProfileContacts />)
+    expect(screen.getByTestId('profile-contacts')).toHaveClass('rounded-lg')
     expect(order()).toEqual([
       ['email-section', 'true'],
       ['phone-section', 'false'],

@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MonitoringPreferences } from './monitoring-preferences'
 
@@ -33,16 +34,15 @@ describe('MonitoringPreferences', () => {
     )
   })
 
-  it('uses the shared preference row typography', () => {
+  it('shows tracking details on demand instead of inline', async () => {
     render(<MonitoringPreferences />)
     expect(screen.getByText('trackingLabel')).toHaveAttribute(
       'data-slot',
       'setting-switch-label',
     )
-    expect(screen.getByText('trackingDescription')).toHaveAttribute(
-      'data-slot',
-      'setting-switch-description',
-    )
+    expect(screen.queryByText('trackingDescription')).not.toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button'))
+    expect(await screen.findByText('trackingDescription')).toBeVisible()
   })
 
   it('synchronizes local events and relevant cross-tab storage changes', () => {

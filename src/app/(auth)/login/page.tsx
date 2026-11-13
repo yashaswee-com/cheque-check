@@ -14,13 +14,15 @@ import {
   Search01Icon as Search,
   Location01Icon as Location,
   TextFontIcon as TextIcon,
-  ViewIcon as Eye,
-  ViewOffIcon as EyeOff,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
 import { Input } from '@/components/ui/input'
-import { AuthFieldLabel } from '@/features/auth/components/auth-field-label'
+import {
+  AUTH_FIELD_INPUT_CLASS,
+  AuthField,
+} from '@/features/auth/components/auth-field-label'
+import { PasswordInput } from '@/components/ui/password-input'
 import { authService } from '@/features/auth/services/auth.service'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -60,7 +62,6 @@ export default function LoginPage() {
   const tc = useTranslations('Common')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const phoneForm = useRef<PhoneAuthFormHandle>(null)
@@ -141,57 +142,48 @@ export default function LoginPage() {
             />
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <AuthFieldLabel htmlFor="email" icon={Mail}>
-                  {t('email')}
-                </AuthFieldLabel>
+              <AuthField
+                htmlFor="email"
+                icon={Mail}
+                label={t('email')}
+                required
+              >
                 <Input
                   id="email"
                   type="email"
                   data-testid="login-email-input"
                   placeholder={t('emailPlaceholder')}
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-12 bg-canvas-parchment border-none rounded-sm"
+                  className={AUTH_FIELD_INPUT_CLASS}
                 />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <AuthFieldLabel htmlFor="password" icon={Lock}>
-                    {t('password')}
-                  </AuthFieldLabel>
+              </AuthField>
+              <AuthField
+                htmlFor="password"
+                icon={Lock}
+                label={t('password')}
+                required
+                action={
                   <Link
                     href="/forgot-password"
-                    className="text-xs font-medium text-primary hover:underline"
+                    className="text-xs text-primary hover:underline"
                   >
                     {t('forgotPassword')}
                   </Link>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    data-testid="login-password-input"
-                    placeholder={t('passwordPlaceholder')}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="h-12 bg-canvas-parchment border-none rounded-sm pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? (
-                      <HugeiconsIcon icon={EyeOff} className="h-5 w-5" />
-                    ) : (
-                      <HugeiconsIcon icon={Eye} className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
+                }
+              >
+                <PasswordInput
+                  id="password"
+                  data-testid="login-password-input"
+                  placeholder={t('passwordPlaceholder')}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className={AUTH_FIELD_INPUT_CLASS}
+                />
+              </AuthField>
               {captcha.challenge}
               <Button
                 type="submit"

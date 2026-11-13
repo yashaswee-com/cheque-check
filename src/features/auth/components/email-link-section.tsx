@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Mail01Icon } from '@hugeicons/core-free-icons'
+import { Mail01Icon, MailOpen01Icon } from '@hugeicons/core-free-icons'
+import { FieldError } from '@/components/ui/field-error'
 import { ContactField } from './contact-field'
 import { useEmailLink } from '../hooks/use-email-link'
 import { EmailLinkError } from '../email-link.types'
@@ -34,13 +35,6 @@ export function EmailLinkSection({ primary = false }: { primary?: boolean }) {
       value={linked}
       placeholder={query.isLoading ? t('loading') : t('unlinked')}
       verified={!!linked}
-      hint={
-        primary && linked
-          ? t('signInEmail')
-          : !linked && query.data && !primary
-            ? t('addEmailHint')
-            : undefined
-      }
     >
       {query.error ? (
         <div role="alert">
@@ -80,6 +74,7 @@ export function EmailLinkSection({ primary = false }: { primary?: boolean }) {
             <Input
               id="link-email"
               type="email"
+              leftIcon={MailOpen01Icon}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
@@ -99,7 +94,7 @@ export function EmailLinkSection({ primary = false }: { primary?: boolean }) {
         )
       )}
       {pending && !query.data?.email && <p role="status">{t('pending')}</p>}
-      {error && <p role="alert">{error}</p>}
+      {error && <FieldError className="ml-0">{error}</FieldError>}
     </ContactField>
   )
 }

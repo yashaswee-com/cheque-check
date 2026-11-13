@@ -21,7 +21,12 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AuthFieldLabel } from '@/features/auth/components/auth-field-label'
+import {
+  AUTH_FIELD_INPUT_CLASS,
+  AuthField,
+  AuthFieldLabel,
+} from '@/features/auth/components/auth-field-label'
+import { FieldError } from '@/components/ui/field-error'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { publicEnv } from '@/lib/env/client'
 import { cn } from '@/lib/utils'
@@ -242,24 +247,23 @@ export function PhoneAuthForm({
     ) : null
 
   const errorBlock = errorMessage ? (
-    <p
-      id={errorId}
-      role="alert"
-      data-testid="phone-auth-error"
-      className="text-sm text-destructive"
-    >
-      {errorMessage}
-    </p>
+    <div data-testid="phone-auth-error">
+      <FieldError id={errorId} className="ml-0 text-sm">
+        {errorMessage}
+      </FieldError>
+    </div>
   ) : null
 
   if (step === 'phone') {
     return (
-      <form onSubmit={handleSend} className="space-y-4" noValidate>
+      <form onSubmit={handleSend} className="space-y-3" noValidate>
         {purpose === 'signup' && (
-          <div className="space-y-2">
-            <AuthFieldLabel htmlFor={nameId} icon={UserIcon}>
-              {tc('fullName')}
-            </AuthFieldLabel>
+          <AuthField
+            htmlFor={nameId}
+            icon={UserIcon}
+            label={tc('fullName')}
+            required
+          >
             <Input
               id={nameId}
               type="text"
@@ -274,40 +278,44 @@ export function PhoneAuthForm({
               }}
               aria-invalid={error === 'name_required'}
               aria-describedby={error === 'name_required' ? errorId : undefined}
-              className="h-12 rounded-sm border-none bg-canvas-parchment"
+              className={AUTH_FIELD_INPUT_CLASS}
             />
-          </div>
+          </AuthField>
         )}
-        <div className="space-y-2">
-          <AuthFieldLabel htmlFor={phoneId} icon={CallIcon}>
-            {t('phoneLabel')}
-          </AuthFieldLabel>
-          <div
-            className="flex items-center gap-2"
-            data-testid="phone-auth-number-field"
+        <div className="space-y-1">
+          <AuthField
+            htmlFor={phoneId}
+            icon={CallIcon}
+            label={t('phoneLabel')}
+            required
           >
-            <PhoneInput
-              id={phoneId}
-              fixedCountry="IN"
-              data-testid="phone-auth-number-input"
-              placeholder={t('phonePlaceholder')}
-              value={national}
-              onChange={(value) => {
-                setNational(value)
-                setError(null)
-              }}
-              disabled={pending !== null}
-              aria-invalid={Boolean(error)}
-              aria-describedby={
-                error
-                  ? errorId
-                  : purpose === 'link'
-                    ? `${phoneId}-hint`
-                    : undefined
-              }
-              className="h-12 rounded-sm border-none bg-canvas-parchment"
-            />
-          </div>
+            <div
+              className="flex items-center gap-2"
+              data-testid="phone-auth-number-field"
+            >
+              <PhoneInput
+                id={phoneId}
+                fixedCountry="IN"
+                data-testid="phone-auth-number-input"
+                placeholder={t('phonePlaceholder')}
+                value={national}
+                onChange={(value) => {
+                  setNational(value)
+                  setError(null)
+                }}
+                disabled={pending !== null}
+                aria-invalid={Boolean(error)}
+                aria-describedby={
+                  error
+                    ? errorId
+                    : purpose === 'link'
+                      ? `${phoneId}-hint`
+                      : undefined
+                }
+                className="h-11 rounded-none bg-transparent focus-within:ring-0"
+              />
+            </div>
+          </AuthField>
           {purpose === 'link' && (
             <p id={`${phoneId}-hint`} className="text-xs text-muted-foreground">
               {t('phoneHint')}
@@ -345,7 +353,7 @@ export function PhoneAuthForm({
   return (
     <form onSubmit={handleVerify} className="space-y-4" noValidate>
       <div className="space-y-2">
-        <AuthFieldLabel htmlFor={codeId} icon={Key01Icon}>
+        <AuthFieldLabel htmlFor={codeId} icon={Key01Icon} required>
           {t('codeLabel')}
         </AuthFieldLabel>
         <p className="text-sm text-muted-foreground" aria-live="polite">

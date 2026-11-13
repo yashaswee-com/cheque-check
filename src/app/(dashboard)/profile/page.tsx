@@ -7,11 +7,12 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowRight01Icon as ChevronRight,
   Delete02Icon as Trash2,
+  Logout01Icon as LogOut,
   Settings02Icon as Settings2,
-  Tick02Icon as Check,
   UserIcon as User,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
 import { EditableAvatar } from '@/components/ui/editable-avatar'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,6 +22,7 @@ import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useSettings } from '@/features/settings/hooks/use-settings'
 import { ProfileContacts } from '@/features/auth/components/profile-contacts'
 import { usePremiumAvatarRing } from '@/features/monetization/hooks/use-premium-avatar-ring'
+import { ReplayTour } from '@/features/tour/components/replay-tour'
 
 const DeleteConfirmationDialog = dynamic(
   () =>
@@ -50,7 +52,7 @@ async function clearPwaCache() {
 export default function ProfilePage() {
   const t = useTranslations('Settings')
   const { profile, updateProfile, isLoading } = useProfile()
-  const { handleDeleteProfile } = useSettings()
+  const { handleDeleteProfile, handleLogout } = useSettings()
   const premiumRing = usePremiumAvatarRing()
   const [draftName, setDraftName] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -104,7 +106,7 @@ export default function ProfilePage() {
         />
       </div>
 
-      <form onSubmit={saveName} className="space-y-6">
+      <form id="profile-edit-form" onSubmit={saveName} className="space-y-4">
         <div className="space-y-2">
           <Label
             htmlFor="profile-name"
@@ -119,49 +121,53 @@ export default function ProfilePage() {
             maxLength={100}
             onChange={(event) => setDraftName(event.target.value)}
             placeholder={t('fullNamePlaceholder')}
-            className="h-14 rounded-sm border-none bg-canvas-parchment text-lg font-semibold dark:bg-surface-tile-1"
+            enableMic={false}
+            className="h-14 rounded-sm border-none bg-canvas-parchment text-lg font-normal dark:bg-surface-tile-1"
           />
         </div>
-
-        <Button
-          type="submit"
-          className="h-14 w-full rounded-full text-lg"
-          disabled={!trimmedName || !isDirty || isSaving}
-          loading={isSaving}
-        >
-          {t('saveProfile')}
-          <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
-        </Button>
       </form>
 
       <ProfileContacts />
 
       <div className="space-y-3">
+        <ReplayTour />
+        <Button
+          variant="outline"
+          data-testid="settings-logout-button"
+          className="w-full rounded-full"
+          onClick={handleLogout}
+        >
+          <HugeiconsIcon icon={LogOut} className="mr-2 h-4 w-4" />
+          {t('signOut')}
+        </Button>
+      </div>
+
+      <div className="space-y-3">
         <div className="flex items-center gap-2 px-2">
-          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-destructive/10 text-destructive">
+          <div className="flex h-5 w-5 items-center justify-center rounded-md text-destructive">
             <HugeiconsIcon icon={Trash2} className="h-3 w-3" />
           </div>
           <h3 className="text-[10px] font-semibold uppercase tracking-wider text-destructive">
             {t('dangerZone')}
           </h3>
         </div>
-        <div className="divide-y overflow-hidden rounded-lg border border-destructive/20 bg-destructive/5">
+        <div className="divide-y overflow-hidden rounded-lg border border-border bg-card">
           <DeleteConfirmationDialog
             title={t('clearCacheTitle')}
             description={t('clearCacheDescription')}
             confirmName="CLEAR"
             onDelete={clearPwaCache}
             trigger={
-              <div className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-destructive/10">
+              <div className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-muted/30">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive text-destructive-foreground shadow-sm">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg text-destructive">
                     <HugeiconsIcon icon={Settings2} className="h-4 w-4" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-destructive">
+                    <span className="text-sm text-destructive">
                       {t('clearCache')}
                     </span>
-                    <span className="mt-0.5 text-[10px] font-medium leading-tight text-destructive/70">
+                    <span className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
                       {t('clearCacheDesc')}
                     </span>
                   </div>
@@ -178,10 +184,10 @@ export default function ProfilePage() {
             description={t('deleteProfileDescription')}
             confirmName={profile?.name || profile?.email || ''}
             reasons={[
-              'I no longer need this account',
-              'I have privacy concerns',
-              'I am switching to another service',
-              'Something else',
+              t('deleteReasonNotNeeded'),
+              t('deleteReasonPrivacy'),
+              t('deleteReasonSwitching'),
+              t('deleteReasonOther'),
             ]}
             onDelete={async (selectedReason) => {
               if (selectedReason) {
@@ -193,16 +199,16 @@ export default function ProfilePage() {
               await handleDeleteProfile()
             }}
             trigger={
-              <div className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-destructive/10">
+              <div className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-muted/30">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive text-destructive-foreground shadow-sm">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg text-destructive">
                     <HugeiconsIcon icon={Trash2} className="h-4 w-4" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-destructive">
+                    <span className="text-sm text-destructive">
                       {t('deleteMyAccount')}
                     </span>
-                    <span className="mt-0.5 text-[10px] font-medium leading-tight text-destructive/70">
+                    <span className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
                       {t('deleteMyAccountDesc')}
                     </span>
                   </div>
@@ -216,6 +222,12 @@ export default function ProfilePage() {
           />
         </div>
       </div>
+      <EditSaveBar
+        formId="profile-edit-form"
+        label={t('saveProfile')}
+        isDirty={isDirty && !!trimmedName}
+        isSaving={isSaving}
+      />
     </div>
   )
 }

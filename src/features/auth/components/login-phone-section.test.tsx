@@ -26,12 +26,12 @@ vi.mock('./phone-auth-form', () => ({
   }: {
     purpose: string
     onCancel: () => void
-    onVerified: () => void
+    onVerified: (phoneE164: string) => void
   }) => (
     <div>
       <p>Form {purpose}</p>
       <button onClick={onCancel}>Cancel linking</button>
-      <button onClick={onVerified}>Verified</button>
+      <button onClick={() => onVerified('+919876543210')}>Verified</button>
     </div>
   ),
 }))
@@ -58,8 +58,8 @@ describe('LoginPhoneSection', () => {
     expect(screen.getByTestId('login-phone-link-button')).toBeDisabled()
     expect(screen.getByLabelText(messages.PhoneAuth.linkTitle)).toHaveValue('')
     expect(
-      screen.getByText(messages.PhoneAuth.linkDisabled),
-    ).toBeInTheDocument()
+      screen.queryByText(messages.PhoneAuth.linkDisabled),
+    ).not.toBeInTheDocument()
   })
   it('does not display an unconfirmed login phone as linked', async () => {
     mocks.getUser.mockResolvedValue({
@@ -73,7 +73,6 @@ describe('LoginPhoneSection', () => {
   it('offers linking for an unlinked user and permits canceling', async () => {
     mount()
     await waitFor(() => expect(mocks.getUser).toHaveBeenCalledOnce())
-    expect(screen.getByText(messages.PhoneAuth.notLinked)).toBeInTheDocument()
     fireEvent.click(screen.getByTestId('login-phone-link-button'))
     expect(screen.getByText('Form link')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Cancel linking' }))
@@ -103,6 +102,9 @@ describe('LoginPhoneSection', () => {
     await waitFor(() => expect(mocks.getUser).toHaveBeenCalledOnce())
     fireEvent.click(screen.getByTestId('login-phone-link-button'))
     fireEvent.click(screen.getByRole('button', { name: 'Verified' }))
+    expect(screen.getByLabelText(messages.PhoneAuth.linkTitle)).toHaveValue(
+      '+919876543210',
+    )
     expect(screen.getByRole('status')).toHaveTextContent(
       messages.PhoneAuth.linkSuccess,
     )
@@ -127,7 +129,9 @@ describe('LoginPhoneSection', () => {
     expect(screen.getByLabelText(messages.PhoneAuth.linkTitle)).toHaveValue(
       '+919876543210',
     )
-    expect(screen.getByText(messages.PhoneAuth.signInPhone)).toBeVisible()
+    expect(
+      screen.queryByText(messages.PhoneAuth.signInPhone),
+    ).not.toBeInTheDocument()
     expect(screen.queryByTestId('login-phone-link-button')).toBeNull()
   })
 

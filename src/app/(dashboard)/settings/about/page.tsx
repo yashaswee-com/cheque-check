@@ -1,3 +1,5 @@
+'use client'
+
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   UserIcon as User,
@@ -6,10 +8,12 @@ import {
 import { useTranslations } from 'next-intl'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
 import { APP_VERSION } from '@/lib/app-version'
+import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { DeveloperMessage } from '@/features/announcements/components/developer-message'
 
 export default function AboutPage() {
   const t = useTranslations('Settings')
+  const display = useDisplayFormat()
 
   return (
     <div className="flex flex-col items-center justify-center px-4 pt-12 pb-20">
@@ -63,6 +67,9 @@ export default function AboutPage() {
           {t('madeWithLove')}
         </p>
         <DeveloperMessage />
+        <p className="text-center text-xs text-muted-foreground">
+          {t('lastUpdated', { date: display.month('2026-11') })}
+        </p>
       </div>
     </div>
   )

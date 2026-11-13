@@ -18,6 +18,10 @@ import {
 } from '../validators/security'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Key01Icon as Key,
+  LockPasswordIcon as Lock,
+} from '@hugeicons/core-free-icons'
 import { Label } from '@/components/ui/label'
 import { logger } from '@/lib/logger'
 import { InfoPopover } from '@/components/ui/info-popover'
@@ -152,6 +156,7 @@ export function PinSettings({
           <Label htmlFor="pin-password">{t('password')}</Label>
           <Input
             id="pin-password"
+            leftIcon={Lock}
             type="password"
             autoComplete="current-password"
             value={password}
@@ -223,6 +228,7 @@ export function PinSettings({
           <Label htmlFor="pin-auth-code">{t('authCode')}</Label>
           <Input
             id="pin-auth-code"
+            leftIcon={Key}
             type="password"
             inputMode="numeric"
             autoComplete="one-time-code"
@@ -262,6 +268,7 @@ export function PinSettings({
         <Label htmlFor="new-pin">{t('newPin')}</Label>
         <Input
           id="new-pin"
+          leftIcon={Key}
           type="password"
           inputMode="numeric"
           autoComplete="new-password"
@@ -279,6 +286,7 @@ export function PinSettings({
         <Label htmlFor="confirm-pin">{t('confirmPin')}</Label>
         <Input
           id="confirm-pin"
+          leftIcon={Key}
           type="password"
           inputMode="numeric"
           autoComplete="new-password"

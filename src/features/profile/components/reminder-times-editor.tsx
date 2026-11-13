@@ -32,7 +32,7 @@ export function ReminderTimesEditor({
   return (
     <div className="space-y-3" data-testid="reminder-times-editor">
       <div className="flex items-center gap-1">
-        <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
+        <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground ml-1">
           {ts('reminderTimes')}
         </Label>
         <InfoPopover title={ts('reminderTimes')}>
@@ -67,7 +67,7 @@ export function ReminderTimesEditor({
                   if (!disabled && value && value !== time)
                     onChange(replaceReminderTime(current, index, value))
                 }}
-                className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
+                className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg font-normal **:font-normal"
               />
             </div>
           )

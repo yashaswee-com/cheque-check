@@ -2,15 +2,9 @@
 
 import { useState } from 'react'
 import {
-  UserIcon as User,
-  Mail01Icon as Mail,
-  LockPasswordIcon as Lock,
-  CallIcon as Phone,
   Calendar03Icon as Calendar,
-  HashtagIcon as Hash,
-  Note01Icon as Note,
-  Search01Icon as Search,
-  Location01Icon as Location,
+  CallIcon as Phone,
+  Clock01Icon as Clock,
   TextFontIcon as TextIcon,
   Wallet01Icon as Wallet,
   Building03Icon as Building2,
@@ -22,6 +16,7 @@ import {
   Tick02Icon as Check,
 } from '@hugeicons/core-free-icons'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,7 +28,6 @@ import { useTimeFormatOptions } from '@/features/profile/hooks/use-time-format-o
 import { useQueryClient } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Combobox } from '@/components/ui/combobox'
-import { cn } from '@/lib/utils'
 import { queryKeys } from '@/lib/query-keys'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -45,7 +39,9 @@ import {
   StepperTrigger,
 } from '@/components/reui/stepper'
 import { useTranslations } from 'next-intl'
-import { EditableAvatar } from '@/components/ui/editable-avatar'
+import type { IconSvgElement } from '@hugeicons/react'
+import { FieldError } from '@/components/ui/field-error'
+import { LocationInput } from '@/components/ui/location-input'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { InfoPopover } from '@/components/ui/info-popover'
 import { PhoneInput } from '@/components/ui/phone-input'
@@ -60,22 +56,14 @@ import {
 import { useReminderOptions } from '@/features/profile/hooks/use-reminder-options'
 import { syncMarketing } from '@/features/analytics/browser'
 
-const COLORS = [
-  '#0066cc',
-  '#34C759',
-  '#FF9500',
-  '#FF3B30',
-  '#AF52DE',
-  '#5856D6',
-  '#8E8E93',
-]
-
 export default function OnboardingPage() {
   const t = useTranslations('Onboarding')
   const tc = useTranslations('Common')
 
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [termsAttempted, setTermsAttempted] = useState(false)
   const router = useRouter()
   const queryClient = useQueryClient()
   const { profile, updateProfile } = useProfile()
@@ -88,11 +76,9 @@ export default function OnboardingPage() {
   // Form State
   const [formData, setFormData] = useState({
     businessName: '',
-    businessEmail: '',
     businessPhone: '',
     businessAddress: '',
-    businessColor: '#0066cc',
-    businessLogoUrl: null as string | null,
+    businessColor: '#6b7280',
     currency: '₹',
     dateFormat: 'dd/MM/yyyy',
     timeFormat: '12h',
@@ -120,7 +106,10 @@ export default function OnboardingPage() {
     }))
   }
 
-  const nextStep = () => setStep((s) => Math.min(s + 1, 5))
+  const nextStep = () => {
+    if (step === 4) setTermsAttempted(true)
+    setStep((current) => Math.min(current + 1, 6))
+  }
   const prevStep = () => setStep((s) => Math.max(s - 1, 1))
   const isBusinessPhoneValid = businessSchema.shape.phone.safeParse(
     formData.businessPhone,
@@ -135,56 +124,68 @@ export default function OnboardingPage() {
   const canAdvance =
     (step === 1 && Boolean(formData.businessName.trim())) ||
     (step === 2 && arePreferencesComplete) ||
-    (step === 3 && isBusinessPhoneValid)
+    (step === 3 && isBusinessPhoneValid) ||
+    step === 4 ||
+    (step === 5 && termsAccepted)
   const preferenceFields: Array<{
     id: string
     key: 'currency' | 'language' | 'dateFormat' | 'timeFormat' | 'timeZone'
     label: string
+    icon: IconSvgElement
     options: Array<{ value: string; label: string }>
   }> = [
     {
       id: 'currency',
       key: 'currency',
       label: t('currency'),
+      icon: Wallet,
       options: CURRENCY_OPTIONS,
     },
     {
       id: 'language',
       key: 'language',
       label: t('language'),
+      icon: TextIcon,
       options: LANGUAGE_OPTIONS,
     },
     {
       id: 'date-format',
       key: 'dateFormat',
       label: t('dateFormat'),
+      icon: Calendar,
       options: DATE_FORMAT_OPTIONS,
     },
     {
       id: 'time-format',
       key: 'timeFormat',
       label: t('timeFormat'),
+      icon: Clock,
       options: timeFormatOptions,
     },
     {
       id: 'time-zone',
       key: 'timeZone',
       label: t('timeZone'),
+      icon: MapPin,
       options: TIMEZONE_OPTIONS,
     },
   ]
 
   const handleFinish = async () => {
+    if (!termsAccepted) {
+      setTermsAttempted(true)
+      return
+    }
     setIsSubmitting(true)
     try {
       // 1. Create Business
       const business = await businessService.create({
         name: formData.businessName,
-        email: formData.businessEmail || null,
+        email: null,
         phone: formData.businessPhone || null,
         address: formData.businessAddress || null,
         color: formData.businessColor,
-        logo_url: formData.businessLogoUrl,
+        logo_url: null,
       })
       await queryClient.invalidateQueries({
         queryKey: queryKeys.businesses.all(),
@@ -203,7 +204,7 @@ export default function OnboardingPage() {
       })
 
       void syncMarketing('onboarding_completed')
-      setStep(5)
+      setStep(6)
     } catch (error) {
       alert(error instanceof Error ? error.message : tc('error'))
     } finally {
@@ -218,54 +219,60 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-full bg-background dark:bg-black selection:bg-primary/10 transition-colors duration-500">
+    <div className="min-h-full bg-background dark:bg-black selection:bg-muted transition-colors duration-500">
       <ClipboardGuard />
-      <div className="mx-auto max-w-2xl px-6 py-12 md:py-24 space-y-12">
+      <div className="mx-auto max-w-2xl space-y-8 px-6 py-8 md:py-16">
         {/* Header */}
         <div className="flex items-center justify-center min-h-[64px]">
           <div className="text-center" data-testid="onboarding-heading">
-            {step < 5 ? (
+            {step < 6 ? (
               <h1 className="text-display-md md:text-display-lg font-semibold tracking-tight text-ink dark:text-white flex items-center justify-center gap-3">
                 {step === 1 && (
                   <HugeiconsIcon
                     icon={Wallet}
-                    className="h-8 w-8 text-primary"
+                    className="h-8 w-8 text-muted-foreground"
                   />
                 )}
                 {step === 2 && (
                   <HugeiconsIcon
                     icon={Settings2}
-                    className="h-8 w-8 text-primary"
+                    className="h-8 w-8 text-muted-foreground"
                   />
                 )}
                 {step === 3 && (
                   <HugeiconsIcon
                     icon={Building2}
-                    className="h-8 w-8 text-primary"
+                    className="h-8 w-8 text-muted-foreground"
                   />
                 )}
                 {step === 4 && (
-                  <HugeiconsIcon icon={Bell} className="h-8 w-8 text-primary" />
+                  <HugeiconsIcon
+                    icon={Bell}
+                    className="h-8 w-8 text-muted-foreground"
+                  />
+                )}
+                {step === 5 && (
+                  <HugeiconsIcon
+                    icon={Check}
+                    className="h-8 w-8 text-muted-foreground"
+                  />
                 )}
                 <span>
                   {step === 1 && t('welcome')}
                   {step === 2 && t('personalizeExperience')}
                   {step === 3 && t('businessDetails')}
                   {step === 4 && t('notifications')}
+                  {step === 5 && t('acceptTerms')}
                 </span>
               </h1>
-            ) : (
-              <h1 className="text-display-lg font-semibold tracking-tight text-ink dark:text-white">
-                {t('allSet')}
-              </h1>
-            )}
+            ) : null}
           </div>
         </div>
 
         {/* Progress Bar */}
-        {step < 5 && (
+        {step < 6 && (
           <Stepper
-            value={step}
+            value={Math.min(step, 5)}
             className="w-full max-w-xl mx-auto space-y-8"
             indicators={{
               completed: <HugeiconsIcon icon={Check} className="size-3.5" />,
@@ -301,6 +308,10 @@ export default function OnboardingPage() {
                     title: t('notifications'),
                     icon: <HugeiconsIcon icon={Bell} className="size-4" />,
                   },
+                  {
+                    title: t('acceptTerms'),
+                    icon: <HugeiconsIcon icon={Check} className="size-4" />,
+                  },
                 ].map((s, index) => (
                   <StepperItem
                     key={index}
@@ -312,7 +323,7 @@ export default function OnboardingPage() {
                         {s.icon}
                       </StepperIndicator>
                     </StepperTrigger>
-                    {4 > index + 1 && (
+                    {5 > index + 1 && (
                       <StepperSeparator className="group-data-[state=completed]/step:bg-success absolute inset-x-0 left-[50%] top-4 m-0 w-full z-0" />
                     )}
                   </StepperItem>
@@ -322,8 +333,18 @@ export default function OnboardingPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={nextStep}
-                disabled={!canAdvance}
+                onClick={() => {
+                  if (step === 5) {
+                    if (!termsAccepted) {
+                      setTermsAttempted(true)
+                      return
+                    }
+                    void handleFinish()
+                  } else {
+                    nextStep()
+                  }
+                }}
+                disabled={!canAdvance || (step === 5 && isSubmitting)}
                 data-testid="onboarding-next-button"
                 className="rounded-full h-8 w-8 shrink-0 hover:bg-canvas-parchment"
               >
@@ -342,48 +363,21 @@ export default function OnboardingPage() {
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                className="space-y-8"
+                className="space-y-6"
               >
-                <div className="space-y-6">
-                  <div className="flex flex-col items-center gap-3 py-2">
-                    <EditableAvatar
-                      name={formData.businessName}
-                      color={formData.businessColor}
-                      imageUrl={formData.businessLogoUrl}
-                      onUpload={async (url) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          businessLogoUrl: url,
-                        }))
-                      }
-                      onDelete={async () =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          businessLogoUrl: null,
-                        }))
-                      }
-                      size="xl"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {t('businessLogo')}
-                    </p>
-                  </div>
-                  <div className="space-y-3">
+                <div className="space-y-4">
+                  <div className="space-y-2">
                     <Label
                       htmlFor="onboarding-business-name"
                       required
-                      className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1"
+                      className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground ml-1"
                     >
                       {t('businessName')}
                     </Label>
                     <div className="relative group">
-                      <HugeiconsIcon
-                        icon={Building2}
-                        className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary"
-                      />
                       <Input
                         id="onboarding-business-name"
-                        leftIcon={TextIcon}
+                        leftIcon={Building2}
                         data-testid="onboarding-business-name-input"
                         placeholder={t('businessNamePlaceholder')}
                         value={formData.businessName}
@@ -393,43 +387,14 @@ export default function OnboardingPage() {
                             businessName: e.target.value,
                           })
                         }
-                        className="h-14 pl-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none text-xl font-medium rounded-sm transition-all focus:ring-2 focus:ring-primary/20"
+                        className="h-12 bg-background text-base rounded-sm transition-all focus:ring-2 focus:ring-muted-foreground/20"
                       />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                      {t('brandColor')}
-                    </Label>
-                    <div
-                      className="flex flex-nowrap items-center justify-between gap-2 p-1 sm:justify-start sm:gap-3"
-                      data-testid="onboarding-brand-colors"
-                    >
-                      {COLORS.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          aria-label={c}
-                          aria-pressed={formData.businessColor === c}
-                          onClick={() =>
-                            setFormData({ ...formData, businessColor: c })
-                          }
-                          className={cn(
-                            'size-10 shrink-0 rounded-full transition-all active:scale-95 ring-offset-2 dark:ring-offset-black',
-                            formData.businessColor === c
-                              ? 'ring-2 ring-primary scale-110'
-                              : 'hover:scale-105 opacity-80 hover:opacity-100',
-                          )}
-                          style={{ backgroundColor: c }}
-                        />
-                      ))}
                     </div>
                   </div>
                 </div>
 
                 <Button
-                  className="w-full rounded-pill h-14 text-lg font-medium active:scale-95 transition-transform"
+                  className="w-full rounded-pill h-12 bg-foreground text-background font-medium hover:bg-foreground/90 active:scale-95 transition-transform"
                   data-testid="onboarding-step1-continue"
                   onClick={nextStep}
                   disabled={!formData.businessName.trim()}
@@ -450,7 +415,7 @@ export default function OnboardingPage() {
                 className="space-y-6"
               >
                 <div
-                  className="grid min-w-0 grid-cols-1 gap-6"
+                  className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2"
                   data-testid="onboarding-preferences"
                 >
                   {preferenceFields.map((field) => (
@@ -458,8 +423,13 @@ export default function OnboardingPage() {
                       <Label
                         htmlFor={`onboarding-${field.id}`}
                         required
-                        className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1"
+                        className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1"
                       >
+                        <HugeiconsIcon
+                          icon={field.icon}
+                          className="mr-1 inline size-4 align-text-bottom"
+                          aria-hidden="true"
+                        />
                         {field.label}
                       </Label>
                       <Combobox
@@ -470,19 +440,17 @@ export default function OnboardingPage() {
                         onValueChange={(v) =>
                           setFormData((prev) => ({ ...prev, [field.key]: v }))
                         }
-                        className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
+                        className="h-12 bg-background border border-border rounded-sm text-base font-normal"
                       />
                       {!formData[field.key] && (
-                        <p className="text-xs text-destructive ml-1">
-                          {t('fieldRequired')}
-                        </p>
+                        <FieldError>{t('fieldRequired')}</FieldError>
                       )}
                     </div>
                   ))}
                 </div>
 
                 <Button
-                  className="w-full rounded-pill h-14 text-lg font-medium active:scale-95 transition-transform"
+                  className="w-full rounded-pill h-12 bg-foreground text-background text-base font-medium hover:bg-foreground/90 active:scale-95 transition-transform"
                   data-testid="onboarding-step2-continue"
                   onClick={nextStep}
                   disabled={!arePreferencesComplete}
@@ -504,77 +472,64 @@ export default function OnboardingPage() {
               >
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                      {t('businessEmail')}
-                    </Label>
-                    <div className="relative group">
+                    <Label
+                      htmlFor="onboarding-business-phone"
+                      className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1"
+                    >
                       <HugeiconsIcon
-                        icon={Mail}
-                        className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors"
+                        icon={Phone}
+                        className="mr-1 inline size-4 align-text-bottom"
+                        aria-hidden="true"
                       />
-                      <Input
-                        leftIcon={Mail}
-                        type="email"
-                        placeholder={t('businessEmailPlaceholder')}
-                        value={formData.businessEmail}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            businessEmail: e.target.value,
-                          })
-                        }
-                        className="h-14 pl-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none text-lg rounded-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
                       {t('businessPhone')}
                     </Label>
                     <PhoneInput
+                      id="onboarding-business-phone"
                       placeholder={t('businessPhonePlaceholder')}
                       value={formData.businessPhone}
                       onChange={(businessPhone) =>
                         setFormData((prev) => ({ ...prev, businessPhone }))
                       }
                       aria-invalid={!isBusinessPhoneValid}
-                      className="dark:bg-surface-tile-1 text-lg"
+                      className="h-12 dark:bg-surface-tile-1 text-base"
                     />
-                    {!isBusinessPhoneValid && (
-                      <p className="text-xs text-destructive ml-1">
+                    {formData.businessPhone && !isBusinessPhoneValid && (
+                      <FieldError id="onboarding-business-phone-error">
                         {tc('invalidPhone')}
-                      </p>
+                      </FieldError>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                      {t('headquarters')}
-                    </Label>
-                    <div className="relative group">
+                    <Label
+                      htmlFor="onboarding-headquarters"
+                      className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1"
+                    >
                       <HugeiconsIcon
                         icon={MapPin}
-                        className="absolute left-5 top-5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors"
+                        className="mr-1 inline size-4 align-text-bottom"
+                        aria-hidden="true"
                       />
-                      <Input
-                        leftIcon={TextIcon}
-                        placeholder={t('headquartersPlaceholder')}
-                        value={formData.businessAddress}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            businessAddress: e.target.value,
-                          })
-                        }
-                        className="h-14 pl-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none text-lg rounded-sm"
-                      />
-                    </div>
+                      {t('headquarters')}
+                    </Label>
+                    <LocationInput
+                      id="onboarding-headquarters"
+                      data-testid="onboarding-headquarters-input"
+                      placeholder={t('headquartersPlaceholder')}
+                      value={formData.businessAddress}
+                      onChange={(businessAddress) =>
+                        setFormData((previous) => ({
+                          ...previous,
+                          businessAddress,
+                        }))
+                      }
+                      className="h-12 bg-background border border-border text-base rounded-sm"
+                    />
                   </div>
                 </div>
 
                 <Button
-                  className="w-full rounded-pill h-14 text-lg font-medium active:scale-95 transition-transform"
+                  className="w-full rounded-pill h-12 bg-foreground text-background text-base font-medium hover:bg-foreground/90 active:scale-95 transition-transform"
                   data-testid="onboarding-step3-continue"
                   onClick={nextStep}
                   disabled={!isBusinessPhoneValid}
@@ -592,32 +547,12 @@ export default function OnboardingPage() {
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                className="space-y-8"
+                className="space-y-4"
               >
-                <div className="space-y-6">
+                <div className="space-y-3">
                   <div className="min-w-0 space-y-2">
                     <div className="flex items-center gap-1">
-                      <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                        {t('dailyFrequency')}
-                      </Label>
-                      <InfoPopover title={t('dailyFrequency')}>
-                        {t('dailyFrequencyHelp')}
-                      </InfoPopover>
-                    </div>
-                    <Combobox
-                      options={REMINDERS_PER_DAY_OPTIONS}
-                      value={formData.remindersPerDay}
-                      allowDeselect={false}
-                      onValueChange={(v) =>
-                        setFormData({ ...formData, remindersPerDay: v })
-                      }
-                      className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
-                    />
-                  </div>
-
-                  <div className="min-w-0 space-y-2">
-                    <div className="flex items-center gap-1">
-                      <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
+                      <Label className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1">
                         {t('advancedWarning')}
                       </Label>
                       <InfoPopover title={t('advancedWarning')}>
@@ -628,22 +563,38 @@ export default function OnboardingPage() {
                       options={REMINDER_FREQUENCY_OPTIONS}
                       value={formData.defaultReminderDays}
                       allowDeselect={false}
+                      testId="onboarding-advanced-warning"
                       onValueChange={(v) =>
                         setFormData({ ...formData, defaultReminderDays: v })
                       }
-                      className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
+                      className="h-12 bg-background border border-border rounded-sm text-base font-normal"
+                    />
+                  </div>
+                  <div className="min-w-0 space-y-2">
+                    <div className="flex items-center gap-1">
+                      <Label className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1">
+                        {t('dailyFrequency')}
+                      </Label>
+                      <InfoPopover title={t('dailyFrequency')}>
+                        {t('dailyFrequencyHelp')}
+                      </InfoPopover>
+                    </div>
+                    <Combobox
+                      options={REMINDERS_PER_DAY_OPTIONS}
+                      value={formData.remindersPerDay}
+                      allowDeselect={false}
+                      testId="onboarding-daily-frequency"
+                      onValueChange={(v) =>
+                        setFormData({ ...formData, remindersPerDay: v })
+                      }
+                      className="h-12 bg-background border border-border rounded-sm text-base font-normal"
                     />
                   </div>
                 </div>
 
-                <div className="p-6 rounded-lg bg-primary/5 dark:bg-primary/10 border border-primary/10 space-y-4">
+                <div className="p-4 rounded-lg bg-muted/40 border border-border space-y-4">
                   <div className="flex items-center gap-4">
-                    <EntityAvatar
-                      name={formData.businessName}
-                      color={formData.businessColor}
-                      imageUrl={formData.businessLogoUrl}
-                      size="lg"
-                    />
+                    <EntityAvatar name={formData.businessName} size="lg" />
                     <div className="min-w-0">
                       <h3 className="truncate font-semibold text-ink dark:text-white">
                         {formData.businessName}
@@ -656,22 +607,77 @@ export default function OnboardingPage() {
                 </div>
 
                 <Button
-                  className="w-full rounded-pill h-14 text-lg font-medium active:scale-95 transition-transform"
-                  data-testid="onboarding-step4-finish"
-                  onClick={handleFinish}
-                  disabled={isSubmitting}
-                  loading={isSubmitting}
+                  className="w-full rounded-pill h-12 bg-foreground text-background text-base font-medium hover:bg-foreground/90 active:scale-95 transition-transform"
+                  data-testid="onboarding-step4-continue"
+                  onClick={nextStep}
                 >
-                  {t('finishSetup')}{' '}
-                  <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
+                  {tc('continue')}{' '}
+                  <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
             )}
 
             {step === 5 && (
-              <CreationSuccessScreen
+              <motion.div
                 key="step5"
-                title={t('readyToGo')}
+                variants={containerVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="space-y-6"
+              >
+                <div className="space-y-2">
+                  <h2 className="text-xl font-medium">{t('acceptTerms')}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {t('termsDescription')}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border p-4">
+                  <div className="flex items-start gap-3">
+                    <input
+                      id="onboarding-accept-terms"
+                      type="checkbox"
+                      checked={termsAccepted}
+                      onChange={(event) => {
+                        setTermsAccepted(event.target.checked)
+                        setTermsAttempted(false)
+                      }}
+                      className="mt-1 size-4 shrink-0 accent-foreground"
+                      data-testid="onboarding-accept-terms-checkbox"
+                    />
+                    <Label
+                      htmlFor="onboarding-accept-terms"
+                      required
+                      className="text-sm font-normal leading-6"
+                    >
+                      {t('termsAgreementPrefix')}{' '}
+                      <Link
+                        href="/settings/terms-and-conditions"
+                        className="text-foreground underline underline-offset-2"
+                      >
+                        {t('termsAndConditions')}
+                      </Link>{' '}
+                      {t('and')}{' '}
+                      <Link
+                        href="/settings/privacy-policy"
+                        className="text-foreground underline underline-offset-2"
+                      >
+                        {t('privacyPolicy')}
+                      </Link>
+                    </Label>
+                  </div>
+                  {termsAttempted && !termsAccepted && (
+                    <FieldError className="mt-2">
+                      {t('termsRequired')}
+                    </FieldError>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {step === 6 && (
+              <CreationSuccessScreen
+                key="step6"
                 description={t('successMessage')}
                 ctaLabel={t('enterDashboard')}
                 continueTestId="onboarding-enter-dashboard"

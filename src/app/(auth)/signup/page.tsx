@@ -14,13 +14,15 @@ import {
   Search01Icon as Search,
   Location01Icon as Location,
   TextFontIcon as TextIcon,
-  ViewIcon as Eye,
-  ViewOffIcon as EyeOff,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { SkeletonImage } from '@/components/ui/skeleton-image'
 import { Input } from '@/components/ui/input'
-import { AuthFieldLabel } from '@/features/auth/components/auth-field-label'
+import {
+  AUTH_FIELD_INPUT_CLASS,
+  AuthField,
+} from '@/features/auth/components/auth-field-label'
+import { PasswordInput } from '@/components/ui/password-input'
 import { authService } from '@/features/auth/services/auth.service'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -45,7 +47,6 @@ export default function SignupPage() {
   const tc = useTranslations('Common')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [name, setName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
@@ -128,64 +129,59 @@ export default function SignupPage() {
               onVerified={() => router.replace('/dashboard')}
             />
           ) : (
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div className="space-y-2">
-                <AuthFieldLabel htmlFor="name" icon={User}>
-                  {tc('fullName')}
-                </AuthFieldLabel>
+            <form onSubmit={handleSignup} className="space-y-3">
+              <AuthField
+                htmlFor="name"
+                icon={User}
+                label={tc('fullName')}
+                required
+              >
                 <Input
                   id="name"
                   data-testid="signup-name-input"
                   placeholder={t('namePlaceholder')}
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="h-12 bg-canvas-parchment border-none rounded-sm"
+                  className={AUTH_FIELD_INPUT_CLASS}
                 />
-              </div>
-              <div className="space-y-2">
-                <AuthFieldLabel htmlFor="email" icon={Mail}>
-                  {t('email')}
-                </AuthFieldLabel>
+              </AuthField>
+              <AuthField
+                htmlFor="email"
+                icon={Mail}
+                label={t('email')}
+                required
+              >
                 <Input
                   id="email"
                   type="email"
                   data-testid="signup-email-input"
                   placeholder={t('emailPlaceholder')}
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-12 bg-canvas-parchment border-none rounded-sm"
+                  className={AUTH_FIELD_INPUT_CLASS}
                 />
-              </div>
-              <div className="space-y-2">
-                <AuthFieldLabel htmlFor="password" icon={Lock}>
-                  {t('password')}
-                </AuthFieldLabel>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    data-testid="signup-password-input"
-                    placeholder={t('passwordPlaceholder')}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="h-12 bg-canvas-parchment border-none rounded-sm pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? (
-                      <HugeiconsIcon icon={EyeOff} className="h-5 w-5" />
-                    ) : (
-                      <HugeiconsIcon icon={Eye} className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
+              </AuthField>
+              <AuthField
+                htmlFor="password"
+                icon={Lock}
+                label={t('password')}
+                required
+              >
+                <PasswordInput
+                  id="password"
+                  data-testid="signup-password-input"
+                  placeholder={t('passwordPlaceholder')}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className={AUTH_FIELD_INPUT_CLASS}
+                />
+              </AuthField>
               {captcha.challenge}
               <Button
                 type="submit"

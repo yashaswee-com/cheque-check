@@ -19,14 +19,20 @@ export function AppearancePreference() {
   return (
     <section className="min-w-0 space-y-2" aria-busy={busy}>
       <div className="flex items-center gap-1">
-        <Label htmlFor={id}>{t('title')}</Label>
+        <Label
+          htmlFor={id}
+          className="ml-1 text-[11px] font-normal uppercase tracking-widest text-muted-foreground"
+        >
+          {t('title')}
+        </Label>
         <InfoPopover title={t('title')}>{t('help')}</InfoPopover>
       </div>
       <Combobox
         id={id}
         value={pending ?? profile?.appearance ?? 'system'}
         allowDeselect={false}
-        className="h-14 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg"
+        showSelectedAvatar={false}
+        className="h-14 min-w-0 bg-canvas-parchment dark:bg-surface-tile-1 border-none rounded-sm text-lg font-normal **:font-normal"
         testId="preferences-appearance"
         options={['light', 'dark', 'system'].map((value) => ({
           value,

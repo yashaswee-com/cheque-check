@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { authService } from '../services/auth.service'
 import { logger } from '@/lib/logger'
 import { toast } from '@/components/ui/toast'
-import { maskPhone } from '@/lib/phone-auth'
 import { PhoneAuthForm } from './phone-auth-form'
 import { publicEnv } from '@/lib/env/client'
 import { SmartPhone01Icon } from '@hugeicons/core-free-icons'
@@ -52,24 +51,7 @@ export function LoginPhoneSection({
       value={phone ?? ''}
       placeholder={t('notLinked')}
       verified={!!phone}
-      hint={
-        phone
-          ? primary
-            ? t('signInPhone')
-            : t('linkedAs', { phone: maskPhone(phone) })
-          : t('notLinked')
-      }
     >
-      {!primary && !phone && (
-        <p className="ml-1 text-xs text-muted-foreground">
-          {t('linkDescription')}
-        </p>
-      )}
-      {!enabled && !primary && (
-        <p className="ml-1 text-xs text-muted-foreground">
-          {t('linkDisabled')}
-        </p>
-      )}
       {linked && (
         <p role="status" className="ml-1 text-sm text-green-600">
           {t('linkSuccess')}
@@ -79,7 +61,8 @@ export function LoginPhoneSection({
         <PhoneAuthForm
           purpose="link"
           onCancel={() => setEditing(false)}
-          onVerified={() => {
+          onVerified={(phoneE164) => {
+            setPhone(phoneE164)
             setEditing(false)
             setLinked(true)
             void refresh()
