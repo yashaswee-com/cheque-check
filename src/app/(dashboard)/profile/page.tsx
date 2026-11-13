@@ -106,28 +106,30 @@ export default function ProfilePage() {
         />
       </div>
 
-      <form id="profile-edit-form" onSubmit={saveName} className="space-y-4">
-        <div className="space-y-2">
-          <Label
-            htmlFor="profile-name"
-            className="ml-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-          >
-            {t('fullName')}
-          </Label>
-          <Input
-            leftIcon={User}
-            id="profile-name"
-            value={name}
-            maxLength={100}
-            onChange={(event) => setDraftName(event.target.value)}
-            placeholder={t('fullNamePlaceholder')}
-            enableMic={false}
-            className="h-14 rounded-sm border-none bg-canvas-parchment text-lg font-normal dark:bg-surface-tile-1"
-          />
-        </div>
-      </form>
+      <div className="space-y-4">
+        <form id="profile-edit-form" onSubmit={saveName} className="space-y-4">
+          <div className="space-y-2">
+            <Label
+              htmlFor="profile-name"
+              className="ml-1 text-xs font-normal uppercase tracking-wider text-muted-foreground"
+            >
+              {t('fullName')}
+            </Label>
+            <Input
+              leftIcon={User}
+              id="profile-name"
+              value={name}
+              maxLength={100}
+              onChange={(event) => setDraftName(event.target.value)}
+              placeholder={t('fullNamePlaceholder')}
+              enableMic={false}
+              className="h-14 rounded-sm border-none bg-canvas-parchment text-base font-normal dark:bg-surface-tile-1"
+            />
+          </div>
+        </form>
 
-      <ProfileContacts />
+        <ProfileContacts />
+      </div>
 
       <div className="space-y-3">
         <ReplayTour />

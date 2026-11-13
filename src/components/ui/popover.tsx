@@ -40,11 +40,13 @@ function PopoverContent({
   side = 'bottom',
   sideOffset = 4,
   backdrop = false,
+  mobileSheet = true,
   positionerClassName,
   children,
   ...props
 }: PopoverPrimitive.Popup.Props & {
   backdrop?: boolean
+  mobileSheet?: boolean
   positionerClassName?: string
 } & Pick<
     PopoverPrimitive.Positioner.Props,
@@ -53,20 +55,24 @@ function PopoverContent({
   const t = useTranslations('Common')
   return (
     <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Backdrop
-        data-slot="popover-backdrop"
-        className={cn(
-          'fixed inset-0 z-50 bg-black/30 backdrop-blur-sm',
-          !backdrop && 'sm:hidden',
-        )}
-      />
+      {(backdrop || mobileSheet) && (
+        <PopoverPrimitive.Backdrop
+          data-slot="popover-backdrop"
+          className={cn(
+            'fixed inset-0 z-50 bg-black/30 backdrop-blur-sm',
+            !backdrop && 'sm:hidden',
+          )}
+        />
+      )}
       <PopoverPrimitive.Positioner
         align={align}
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
         className={cn(
-          'isolate z-50 max-sm:fixed! max-sm:inset-x-0! max-sm:bottom-0! max-sm:top-auto! max-sm:transform-none! max-sm:w-screen! max-sm:max-w-none!',
+          'isolate z-50',
+          mobileSheet &&
+            'max-sm:fixed! max-sm:inset-x-0! max-sm:bottom-0! max-sm:top-auto! max-sm:transform-none! max-sm:w-screen! max-sm:max-w-none!',
           positionerClassName,
         )}
       >
@@ -75,19 +81,22 @@ function PopoverContent({
           className={cn(
             'z-50 flex w-72 origin-(--transform-origin) flex-col gap-2.5 rounded-lg bg-popover p-2.5 text-sm text-popover-foreground border border-primary/5 outline-hidden duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
             className,
-            'max-sm:w-full! max-sm:max-w-none! max-sm:max-h-[85dvh] max-sm:overflow-y-auto max-sm:rounded-b-none! max-sm:rounded-t-3xl! max-sm:origin-bottom max-sm:pb-[max(1rem,env(safe-area-inset-bottom))] max-sm:duration-200 max-sm:data-open:slide-in-from-bottom-full max-sm:data-open:zoom-in-100 max-sm:data-closed:slide-out-to-bottom-full max-sm:data-closed:zoom-out-100',
+            mobileSheet &&
+              'max-sm:w-full! max-sm:max-w-none! max-sm:max-h-[85dvh] max-sm:overflow-y-auto max-sm:rounded-b-none! max-sm:rounded-t-3xl! max-sm:origin-bottom max-sm:pb-[max(1rem,env(safe-area-inset-bottom))] max-sm:duration-200 max-sm:data-open:slide-in-from-bottom-full max-sm:data-open:zoom-in-100 max-sm:data-closed:slide-out-to-bottom-full max-sm:data-closed:zoom-out-100',
           )}
           {...props}
         >
-          <div className="relative flex h-8 shrink-0 items-center justify-center sm:hidden">
-            <span aria-hidden className="h-1.5 w-12 rounded-full bg-muted" />
-            <PopoverPrimitive.Close
-              aria-label={t('close')}
-              className="absolute right-2 flex size-8 items-center justify-center rounded-full hover:bg-muted"
-            >
-              <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
-            </PopoverPrimitive.Close>
-          </div>
+          {mobileSheet && (
+            <div className="relative flex h-8 shrink-0 items-center justify-center sm:hidden">
+              <span aria-hidden className="h-1.5 w-12 rounded-full bg-muted" />
+              <PopoverPrimitive.Close
+                aria-label={t('close')}
+                className="absolute right-2 flex size-8 items-center justify-center rounded-full hover:bg-muted"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+              </PopoverPrimitive.Close>
+            </div>
+          )}
           {children}
         </PopoverPrimitive.Popup>
       </PopoverPrimitive.Positioner>

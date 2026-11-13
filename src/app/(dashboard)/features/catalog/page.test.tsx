@@ -257,7 +257,14 @@ describe('Features page', () => {
       },
     ]
     renderPage()
-    expect(screen.getByText('₹425 one-time')).toBeVisible()
+    const price = screen.getByText('₹425')
+    expect(price).toBeVisible()
+    expect(price).toHaveClass('text-4xl')
+    expect(price.closest('section')).toHaveClass(
+      'rounded-[18px]',
+      'border-primary/30',
+    )
+    expect(price.closest('.bg-blue-50\\/60')).not.toBeNull()
     expect(screen.getByText('$72.5 / 45 days')).toBeVisible()
     expect(screen.getByText('375 scans included per period')).toBeVisible()
     expect(

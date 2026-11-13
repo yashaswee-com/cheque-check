@@ -1,11 +1,25 @@
 'use client'
 
 import { useState } from 'react'
-import { HugeiconsIcon } from '@hugeicons/react'
+import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react'
 import {
   File02Icon as FileText,
   Building03Icon as Building2,
   ArrowRight01Icon as ChevronRight,
+  Invoice01Icon,
+  CreditCardIcon,
+  UserGroupIcon,
+  Settings02Icon,
+  Notification03Icon,
+  DashboardSquare01Icon,
+  ChatFeedbackIcon,
+  HelpCircleIcon,
+  News01Icon,
+  LabelIcon,
+  ChartHistogramIcon,
+  UserIcon,
+  SparklesIcon,
+  Invoice03Icon,
 } from '@hugeicons/core-free-icons'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useChequeSearch } from '@/features/cheques/hooks/use-cheque-list'
@@ -42,6 +56,9 @@ export function GlobalSearch({
   const router = useRouter()
   const t = useTranslations('Common')
   const tDrafts = useTranslations('Drafts')
+  const navigation = useTranslations('Navigation')
+  const settings = useTranslations('Settings')
+  const feedback = useTranslations('Feedback')
   const display = useDisplayFormat()
 
   const {
@@ -138,7 +155,128 @@ export function GlobalSearch({
     onOpenChange(false)
   }
 
+  const pages: {
+    href: string
+    label: string
+    icon: IconSvgElement
+    keywords: string
+  }[] = [
+    {
+      href: '/dashboard',
+      label: navigation('dashboard'),
+      icon: DashboardSquare01Icon,
+      keywords: 'dashboard',
+    },
+    {
+      href: '/cheques',
+      label: navigation('cheques'),
+      icon: Invoice01Icon,
+      keywords: 'cheques checks',
+    },
+    {
+      href: '/parties',
+      label: navigation('parties'),
+      icon: UserGroupIcon,
+      keywords: 'parties contacts',
+    },
+    {
+      href: '/accounts',
+      label: navigation('accounts'),
+      icon: CreditCardIcon,
+      keywords: 'accounts banks',
+    },
+    {
+      href: '/businesses',
+      label: settings('businesses'),
+      icon: Building2,
+      keywords: 'businesses',
+    },
+    {
+      href: '/settings',
+      label: navigation('settings'),
+      icon: Settings02Icon,
+      keywords: 'settings',
+    },
+    {
+      href: '/settings/preferences',
+      label: settings('preferences'),
+      icon: Settings02Icon,
+      keywords: 'preferences appearance language currency',
+    },
+    {
+      href: '/notifications',
+      label: settings('notifications'),
+      icon: Notification03Icon,
+      keywords: 'notifications inbox',
+    },
+    {
+      href: '/settings/notifications',
+      label: t('notificationSettings'),
+      icon: Notification03Icon,
+      keywords: 'notifications settings reminders',
+    },
+    {
+      href: '/settings/transactions',
+      label: settings('transactions'),
+      icon: Invoice03Icon,
+      keywords: 'transactions payments',
+    },
+    {
+      href: '/features/catalog',
+      label: navigation('features'),
+      icon: SparklesIcon,
+      keywords: 'features premium',
+    },
+    {
+      href: '/profile',
+      label: settings('profile'),
+      icon: UserIcon,
+      keywords: 'profile name email phone',
+    },
+    {
+      href: '/reports',
+      label: settings('reports'),
+      icon: ChartHistogramIcon,
+      keywords: 'reports exports',
+    },
+    {
+      href: '/tags',
+      label: settings('manageTags'),
+      icon: LabelIcon,
+      keywords: 'tags labels',
+    },
+    {
+      href: '/feedback',
+      label: feedback('mySubmissions'),
+      icon: ChatFeedbackIcon,
+      keywords: 'feedback submissions',
+    },
+    {
+      href: '/help',
+      label: settings('helpAndSupport'),
+      icon: HelpCircleIcon,
+      keywords: 'help support faq',
+    },
+    {
+      href: '/settings/whats-new',
+      label: settings('whatsNew'),
+      icon: News01Icon,
+      keywords: 'whats new updates',
+    },
+  ]
+  const filteredPages = pages.filter((item) =>
+    query
+      .toLocaleLowerCase()
+      .trim()
+      .split(/\s+/)
+      .every((term) =>
+        `view ${item.label} ${item.keywords} ${item.href}`
+          .toLocaleLowerCase()
+          .includes(term),
+      ),
+  )
   const hasResults =
+    filteredPages.length > 0 ||
     filteredCheques.length > 0 ||
     filteredParties.length > 0 ||
     filteredAccounts.length > 0 ||
@@ -155,6 +293,25 @@ export function GlobalSearch({
         onValueChange={setQuery}
       />
       <CommandList className="max-h-[400px]">
+        {filteredPages.length > 0 && (
+          <CommandGroup heading={t('pages')}>
+            {filteredPages.map((item) => (
+              <CommandItem
+                key={item.href}
+                value={`view ${item.label} ${item.keywords} ${item.href}`}
+                data-testid="global-search-result-page"
+                onSelect={() => navigateTo(item.href)}
+                className="flex cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+              >
+                <HugeiconsIcon
+                  icon={item.icon}
+                  className="size-5 text-primary"
+                />
+                {item.label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
         {chequesError && <p role="alert">{t('loadDataError')}</p>}
         {query.length > 0 &&
           !hasResults &&

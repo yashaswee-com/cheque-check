@@ -71,9 +71,6 @@ export function PinGate({ children }: { children: React.ReactNode }) {
               <Spinner className="size-7" />
             </span>
             <div className="space-y-1">
-              <p className="text-base font-semibold text-foreground">
-                {t('checking')}
-              </p>
               <p className="text-sm text-muted-foreground">
                 {checkingHints[hintIndex]}
               </p>

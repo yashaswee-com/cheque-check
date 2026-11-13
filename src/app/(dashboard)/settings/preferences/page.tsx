@@ -87,7 +87,7 @@ export default function PreferencesPage() {
         />
       </div>
 
-      <div className="border-t border-border/50 pt-6">
+      <div>
         <SettingSwitchRow
           id="reduce-motion"
           label={ts('reduceMotion')}
@@ -103,11 +103,11 @@ export default function PreferencesPage() {
         />
       </div>
 
-      <div className="border-t border-border/50 pt-6">
+      <div>
         <MonitoringPreferences />
       </div>
 
-      <div className="border-t border-border/50 pt-6">
+      <div>
         <PrivacyPreference />
       </div>
     </div>

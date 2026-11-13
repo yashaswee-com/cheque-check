@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Search01Icon as Search,
-  ArrowDataTransferHorizontalIcon as TransactionIcon,
+  Invoice03Icon as TransactionIcon,
   ReceiptTextIcon,
   CheckmarkCircle02Icon as Success,
   CancelCircleIcon as Failed,

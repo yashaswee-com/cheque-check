@@ -232,6 +232,8 @@
     "unread": "Unread",
     "refresh": "Refresh karein",
     "markAll": "Sabhi read mark karein",
+    "markedAllRead": "Sabhi notifications read mark ho gayi hain.",
+    "refreshed": "Notifications refresh ho gayi hain.",
     "actionError": "Yeh action poora nahi hua. Dobara try karein.",
     "events": {
       "cheque_reminder": "Cheques par aapka dhyan chahiye",
@@ -709,6 +711,8 @@
     }
   },
   "Common": {
+    "pages": "Pages",
+    "notificationSettings": "Notification settings",
     "noChequesMatch": "In filters se koi cheque match nahi karta",
     "noAccountsMatch": "In filters se koi account match nahi karta",
     "noPartiesMatch": "In filters se koi party match nahi karti",

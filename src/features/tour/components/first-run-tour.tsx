@@ -154,6 +154,7 @@ function TourDialog({
           document.body,
         )}
       <DialogContent
+        mobileSheet={false}
         scrollable
         showCloseButton={false}
         overlayClassName="bg-transparent supports-backdrop-filter:backdrop-blur-none"

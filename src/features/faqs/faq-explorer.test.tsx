@@ -46,7 +46,7 @@ describe('searchable branched FAQs', () => {
     expect(screen.getByText(/camera or photo library/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Report issue' })).toHaveAttribute(
       'href',
-      '/feedback?category=bug',
+      '/feedback/create?category=bug',
     )
   })
 

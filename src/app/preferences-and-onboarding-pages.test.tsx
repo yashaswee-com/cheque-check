@@ -601,6 +601,21 @@ describe('notification preferences page', () => {
   })
 })
 describe('general preferences page', () => {
+  it('keeps toggle settings unseparated while retaining their info actions', () => {
+    const { container } = renderPage(<PreferencesPage />)
+    expect(container.querySelector('.border-t')).toBeNull()
+    expect(
+      screen.getByRole('switch', { name: messages.Settings.reduceMotion }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('button', {
+        name: messages.SharedUI.moreInfo.replace(
+          '{title}',
+          messages.Settings.reduceMotion,
+        ),
+      }),
+    ).toBeVisible()
+  })
   it('includes the browser-local analytics and session recording preference', () => {
     renderPage(<PreferencesPage />)
     expect(screen.getByText('Monitoring preferences')).toBeVisible()

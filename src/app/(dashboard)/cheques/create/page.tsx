@@ -133,6 +133,22 @@ export default function CreateChequePage() {
     formState: { errors },
   } = form
   const { setUserValue } = draft
+  const amountFocused = useRef(false)
+  const amountInputRef = useRef<HTMLInputElement>(null)
+  const amountField = register('amount', { valueAsNumber: true })
+  useEffect(() => {
+    if (
+      !cameFromScan &&
+      !draft.isLoadingDraft &&
+      step === 1 &&
+      !isSuccess &&
+      !amountFocused.current &&
+      amountInputRef.current
+    ) {
+      amountInputRef.current.focus()
+      amountFocused.current = true
+    }
+  }, [cameFromScan, draft.isLoadingDraft, isSuccess, step])
 
   const openCreatePage = (path: string, params: Record<string, string> = {}) =>
     draft.navigateAfterSave(
@@ -460,13 +476,17 @@ export default function CreateChequePage() {
               <CurrencyPrefixInput
                 currency={currency}
                 id="amount"
-                autoFocus={!cameFromScan}
+                autoFocus={!cameFromScan && !draft.isLoadingDraft}
                 inputMode="decimal"
                 type="number"
                 min={0}
                 step="any"
                 data-testid="cheque-amount-input"
-                {...register('amount', { valueAsNumber: true })}
+                {...amountField}
+                ref={(node) => {
+                  amountField.ref(node)
+                  amountInputRef.current = node
+                }}
                 aria-invalid={!!errors.amount}
                 aria-describedby={
                   errors.amount ? 'cheque-amount-error' : undefined

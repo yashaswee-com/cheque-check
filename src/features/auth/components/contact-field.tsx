@@ -33,26 +33,24 @@ export function ContactField({
     <section className="space-y-2" data-testid={testId}>
       <Label
         htmlFor={id}
-        className="ml-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+        className="ml-1 text-xs font-normal uppercase tracking-wider text-muted-foreground"
       >
         {label}
       </Label>
-      <div className="flex min-w-0 items-center gap-2">
-        <div className="min-w-0 flex-1">
-          <Input
-            id={id}
-            leftIcon={icon}
-            enableMic={false}
-            readOnly
-            value={value}
-            placeholder={placeholder}
-            className="h-14 rounded-sm border-none bg-canvas-parchment pr-3 text-base font-normal dark:bg-surface-tile-1"
-          />
-        </div>
+      <div className="relative min-w-0">
+        <Input
+          id={id}
+          leftIcon={icon}
+          enableMic={false}
+          readOnly
+          value={value}
+          placeholder={placeholder}
+          className={`h-14 rounded-sm border-none bg-canvas-parchment text-base font-normal dark:bg-surface-tile-1 ${verified ? 'pr-32' : 'pr-3'}`}
+        />
         {verified && (
           <Badge
             data-testid={`${testId}-verified`}
-            className="shrink-0 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
           >
             <HugeiconsIcon
               icon={CheckmarkBadge01Icon}

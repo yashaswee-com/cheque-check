@@ -16,18 +16,20 @@ import {
   UserGroupIcon as Party,
   UserAdd01Icon as NewParty,
   Settings02Icon as Settings,
-  StarIcon as Star,
+  Route01Icon as Roadmap,
+  InformationCircleIcon as Info,
   Shield01Icon as Shield,
   LegalDocumentIcon as File,
   HelpCircleIcon as Help,
   MegaphoneIcon as Megaphone,
-  SparklesIcon as WhatsNew,
+  News01Icon as WhatsNew,
+  SparklesIcon as Features,
   ChartHistogramIcon as Reports,
-  ArrowDataTransferHorizontalIcon as Transactions,
+  Invoice03Icon as Transactions,
   Notification03Icon as Notifications,
   PencilEdit01Icon as Edit,
   Calculator01Icon as CalculatorIcon,
-  Tag01Icon as TagIcon,
+  LabelIcon as TagIcon,
   NoteEditIcon as DraftIcon,
   MoreVerticalIcon as More,
 } from '@hugeicons/core-free-icons'
@@ -74,12 +76,14 @@ export function TopNav() {
     if (path === '/dashboard')
       return { title: t('Navigation.dashboard'), icon: null }
     if (path === '/feedback')
+      return { title: t('Feedback.mySubmissions'), icon: Help }
+    if (path === '/feedback/create')
       return { title: t('Feedback.submitTitle'), icon: Help }
     if (path === '/help') return { title: t('FAQ.title'), icon: Help }
     if (path === '/announcements')
       return { title: 'Announcements', icon: Megaphone }
     if (path === '/roadmap')
-      return { title: t('Feedback.roadmapTitle'), icon: Star }
+      return { title: t('Feedback.roadmapTitle'), icon: Roadmap }
     if (path === '/settings')
       return { title: t('Navigation.settings'), icon: Settings }
     if (path === '/notifications')
@@ -88,7 +92,7 @@ export function TopNav() {
       return { title: t('Reports.title'), icon: Reports }
     if (path === '/drafts') return { title: t('Drafts.title'), icon: DraftIcon }
     if (path === '/features' || path.startsWith('/features/'))
-      return { title: t('Navigation.features'), icon: Star }
+      return { title: t('Navigation.features'), icon: Features }
     if (path === '/profile') return { title: t('Settings.profile'), icon: User }
 
     if (path.startsWith('/settings/')) {
@@ -100,7 +104,7 @@ export function TopNav() {
           icon: File,
         },
         'refund-policy': { title: t('Settings.refundPolicy'), icon: Pay },
-        about: { title: t('Settings.aboutApp'), icon: Star },
+        about: { title: t('Settings.aboutApp'), icon: Info },
         'help-and-support': { title: t('Settings.helpAndSupport'), icon: Help },
         announcements: { title: 'Announcements', icon: Megaphone },
         'whats-new': { title: t('Settings.whatsNew'), icon: WhatsNew },
@@ -187,9 +191,7 @@ export function TopNav() {
   const route = getShellRoute(pathname)
   const isMainTab =
     route.isTopLevel ||
-    ['/settings', '/profile', '/feedback', '/roadmap', '/help'].includes(
-      pathname,
-    )
+    ['/settings', '/feedback', '/roadmap', '/help'].includes(pathname)
 
   const hideBusinessSwitcher = !route.showBusinessSwitcher
 
@@ -290,6 +292,7 @@ export function TopNav() {
               </span>
             </PopoverTrigger>
             <PopoverContent
+              mobileSheet={false}
               align="end"
               className="w-60"
               aria-label={ts('more')}

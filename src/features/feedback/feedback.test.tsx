@@ -9,11 +9,15 @@ import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../messages/en.json'
 import FeedbackPage from '@/app/(dashboard)/feedback/page'
+import CreateFeedbackPage from '@/app/(dashboard)/feedback/create/page'
 import { FeedbackCenter } from './components/feedback-center'
 import { Roadmap } from './components/roadmap'
 
 const mocks = vi.hoisted(() => ({
   submit: vi.fn(),
+  push: vi.fn(),
+  redirect: vi.fn(),
+  toast: vi.fn(),
   vote: vi.fn(),
   privatePage: {
     data: {
@@ -54,6 +58,14 @@ const mocks = vi.hoisted(() => ({
     error: null,
   },
 }))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mocks.push }),
+  redirect: (href: string) => {
+    mocks.redirect(href)
+    throw new Error('NEXT_REDIRECT')
+  },
+}))
+vi.mock('@/components/ui/toast', () => ({ toast: { add: mocks.toast } }))
 
 vi.mock('./hooks/use-feedback', () => ({
   useMyFeedback: () => mocks.privatePage,
@@ -86,7 +98,7 @@ afterEach(cleanup)
 
 describe('feedback center', () => {
   it('prefills the private bug form from the Report issue route', async () => {
-    const page = await FeedbackPage({
+    const page = await CreateFeedbackPage({
       searchParams: Promise.resolve({ category: 'bug' }),
     })
     mount(page)
@@ -94,9 +106,17 @@ describe('feedback center', () => {
       expect(screen.getByLabelText('Feedback type')).toHaveValue('bug'),
     )
   })
+  it('keeps existing Report issue links working through the new create route', async () => {
+    await expect(
+      FeedbackPage({
+        searchParams: Promise.resolve({ category: 'bug' }),
+      }),
+    ).rejects.toThrow('NEXT_REDIRECT')
+    expect(mocks.redirect).toHaveBeenCalledWith('/feedback/create?category=bug')
+  })
 
   it('prefills Report issue, submits only category/title/description, and resets the form', async () => {
-    mount(<FeedbackCenter initialCategory="bug" />)
+    mount(<FeedbackCenter mode="create" initialCategory="bug" />)
     await waitFor(() =>
       expect(screen.getByLabelText('Feedback type')).toHaveValue('bug'),
     )
@@ -117,13 +137,22 @@ describe('feedback center', () => {
         description: 'The scanner stays on the loading screen after capture.',
       }),
     )
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'Your feedback was sent. You can track its status below.',
-    )
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/feedback'))
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: messages.Feedback.submitSuccess,
+      type: 'success',
+    })
+    expect(
+      screen.getAllByRole('button', { name: 'Send feedback' }),
+    ).toHaveLength(1)
+    expect(
+      screen.getByRole('button', { name: 'Send feedback' }),
+    ).toHaveAttribute('form', 'feedback-create-form')
   })
 
   it('shows only the signed-in user submission list and its admin status', () => {
     mount(<FeedbackCenter />)
+    expect(screen.queryByLabelText('Title')).toBeNull()
     expect(screen.getByText('Private request')).toBeInTheDocument()
     expect(screen.getByText('Under review')).toBeInTheDocument()
     expect(
@@ -133,7 +162,7 @@ describe('feedback center', () => {
 
   it('maps the database submission throttle to a clear message', async () => {
     mocks.submit.mockRejectedValueOnce(new Error('FEEDBACK_RATE_LIMIT'))
-    mount(<FeedbackCenter />)
+    mount(<FeedbackCenter mode="create" />)
     fireEvent.change(screen.getByLabelText('Title'), {
       target: { value: 'Another issue' },
     })
@@ -150,6 +179,9 @@ describe('feedback center', () => {
 describe('published roadmap', () => {
   it('shows only published feature requests, their status, and a single-vote toggle', async () => {
     mount(<Roadmap />)
+    expect(
+      screen.getByRole('link', { name: messages.Feedback.suggestFeature }),
+    ).toHaveAttribute('href', '/feedback/create?category=feature')
     expect(screen.getByText('Per-account reminders')).toBeInTheDocument()
     expect(screen.getByText('Planned')).toBeInTheDocument()
     const vote = screen.getByRole('button', { name: /Vote/ })

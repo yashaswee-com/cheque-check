@@ -30,6 +30,7 @@ import { matchInboxSearch } from '@/features/notifications/lib/inbox-search'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/toast'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -123,16 +124,21 @@ export default function NotificationsPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(false)
   const lock = useRef(false)
-  const perform = async (operation: () => Promise<unknown>) => {
+  const perform = async (
+    operation: () => Promise<unknown>,
+    success?: string,
+  ) => {
     if (lock.current) return
     lock.current = true
     setBusy(true)
     setError(false)
     try {
       await operation()
+      if (success) toast.add({ title: success, type: 'success' })
     } catch (error) {
       logger.error('Notification action failed', error)
       setError(true)
+      toast.add({ title: t('actionError'), type: 'error' })
     } finally {
       lock.current = false
       setBusy(false)
@@ -301,7 +307,10 @@ export default function NotificationsPage() {
           disabled={busy || inbox.isFetching}
           onClick={() => {
             setPaging({ key: filterKey, page: 0 })
-            void inbox.refetch()
+            return perform(
+              () => inbox.refetch({ throwOnError: true }),
+              t('refreshed'),
+            )
           }}
         >
           <HugeiconsIcon
@@ -316,7 +325,7 @@ export default function NotificationsPage() {
           title={t('markAll')}
           className="h-11 w-11 shrink-0 rounded-full bg-white"
           disabled={busy || !inbox.data || inbox.isFetching}
-          onClick={() => void perform(inbox.markAll)}
+          onClick={() => perform(inbox.markAll, t('markedAllRead'))}
         >
           <HugeiconsIcon icon={TickDouble02Icon} className="h-5 w-5" />
         </Button>

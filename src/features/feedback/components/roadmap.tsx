@@ -22,7 +22,7 @@ export function Roadmap() {
         <h1 className="text-2xl font-bold">{t('roadmapTitle')}</h1>
         <p className="text-sm text-muted-foreground">{t('roadmapPrivacy')}</p>
         <Link
-          href="/feedback"
+          href="/feedback/create?category=feature"
           className="inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
           {t('suggestFeature')}

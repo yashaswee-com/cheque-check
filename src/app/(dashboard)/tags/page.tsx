@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Search01Icon as Search,
-  Tag01Icon as TagIcon,
+  LabelIcon as TagIcon,
   ArrowRight01Icon as ChevronRight,
   Sorting05Icon as Filter,
   Tick02Icon as Check,

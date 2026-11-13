@@ -48,6 +48,22 @@ function shell() {
 }
 
 describe('shared navigation shell', () => {
+  it('shows a profile back button without bottom navigation', async () => {
+    pathname = '/profile'
+    shell()
+    expect(screen.queryByRole('navigation')).toBeNull()
+    await userEvent.click(
+      screen.getByRole('button', { name: messages.SharedUI.back }),
+    )
+    expect(back).toHaveBeenCalledOnce()
+  })
+  it('opens new feedback from the single blue list action', () => {
+    pathname = '/feedback'
+    shell()
+    const add = screen.getByTestId('app-fab-create')
+    expect(add).toHaveAttribute('href', '/feedback/create')
+    expect(screen.getAllByTestId('app-fab-create')).toHaveLength(1)
+  })
   it('keeps bottom navigation on details and exposes named back/search/More actions', () => {
     shell()
     const nav = screen.getByRole('navigation', {

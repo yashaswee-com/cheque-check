@@ -144,7 +144,7 @@ describe('PIN shell gating', () => {
     ).toBeInTheDocument()
     expect(mocks.mounted).not.toHaveBeenCalled()
   })
-  it('shows a spinner with a clear heading while security status loads', async () => {
+  it('shows only the hint and spinner while security status loads', async () => {
     let resolve!: (value: typeof enabled) => void
     mocks.status.mockReturnValue(
       new Promise<typeof enabled>((done) => {
@@ -155,9 +155,8 @@ describe('PIN shell gating', () => {
     const checking = await screen.findByTestId('pin-gate-checking')
     expect(checking).toHaveAttribute('role', 'status')
     expect(checking.querySelector('svg.animate-spin')).not.toBeNull()
-    const [title, description] = checking.querySelectorAll('p')
-    expect(title).toHaveTextContent(messages.Security.checking)
-    expect(title).toHaveClass('font-semibold')
+    const [description] = checking.querySelectorAll('p')
+    expect(checking).not.toHaveTextContent(messages.Security.checking)
     expect(description).toHaveTextContent(messages.Security.checkingHints[0])
     expect(description).toHaveClass('text-muted-foreground')
     expect(screen.getByText('ChequeCheck')).toHaveClass('sr-only')
@@ -176,7 +175,7 @@ describe('PIN shell gating', () => {
 
     mount()
     const checking = screen.getByTestId('pin-gate-checking')
-    const hint = checking.querySelectorAll('p')[1]
+    const hint = checking.querySelector('p')
     expect(hint).toHaveTextContent(messages.Security.checkingHints[0])
 
     act(() => vi.advanceTimersByTime(3199))

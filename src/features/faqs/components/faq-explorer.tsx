@@ -190,7 +190,7 @@ export function FaqExplorer() {
                     )}
                     <Link
                       className="inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
-                      href="/feedback?category=bug"
+                      href="/feedback/create?category=bug"
                     >
                       {t('reportIssue')}
                     </Link>

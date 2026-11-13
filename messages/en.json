@@ -232,6 +232,8 @@
     "unread": "Unread",
     "refresh": "Refresh",
     "markAll": "Mark all read",
+    "markedAllRead": "All notifications marked as read.",
+    "refreshed": "Notifications refreshed.",
     "actionError": "Could not complete this action. Please try again.",
     "events": {
       "cheque_reminder": "Cheques need your attention",
@@ -709,6 +711,8 @@
     }
   },
   "Common": {
+    "pages": "Pages",
+    "notificationSettings": "Notification settings",
     "noChequesMatch": "No cheques match these filters",
     "noAccountsMatch": "No accounts match these filters",
     "noPartiesMatch": "No parties match these filters",

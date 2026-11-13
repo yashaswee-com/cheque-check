@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  Tag01Icon as TagIcon,
+  LabelIcon as TagIcon,
   Tick02Icon as Check,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'

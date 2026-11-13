@@ -9,7 +9,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowRight01Icon as ChevronRight,
   Delete02Icon as Trash2,
-  Tag01Icon as TagIcon,
+  LabelIcon as TagIcon,
 } from '@hugeicons/core-free-icons'
 import { SpeedDialFab } from '@/components/speed-dial-fab'
 import { useTags } from '@/features/tags/hooks/use-tags'

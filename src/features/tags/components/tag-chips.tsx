@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Tag01Icon as TagIcon } from '@hugeicons/core-free-icons'
+import { LabelIcon as TagIcon } from '@hugeicons/core-free-icons'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import type { Tag, TagEntityType } from '@/types'

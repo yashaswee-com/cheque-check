@@ -118,7 +118,7 @@ describe('settings and draft routes', () => {
     }
     expect(
       screen.getByRole('link', { name: messages.Feedback.submitTitle }),
-    ).toHaveAttribute('href', '/feedback')
+    ).toHaveAttribute('href', '/feedback/create')
     expect(
       screen.getByRole('link', { name: messages.Feedback.roadmapTitle }),
     ).toHaveAttribute('href', '/roadmap')
@@ -173,7 +173,7 @@ describe('settings and draft routes', () => {
     ).toBeVisible()
     expect(
       screen.getByRole('link', { name: messages.FAQ.reportIssue }),
-    ).toHaveAttribute('href', '/feedback?category=bug')
+    ).toHaveAttribute('href', '/feedback/create?category=bug')
   })
 
   it.each(locales)(

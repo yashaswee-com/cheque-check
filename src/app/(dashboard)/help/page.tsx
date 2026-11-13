@@ -4,8 +4,7 @@ import {
   HelpCircleIcon as WhatsApp,
 } from '@hugeicons/core-free-icons'
 import Link from 'next/link'
-import { Button, buttonVariants } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { getWhatsAppSupportLink } from '@/lib/whatsapp'
 import { FaqExplorer } from '@/features/faqs/components/faq-explorer'
@@ -19,24 +18,22 @@ export default function HelpPage() {
       <FaqExplorer />
       <div className="space-y-8 px-2">
         <div className="grid grid-cols-2 gap-3">
-          <Link
-            href="/feedback"
-            className={cn(
-              buttonVariants({ variant: 'outline' }),
-              'font-normal',
-            )}
+          <Button
+            role="link"
+            variant="outline"
+            className="font-normal"
+            render={<Link href="/feedback/create" />}
           >
             {tf('submitTitle')}
-          </Link>
-          <Link
-            href="/roadmap"
-            className={cn(
-              buttonVariants({ variant: 'outline' }),
-              'font-normal',
-            )}
+          </Button>
+          <Button
+            role="link"
+            variant="outline"
+            className="font-normal"
+            render={<Link href="/roadmap" />}
           >
             {tf('roadmapTitle')}
-          </Link>
+          </Button>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Link

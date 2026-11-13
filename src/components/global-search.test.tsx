@@ -158,6 +158,22 @@ beforeEach(() => {
 })
 
 describe('GlobalSearch', () => {
+  it.each([
+    ['view cheques', '/cheques'],
+    ['view accounts', '/accounts'],
+    ['preferences', '/settings/preferences'],
+    ['inbox', '/notifications'],
+  ])('navigates to %s even without an active business', (query, path) => {
+    state.active = false
+    const close = vi.fn()
+    render(<GlobalSearch open onOpenChange={close} />)
+    fireEvent.change(screen.getByTestId('global-search-input'), {
+      target: { value: query },
+    })
+    fireEvent.click(screen.getAllByTestId('global-search-result-page')[0])
+    expect(state.push).toHaveBeenCalledWith(path)
+    expect(close).toHaveBeenCalledWith(false)
+  })
   it('uses the preferred currency for live and draft search results, including zero', () => {
     state.cheques = [
       {
@@ -219,7 +235,7 @@ describe('GlobalSearch', () => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument()
       expect(screen.queryByText(/^noResultsFor/)).not.toBeInTheDocument()
       expect(screen.queryAllByTestId(/^global-search-result-/)).toHaveLength(
-        query ? 6 : 0,
+        query ? 6 : 17,
       )
       if (query) {
         fireEvent.click(screen.getByTestId('global-search-result-party'))
@@ -306,9 +322,9 @@ describe('GlobalSearch', () => {
       screen.getAllByTestId('global-search-result-cheque-draft'),
     ).toHaveLength(3)
   })
-  it('shows no results until a query is entered and explains misses', () => {
+  it('shows page shortcuts before a query and explains search misses', () => {
     render(<GlobalSearch open onOpenChange={vi.fn()} />)
-    expect(screen.queryAllByTestId(/^global-search-result-/)).toHaveLength(0)
+    expect(screen.getAllByTestId('global-search-result-page')).toHaveLength(17)
     fireEvent.change(screen.getByTestId('global-search-input'), {
       target: { value: 'unmatched' },
     })

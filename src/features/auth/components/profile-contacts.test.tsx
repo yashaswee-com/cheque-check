@@ -38,14 +38,18 @@ describe('ProfileContacts', () => {
   it('leads with the read-only email for email and Google sign-ins', () => {
     state.data = { loginMethod: 'email' }
     render(<ProfileContacts />)
-    expect(screen.getByTestId('profile-contacts')).toHaveClass('rounded-lg')
+    expect(screen.getByTestId('profile-contacts')).not.toHaveClass(
+      'rounded-lg',
+      'border',
+      'bg-card',
+    )
     expect(order()).toEqual([
       ['email-section', 'true'],
       ['phone-section', 'false'],
     ])
   })
 
-  it('leads with the read-only phone for phone OTP sign-ins', () => {
+  it('keeps email then phone, with the sign-in phone read-only for OTP sign-ins', () => {
     state.data = { loginMethod: 'phone' }
     render(<ProfileContacts />)
     expect(screen.getByTestId('profile-contacts')).toHaveAttribute(
@@ -53,8 +57,8 @@ describe('ProfileContacts', () => {
       'phone',
     )
     expect(order()).toEqual([
-      ['phone-section', 'true'],
       ['email-section', 'false'],
+      ['phone-section', 'true'],
     ])
   })
 

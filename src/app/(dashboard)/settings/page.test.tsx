@@ -133,7 +133,7 @@ describe('settings page', () => {
       '/settings/terms-and-conditions',
       '/settings/refund-policy',
     ]) {
-      expect(document.querySelector(`a[href="${href}"]`)).toBeInTheDocument()
+      expect(document.querySelector(`a[href="${href}"]`)).toHaveClass('block')
     }
     expect(
       screen.queryByText(messages.Premium.openTools),

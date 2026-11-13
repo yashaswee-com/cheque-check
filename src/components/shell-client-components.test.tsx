@@ -207,7 +207,8 @@ describe('navigation components', () => {
     ['/settings', messages.Navigation.settings],
     ['/settings/security', messages.Security.pinTitle],
     ['/features/catalog', messages.Navigation.features],
-    ['/feedback', messages.Feedback.submitTitle],
+    ['/feedback', messages.Feedback.mySubmissions],
+    ['/feedback/create', messages.Feedback.submitTitle],
     ['/roadmap', messages.Feedback.roadmapTitle],
     ['/profile', messages.Settings.profile],
     ['/settings/privacy-policy', messages.Settings.privacyPolicy],
@@ -247,7 +248,6 @@ describe('navigation components', () => {
         [
           '/dashboard',
           '/settings',
-          '/profile',
           '/cheques',
           '/accounts',
           '/parties',
@@ -296,6 +296,9 @@ describe('navigation components', () => {
     expect(
       screen.getByRole('button', { name: messages.SharedUI.reload }),
     ).toHaveClass('font-normal')
+    const popup = screen.getByRole('dialog', { name: messages.SharedUI.more })
+    expect(popup).not.toHaveClass('max-sm:w-full!')
+    expect(popup.parentElement).not.toHaveClass('max-sm:fixed!')
     await user.click(
       screen.getByRole('button', { name: messages.SharedUI.calculator }),
     )

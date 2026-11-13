@@ -84,6 +84,7 @@ describe('first-run dashboard tour', () => {
     expect(screen.getByRole('dialog')).toHaveTextContent(
       'Your dashboard summary',
     )
+    expect(screen.getByTestId('tour-card')).not.toHaveClass('max-sm:bottom-0!')
     for (let i = 0; i < 5; i++) {
       await waitFor(() =>
         expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled(),

@@ -69,19 +69,28 @@ describe('verified email UI', () => {
     expect(screen.getByTestId('profile-email-verified')).toHaveTextContent(
       messages.EmailLink.verified,
     )
+    const field = screen.getByLabelText('Email')
+    expect(field).toHaveClass('pr-32')
+    expect(
+      screen.getByTestId('profile-email-verified').parentElement,
+    ).toContainElement(field)
+    expect(screen.getByTestId('profile-email-verified')).toHaveClass(
+      'absolute',
+      'right-3',
+    )
   })
   it('shows the sign-in email read-only without verification actions', () => {
     mocks.data.email = 'owner@example.test'
     mount(true)
     expect(screen.getByLabelText('Email')).toHaveAttribute('readonly')
-    expect(screen.getByText(messages.EmailLink.signInEmail)).toBeVisible()
+    expect(screen.queryByText(messages.EmailLink.signInEmail)).toBeNull()
     expect(
       screen.queryByLabelText(messages.EmailLink.newEmail),
     ).not.toBeInTheDocument()
   })
   it('invites a secondary email with a verification link', () => {
     mount()
-    expect(screen.getByText(messages.EmailLink.addEmailHint)).toBeVisible()
+    expect(screen.getByLabelText(messages.EmailLink.newEmail)).toBeVisible()
     expect(screen.queryByTestId('profile-email-verified')).toBeNull()
   })
   it('shows claimed email rejection without a success message', async () => {

@@ -16,7 +16,6 @@ describe('shell route classification', () => {
     '/settings/preferences',
     '/reports',
     '/features',
-    '/profile',
     '/feedback',
     '/roadmap',
     '/help',
@@ -37,6 +36,8 @@ describe('shell route classification', () => {
     '/accounts/create',
     '/businesses/create',
     '/tags/create',
+    '/profile',
+    '/feedback/create',
     '/cheques/abc/edit',
     '/parties/abc/edit',
     '/accounts/abc/edit',
@@ -64,6 +65,13 @@ describe('shell route classification', () => {
       createHref: null,
       activeTab: null,
     })
+  })
+  it('offers feedback creation from the list without business scoping', () => {
+    expect(getShellRoute('/feedback')).toMatchObject({
+      createHref: '/feedback/create',
+      showBusinessSwitcher: false,
+    })
+    expect(getShellRoute('/profile').isTopLevel).toBe(false)
   })
 })
 

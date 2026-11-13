@@ -226,7 +226,7 @@ export function NativeTools(props: NativeToolsProps) {
       {props.inSpeedDial ? (
         <SheetTrigger render={trigger} />
       ) : (
-        <div className="fixed bottom-[calc(5rem+var(--shell-bottom-extra,0px)+env(safe-area-inset-bottom)+4.5rem)] right-6 z-40 flex w-16 justify-center">
+        <div className="fixed m-0! bottom-[calc(5rem+var(--shell-bottom-extra,0px)+env(safe-area-inset-bottom)+4.5rem)] right-6 z-40 flex w-16 justify-center">
           <SheetTrigger render={trigger} />
         </div>
       )}

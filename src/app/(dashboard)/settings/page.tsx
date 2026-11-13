@@ -10,7 +10,7 @@ import {
   Settings02Icon as Settings2,
   Notification01Icon as Notifications,
   MegaphoneIcon as Megaphone,
-  SparklesIcon as News,
+  News01Icon as News,
   ChatFeedbackIcon as FeedbackIcon,
   CustomerSupportIcon as CustomerSupport,
   HelpCircleIcon as Help,
@@ -19,10 +19,10 @@ import {
   Shield02Icon as PrivacyShield,
   UserLock02Icon as SecurityLock,
   LicenseIcon as License,
-  ArrowDataTransferHorizontalIcon as Money,
+  Invoice03Icon as Money,
   SparklesIcon as Features,
   GiftIcon as Gift,
-  Tag01Icon as Tag,
+  LabelIcon as Tag,
   ReceiptIndianRupeeIcon as Refund,
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
@@ -407,7 +407,7 @@ export default function SettingsPage() {
                     {content}
                   </PremiumLink>
                 ) : (
-                  <Link href={item.href} key={item.name}>
+                  <Link href={item.href} key={item.name} className="block">
                     {content}
                   </Link>
                 )

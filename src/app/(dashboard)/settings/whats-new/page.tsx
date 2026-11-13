@@ -3,7 +3,8 @@
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ZapIcon as Zap,
-  StarIcon as Star,
+  LabelIcon as Tag,
+  CheckmarkBadge01Icon as Premium,
   Shield01Icon as Shield,
 } from '@hugeicons/core-free-icons'
 import { useTranslations } from 'next-intl'
@@ -18,10 +19,10 @@ export default function WhatsNewPage() {
   const features = [
     { key: 'releasePhone', icon: Shield, image: undefined },
     { key: 'releaseBanks', icon: Shield, image: undefined },
-    { key: 'releaseTags', icon: Star, image: undefined },
+    { key: 'releaseTags', icon: Tag, image: undefined },
     { key: 'releaseDrafts', icon: Zap, image: undefined },
     { key: 'releaseReports', icon: Zap, image: undefined },
-    { key: 'releasePremium', icon: Star, image: undefined },
+    { key: 'releasePremium', icon: Premium, image: undefined },
     { key: 'releaseReminders', icon: Zap, image: undefined },
     { key: 'releaseReliability', icon: Shield, image: undefined },
   ] as const

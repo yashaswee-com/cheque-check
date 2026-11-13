@@ -15,6 +15,13 @@ function renderCalendar(children: React.ReactNode) {
 afterEach(cleanup)
 
 describe('Calendar', () => {
+  it('fills mobile sheets while retaining intrinsic desktop width', () => {
+    const { container } = renderCalendar(<Calendar mode="single" />)
+    expect(container.querySelector('.group\\/calendar')).toHaveClass(
+      'w-fit',
+      'max-sm:w-full',
+    )
+  })
   it('selects a date and navigates months', () => {
     const onSelect = vi.fn()
     renderCalendar(

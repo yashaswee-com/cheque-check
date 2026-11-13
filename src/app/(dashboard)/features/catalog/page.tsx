@@ -61,6 +61,7 @@ export default function FeaturesPage() {
   const tc = useTranslations('Common')
   const productNames = useTranslations('ProductNames')
   const tp = useTranslations('Premium')
+  const comparison = useTranslations('PublicSite.comparison')
   const premium = usePremiumAccess()
   const display = useDisplayFormat()
   const queryClient = useQueryClient()
@@ -251,9 +252,9 @@ export default function FeaturesPage() {
         <>
           <section
             aria-labelledby="lifetime-title"
-            className="overflow-hidden rounded-lg border bg-card"
+            className="overflow-hidden rounded-[18px] border border-primary/30 bg-card"
           >
-            <div className="grid gap-6 bg-canvas-parchment p-5 @min-[640px]:grid-cols-[1fr_auto] @min-[640px]:items-center @min-[640px]:p-8">
+            <div className="flex flex-col gap-5 bg-blue-50/60 p-6 dark:bg-primary/5 @min-[640px]:p-8">
               <div className="space-y-3">
                 <FeatureStatus active={!!isLifetimePremium}>
                   {premium.state === 'free'
@@ -262,19 +263,41 @@ export default function FeaturesPage() {
                 </FeatureStatus>
                 <h2
                   id="lifetime-title"
-                  className="text-2xl font-semibold tracking-tight @min-[640px]:text-3xl"
+                  className="font-heading text-2xl font-bold"
                 >
                   {productNames(PRODUCT_IDS.LIFETIME_PREMIUM)}
                   <PremiumMark className="ml-2 align-middle" />
                 </h2>
+                {!premium.hasLifetimePurchase &&
+                  premium.state !== 'paused' &&
+                  premium.state !== 'active' && (
+                    <div>
+                      <p className="text-4xl font-semibold tracking-tight">
+                        {lifetimeProduct
+                          ? formatPrice(lifetimeProduct)
+                          : productsQuery.isLoading
+                            ? t('loading')
+                            : t('priceUnavailable')}
+                      </p>
+                      <p className="mt-2 text-sm text-primary">
+                        {t('oneTimeLabel')}
+                      </p>
+                    </div>
+                  )}
                 <Link className="text-sm underline" href="/referrals">
                   {referrals('title')}
                 </Link>
-                <p className="max-w-lg text-[17px] leading-relaxed text-muted-foreground">
-                  {t('lifetimeAccess')}
+                <p className="text-sm text-muted-foreground">
+                  {comparison('premiumDescription')}
                 </p>
               </div>
-              <div className="space-y-3 @min-[640px]:max-w-64">
+              <ul className="space-y-3 text-sm">
+                <li>{comparison('unlimited')}</li>
+                <li>{tp('features.reports')}</li>
+                <li>{tp('features.bulk-import')}</li>
+                <li>{comparison('creditsSeparate')}</li>
+              </ul>
+              <div className="space-y-3">
                 {premium.hasLifetimePurchase ? (
                   <p className="text-sm font-semibold">
                     {t('alreadyUnlocked')}
@@ -288,15 +311,6 @@ export default function FeaturesPage() {
                   </Link>
                 ) : (
                   <>
-                    <p className="text-2xl font-semibold tracking-tight">
-                      {lifetimeProduct
-                        ? t('catalogOneTimePrice', {
-                            price: formatPrice(lifetimeProduct),
-                          })
-                        : productsQuery.isLoading
-                          ? t('loading')
-                          : t('priceUnavailable')}
-                    </p>
                     <Button
                       loading={isProcessing}
                       size="pill"

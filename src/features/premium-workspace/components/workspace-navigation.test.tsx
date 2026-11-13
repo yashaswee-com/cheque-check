@@ -223,6 +223,23 @@ describe('PremiumWorkspace navigation', () => {
 })
 
 describe('NativeTools destinations', () => {
+  it.each(['businesses', 'parties', 'cheques'] as const)(
+    'keeps the floating tools margin independent of page spacing on %s',
+    (destination) => {
+      render(
+        <div className="space-y-8">
+          <NativeTools destination={destination} />
+          <div>Content</div>
+        </div>,
+      )
+      expect(screen.getByTestId('native-tools-fab').parentElement).toHaveClass(
+        'fixed',
+        'm-0!',
+        'w-16',
+        'justify-center',
+      )
+    },
+  )
   function openTools() {
     const trigger = screen.getByTestId('native-tools-fab')
     if (trigger.getAttribute('aria-expanded') !== 'true')

@@ -1,5 +1,6 @@
 import { FeedbackCenter } from '@/features/feedback/components/feedback-center'
 import { feedbackCategories } from '@/validators/feedback'
+import { redirect } from 'next/navigation'
 
 export default async function FeedbackPage({
   searchParams,
@@ -13,5 +14,6 @@ export default async function FeedbackPage({
   const initialCategory = feedbackCategories.find(
     (candidate) => candidate === category,
   )
-  return <FeedbackCenter initialCategory={initialCategory} />
+  if (initialCategory) redirect(`/feedback/create?category=${initialCategory}`)
+  return <FeedbackCenter />
 }

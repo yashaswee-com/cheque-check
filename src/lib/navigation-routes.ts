@@ -38,11 +38,14 @@ export function getShellRoute(pathname: string) {
   const segments = pathname.split('?')[0].split('/').filter(Boolean)
   const [family, id, action] = segments
   const resource = resourceRoutes.has(family)
-  const workflow = resource && (id === 'create' || action === 'edit')
+  const workflow =
+    (resource && (id === 'create' || action === 'edit')) ||
+    (family === 'feedback' && id === 'create')
   const fullscreen = family === 'premium'
   const authenticated = resource || viewingRoutes.has(family)
   return {
-    showBottomNav: authenticated && !workflow && !fullscreen,
+    showBottomNav:
+      authenticated && !workflow && !fullscreen && family !== 'profile',
     isTopLevel:
       authenticated && segments.length === 1 && !nestedRoutes.has(family),
     showBusinessSwitcher:
@@ -51,7 +54,8 @@ export function getShellRoute(pathname: string) {
       family === 'reports' ||
       family === 'drafts',
     createHref:
-      segments.length === 1 && (resource || family === 'dashboard')
+      segments.length === 1 &&
+      (resource || family === 'dashboard' || family === 'feedback')
         ? `/${family === 'dashboard' ? 'cheques' : family}/create`
         : null,
     activeTab: ['dashboard', 'cheques', 'parties', 'accounts'].includes(family)

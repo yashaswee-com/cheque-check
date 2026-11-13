@@ -9,7 +9,7 @@ import {
   Camera01Icon as Camera,
   Building03Icon,
   Calendar01Icon,
-  Tag01Icon,
+  LabelIcon as Tag01Icon,
 } from '@hugeicons/core-free-icons'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useDashboardCheques } from '@/features/cheques/hooks/use-dashboard-cheques'

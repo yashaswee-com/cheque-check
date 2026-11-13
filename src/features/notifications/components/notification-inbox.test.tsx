@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   switch: vi.fn(),
   refetch: vi.fn(),
+  toast: vi.fn(),
   requests: [] as Record<string, unknown>[],
   totalPages: 1,
   isLoading: false,
@@ -33,6 +34,7 @@ const mocks = vi.hoisted(() => ({
     created_at: string
   }[],
 }))
+vi.mock('@/components/ui/toast', () => ({ toast: { add: mocks.toast } }))
 vi.mock('../hooks/use-inbox', () => ({
   useUnreadCount: () => mocks.count,
   useInbox: (request: Record<string, unknown>) => {
@@ -105,9 +107,49 @@ beforeEach(() => {
     },
   ]
   mocks.markRead.mockResolvedValue(undefined)
+  mocks.markAll.mockResolvedValue(undefined)
+  mocks.refetch.mockResolvedValue({})
 })
 afterEach(cleanup)
 describe('inbox and header bell', () => {
+  it('toasts successful mark-all and refresh actions', async () => {
+    mount(<NotificationsPage />)
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Inbox.markAll }),
+    )
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith({
+        title: messages.Inbox.markedAllRead,
+        type: 'success',
+      }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Inbox.refresh }),
+    )
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith({
+        title: messages.Inbox.refreshed,
+        type: 'success',
+      }),
+    )
+    expect(mocks.refetch).toHaveBeenCalledWith({ throwOnError: true })
+  })
+  it('does not show a success toast when refresh fails', async () => {
+    mocks.refetch.mockRejectedValueOnce(new Error('offline'))
+    mount(<NotificationsPage />)
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Inbox.refresh }),
+    )
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith({
+        title: messages.Inbox.actionError,
+        type: 'error',
+      }),
+    )
+    expect(mocks.toast).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'success' }),
+    )
+  })
   it('caps visual badge while exposing the full accessible count', () => {
     mount(<NotificationBell />)
     expect(

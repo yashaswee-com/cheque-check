@@ -144,6 +144,7 @@ function useChequeForm(options?: {
     },
     onDelete: mocks.delete,
     draft: {
+      isLoadingDraft: loading,
       draftId: 'draft',
       status: draftStatus,
       hasUserChanges: true,
@@ -796,6 +797,27 @@ describe('cheque list page', () => {
 })
 
 describe('cheque creation page', () => {
+  it('focuses the manual amount input when the form opens', () => {
+    renderPage(<CreateChequePage />)
+    expect(screen.getByTestId('cheque-amount-input')).toHaveFocus()
+  })
+  it('waits for draft hydration before focusing the manual amount input', () => {
+    loading = true
+    const view = renderPage(<CreateChequePage />)
+    expect(screen.getByTestId('cheque-amount-input')).not.toHaveFocus()
+    loading = false
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <CreateChequePage />
+      </NextIntlClientProvider>,
+    )
+    expect(screen.getByTestId('cheque-amount-input')).toHaveFocus()
+  })
+  it('does not focus the amount input when opened from a scan', () => {
+    query = new URLSearchParams({ imageUrl: 'scan-image' })
+    renderPage(<CreateChequePage />)
+    expect(screen.getByTestId('cheque-amount-input')).not.toHaveFocus()
+  })
   it('captures amount, entities, dates and notes, then flushes tags before and after publishing', async () => {
     renderPage(<CreateChequePage />)
     change('amount', '1500')
