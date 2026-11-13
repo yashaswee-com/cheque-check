@@ -1,4 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
+import {
+  reportMarketingBlock,
+  notifyMarketingActivity,
+} from '@/features/analytics/browser'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { chequeSchema } from '@/validators'
@@ -140,6 +144,7 @@ export function useCreateCheque(
       return current ? [optimisticCheque, ...current] : [optimisticCheque]
     },
     onSuccess: async (created) => {
+      notifyMarketingActivity()
       await onCreated?.(created)
       const actionProps = await buildNotifyPartyAction(
         created,
@@ -172,6 +177,7 @@ export function useCreateCheque(
 
   function showCreateError(error: unknown) {
     if (error instanceof PlanLimitError) {
+      reportMarketingBlock('cheques')
       premium.requireAccess('unlimited-cheques')
       return
     }
@@ -198,6 +204,7 @@ export function useCreateCheque(
         data,
         profile?.default_reminder_days ?? null,
       )
+      notifyMarketingActivity()
       draft.finishPublish()
       await onCreated?.(published)
       queryClient.invalidateQueries({

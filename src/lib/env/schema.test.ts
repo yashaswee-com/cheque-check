@@ -36,6 +36,34 @@ describe('publicEnvSchema', () => {
 
     expect(result.NEXT_PUBLIC_RAZORPAY_KEY_ID).toBeUndefined()
   })
+  it('defaults marketing off with the existing Pixel and validates explicit configuration', () => {
+    const base = {
+      NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon-key',
+    }
+    const defaults = publicEnvSchema.parse(base)
+    expect(defaults.NEXT_PUBLIC_MARKETING_ANALYTICS_ENABLED).toBe('false')
+    expect(defaults.NEXT_PUBLIC_META_PIXEL_ID).toBe('1782530103005623')
+    expect(
+      publicEnvSchema.safeParse({
+        ...base,
+        NEXT_PUBLIC_MARKETING_ANALYTICS_ENABLED: 'true',
+        NEXT_PUBLIC_META_PIXEL_ID: '123456789',
+      }).success,
+    ).toBe(true)
+    expect(
+      publicEnvSchema.safeParse({
+        ...base,
+        NEXT_PUBLIC_MARKETING_ANALYTICS_ENABLED: 'yes',
+      }).success,
+    ).toBe(false)
+    expect(
+      publicEnvSchema.safeParse({
+        ...base,
+        NEXT_PUBLIC_META_PIXEL_ID: 'invalid',
+      }).success,
+    ).toBe(false)
+  })
 })
 
 describe('publicEnvSchema phone auth and environment guards', () => {

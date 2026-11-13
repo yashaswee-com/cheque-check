@@ -58,6 +58,7 @@ import {
   TIMEZONE_OPTIONS,
 } from '@/features/profile/lib/preference-options'
 import { useReminderOptions } from '@/features/profile/hooks/use-reminder-options'
+import { syncMarketing } from '@/features/analytics/browser'
 
 const COLORS = [
   '#0066cc',
@@ -201,6 +202,7 @@ export default function OnboardingPage() {
         default_reminder_days: parseInt(formData.defaultReminderDays),
       })
 
+      void syncMarketing('onboarding_completed')
       setStep(5)
     } catch (error) {
       alert(error instanceof Error ? error.message : tc('error'))

@@ -9,6 +9,7 @@ import { toast } from '@/components/ui/toast'
 import { verifyLifetimePremium } from '../services/premium-authorization'
 import { usePremiumPrompt } from './premium-prompt'
 import { PremiumMark } from './premium-mark'
+import { reportMarketingBlock } from '@/features/analytics/browser'
 
 export function PremiumGate({
   feature,
@@ -69,6 +70,7 @@ export function usePremiumAction() {
   const showPremium = usePremiumPrompt()
   function requireAccess(feature: PremiumFeature) {
     if (access.canUse(feature)) return true
+    if (access.state === 'expired') reportMarketingBlock('trial_expired')
     showPremium({ feature, state: access.state })
     return false
   }
@@ -77,6 +79,7 @@ export function usePremiumAction() {
     try {
       if (await verifyLifetimePremium()) return true
       await access.refresh()
+      reportMarketingBlock('trial_expired')
       showPremium({ feature, state: 'expired' })
     } catch (error) {
       toast.add({

@@ -1,38 +1,18 @@
 'use client'
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { usePathname } from 'next/navigation'
-
-const META_PIXEL_ID = '1782530103005623'
-const CONSENT_KEY = 'cheque-check:meta-marketing-consent:v1'
-const CONSENT_CHANGE_EVENT = 'cheque-check:meta-consent-change'
-const OPEN_PREFERENCES_EVENT = 'cheque-check:open-meta-consent'
-const TRACKABLE_PUBLIC_ROUTES = new Set([
-  '/',
-  '/features',
-  '/pricing',
-  '/privacy',
-  '/contact',
-  '/legal-notice',
-  '/cheque-bounce',
-])
-
-type Consent = 'accepted' | 'rejected'
-type MetaPixelFunction = ((...args: unknown[]) => void) & {
-  callMethod?: (...args: unknown[]) => void
-  queue: unknown[][]
-  push: MetaPixelFunction
-  loaded?: boolean
-  version?: string
-  initialized?: boolean
-}
-
-declare global {
-  interface Window {
-    fbq?: MetaPixelFunction
-    _fbq?: MetaPixelFunction
-  }
-}
+import { useEffect, useState, useSyncExternalStore } from 'react'
+import {
+  CONSENT_CHANGE_EVENT,
+  CONSENT_KEY,
+  OPEN_PREFERENCES_EVENT,
+  hasTrackingOptOut,
+  setSessionMarketingOptOut,
+} from '@/features/analytics/contracts'
+import {
+  clearMarketingStorage,
+  syncMarketing,
+} from '@/features/analytics/browser'
+import { logger } from '@/lib/logger'
 
 type Props = {
   title: string
@@ -43,20 +23,14 @@ type Props = {
   saveError: string
 }
 
-export function isTrackablePublicRoute(pathname: string) {
-  return TRACKABLE_PUBLIC_ROUTES.has(pathname)
-}
-
-function readConsent(): Consent | null {
+function readConsent() {
   try {
-    const saved = window.localStorage.getItem(CONSENT_KEY)
-    return saved === 'accepted' || saved === 'rejected' ? saved : null
+    return localStorage.getItem(CONSENT_KEY)
   } catch {
     return null
   }
 }
-
-function subscribeToConsent(onChange: () => void) {
+function subscribe(onChange: () => void) {
   window.addEventListener('storage', onChange)
   window.addEventListener(CONSENT_CHANGE_EVENT, onChange)
   return () => {
@@ -65,159 +39,96 @@ function subscribeToConsent(onChange: () => void) {
   }
 }
 
-function hasTrackingOptOut() {
-  return (
-    (navigator as Navigator & { globalPrivacyControl?: boolean })
-      .globalPrivacyControl === true || navigator.doNotTrack === '1'
-  )
-}
-
-function initializeMetaPixel() {
-  if (!window.fbq) {
-    const fbq = function (...args: unknown[]) {
-      if (fbq.callMethod) fbq.callMethod(...args)
-      else fbq.queue.push(args)
-    } as MetaPixelFunction
-    fbq.queue = []
-    fbq.push = fbq
-    fbq.loaded = true
-    fbq.version = '2.0'
-    window.fbq = window._fbq = fbq
-
-    const script = document.createElement('script')
-    script.id = 'meta-pixel-script'
-    script.async = true
-    script.src = 'https://connect.facebook.net/en_US/fbevents.js'
-    document.head.appendChild(script)
-  }
-
-  const fbq = window.fbq
-  if (!fbq.initialized) {
-    fbq('set', 'autoConfig', false, META_PIXEL_ID)
-    fbq('init', META_PIXEL_ID)
-    fbq.initialized = true
-  }
-  fbq('consent', 'grant')
-  return fbq
-}
-
-function revokeMetaPixelConsent() {
-  window.fbq?.('consent', 'revoke')
-  for (const name of ['_fbp', '_fbc']) {
-    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`
-  }
-}
-
-export function MetaPixelConsent({
-  title,
-  description,
-  acceptLabel,
-  rejectLabel,
-  manageLabel,
-  saveError,
-}: Props) {
-  const pathname = usePathname()
-  const savedConsent = useSyncExternalStore(
-    subscribeToConsent,
-    readConsent,
-    () => null,
-  )
-  const [sessionConsent, setSessionConsent] = useState<Consent | null>(null)
+export function MetaPixelConsent(props: Props) {
+  const consent = useSyncExternalStore(subscribe, readConsent, () => null)
   const [editing, setEditing] = useState(false)
   const [storageError, setStorageError] = useState(false)
-  const lastTrackedRoute = useRef<string | null>(null)
-  const consent = sessionConsent ?? savedConsent
-
   useEffect(() => {
-    const openPreferences = () => setEditing(true)
-    window.addEventListener(OPEN_PREFERENCES_EVENT, openPreferences)
-    return () =>
-      window.removeEventListener(OPEN_PREFERENCES_EVENT, openPreferences)
+    const open = () => setEditing(true)
+    window.addEventListener(OPEN_PREFERENCES_EVENT, open)
+    return () => window.removeEventListener(OPEN_PREFERENCES_EVENT, open)
   }, [])
 
-  useEffect(() => {
-    if (consent !== 'accepted') {
-      if (consent === 'rejected') revokeMetaPixelConsent()
-      lastTrackedRoute.current = null
-      return
-    }
-    if (
-      !pathname ||
-      !isTrackablePublicRoute(pathname) ||
-      window.location.search ||
-      window.location.hash ||
-      hasTrackingOptOut()
-    ) {
-      return
-    }
-
-    const fbq = initializeMetaPixel()
-    if (lastTrackedRoute.current !== pathname) {
-      fbq('track', 'PageView')
-      lastTrackedRoute.current = pathname
-    }
-  }, [consent, pathname])
-
-  function chooseConsent(choice: Consent) {
+  async function choose(choice: 'accepted' | 'rejected') {
     setStorageError(false)
+    setEditing(true)
     try {
-      window.localStorage.setItem(CONSENT_KEY, choice)
-      setSessionConsent(null)
+      const actual = hasTrackingOptOut() ? 'rejected' : choice
+      if (actual === 'rejected') {
+        setSessionMarketingOptOut(true)
+        window.fbq?.('consent', 'revoke')
+        let storageFailed = false
+        try {
+          localStorage.setItem(CONSENT_KEY, actual)
+          clearMarketingStorage()
+        } catch (error) {
+          logger.error(
+            'Marketing withdrawal could not be persisted locally',
+            error,
+          )
+          storageFailed = true
+        }
+        const synchronized = await syncMarketing('sync', {
+          explicitChoice: true,
+          acceptedOverride: false,
+        })
+        if (storageFailed || !synchronized)
+          throw new Error('Marketing withdrawal synchronization failed')
+      } else {
+        localStorage.setItem(CONSENT_KEY, actual)
+        setSessionMarketingOptOut(false)
+        if (!(await syncMarketing('sync', { explicitChoice: true })))
+          throw new Error('Marketing consent synchronization failed')
+      }
+      // Old public-page-only consent does not authorize the expanded funnel.
+      localStorage.removeItem('cheque-check:meta-marketing-consent:v1')
       window.dispatchEvent(new Event(CONSENT_CHANGE_EVENT))
       setEditing(false)
-    } catch {
+    } catch (error) {
+      logger.error('Marketing consent could not be saved', error)
       setStorageError(true)
-      if (choice === 'rejected') {
-        setSessionConsent('rejected')
-        setEditing(false)
-      }
     }
   }
-
-  function openPreferences() {
-    setEditing(true)
-  }
-
   return (
     <>
       <button
         type="button"
-        onClick={openPreferences}
-        className="min-h-11 rounded-full px-2 text-xs font-medium underline underline-offset-4 hover:text-foreground"
+        onClick={() => setEditing(true)}
+        className="fixed bottom-20 right-2 z-[115] min-h-11 rounded-full border bg-background px-3 text-xs underline shadow-sm"
       >
-        {manageLabel}
+        {props.manageLabel}
       </button>
-      {(consent === null || editing) && (
+      {((consent !== 'accepted' && consent !== 'rejected') || editing) && (
         <section
-          aria-label={title}
-          className="fixed inset-x-0 bottom-0 z-120 border-t bg-card p-4 shadow-2xl sm:p-5"
+          aria-label={props.title}
+          className="fixed inset-x-0 bottom-0 z-[120] border-t bg-card p-4 shadow-2xl sm:p-5"
         >
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-3xl space-y-1">
-              <h2 className="font-semibold">{title}</h2>
+              <h2 className="font-semibold">{props.title}</h2>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                {description}
+                {props.description}
               </p>
               {storageError && (
                 <p role="alert" className="text-sm text-destructive">
-                  {saveError}
+                  {props.saveError}
                 </p>
               )}
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => chooseConsent('accepted')}
+                onClick={() => void choose('accepted')}
                 className="min-h-11 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground"
               >
-                {acceptLabel}
+                {props.acceptLabel}
               </button>
               <button
                 type="button"
-                onClick={() => chooseConsent('rejected')}
+                onClick={() => void choose('rejected')}
                 className="min-h-11 rounded-full border px-4 text-sm font-semibold"
               >
-                {rejectLabel}
+                {props.rejectLabel}
               </button>
             </div>
           </div>

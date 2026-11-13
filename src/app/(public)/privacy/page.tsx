@@ -19,7 +19,7 @@ export default async function PublicPrivacyPage() {
     month: 'long',
     year: 'numeric',
     timeZone: 'UTC',
-  }).format(new Date('2026-08-01T00:00:00Z'))
+  }).format(new Date('2026-11-13T00:00:00Z'))
   const sections = [
     ['intro', 'privacyIntroContent'],
     ['dataCollect', 'privacyDataCollectContent'],

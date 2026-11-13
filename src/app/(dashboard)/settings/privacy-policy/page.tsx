@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
           <div className="flex items-center gap-3 text-primary mb-4">
             <HugeiconsIcon icon={Shield} className="h-6 w-6" />
             <span className="font-semibold uppercase tracking-wider text-xs">
-              {t('lastUpdated', { date: display.month('2026-08') })}
+              {t('lastUpdated', { date: display.month('2026-11') })}
             </span>
           </div>
 
@@ -60,6 +60,9 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-lg font-bold">6. {tm('trackingLabel')}</h2>
             <p className="text-muted-foreground leading-relaxed">
               {tm('privacyDisclosure')}
+            </p>
+            <p className="text-muted-foreground leading-relaxed">
+              {tm('metaPixelDisclosure')}
             </p>
           </section>
 

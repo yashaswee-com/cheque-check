@@ -15,6 +15,7 @@ import { APPEARANCE_BOOTSTRAP } from '@/features/profile/lib/appearance'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { QaIndicator } from '@/components/qa-indicator'
+import { MarketingProvider } from '@/features/analytics/marketing-provider'
 
 const bodyFont = IBM_Plex_Sans({
   subsets: ['latin'],
@@ -93,6 +94,9 @@ export default async function RootLayout({
         <PwaRegistrar />
         {!isPublicSite && <LaunchSplash />}
         <NextIntlClientProvider messages={messages}>
+          <Suspense fallback={null}>
+            <MarketingProvider />
+          </Suspense>
           {isPublicSite ? (
             <div className="min-h-screen">
               {isQa && (

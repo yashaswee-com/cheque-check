@@ -397,7 +397,7 @@
     "copyReference": "Support Reference Copy Karein",
     "copied": "Copy Ho Gaya",
     "privacyDisclosure": "Hum error diagnostics ke liye Sentry aur usage analytics aur masked session recordings ke liye Microsoft Clarity use karte hain. Diagnostics mein user ID, email, naam, business ID, subscription state aur language preferences shamil ho sakte hain. Financial details, uploaded documents aur form values shamil nahi hain. Settings mein is browser ke liye analytics aur recordings off kar sakte hain; zaroori sanitized error reporting alag hai. Browser data clear karne par preference reset hoti hai. Pehle collect ki gayi information providers ki retention aur deletion policies ke anusar rakhi jati hai.",
-    "metaPixelDisclosure": "Meta Pixel sirf selected public marketing pages par optional marketing cookies accept karne ke baad use hota hai. Yeh page views measure karta hai aur browser/device info aur public page URL process kar sakta hai. Hum account identifiers, cheque ya financial data, form contents ya payment details nahi bhejte. Reject ya consent withdraw karne ke baad aage ke events rukte hain; pehle mili information Meta ki policies ke adheen hai."
+    "metaPixelDisclosure": "Aapki marketing permission ke baad selected page visits, verified signup, onboarding, cheque-count milestones, blocked free limits aur purchase starts/completions private analytics database mein record hote hain aur Meta Pixel/Conversions API se share hote hain. Meta ko hashed account ID aur verified email/phone, IP/browser info, campaign/click IDs, product, currency aur actual cash paid mil sakta hai. Cheque contents, bank/party details, images ya form contents share nahi hote. Raw events 90 din, bina identifiers ke daily totals 13 mahine aur matching/delivery payloads maximum 7 din rakhe jaate hain. Cookie settings se permission withdraw karne par future collection aur unsent events rukte hain; pehle bheja data Meta policies ke adheen hai. Explicit account erasure linked raw analytics hataata hai; sirf deactivation historical records nahi mitaata."
   },
   "PremiumWorkspace": {
     "title": "Premium workspace",
@@ -1798,7 +1798,7 @@
     },
     "cookieConsent": {
       "title": "Optional marketing cookies",
-      "description": "Aapki permission ke baad Meta Pixel public Cheque Check pages ke visits measure karta hai. Meta ko browser/device info aur dekha gaya public page mil sakta hai. Hum account, cheque, contact form ya payment details nahi bhejte. Cookie settings mein aap yeh choice kabhi bhi badal sakte hain.",
+      "description": "Cheque Check par optional marketing analytics allow karein? Selected visits, signup, onboarding, cheque-count milestones, free-limit blocks aur purchases record karke ads measure karne ke liye Meta Pixel/Conversions API se share hote hain. Meta ko hashed account/contact IDs, browser/IP info, ad IDs aur purchase product/value mil sakta hai. Cheque contents, bank/party details, images ya form entries share nahi hote. Cookie settings mein kabhi bhi reject ya withdraw karein. Retention aur data rights ke liye privacy policy dekhein.",
       "accept": "Accept",
       "reject": "Reject",
       "manage": "Cookie settings",

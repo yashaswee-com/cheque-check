@@ -397,7 +397,7 @@
     "copyReference": "Copy Support Reference",
     "copied": "Copied",
     "privacyDisclosure": "We use Sentry for error diagnostics and Microsoft Clarity for usage analytics and masked session recordings. Diagnostics may include your user ID, email, display name, business ID, subscription state and language preferences. We exclude financial details, uploaded documents and form values. You can disable analytics and recordings in Settings for this browser; essential sanitized error reporting is separate. Clearing browser data resets your preference. Previously collected information is subject to each provider's retention and deletion policies.",
-    "metaPixelDisclosure": "Meta Pixel is used only on allowlisted public marketing pages after you accept optional marketing cookies. It measures page views and may process browser or device information and the public page URL. We do not send account identifiers, cheque or financial data, form contents, or payment details. Rejecting or withdrawing consent stops future events; Meta's handling of information already received is subject to Meta's policies."
+    "metaPixelDisclosure": "With your marketing consent, we record selected page visits, verified signup, onboarding, cheque-count milestones, blocked free limits, and purchase starts/completions in our private analytics database and share these events through Meta Pixel and Conversions API. Meta may receive hashed account identifiers and verified email/phone, IP and browser information, campaign/click identifiers, and purchase product, currency and actual cash paid. We never share cheque contents, bank/party details, images, or form contents. Raw events are retained for 90 days, identifier-free daily totals for 13 months, and matching/delivery payloads for at most 7 days. Cookie settings lets you withdraw consent, stopping future collection and cancelling unsent events; previously delivered data remains subject to Meta's policies. Explicit account erasure removes linked raw analytics; deactivation alone does not erase historical records."
   },
   "PremiumWorkspace": {
     "title": "Premium workspace",
@@ -1798,7 +1798,7 @@
     },
     "cookieConsent": {
       "title": "Optional marketing cookies",
-      "description": "With your permission, Meta Pixel measures visits to public Cheque Check pages. Meta may receive browser and device information and the public page viewed. We do not send account, cheque, contact form, or payment details. You can change this choice anytime in Cookie settings.",
+      "description": "Allow optional marketing analytics across Cheque Check? We record selected visits, signup, onboarding, cheque-count milestones, free-limit blocks, and purchases, and share them with Meta Pixel and Conversions API to measure ads. Meta may receive hashed account/contact identifiers, browser/IP information, ad identifiers, and purchase product/value. We never share cheque contents, bank/party details, images, or form entries. You can reject or withdraw anytime in Cookie settings. See our privacy policy for retention and data rights.",
       "accept": "Accept",
       "reject": "Reject",
       "manage": "Cookie settings",

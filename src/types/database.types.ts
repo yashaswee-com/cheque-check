@@ -8,9 +8,96 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+type AnalyticsTable<Row, Required extends keyof Row = never> = {
+  Row: Row
+  Insert: Partial<Row> & Pick<Row, Required>
+  Update: Partial<Row>
+  Relationships: []
+}
+
+type DailyAnalyticsRow = {
+  day: string
+  event_name: string
+  mode: string
+  dimensions: Json
+  event_count: number
+  unique_users: number
+  unique_anonymous_visitors: number
+  revenue_paise: number
+  delivered: number
+  failed: number
+  pending: number
+  cancelled: number
+}
+
 export interface Database {
   public: {
     Tables: {
+      marketing_configuration: AnalyticsTable<{
+        singleton: boolean
+        enabled: boolean
+        mode: string
+        launched_at: string
+        aggregated_at: string | null
+      }>
+      marketing_ingress_windows: AnalyticsTable<
+        {
+          subject_hash: string
+          window_started_at: string
+          requests: number
+        },
+        'subject_hash' | 'window_started_at' | 'requests'
+      >
+      marketing_user_state: AnalyticsTable<
+        {
+          user_id: string
+          consent: boolean
+          consent_at: string | null
+          registered_at: string | null
+          milestones: string[]
+          published_count: number
+          context: Json
+          matching: Json | null
+          matching_expires_at: string | null
+        },
+        'user_id'
+      >
+      event_analytics: AnalyticsTable<
+        {
+          id: string
+          event_name: string
+          meta_event_name: string
+          occurred_at: string
+          user_id: string | null
+          visitor_id: string | null
+          session_id: string | null
+          dedupe_key: string
+          mode: string
+          context: Json
+          details: Json
+          delivery_status: string
+          delivery_attempts: number
+          delivery_code: string | null
+          delivered_at: string | null
+          browser_claimed_at: string | null
+        },
+        'event_name' | 'meta_event_name' | 'dedupe_key' | 'mode'
+      >
+      marketing_delivery_queue: AnalyticsTable<
+        {
+          event_id: string
+          matching: Json
+          available_at: string
+          expires_at: string
+          lease_token: string | null
+          lease_until: string | null
+        },
+        'event_id' | 'matching'
+      >
+      event_analytics_daily_totals: AnalyticsTable<
+        DailyAnalyticsRow,
+        keyof DailyAnalyticsRow
+      >
       ai_model_policies: {
         Row: {
           product_id: string
@@ -469,6 +556,7 @@ export interface Database {
       }
       cheques: {
         Row: {
+          marketing_publication_counted: boolean
           deleted_at: string | null
           deletion_batch_id: string | null
           id: string
@@ -772,12 +860,72 @@ export interface Database {
       }
     }
     Views: {
+      event_analytics_daily: { Row: DailyAnalyticsRow; Relationships: [] }
+      event_analytics_daily_live: { Row: DailyAnalyticsRow; Relationships: [] }
       notification_time_zones: {
         Row: { name: string | null }
         Relationships: []
       }
     }
     Functions: {
+      marketing_sync: {
+        Args: {
+          owner: string | null
+          accepted: boolean
+          explicit_choice: boolean
+          accepted_at: string
+          event_context: Json
+          match_data: Json
+          visitor: string
+        }
+        Returns: boolean
+      }
+      marketing_admit_ingress: { Args: { subject: string }; Returns: boolean }
+      marketing_blocked: {
+        Args: { owner: string; feature: string }
+        Returns: undefined
+      }
+      marketing_onboarding: {
+        Args: { owner: string; completed: boolean; tracking_allowed?: boolean }
+        Returns: undefined
+      }
+      marketing_delivery_valid: {
+        Args: { event: string; token: string }
+        Returns: boolean
+      }
+      marketing_browser_events: {
+        Args: {
+          owner: string | null
+          visitor: string
+          session: string | null
+          route: string
+          event_context: Json
+          match_data: Json
+          claim_browser?: boolean
+        }
+        Returns: Json
+      }
+      marketing_maintenance: { Args: Record<string, never>; Returns: undefined }
+      marketing_erase_user: { Args: { owner: string }; Returns: undefined }
+      marketing_claim_delivery: {
+        Args: { batch_size?: number }
+        Returns: {
+          event_id: string
+          lease_token: string
+          payload: Json
+          mode: string
+          owner: string | null
+        }[]
+      }
+      marketing_settle_delivery: {
+        Args: {
+          event: string
+          token: string
+          outcome: string
+          result_code: string
+        }
+        Returns: undefined
+      }
       security_pin_proof: {
         Args: { requested_user: string; requested_proof: string }
         Returns: undefined

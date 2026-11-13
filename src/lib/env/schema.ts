@@ -70,6 +70,11 @@ export const publicEnvSchema = z
       .enum(['production', 'qa', 'preview', 'development'])
       .optional(),
     NEXT_PUBLIC_PHONE_AUTH_ENABLED: monitoringFlag,
+    NEXT_PUBLIC_MARKETING_ANALYTICS_ENABLED: monitoringFlag,
+    NEXT_PUBLIC_META_PIXEL_ID: z
+      .string()
+      .regex(/^\d{5,30}$/)
+      .default('1782530103005623'),
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: optionalString,
     NEXT_PUBLIC_LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])

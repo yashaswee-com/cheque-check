@@ -1,6 +1,9 @@
 import type { Database } from '@/types/database.types'
 
-export type ChequeRow = Database['public']['Tables']['cheques']['Row']
+export type ChequeRow = Omit<
+  Database['public']['Tables']['cheques']['Row'],
+  'marketing_publication_counted'
+>
 export type PartyRow = Database['public']['Tables']['parties']['Row']
 export type AccountRow = Database['public']['Tables']['accounts']['Row']
 export type SavedTool =

@@ -19,10 +19,12 @@ describe('public route allowlist', () => {
     expect(isPublicPagePath('/settings/privacy-policy')).toBe(false)
   })
 
-  it('allows only the contact API and does not allow nested endpoints', () => {
+  it('allows contact and analytics ingestion, but not nested or private endpoints', () => {
     expect(isPublicApiPath('/api/contact')).toBe(true)
     expect(isPublicApiPath('/api/contact/')).toBe(true)
     expect(isPublicApiPath('/api/contact/messages')).toBe(false)
+    expect(isPublicApiPath('/api/analytics/events')).toBe(true)
+    expect(isPublicApiPath('/api/analytics/events/private')).toBe(false)
     expect(isPublicApiPath('/api/payments/create-order')).toBe(false)
     expect(isPublicApiPath('/api/sentry-example-api')).toBe(false)
   })

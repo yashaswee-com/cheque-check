@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Analytics01Icon, Login01Icon } from '@hugeicons/core-free-icons'
 import { PublicNavigation } from '@/components/public-site/public-navigation'
-import { MetaPixelConsent } from '@/components/public-site/meta-pixel-consent'
 import styles from '@/components/public-site/landing.module.css'
 import { PUBLIC_NAV_LINKS } from '@/components/public-site/navigation-links'
 import {
@@ -108,14 +107,6 @@ export default async function PublicSiteLayout({
             <span>
               © {new Date().getFullYear()} {t('footer.copyright')}
             </span>
-            <MetaPixelConsent
-              title={t('cookieConsent.title')}
-              description={t('cookieConsent.description')}
-              acceptLabel={t('cookieConsent.accept')}
-              rejectLabel={t('cookieConsent.reject')}
-              manageLabel={t('cookieConsent.manage')}
-              saveError={t('cookieConsent.saveError')}
-            />
           </div>
         </div>
       </footer>

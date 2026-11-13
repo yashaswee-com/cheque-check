@@ -7,7 +7,7 @@ const PUBLIC_PAGE_PATHS = new Set([
   '/sentry-example-page',
 ])
 
-const PUBLIC_API_PATHS = new Set(['/api/contact'])
+const PUBLIC_API_PATHS = new Set(['/api/contact', '/api/analytics/events'])
 
 function normalizedPath(pathname: string) {
   return pathname.replace(/\/+$/, '') || '/'

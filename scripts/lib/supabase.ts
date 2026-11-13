@@ -30,6 +30,7 @@ export const EDGE_FUNCTIONS = [
   'notifications-dispatcher',
   'razorpay-webhook',
   'report-exports',
+  'marketing-delivery',
 ] as const
 export type EdgeFunctionName = (typeof EDGE_FUNCTIONS)[number]
 
