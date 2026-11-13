@@ -31,7 +31,7 @@ export function SettingSwitchRow({
           <label
             htmlFor={id}
             data-slot="setting-switch-label"
-            className="text-sm font-semibold"
+            className="text-sm font-normal"
           >
             {label}
           </label>

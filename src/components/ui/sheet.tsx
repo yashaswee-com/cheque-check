@@ -91,6 +91,7 @@ function SheetContent({
           'fixed bottom-0 left-0 right-0 z-50 flex max-h-[90dvh] flex-col gap-4 overflow-hidden rounded-t-3xl bg-popover p-6 text-sm text-popover-foreground shadow-2xl ring-1 ring-foreground/5 duration-300 outline-none data-open:animate-in data-open:slide-in-from-bottom-full data-closed:animate-out data-closed:slide-out-to-bottom-full',
           'sm:left-1/2 sm:right-auto sm:w-full sm:max-w-[430px] sm:-translate-x-1/2',
           className,
+          'max-sm:w-screen! max-sm:max-w-none!',
         )}
         {...props}
       >

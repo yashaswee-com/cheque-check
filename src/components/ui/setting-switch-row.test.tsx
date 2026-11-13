@@ -20,7 +20,7 @@ describe('SettingSwitchRow', () => {
     expect(toggle).toHaveAccessibleDescription('Fewer animations')
     expect(screen.getByText('Reduce Motion')).toHaveClass(
       'text-sm',
-      'font-semibold',
+      'font-normal',
     )
     expect(screen.getByText('Fewer animations')).toHaveClass(
       'text-xs',

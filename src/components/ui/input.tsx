@@ -130,6 +130,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             leftIcon && 'pl-10',
             showMic && 'pr-10',
             className,
+            'aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/50 focus-visible:aria-invalid:border-destructive focus-visible:aria-invalid:ring-1',
           )}
           onChange={onChange}
           value={value}

@@ -14,7 +14,7 @@ export const CurrencyPrefixInput = React.forwardRef<
 >(({ currency, className, ...props }, ref) => {
   return (
     <div className="relative">
-      <span className="absolute left-3 top-1/2 z-10 -translate-y-1/2 text-base font-semibold text-muted-foreground pointer-events-none">
+      <span className="absolute left-3 top-1/2 z-10 -translate-y-1/2 text-base font-normal text-muted-foreground pointer-events-none">
         {currency}
       </span>
       <Input ref={ref} className={cn('pl-10', className)} {...props} />

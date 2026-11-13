@@ -4,6 +4,8 @@ import * as React from 'react'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useReducedMotionPreference } from '@/hooks/use-reduced-motion'
 
 import { cn } from '@/lib/utils'
 
@@ -16,6 +18,7 @@ function PillScroller({
   ...props
 }: React.ComponentProps<'div'> & { floatingControls?: boolean }) {
   const t = useTranslations('SharedUI')
+  const reduced = useReducedMotionPreference()
   const elementRef = React.useRef<HTMLDivElement>(null)
   const [overflow, setOverflow] = React.useState({ left: false, right: false })
   const measure = React.useCallback(() => {
@@ -25,10 +28,14 @@ function PillScroller({
     const children = Array.from(element.children)
     setOverflow({
       left: children.some(
-        (child) => child.getBoundingClientRect().left < bounds.left - 1,
+        (child) =>
+          child.getBoundingClientRect().width > 0 &&
+          child.getBoundingClientRect().left < bounds.left - 1,
       ),
       right: children.some(
-        (child) => child.getBoundingClientRect().right > bounds.right + 1,
+        (child) =>
+          child.getBoundingClientRect().width > 0 &&
+          child.getBoundingClientRect().right > bounds.right + 1,
       ),
     })
   }, [])
@@ -52,32 +59,42 @@ function PillScroller({
     element?.scrollBy({
       left: direction * element.clientWidth,
       behavior:
-        document.documentElement.hasAttribute('data-reduce-motion') ||
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        reduced || document.documentElement.hasAttribute('data-reduce-motion')
           ? 'instant'
           : 'smooth',
     })
   }
   return (
-    <div
-      className={cn(
-        'relative flex min-w-0 items-center',
-        !floatingControls && 'gap-1',
-      )}
-    >
-      {overflow.left && (
-        <button
-          type="button"
-          aria-label={t('scrollLeft')}
-          onClick={() => scroll(-1)}
-          className={cn(
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-background shadow-sm',
-            floatingControls && 'absolute left-0 top-1/2 z-10 -translate-y-1/2',
-          )}
-        >
-          <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" />
-        </button>
-      )}
+    <div className="relative flex min-w-0 items-center">
+      <AnimatePresence initial={false}>
+        {overflow.left && (
+          <motion.button
+            key="left"
+            initial={{
+              opacity: 0,
+              x: reduced ? 0 : -6,
+              width: floatingControls ? 32 : 0,
+            }}
+            animate={{ opacity: 1, x: 0, width: 32 }}
+            exit={{
+              opacity: 0,
+              x: reduced ? 0 : -6,
+              width: floatingControls ? 32 : 0,
+            }}
+            transition={{ duration: reduced ? 0 : 0.2, ease: 'easeInOut' }}
+            type="button"
+            aria-label={t('scrollLeft')}
+            onClick={() => scroll(-1)}
+            className={cn(
+              'flex h-8 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-background shadow-sm',
+              floatingControls &&
+                'absolute left-0 top-1/2 z-10 -translate-y-1/2',
+            )}
+          >
+            <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" />
+          </motion.button>
+        )}
+      </AnimatePresence>
       <div
         role="group"
         data-slot="pill-scroller"
@@ -98,20 +115,35 @@ function PillScroller({
       >
         {children}
       </div>
-      {overflow.right && (
-        <button
-          type="button"
-          aria-label={t('scrollRight')}
-          onClick={() => scroll(1)}
-          className={cn(
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-background shadow-sm',
-            floatingControls &&
-              'absolute right-0 top-1/2 z-10 -translate-y-1/2',
-          )}
-        >
-          <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
-        </button>
-      )}
+      <AnimatePresence initial={false}>
+        {overflow.right && (
+          <motion.button
+            key="right"
+            initial={{
+              opacity: 0,
+              x: reduced ? 0 : 6,
+              width: floatingControls ? 32 : 0,
+            }}
+            animate={{ opacity: 1, x: 0, width: 32 }}
+            exit={{
+              opacity: 0,
+              x: reduced ? 0 : 6,
+              width: floatingControls ? 32 : 0,
+            }}
+            transition={{ duration: reduced ? 0 : 0.2, ease: 'easeInOut' }}
+            type="button"
+            aria-label={t('scrollRight')}
+            onClick={() => scroll(1)}
+            className={cn(
+              'flex h-8 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-background shadow-sm',
+              floatingControls &&
+                'absolute right-0 top-1/2 z-10 -translate-y-1/2',
+            )}
+          >
+            <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -133,7 +165,7 @@ function FilterPillSection({
     <div className={cn('space-y-3', className)}>
       <h3
         id={headingId}
-        className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+        className="text-[10px] font-normal uppercase tracking-widest text-muted-foreground"
       >
         {title}
       </h3>
@@ -146,7 +178,7 @@ function FilterPillSection({
 
 function filterPillClassName(active: boolean, className?: string) {
   return cn(
-    'flex shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-xl border px-4 py-3 transition-all active:scale-[0.98]',
+    'flex shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-xl border px-4 py-3 font-normal transition-all active:scale-[0.98]',
     active
       ? 'bg-primary/5 border-primary text-primary'
       : 'bg-muted/30 border-transparent text-foreground',

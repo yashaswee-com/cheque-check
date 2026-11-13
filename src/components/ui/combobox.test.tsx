@@ -74,8 +74,13 @@ it('selects and clears existing options', async () => {
   const { rerender } = render(
     <Combobox options={options} onValueChange={change} testId="account" />,
   )
+  expect(screen.getByTestId('account').querySelector('span')).toHaveClass(
+    'font-normal',
+  )
   fireEvent.click(screen.getByTestId('account'))
-  fireEvent.click(await screen.findByTestId('account-option-main'))
+  const option = await screen.findByTestId('account-option-main')
+  expect(option.querySelector('span.font-normal')).toBeInTheDocument()
+  fireEvent.click(option)
   expect(change).toHaveBeenCalledWith('main')
   rerender(
     <Combobox
@@ -88,6 +93,21 @@ it('selects and clears existing options', async () => {
   fireEvent.click(screen.getByTestId('account'))
   fireEvent.click(await screen.findByTestId('account-option-main'))
   expect(change).toHaveBeenLastCalledWith('')
+})
+
+it('contains popup focus guards inside a stable field wrapper', async () => {
+  render(
+    <div data-testid="fields" className="space-y-2">
+      <Combobox options={options} onValueChange={vi.fn()} testId="stable" />
+      <input aria-label="Next field" />
+    </div>,
+  )
+  const fields = screen.getByTestId('fields')
+  expect(fields.children).toHaveLength(2)
+  fireEvent.click(screen.getByTestId('stable'))
+  await screen.findByTestId('stable-search')
+  expect(fields.children).toHaveLength(2)
+  expect(fields.firstElementChild).toHaveAttribute('data-slot', 'combobox')
 })
 
 it('keeps required preference selections and bounds the trigger content without clearing', async () => {

@@ -50,6 +50,7 @@ interface ComboboxProps {
   disabled?: boolean
   id?: string
   allowDeselect?: boolean
+  showSelectedAvatar?: boolean
 }
 
 export function Combobox({
@@ -66,6 +67,7 @@ export function Combobox({
   disabled = false,
   id,
   allowDeselect = true,
+  showSelectedAvatar = true,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const paged = usePagedOptions(options, optionLabel)
@@ -96,7 +98,7 @@ export function Combobox({
             setQuery('')
             onCreateClick(trimmedQuery)
           }}
-          className="flex w-full items-center gap-2 rounded-sm px-3 py-3 text-sm font-semibold text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+          className="flex w-full items-center gap-2 rounded-sm px-3 py-3 text-sm font-normal text-primary hover:bg-primary/5 transition-colors cursor-pointer"
         >
           <HugeiconsIcon icon={PlusCircle} className="h-4 w-4" />
           {resolvedCreateLabel}
@@ -110,7 +112,7 @@ export function Combobox({
               : createUrl!
           }
         >
-          <div className="flex items-center gap-2 rounded-sm px-3 py-3 text-sm font-semibold text-primary hover:bg-primary/5 transition-colors cursor-pointer">
+          <div className="flex items-center gap-2 rounded-sm px-3 py-3 text-sm font-normal text-primary hover:bg-primary/5 transition-colors cursor-pointer">
             <HugeiconsIcon icon={PlusCircle} className="h-4 w-4" />
             {resolvedCreateLabel}
           </div>
@@ -120,119 +122,124 @@ export function Combobox({
   )
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={(next) => {
-        if (disabled) return
-        setOpen(next)
-        if (!next) setQuery('')
-      }}
-    >
-      <PopoverTrigger
-        id={id}
-        disabled={disabled}
-        data-testid={testId}
-        className={cn(
-          buttonVariants({
-            variant: className?.includes('bg-') ? 'ghost' : 'outline',
-          }),
-          'min-w-0 w-full justify-between h-12 rounded-sm',
-          !className?.includes('border-none') && 'border-primary/10',
-          className,
-        )}
+    <div className="min-w-0" data-slot="combobox">
+      <Popover
+        open={open}
+        onOpenChange={(next) => {
+          if (disabled) return
+          setOpen(next)
+          if (!next) setQuery('')
+        }}
       >
-        <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-          {selectedOption && (
-            <EntityAvatar
-              name={selectedOption.label}
-              color={selectedOption.color}
-              icon={selectedOption.icon}
-              imageUrl={selectedOption.imageUrl}
-              size="sm"
-            />
+        <PopoverTrigger
+          id={id}
+          disabled={disabled}
+          data-testid={testId}
+          className={cn(
+            buttonVariants({
+              variant: className?.includes('bg-') ? 'ghost' : 'outline',
+            }),
+            'min-w-0 w-full justify-between h-12 rounded-sm',
+            !className?.includes('border-none') && 'border-primary/10',
+            className,
           )}
-          <span className="truncate font-semibold">
-            {selectedOption ? selectedOption.label : placeholder}
-          </span>
-        </div>
-        <HugeiconsIcon
-          icon={ChevronsUpDown}
-          className="ml-2 h-4 w-4 shrink-0 opacity-50"
-        />
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-(--anchor-width) p-0 rounded-lg overflow-hidden border border-primary/5"
-        align="start"
-      >
-        <Command className="rounded-none" shouldFilter={false}>
-          <CommandInput
-            placeholder={placeholder}
-            data-testid={testId ? `${testId}-search` : undefined}
-            className="h-12"
-            value={query}
-            onValueChange={setQuery}
-          />
-          <CommandList key={`${query}:${paged.page}`} className="max-h-[300px]">
-            {showEmptyCreate ? (
-              <CommandEmpty className="p-1 text-sm">
-                {createAction}
-              </CommandEmpty>
-            ) : (
-              <CommandEmpty className="py-6 text-center text-sm">
-                <p className="text-muted-foreground font-semibold">
-                  {emptyMessage}
-                </p>
-              </CommandEmpty>
+        >
+          <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+            {showSelectedAvatar && selectedOption && (
+              <EntityAvatar
+                name={selectedOption.label}
+                color={selectedOption.color}
+                icon={selectedOption.icon}
+                imageUrl={selectedOption.imageUrl}
+                size="sm"
+              />
             )}
-            <CommandGroup>
-              {paged.options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.value}
-                  data-testid={
-                    testId ? `${testId}-option-${option.value}` : undefined
-                  }
-                  onSelect={() => {
-                    setOpen(false)
-                    setQuery('')
-                    onValueChange(
-                      allowDeselect && option.value === value
-                        ? ''
-                        : option.value,
-                    )
-                  }}
-                  className="flex items-center justify-between py-3 px-4"
-                >
-                  <div className="flex items-center gap-2">
-                    <EntityAvatar
-                      name={option.label}
-                      color={option.color}
-                      icon={option.icon}
-                      imageUrl={option.imageUrl}
-                      size="sm"
+            <span className="truncate font-normal">
+              {selectedOption ? selectedOption.label : placeholder}
+            </span>
+          </div>
+          <HugeiconsIcon
+            icon={ChevronsUpDown}
+            className="ml-2 h-4 w-4 shrink-0 opacity-50"
+          />
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-(--anchor-width) p-0 rounded-lg overflow-hidden border border-primary/5"
+          align="start"
+        >
+          <Command className="rounded-none" shouldFilter={false}>
+            <CommandInput
+              placeholder={placeholder}
+              data-testid={testId ? `${testId}-search` : undefined}
+              className="h-12"
+              value={query}
+              onValueChange={setQuery}
+            />
+            <CommandList
+              key={`${query}:${paged.page}`}
+              className="max-h-[300px]"
+            >
+              {showEmptyCreate ? (
+                <CommandEmpty className="p-1 text-sm">
+                  {createAction}
+                </CommandEmpty>
+              ) : (
+                <CommandEmpty className="py-6 text-center text-sm">
+                  <p className="text-muted-foreground font-normal">
+                    {emptyMessage}
+                  </p>
+                </CommandEmpty>
+              )}
+              <CommandGroup>
+                {paged.options.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    data-testid={
+                      testId ? `${testId}-option-${option.value}` : undefined
+                    }
+                    onSelect={() => {
+                      setOpen(false)
+                      setQuery('')
+                      onValueChange(
+                        allowDeselect && option.value === value
+                          ? ''
+                          : option.value,
+                      )
+                    }}
+                    className="flex items-center justify-between py-3 px-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <EntityAvatar
+                        name={option.label}
+                        color={option.color}
+                        icon={option.icon}
+                        imageUrl={option.imageUrl}
+                        size="sm"
+                      />
+                      <span className="font-normal">{option.label}</span>
+                    </div>
+                    <HugeiconsIcon
+                      icon={Check}
+                      className={cn(
+                        'h-4 w-4 text-primary',
+                        value === option.value ? 'opacity-100' : 'opacity-0',
+                      )}
                     />
-                    <span className="font-semibold">{option.label}</span>
-                  </div>
-                  <HugeiconsIcon
-                    icon={Check}
-                    className={cn(
-                      'h-4 w-4 text-primary',
-                      value === option.value ? 'opacity-100' : 'opacity-0',
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-          <OptionPagination {...paged} />
-          {showCreateRow && (
-            <>
-              <CommandSeparator />
-              <div className="p-1">{createAction}</div>
-            </>
-          )}
-        </Command>
-      </PopoverContent>
-    </Popover>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+            <OptionPagination {...paged} />
+            {showCreateRow && (
+              <>
+                <CommandSeparator />
+                <div className="p-1">{createAction}</div>
+              </>
+            )}
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
   )
 }

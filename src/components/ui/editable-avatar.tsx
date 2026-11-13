@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  Camera01Icon as Camera,
   Delete02Icon as Trash,
+  PencilEdit02Icon as Edit,
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import { EntityAvatar } from './entity-avatar'
@@ -82,6 +82,22 @@ export function EditableAvatar({
   const isPending = pendingAction !== null
   const [isOpen, setIsOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [preview, setPreview] = useState<{
+    base: string | null | undefined
+    url: string
+    uploadedUrl?: string
+  } | null>(null)
+  const displayedImage =
+    preview && (imageUrl === preview.base || imageUrl === preview.uploadedUrl)
+      ? preview.url
+      : imageUrl
+  const previewUrl = preview?.url
+  useEffect(
+    () => () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    },
+    [previewUrl],
+  )
 
   const sizeClasses = {
     sm: 'h-10 w-10',
@@ -103,7 +119,10 @@ export function EditableAvatar({
     setPendingAction('upload')
     try {
       const croppedFile = await centerCropImage(file)
+      const localUrl = URL.createObjectURL(croppedFile)
+      setPreview({ base: imageUrl, url: localUrl })
       const publicUrl = await storageService.uploadAvatar(croppedFile)
+      setPreview({ base: imageUrl, url: localUrl, uploadedUrl: publicUrl })
       await onUpload(publicUrl)
       toast.add({
         title: t('success'),
@@ -112,6 +131,7 @@ export function EditableAvatar({
       })
       setIsOpen(false)
     } catch (error) {
+      setPreview(null)
       logger.error('Error uploading avatar', error)
       toast.add({
         title: t('error'),
@@ -120,6 +140,7 @@ export function EditableAvatar({
       })
     } finally {
       setPendingAction(null)
+      e.target.value = ''
     }
   }
 
@@ -128,6 +149,7 @@ export function EditableAvatar({
     setPendingAction('delete')
     try {
       await onDelete()
+      setPreview(null)
       toast.add({
         title: t('success'),
         description: t('avatarRemoved'),
@@ -148,63 +170,51 @@ export function EditableAvatar({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger
-        render={
-          <button
-            type="button"
-            aria-label={t('changePhoto')}
-            className={cn(
-              'relative group shrink-0 rounded-full transition-transform active:scale-95',
-              sizeClasses[size],
-              className,
-            )}
-          >
-            <span
-              className="absolute inset-0 overflow-hidden rounded-full border-2 border-background"
-              data-testid="avatar-image-clip"
-            >
-              {imageUrl ? (
-                <SkeletonImage
-                  src={imageUrl}
-                  alt={name}
-                  containerClassName="h-full w-full rounded-full"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <EntityAvatar
-                  name={name}
-                  color={color}
-                  icon={icon}
-                  size={size === 'xl' ? 'lg' : size}
-                  className="h-full w-full"
-                />
-              )}
-              <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                <HugeiconsIcon
-                  icon={Camera}
-                  className="h-1/3 w-1/3 text-white"
-                />
-              </span>
-            </span>
-            <span
+      <div className={cn('relative shrink-0', sizeClasses[size], className)}>
+        <span
+          className="absolute inset-0 overflow-hidden rounded-full border-2 border-background"
+          data-testid="avatar-image-clip"
+        >
+          {displayedImage ? (
+            <SkeletonImage
+              src={displayedImage}
+              alt={name}
+              containerClassName="h-full w-full rounded-full"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <EntityAvatar
+              name={name}
+              color={color}
+              icon={icon}
+              size={size === 'xl' ? 'lg' : size}
+              className="h-full w-full"
+            />
+          )}
+        </span>
+        <DialogTrigger
+          render={
+            <button
+              type="button"
+              aria-label={t('changePhoto')}
               className={cn(
-                'absolute flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-background',
+                'absolute z-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm ring-2 ring-background transition-transform active:scale-95',
                 badgeClasses[size].badge,
               )}
-              data-testid="avatar-camera-badge"
+              data-testid="avatar-edit-badge"
             >
-              <HugeiconsIcon
-                icon={Camera}
-                className={badgeClasses[size].icon}
-              />
-            </span>
-          </button>
-        }
-      />
+              <HugeiconsIcon icon={Edit} className={badgeClasses[size].icon} />
+            </button>
+          }
+        />
+      </div>
 
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{t('changePhoto')}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <HugeiconsIcon icon={Edit} className="size-5 text-primary" />
+            {t('changePhoto')}
+          </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center gap-6 py-8">
           <div
@@ -213,9 +223,9 @@ export function EditableAvatar({
               sizeClasses.xl,
             )}
           >
-            {imageUrl ? (
+            {displayedImage ? (
               <SkeletonImage
-                src={imageUrl}
+                src={displayedImage}
                 alt={name}
                 containerClassName="h-full w-full rounded-full"
                 className="h-full w-full object-cover"

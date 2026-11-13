@@ -81,7 +81,7 @@ function CountrySelect({
         className="flex h-full shrink-0 items-center gap-1.5 border-r border-primary/10 px-3 outline-none focus-visible:bg-primary/5 disabled:opacity-50"
       >
         <CountryFlag country={value} />
-        <span className="text-sm font-semibold text-muted-foreground">
+        <span className="text-sm font-normal text-muted-foreground">
           {value ? `+${getCountryCallingCode(value)}` : ''}
         </span>
         <HugeiconsIcon icon={ChevronDown} className="h-3.5 w-3.5 opacity-50" />

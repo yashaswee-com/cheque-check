@@ -24,6 +24,14 @@ it('reveals help with the keyboard, dismisses with Escape and returns focus', as
   expect(trigger).toHaveFocus()
   await user.keyboard('{Enter}')
   expect(await screen.findByRole('dialog')).toHaveAccessibleName('Reminders')
+  expect(screen.getByRole('dialog')).toHaveClass(
+    'max-sm:w-full!',
+    'max-sm:max-w-none!',
+  )
+  expect(screen.getByRole('dialog').parentElement).toHaveClass(
+    'max-sm:w-screen!',
+    'max-sm:max-w-none!',
+  )
   expect(screen.getByText('Choose a time for each reminder.')).toBeVisible()
   await user.keyboard('{Escape}')
   expect(trigger).toHaveFocus()

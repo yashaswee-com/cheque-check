@@ -117,8 +117,8 @@ export function DeleteConfirmationDialog({
           <div className="space-y-4 py-6">
             {reasons && reasons.length > 0 && (
               <div className="space-y-2 text-left">
-                <Label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Please tell us why you are deleting your account
+                <Label className="block text-[10px] font-normal uppercase tracking-widest text-muted-foreground">
+                  {t('deleteReasonPrompt')}
                 </Label>
                 <div className="space-y-2">
                   {reasons.map((reason) => (
@@ -144,7 +144,7 @@ export function DeleteConfirmationDialog({
             <div className="space-y-3 text-center">
               <Label
                 htmlFor="confirm_name"
-                className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block"
+                className="text-[10px] font-normal uppercase tracking-widest text-muted-foreground block"
               >
                 {t('typeToConfirm', { name: confirmName })}
               </Label>
@@ -154,7 +154,7 @@ export function DeleteConfirmationDialog({
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder={confirmName}
-                className="h-14 bg-canvas-parchment border-none rounded-2xl font-mono font-bold text-lg text-center"
+                className="h-14 bg-canvas-parchment border-none rounded-2xl font-mono font-normal text-lg text-center"
                 autoComplete="off"
               />
             </div>
@@ -172,7 +172,7 @@ export function DeleteConfirmationDialog({
             }
             loading={isDeleting}
             data-testid="delete-dialog-confirm-button"
-            className="w-full rounded-pill h-14 font-bold text-lg"
+            className="w-full rounded-pill h-14 font-normal text-lg"
           >
             {t('delete')}
           </Button>

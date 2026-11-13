@@ -58,7 +58,7 @@ export function StickyPagination({
         <HugeiconsIcon icon={ArrowLeft01Icon} className="size-5" />
       </Button>
       <span
-        className="text-sm font-semibold tabular-nums text-muted-foreground"
+        className="text-sm font-normal tabular-nums text-muted-foreground"
         aria-live="polite"
         aria-label={t('pageStatus', { page: current, total: totalPages })}
         data-testid={`${testId}-status`}

@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   FilterPillSection,
@@ -28,7 +34,7 @@ afterEach(() => {
 describe('PillScroller', () => {
   it.each([false, true])(
     'shows physical overflow directions and scrolls a visible width (floating: %s)',
-    (floatingControls) => {
+    async (floatingControls) => {
       render(
         <PillScroller aria-label="Options" floatingControls={floatingControls}>
           <button>One</button>
@@ -65,7 +71,7 @@ describe('PillScroller', () => {
       fireEvent.scroll(row)
       expect(screen.queryByRole('button', { name: 'scrollLeft' })).toBeNull()
       const scrollRight = screen.getByRole('button', { name: 'scrollRight' })
-      expect(scrollRight).toBeVisible()
+      await waitFor(() => expect(scrollRight).toBeVisible())
       expect(scrollRight.parentElement).toBe(row.parentElement)
       if (floatingControls) {
         expect(scrollRight).toHaveClass('absolute', 'right-0')
@@ -80,7 +86,11 @@ describe('PillScroller', () => {
       )
       lastChildRect.mockReturnValue(makeRect(100, 200))
       fireEvent.scroll(row)
-      expect(screen.queryByRole('button', { name: 'scrollRight' })).toBeNull()
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('button', { name: 'scrollRight' }),
+        ).toBeNull(),
+      )
       document.documentElement.setAttribute('data-reduce-motion', 'true')
       fireEvent.click(screen.getByRole('button', { name: 'scrollLeft' }))
       expect(scrollBy).toHaveBeenLastCalledWith({
@@ -89,7 +99,7 @@ describe('PillScroller', () => {
       })
     },
   )
-  it('detects left-side overflow in right-to-left layouts', () => {
+  it('detects left-side overflow in right-to-left layouts', async () => {
     render(
       <PillScroller aria-label="Options" dir="rtl">
         <button>First</button>
@@ -121,7 +131,9 @@ describe('PillScroller', () => {
 
     fireEvent.scroll(row)
 
-    expect(screen.getByRole('button', { name: 'scrollLeft' })).toBeVisible()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'scrollLeft' })).toBeVisible(),
+    )
     expect(screen.queryByRole('button', { name: 'scrollRight' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'scrollLeft' }))
     expect(scrollBy).toHaveBeenCalledWith({ left: -200, behavior: 'smooth' })
@@ -191,6 +203,10 @@ describe('FilterPillSection', () => {
     const row = screen.getByRole('group', { name: 'Sort By' })
     expect(row).toHaveAttribute('aria-labelledby', heading.id)
     expect(row).toHaveClass('overflow-x-auto', 'p-1')
+    expect(heading).toHaveClass('font-normal')
+    expect(screen.getByRole('button', { name: 'Date' })).toHaveClass(
+      'font-normal',
+    )
   })
 })
 
@@ -198,6 +214,7 @@ describe('filterPillClassName', () => {
   it('keeps pills at their natural width so the row scrolls', () => {
     expect(filterPillClassName(false)).toContain('shrink-0')
     expect(filterPillClassName(false)).toContain('whitespace-nowrap')
+    expect(filterPillClassName(false)).toContain('font-normal')
   })
 
   it('distinguishes active and inactive pills', () => {

@@ -21,10 +21,12 @@ it('marks only required labels with a small red asterisk', () => {
       <Label>Notes</Label>
     </>,
   )
-  const marker = screen.getByText('*')
-  expect(marker).toHaveClass('text-destructive', 'text-xs')
-  expect(marker).toHaveAttribute('aria-hidden', 'true')
-  expect(screen.getByText('Notes').querySelector('span')).toBeNull()
+  // The marker is a CSS pseudo-element, so it never pollutes the accessible name.
+  const required = screen.getByText('Name')
+  expect(required).toHaveAttribute('data-required', 'true')
+  expect(required).toHaveClass('after:text-destructive', "after:content-['*']")
+  expect(screen.getByText('Notes')).not.toHaveAttribute('data-required')
+  expect(screen.queryByText('*')).toBeNull()
 })
 
 it('toggles checkbox and switch controls and preserves their accessibility labels', () => {

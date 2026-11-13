@@ -21,6 +21,32 @@ function mount(node: React.ReactNode) {
 }
 
 describe('EditSaveBar', () => {
+  it('keeps the secondary action next to submit and sends Continue to the form', () => {
+    const submit = vi.fn((event: React.FormEvent) => event.preventDefault())
+    mount(
+      <>
+        <form id="steps" onSubmit={submit} />
+        <EditSaveBar
+          formId="steps"
+          label="Continue"
+          isContinue
+          isDirty
+          isSaving={false}
+          secondaryAction={
+            <button type="button" aria-label="Delete">
+              x
+            </button>
+          }
+        />
+      </>,
+    )
+    const save = screen.getByRole('button', { name: 'Continue' })
+    const remove = screen.getByRole('button', { name: 'Delete' })
+    expect(save.parentElement).toBe(remove.parentElement)
+    expect(screen.getByTestId('edit-save-bar')).toContainElement(remove)
+    fireEvent.click(save)
+    expect(submit).toHaveBeenCalledOnce()
+  })
   it('stays disabled with a hint until the form has changes', () => {
     mount(
       <EditSaveBar
@@ -91,6 +117,16 @@ describe('UnsavedChangesDialog', () => {
     )
     expect(screen.getByText(messages.SharedUI.unsavedTitle)).toBeVisible()
     expect(screen.getByText(messages.SharedUI.unsavedDescription)).toBeVisible()
+    expect(
+      screen
+        .getByRole('button', { name: messages.SharedUI.discardChanges })
+        .querySelector('svg'),
+    ).toBeInTheDocument()
+    expect(
+      screen
+        .getByRole('button', { name: messages.SharedUI.keepEditing })
+        .querySelector('svg'),
+    ).toBeInTheDocument()
     fireEvent.click(
       screen.getByRole('button', { name: messages.SharedUI.keepEditing }),
     )

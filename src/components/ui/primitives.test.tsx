@@ -294,7 +294,11 @@ it('selects an option in a grouped select', async () => {
       </SelectContent>
     </Select>,
   )
-  await user.click(screen.getByRole('combobox', { name: 'Account' }))
-  await user.click(await screen.findByRole('option', { name: 'Savings' }))
+  const trigger = screen.getByRole('combobox', { name: 'Account' })
+  expect(trigger).toHaveClass('font-normal')
+  await user.click(trigger)
+  const savings = await screen.findByRole('option', { name: 'Savings' })
+  expect(savings).toHaveClass('font-normal')
+  await user.click(savings)
   expect(change).toHaveBeenCalledWith('two', expect.anything())
 })

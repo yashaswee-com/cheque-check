@@ -376,3 +376,33 @@ html[data-clipboard-guard]
     display: block !important;
   }
 }
+
+/* First-run tour spotlight boundary animation. */
+.tour-spotlight-ring {
+  isolation: isolate;
+}
+
+.tour-spotlight-ring::after {
+  position: absolute;
+  inset: -5px;
+  border: 2px solid rgb(255 255 255 / 90%);
+  border-radius: inherit;
+  box-shadow: 0 0 10px 2px rgb(255 255 255 / 55%);
+  content: '';
+  pointer-events: none;
+  animation: tour-spotlight-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes tour-spotlight-pulse {
+  50% {
+    opacity: 0.45;
+    box-shadow: 0 0 18px 5px rgb(255 255 255 / 85%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-spotlight-ring::after {
+    animation: none;
+    opacity: 1;
+  }
+}

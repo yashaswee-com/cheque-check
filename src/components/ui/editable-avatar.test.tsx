@@ -56,7 +56,7 @@ function openEditor(
   const view = render(
     <EditableAvatar name="Asha" onUpload={onUpload} {...props} />,
   )
-  fireEvent.click(screen.getByRole('button'))
+  fireEvent.click(screen.getByRole('button', { name: 'changePhoto' }))
   return { ...view, onUpload }
 }
 function selectFile(
@@ -69,31 +69,37 @@ function selectFile(
 }
 
 describe('EditableAvatar', () => {
-  it('exposes an accessible non-submit camera button on touch surfaces', () => {
+  it('exposes an accessible non-submit edit button on touch surfaces', () => {
     render(<EditableAvatar name="Asha" onUpload={vi.fn()} />)
     expect(screen.getByRole('button', { name: 'changePhoto' })).toHaveAttribute(
       'type',
       'button',
     )
-    expect(screen.getByTestId('avatar-camera-badge')).toBeVisible()
+    expect(screen.getByTestId('avatar-edit-badge')).toBeVisible()
   })
   it.each(['sm', 'md', 'lg', 'xl'] as const)(
-    'keeps the %s camera badge outside the clipped circle',
+    'keeps the %s edit badge outside the clipped circle',
     (size) => {
       render(<EditableAvatar name="Asha" size={size} onUpload={vi.fn()} />)
       const trigger = screen.getByRole('button', { name: 'changePhoto' })
       const clip = screen.getByTestId('avatar-image-clip')
-      const badge = screen.getByTestId('avatar-camera-badge')
-      expect(trigger).not.toHaveClass('overflow-hidden')
+      const badge = screen.getByTestId('avatar-edit-badge')
+      expect(trigger).toHaveClass('absolute')
       expect(clip).toHaveClass('overflow-hidden', 'rounded-full')
       expect(clip).not.toContainElement(badge)
-      expect(trigger).toContainElement(badge)
+      expect(clip.parentElement).not.toHaveAttribute('type', 'button')
       expect(badge).toHaveClass('absolute', 'rounded-full', 'ring-2')
       expect(badge.className).toMatch(
         size === 'xl' ? /bottom-0 right-0/ : /-bottom-1 -right-1/,
       )
     },
   )
+  it('does not open the editor when the preview circle is clicked', () => {
+    render(<EditableAvatar name="Asha" onUpload={vi.fn()} />)
+    fireEvent.click(screen.getByTestId('avatar-image-clip'))
+    expect(screen.queryByRole('button', { name: 'uploadNew' })).toBeNull()
+  })
+
   it('center-crops and uploads a selected image, then persists and notifies', async () => {
     const { onUpload } = openEditor()
     selectFile()
@@ -158,6 +164,40 @@ describe('EditableAvatar', () => {
     )
     expect(onUpload).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: 'uploadNew' })).toBeEnabled()
+  })
+
+  it('shows a local preview immediately and retains it while parent data catches up', async () => {
+    let finishUpload!: (url: string) => void
+    mocks.uploadAvatar.mockImplementationOnce(
+      () =>
+        new Promise<string>((resolve) => {
+          finishUpload = resolve
+        }),
+    )
+    const view = openEditor({ imageUrl: '/old.png' })
+    selectFile()
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('avatar-image-clip').querySelector('img'),
+      ).toHaveAttribute('src', 'blob:avatar')
+    })
+    finishUpload('avatars/uploaded.png')
+    await waitFor(() =>
+      expect(view.onUpload).toHaveBeenCalledWith('avatars/uploaded.png'),
+    )
+    expect(
+      screen.getByTestId('avatar-image-clip').querySelector('img'),
+    ).toHaveAttribute('src', 'blob:avatar')
+    view.rerender(
+      <EditableAvatar
+        name="Asha"
+        imageUrl="avatars/uploaded.png"
+        onUpload={view.onUpload}
+      />,
+    )
+    expect(
+      screen.getByTestId('avatar-image-clip').querySelector('img'),
+    ).toHaveAttribute('src', 'blob:avatar')
   })
 
   it('ignores an empty file selection', () => {

@@ -51,7 +51,7 @@ export function ThemeColorRow({
 }: ThemeColorRowProps) {
   return (
     <div className="space-y-2" data-testid={testId}>
-      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+      <Label className="text-xs font-normal uppercase tracking-wider text-muted-foreground ml-1">
         {label}
       </Label>
       <div

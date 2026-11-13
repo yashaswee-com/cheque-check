@@ -4,14 +4,14 @@ const query = '(prefers-reduced-motion: reduce)'
 function subscribe(callback: () => void) {
   const media =
     typeof window.matchMedia === 'function' ? window.matchMedia(query) : null
-  media?.addEventListener('change', callback)
+  media?.addEventListener?.('change', callback)
   const observer = new MutationObserver(callback)
   observer.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['data-reduce-motion'],
   })
   return () => {
-    media?.removeEventListener('change', callback)
+    media?.removeEventListener?.('change', callback)
     observer.disconnect()
   }
 }
