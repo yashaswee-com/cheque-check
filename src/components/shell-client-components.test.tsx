@@ -148,6 +148,33 @@ afterEach(() => {
 })
 
 describe('navigation components', () => {
+  it('keeps the Notifications heading and icon in the application header', () => {
+    pathname = '/notifications'
+    renderIntl(<TopNav />)
+    const heading = screen.getByRole('heading', { name: messages.Inbox.title })
+    expect(heading.querySelector('svg')).not.toBeNull()
+  })
+  it('places Transactions immediately before Notifications only on Features', () => {
+    pathname = '/features/catalog'
+    const view = renderIntl(<TopNav />)
+    const transactions = screen.getByRole('link', {
+      name: messages.Settings.transactions,
+    })
+    expect(transactions).toHaveAttribute('href', '/settings/transactions')
+    expect(transactions.nextElementSibling).toHaveAttribute(
+      'href',
+      '/notifications',
+    )
+    pathname = '/dashboard'
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <TopNav />
+      </NextIntlClientProvider>,
+    )
+    expect(
+      screen.queryByRole('link', { name: messages.Settings.transactions }),
+    ).toBeNull()
+  })
   it('updates optimistic active tabs and resets them when the real route changes', () => {
     const view = renderIntl(<BottomNav />)
     const parties = screen.getByTestId('bottom-nav-parties')
@@ -220,7 +247,6 @@ describe('navigation components', () => {
         [
           '/dashboard',
           '/settings',
-          '/features/catalog',
           '/profile',
           '/cheques',
           '/accounts',
@@ -264,6 +290,12 @@ describe('navigation components', () => {
     await user.click(
       screen.getByRole('button', { name: messages.SharedUI.more }),
     )
+    expect(
+      screen.getByRole('button', { name: messages.SharedUI.calculator }),
+    ).toHaveClass('font-normal')
+    expect(
+      screen.getByRole('button', { name: messages.SharedUI.reload }),
+    ).toHaveClass('font-normal')
     await user.click(
       screen.getByRole('button', { name: messages.SharedUI.calculator }),
     )
@@ -316,7 +348,7 @@ describe('navigation components', () => {
     expect(notifications?.querySelector('svg')).toHaveClass('size-5')
   })
 
-  it('shows profile and business initials when their image URLs are absent or names are missing', () => {
+  it('shows profile and business initials when their image URLs are absent or names are missing', async () => {
     pathname = '/cheques'
     profile = { name: null, avatar_url: 'https://example.test/avatar.png' }
     activeBusiness = {
@@ -338,7 +370,7 @@ describe('navigation components', () => {
       'A',
     )
     expect(avatar).not.toHaveClass('ring-[#D4AF37]')
-    fireEvent.click(avatar.closest('button')!)
+    await userEvent.setup().click(avatar.closest('button')!)
     expect(screen.getByTestId('top-nav-settings-icon')).toBeVisible()
     expect(screen.getByText(messages.SharedUI.help)).toBeVisible()
   })

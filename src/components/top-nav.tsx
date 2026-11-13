@@ -21,7 +21,10 @@ import {
   LegalDocumentIcon as File,
   HelpCircleIcon as Help,
   MegaphoneIcon as Megaphone,
-  RocketIcon as Rocket,
+  SparklesIcon as WhatsNew,
+  ChartHistogramIcon as Reports,
+  ArrowDataTransferHorizontalIcon as Transactions,
+  Notification03Icon as Notifications,
   PencilEdit01Icon as Edit,
   Calculator01Icon as CalculatorIcon,
   Tag01Icon as TagIcon,
@@ -80,7 +83,9 @@ export function TopNav() {
     if (path === '/settings')
       return { title: t('Navigation.settings'), icon: Settings }
     if (path === '/notifications')
-      return { title: t('Inbox.title'), icon: null }
+      return { title: t('Inbox.title'), icon: Notifications }
+    if (path === '/reports' || path.startsWith('/reports/'))
+      return { title: t('Reports.title'), icon: Reports }
     if (path === '/drafts') return { title: t('Drafts.title'), icon: DraftIcon }
     if (path === '/features' || path.startsWith('/features/'))
       return { title: t('Navigation.features'), icon: Star }
@@ -98,11 +103,11 @@ export function TopNav() {
         about: { title: t('Settings.aboutApp'), icon: Star },
         'help-and-support': { title: t('Settings.helpAndSupport'), icon: Help },
         announcements: { title: 'Announcements', icon: Megaphone },
-        'whats-new': { title: t('Settings.whatsNew'), icon: Rocket },
+        'whats-new': { title: t('Settings.whatsNew'), icon: WhatsNew },
         preferences: { title: t('Settings.preferences'), icon: Settings },
         security: { title: t('Security.pinTitle'), icon: Shield },
         notifications: { title: t('Settings.notifications'), icon: Settings },
-        transactions: { title: t('Settings.transactions'), icon: Pay },
+        transactions: { title: t('Settings.transactions'), icon: Transactions },
       }
       if (subInfo[sub]) return subInfo[sub]
     }
@@ -180,7 +185,11 @@ export function TopNav() {
 
   const { title, icon: TitleIcon } = getNavInfo(pathname)
   const route = getShellRoute(pathname)
-  const isMainTab = route.isTopLevel || pathname === '/features/catalog'
+  const isMainTab =
+    route.isTopLevel ||
+    ['/settings', '/profile', '/feedback', '/roadmap', '/help'].includes(
+      pathname,
+    )
 
   const hideBusinessSwitcher = !route.showBusinessSwitcher
 
@@ -223,6 +232,18 @@ export function TopNav() {
         </div>
 
         <div className="flex items-center gap-2">
+          {pathname.startsWith('/features/') && (
+            <Link
+              href="/settings/transactions"
+              aria-label={t('Settings.transactions')}
+              className="flex size-9 items-center justify-center rounded-full hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              <HugeiconsIcon
+                icon={Transactions}
+                className="size-5 text-muted-foreground"
+              />
+            </Link>
+          )}
           <NotificationBell />
           <Button
             variant="ghost"
@@ -275,7 +296,7 @@ export function TopNav() {
             >
               <Button
                 variant="ghost"
-                className="justify-start"
+                className="justify-start font-normal"
                 onClick={() => {
                   setMoreOpen(false)
                   setCalculatorOpen(true)
@@ -301,7 +322,7 @@ export function TopNav() {
               <Button
                 variant="ghost"
                 onClick={() => window.location.reload()}
-                className="justify-start"
+                className="justify-start font-normal"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

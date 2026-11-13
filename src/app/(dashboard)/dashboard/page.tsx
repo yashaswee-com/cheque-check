@@ -4,9 +4,7 @@ import { PremiumLink } from '@/features/monetization/components/premium-controls
 
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  File02Icon as FileText,
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
+  ChartHistogramIcon as FileText,
   Calendar03Icon as Calendar,
   Camera01Icon as Camera,
   Building03Icon,
@@ -19,7 +17,7 @@ import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { ChequeCard } from '@/components/cheque-card'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useRef } from 'react'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -28,6 +26,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { useTranslations } from 'next-intl'
 import { DraftsSummaryCard } from '@/features/drafts'
 import { cn } from '@/lib/utils'
+import { PillScroller } from '@/components/ui/pill-scroller'
 
 export default function HomePage() {
   const tDashboard = useTranslations('Dashboard')
@@ -40,20 +39,6 @@ export default function HomePage() {
   const { profile } = useProfile()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const actionsRef = useRef<HTMLDivElement>(null)
-  const [actionsOverflow, setActionsOverflow] = useState({
-    left: false,
-    right: false,
-  })
-  const updateActionsOverflow = useCallback(
-    (element: HTMLDivElement) =>
-      setActionsOverflow({
-        left: element.scrollLeft > 1,
-        right:
-          element.scrollLeft + element.clientWidth < element.scrollWidth - 1,
-      }),
-    [],
-  )
 
   const {
     todayCheques,
@@ -68,13 +53,6 @@ export default function HomePage() {
     updateStatus,
     hasMoreToday,
   } = useDashboardCheques(activeBusiness?.id)
-  useEffect(() => {
-    const element = actionsRef.current
-    if (!element) return
-    const observer = new ResizeObserver(() => updateActionsOverflow(element))
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [isLoading, activeBusiness?.id, error, updateActionsOverflow])
   const tagMap = useEntityTagMap(
     activeBusiness?.id,
     'cheque',
@@ -97,7 +75,7 @@ export default function HomePage() {
   const formatAmount = display.currency
 
   return (
-    <div className="max-w-2xl space-y-8 pb-20 pt-2">
+    <div data-testid="dashboard-page" className="max-w-2xl space-y-3 pb-20">
       <DataState
         isLoading={isLoading}
         isError={!!error}
@@ -106,7 +84,7 @@ export default function HomePage() {
         loadingComponent={
           <>
             <Skeleton className="h-40 w-full rounded-lg" />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {[1, 2, 3, 4].map((i) => (
                 <Skeleton key={i} className="h-24 w-full rounded-lg" />
               ))}
@@ -133,7 +111,7 @@ export default function HomePage() {
           {/* Balance Card */}
           <div
             data-tour="summary"
-            className="rounded-lg bg-primary p-5 text-primary-foreground relative overflow-hidden"
+            className="rounded-lg bg-primary p-4 text-primary-foreground relative overflow-hidden"
           >
             <div className="relative z-10">
               <p className="text-[10px] font-semibold opacity-70 uppercase tracking-wider">
@@ -152,7 +130,7 @@ export default function HomePage() {
               <p className="mt-1 text-xs opacity-80">
                 {tStats('pendingNetHelp')}
               </p>
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 <div className="rounded-md bg-white/10 p-2">
                   <p className="text-[10px] font-semibold opacity-70 uppercase tracking-wider">
                     {tDashboard('receivable')}
@@ -174,7 +152,7 @@ export default function HomePage() {
           </div>
 
           <div
-            className="grid grid-cols-3 gap-3"
+            className="grid grid-cols-3 gap-2"
             data-testid="dashboard-status-cards"
           >
             {[
@@ -184,7 +162,7 @@ export default function HomePage() {
                 color: 'bg-primary/5',
               },
               {
-                label: tDashboard('upcoming'),
+                label: tDashboard('upcoming7d'),
                 count: upcomingCount,
                 color: 'bg-green-500/5',
               },
@@ -196,7 +174,7 @@ export default function HomePage() {
             ].map((status) => (
               <div
                 key={status.label}
-                className={`rounded-lg border ${status.color} p-4 text-center`}
+                className={`rounded-lg border ${status.color} p-2.5 text-center`}
               >
                 <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">
                   {status.label}
@@ -208,40 +186,9 @@ export default function HomePage() {
 
           {/* Quick Actions */}
           <div className="relative">
-            {actionsOverflow.left && (
-              <button
-                type="button"
-                aria-label={tShared('previousPage')}
-                onClick={() =>
-                  actionsRef.current?.scrollBy({
-                    left: -180,
-                    behavior: 'smooth',
-                  })
-                }
-                className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border bg-background p-1 shadow-sm"
-              >
-                <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-              </button>
-            )}
-            {actionsOverflow.right && (
-              <button
-                type="button"
-                aria-label={tShared('nextPage')}
-                onClick={() =>
-                  actionsRef.current?.scrollBy({
-                    left: 180,
-                    behavior: 'smooth',
-                  })
-                }
-                className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border bg-background p-1 shadow-sm"
-              >
-                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-              </button>
-            )}
-            <div
-              ref={actionsRef}
-              onScroll={(event) => updateActionsOverflow(event.currentTarget)}
-              className="scroll-fade-x scroll-fade-4 flex max-w-full gap-3 overflow-x-auto overscroll-x-contain snap-x snap-proximity px-1 py-2 scrollbar-none [&::-webkit-scrollbar]:hidden"
+            <PillScroller
+              floatingControls
+              className="scroll-fade-x scroll-fade-4 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain snap-x snap-proximity px-1 py-1 scrollbar-none [&::-webkit-scrollbar]:hidden"
               data-testid="dashboard-quick-actions"
             >
               <input
@@ -257,7 +204,7 @@ export default function HomePage() {
                 onClick={() => fileInputRef.current?.click()}
                 className="w-36 shrink-0 snap-start rounded-lg transition-transform focus-visible:outline-2 focus-visible:outline-primary active:scale-95"
               >
-                <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-4 border border-primary/5">
+                <div className="flex h-28 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-3 border border-primary/5">
                   <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary/10 text-primary">
                     <HugeiconsIcon icon={Camera} className="h-6 w-6" />
                   </div>
@@ -266,26 +213,13 @@ export default function HomePage() {
                   </span>
                 </div>
               </button>
-              <Link
-                href="/businesses"
-                className="w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
-              >
-                <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-4 transition-transform active:scale-95 border border-primary/5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary/10 text-primary">
-                    <HugeiconsIcon icon={Building03Icon} className="h-6 w-6" />
-                  </div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-                    {tCommon('businesses')}
-                  </span>
-                </div>
-              </Link>
               <PremiumLink
                 feature="reports"
                 data-tour="reports"
                 href="/reports"
                 className="relative w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary *:data-[slot=premium-mark]:absolute *:data-[slot=premium-mark]:right-2 *:data-[slot=premium-mark]:top-2"
               >
-                <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-4 transition-transform active:scale-95 border border-primary/5">
+                <div className="flex h-28 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-3 transition-transform active:scale-95 border border-primary/5">
                   <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary/10 text-primary">
                     <HugeiconsIcon icon={FileText} className="h-6 w-6" />
                   </div>
@@ -298,7 +232,7 @@ export default function HomePage() {
                 href="/tags"
                 className="w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
               >
-                <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-4 transition-transform active:scale-95 border border-primary/5">
+                <div className="flex h-28 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-3 transition-transform active:scale-95 border border-primary/5">
                   <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary/10 text-primary">
                     <HugeiconsIcon icon={Tag01Icon} className="h-6 w-6" />
                   </div>
@@ -307,13 +241,26 @@ export default function HomePage() {
                   </span>
                 </div>
               </Link>
-            </div>
+              <Link
+                href="/businesses"
+                className="w-36 shrink-0 snap-start rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
+              >
+                <div className="flex h-28 flex-col items-center justify-center gap-2 rounded-lg bg-canvas-parchment p-3 transition-transform active:scale-95 border border-primary/5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-primary/10 text-primary">
+                    <HugeiconsIcon icon={Building03Icon} className="h-6 w-6" />
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    {tCommon('businesses')}
+                  </span>
+                </div>
+              </Link>
+            </PillScroller>
           </div>
 
           <DraftsSummaryCard />
 
           {/* Today's Cheques */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center gap-2 px-1">
               <HugeiconsIcon
                 icon={Calendar}
@@ -331,7 +278,7 @@ export default function HomePage() {
                 className="py-10 bg-canvas-parchment/30"
               />
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {todayCheques.map((cheque) => (
                   <ChequeCard
                     key={cheque.id}

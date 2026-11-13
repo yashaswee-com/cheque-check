@@ -69,6 +69,17 @@ vi.mock('@/features/businesses/hooks/use-business', () => ({
 vi.mock('@/features/profile/hooks/use-display-format', () => ({
   useDisplayFormat: () => ({ date: (v: string) => v }),
 }))
+vi.mock('@/features/profile/hooks/use-profile', () => ({
+  useProfile: () => ({
+    profile: {
+      voice_call_enabled: true,
+      sms_enabled: false,
+      push_enabled: false,
+      whatsapp_enabled: false,
+    },
+    isLoading: false,
+  }),
+}))
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 function mount(node: React.ReactNode) {
   render(
@@ -235,7 +246,10 @@ describe('inbox and header bell', () => {
       messages.Inbox.refresh,
       messages.Inbox.markAll,
     ])
-    expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId('notifications-page-icon'),
+    ).not.toBeInTheDocument()
   })
   it('defaults to the active business, newest first, all read states', () => {
     mount(<NotificationsPage />)

@@ -6,11 +6,22 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { pushService, type PushState } from '../services/push.service'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 
-export function PushSettings() {
+export function PushSettings({
+  enabled,
+  disabled,
+  onEnabledChange,
+}: {
+  enabled: boolean
+  disabled: boolean
+  onEnabledChange: (enabled: boolean) => void
+}) {
   const t = useTranslations('Push')
+  const settings = useTranslations('Settings')
   const { profile } = useProfile()
   const client = useQueryClient()
   const [state, setState] = useState<PushState | null>(null)
@@ -55,38 +66,58 @@ export function PushSettings() {
   }
   return (
     <section
-      className="space-y-2 rounded-xl border p-4"
-      aria-label={t('title')}
+      className="flex flex-col gap-3 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
+      aria-label={settings('pushNotifications')}
     >
-      <h2 className="font-semibold">{t('title')}</h2>
-      <p className="text-sm">{t('privacy')}</p>
-      {error && (
-        <>
-          <p role="alert">{t('error')}</p>
+      <div className="min-w-0 space-y-1">
+        <Label>{settings('pushNotifications')}</Label>
+        <p className="text-xs text-muted-foreground">{t('privacy')}</p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {state && (
+            <p role="status" className="text-xs text-muted-foreground">
+              {t(`states.${state}`)}
+            </p>
+          )}
           <Button
-            variant="outline"
-            disabled={busy}
-            onClick={() => {
-              setError(false)
-              setAttempt(attempt + 1)
-            }}
+            variant="link"
+            className="h-auto p-0 text-xs"
+            disabled={
+              busy ||
+              !profile ||
+              !state ||
+              !['available', 'enabled'].includes(state)
+            }
+            onClick={() => void perform()}
           >
-            {t('retry')}
+            {state === 'enabled' ? t('disable') : t('enable')}
           </Button>
-        </>
-      )}
-      {state && <p role="status">{t(`states.${state}`)}</p>}
-      <Button
-        disabled={
-          busy ||
-          !profile ||
-          !state ||
-          !['available', 'enabled'].includes(state)
-        }
-        onClick={() => void perform()}
-      >
-        {state === 'enabled' ? t('disable') : t('enable')}
-      </Button>
+        </div>
+        {error && (
+          <div className="flex items-center gap-2">
+            <p role="alert" className="text-xs text-destructive">
+              {t('error')}
+            </p>
+            <Button
+              variant="link"
+              className="h-auto p-0 text-xs"
+              disabled={busy}
+              onClick={() => {
+                setError(false)
+                setAttempt(attempt + 1)
+              }}
+            >
+              {t('retry')}
+            </Button>
+          </div>
+        )}
+      </div>
+      <Switch
+        checked={enabled}
+        onCheckedChange={onEnabledChange}
+        disabled={disabled}
+        aria-label={settings('pushNotifications')}
+        data-testid="notifications-toggle-push_enabled"
+      />
     </section>
   )
 }

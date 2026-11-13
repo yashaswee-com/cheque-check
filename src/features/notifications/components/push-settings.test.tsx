@@ -19,7 +19,11 @@ function mount() {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <NextIntlClientProvider locale="en" messages={messages}>
-        <PushSettings />
+        <PushSettings
+          enabled={false}
+          disabled={false}
+          onEnabledChange={vi.fn()}
+        />
       </NextIntlClientProvider>
     </QueryClientProvider>,
   )

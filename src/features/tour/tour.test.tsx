@@ -99,14 +99,18 @@ describe('first-run dashboard tour', () => {
       messages.Tour.voice.body,
     )
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Finish tour' })).toBeEnabled(),
+      expect(
+        screen.getByRole('button', { name: 'Set up voice reminders' }),
+      ).toBeEnabled(),
     )
     expect(mocks.update).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: 'Finish tour' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Set up voice reminders' }),
+    )
     await waitFor(() =>
       expect(mocks.update).toHaveBeenCalledWith({ tour_status: 'completed' }),
     )
-    expect(mocks.push).not.toHaveBeenCalled()
+    expect(mocks.push).toHaveBeenCalledWith('/features/catalog#voice-reminders')
   })
   it('supports keyboard Escape as a durable skip and traps focus', async () => {
     mount()

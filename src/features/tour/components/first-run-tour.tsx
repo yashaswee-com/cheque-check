@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Button } from '@/components/ui/button'
 import {
@@ -33,6 +34,7 @@ function TourDialog({
   onFinish: (status: 'completed' | 'skipped') => Promise<void>
 }) {
   const t = useTranslations('Tour')
+  const router = useRouter()
   const [step, setStep] = useState(0),
     [box, setBox] = useState<Box | null>(null),
     [busy, setBusy] = useState(false),
@@ -116,6 +118,9 @@ function TourDialog({
     setError(false)
     try {
       await onFinish(status)
+      if (status === 'completed') {
+        router.push('/features/catalog#voice-reminders')
+      }
     } catch (error) {
       logger.error('Tour completion could not be saved', error)
       setError(true)
@@ -137,7 +142,7 @@ function TourDialog({
           <div
             aria-hidden="true"
             data-testid="tour-spotlight"
-            className="pointer-events-none fixed z-[60] rounded-lg border-2 border-white"
+            className="tour-spotlight-ring pointer-events-none fixed z-[60] rounded-lg border-2 border-white"
             style={{
               left: activeBox.left - 4,
               top: activeBox.top - 4,
@@ -177,6 +182,7 @@ function TourDialog({
         {error && <p role="alert">{t('saveError')}</p>}
         <div className="flex flex-wrap gap-2">
           <Button
+            className="font-normal"
             variant="outline"
             disabled={busy}
             onClick={() => void finish('skipped')}
@@ -191,6 +197,7 @@ function TourDialog({
             {t('back')}
           </Button>
           <Button
+            className="font-normal"
             disabled={busy || !activeBox}
             onClick={() =>
               step === steps.length - 1
@@ -198,7 +205,7 @@ function TourDialog({
                 : setStep(step + 1)
             }
           >
-            {step === steps.length - 1 ? t('finish') : t('next')}
+            {step === steps.length - 1 ? t('voiceAction') : t('next')}
           </Button>
         </div>
       </DialogContent>

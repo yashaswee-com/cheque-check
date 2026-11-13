@@ -4,18 +4,40 @@ import {
   HelpCircleIcon as WhatsApp,
 } from '@hugeicons/core-free-icons'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { getWhatsAppSupportLink } from '@/lib/whatsapp'
 import { FaqExplorer } from '@/features/faqs/components/faq-explorer'
 
 export default function HelpPage() {
   const t = useTranslations('Settings')
+  const tf = useTranslations('Feedback')
 
   return (
     <div className="max-w-2xl space-y-8 pb-24">
       <FaqExplorer />
       <div className="space-y-8 px-2">
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            href="/feedback"
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'font-normal',
+            )}
+          >
+            {tf('submitTitle')}
+          </Link>
+          <Link
+            href="/roadmap"
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'font-normal',
+            )}
+          >
+            {tf('roadmapTitle')}
+          </Link>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <Link
             href="mailto:support@chequecheck.com"

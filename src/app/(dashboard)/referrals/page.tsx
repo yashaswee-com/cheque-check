@@ -6,6 +6,8 @@ import { useReferrals } from '@/features/referrals/hooks/use-referrals'
 import { referralCodeSchema } from '@/validators/referral'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Link01Icon, HashtagIcon } from '@hugeicons/core-free-icons'
 import { logger } from '@/lib/logger'
 import {
   useReferralLink,
@@ -57,7 +59,12 @@ export default function ReferralsPage() {
             <section className="rounded-xl border p-4 space-y-2">
               <h2 className="font-semibold">{t('yourCode')}</h2>
               <p>{query.data.code}</p>
-              <Input readOnly value={link} aria-label={t('shareLink')} />
+              <Input
+                readOnly
+                value={link}
+                aria-label={t('shareLink')}
+                leftIcon={Link01Icon}
+              />
               <Button
                 disabled={busy}
                 onClick={() =>
@@ -77,9 +84,12 @@ export default function ReferralsPage() {
             <p>{t('qualify')}</p>
           )}
           <section className="space-y-2">
-            <label htmlFor="referral-code">{t('apply')}</label>
+            <Label htmlFor="referral-code" required>
+              {t('apply')}
+            </Label>
             <Input
               id="referral-code"
+              leftIcon={HashtagIcon}
               value={query.data?.applied_code ?? code}
               maxLength={12}
               disabled={!!query.data?.applied_code || busy}

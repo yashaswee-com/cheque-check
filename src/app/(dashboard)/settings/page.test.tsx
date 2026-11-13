@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
@@ -6,7 +6,6 @@ import SettingsPage from './page'
 import { PremiumPromptProvider } from '@/features/monetization/components/premium-prompt'
 import { clearInstallPrompt } from '@/lib/pwa-install'
 
-const mocks = vi.hoisted(() => ({ logout: vi.fn() }))
 let profileLoading = false
 let monetizationLoading = false
 let hasPremium = false
@@ -20,9 +19,6 @@ let profile: {
 vi.mock('@/features/profile/hooks/use-profile', () => ({
   useProfile: () => ({ profile, isLoading: profileLoading }),
 }))
-vi.mock('@/features/settings/hooks/use-settings', () => ({
-  useSettings: () => ({ handleLogout: mocks.logout }),
-}))
 vi.mock('@/features/monetization/hooks/use-monetization', () => ({
   useMonetization: () => ({ isLoading: monetizationLoading }),
 }))
@@ -34,10 +30,20 @@ vi.mock('@/features/monetization/hooks/use-premium-access', () => ({
     isLoading: false,
   }),
 }))
-vi.mock('@/features/monetization/components/free-usage-banner', () => ({
-  UsageCard: ({ alwaysShow }: { alwaysShow?: boolean }) => (
-    <section data-testid="usage-card" data-always-show={String(!!alwaysShow)} />
-  ),
+vi.mock('@/features/monetization/hooks/use-free-usage', () => ({
+  useFreeUsage: () => ({
+    data: {
+      unlimited: false,
+      cheques_used: 3,
+      cheques_limit: 50,
+      ai_scans_used: 2,
+      ai_scans_limit: 10,
+      voice_used: 1,
+      voice_limit: 5,
+    },
+    error: null,
+    refetch: vi.fn(),
+  }),
 }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/components/monitoring-preferences', () => ({
@@ -90,6 +96,10 @@ describe('settings page', () => {
     const profileLink = document.querySelector('a[href="/profile"]')!
     const usage = screen.getByTestId('usage-card')
     expect(usage).toHaveAttribute('data-always-show', 'true')
+    expect(usage.querySelectorAll('[data-testid="usage-meter"]')).toHaveLength(
+      3,
+    )
+    expect(usage.querySelectorAll('[role="progressbar"]')).toHaveLength(3)
     expect(profileLink.parentElement).toBe(usage.parentElement)
     expect(profileLink.parentElement).toHaveClass('space-y-4')
   })
@@ -129,8 +139,9 @@ describe('settings page', () => {
       screen.queryByText(messages.Premium.openTools),
     ).not.toBeInTheDocument()
     expect(screen.queryByText('Monitoring preferences')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByTestId('settings-logout-button'))
-    expect(mocks.logout).toHaveBeenCalledOnce()
+    expect(
+      screen.queryByTestId('settings-logout-button'),
+    ).not.toBeInTheDocument()
   })
 
   it('uses a distinct icon for each Settings line item', () => {

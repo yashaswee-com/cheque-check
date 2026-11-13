@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { PillScroller } from '@/components/ui/pill-scroller'
 import {
   Search01Icon,
+  Cancel01Icon,
   ArrowDown01Icon,
   LayoutGridIcon as Grid,
   RocketIcon as Rocket,
@@ -69,16 +70,32 @@ export function FaqExplorer() {
       <label className="sr-only" htmlFor="faq-search">
         {t('searchLabel')}
       </label>
-      <Input
-        id="faq-search"
-        type="search"
-        enableMic={false}
-        leftIcon={Search01Icon}
-        className="h-11 rounded-full border-none bg-canvas-parchment"
-        value={search}
-        placeholder={t('searchPlaceholder')}
-        onChange={(event) => setSearch(event.target.value)}
-      />
+      <div className="relative">
+        <Input
+          id="faq-search"
+          type="search"
+          enableMic={false}
+          leftIcon={Search01Icon}
+          className="h-11 rounded-full border-none bg-canvas-parchment pr-12 [&::-webkit-search-cancel-button]:appearance-none"
+          value={search}
+          placeholder={t('searchPlaceholder')}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+        {search && (
+          <button
+            type="button"
+            aria-label={t('clearSearch')}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            onClick={() => setSearch('')}
+          >
+            <HugeiconsIcon
+              icon={Cancel01Icon}
+              className="size-4"
+              aria-hidden="true"
+            />
+          </button>
+        )}
+      </div>
 
       <PillScroller aria-label={t('categoriesLabel')}>
         <Button

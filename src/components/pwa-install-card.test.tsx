@@ -144,6 +144,21 @@ describe('post-onboarding install card', () => {
     expect(screen.queryByRole('region')).toBeNull()
   })
 
+  it('collapses the inline install card to its icon and heading', async () => {
+    available()
+    const view = renderCard(undefined, 'inline')
+    const summary = screen.getByText(messages.PWA.title).closest('summary')!
+    expect(summary.querySelector('svg')).toBeInTheDocument()
+    const details = summary.parentElement!
+    expect(details).toHaveAttribute('open')
+    expect(screen.getByText(messages.PWA.description)).toBeVisible()
+    await userEvent.setup().click(summary)
+    expect(details).not.toHaveAttribute('open')
+    expect(screen.getByText(messages.PWA.description)).not.toBeVisible()
+    expect(screen.getByText(messages.PWA.title)).toBeVisible()
+    view.unmount()
+  })
+
   it('keeps the inline card after declining and accepts a newly offered prompt', async () => {
     available('dismissed')
     renderCard(undefined, 'inline')
@@ -228,6 +243,10 @@ describe('post-onboarding install card', () => {
     const { prompt } = available()
     renderCard(undefined, 'inline')
     const user = userEvent.setup()
+    await user.tab()
+    expect(
+      screen.getByText(messages.PWA.title).closest('summary'),
+    ).toHaveFocus()
     await user.tab()
     expect(screen.getByRole('button', { name: 'Install' })).toHaveFocus()
     await user.keyboard('{Enter}')

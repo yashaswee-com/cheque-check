@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Search01Icon as Search,
-  Money03Icon,
+  ArrowDataTransferHorizontalIcon as TransactionIcon,
   ReceiptTextIcon,
   CheckmarkCircle02Icon as Success,
   CancelCircleIcon as Failed,
@@ -180,12 +180,9 @@ export default function TransactionsPage() {
     <div className="max-w-2xl space-y-8 pb-20" data-testid="transactions-page">
       <div className="flex gap-3">
         <div className="relative flex-1">
-          <HugeiconsIcon
-            icon={Search}
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          />
           <Input
             leftIcon={Search}
+            enableMic={false}
             className="rounded-full h-11 bg-canvas-parchment border-none"
             placeholder={t('searchPlaceholder')}
             value={searchQuery}
@@ -225,7 +222,7 @@ export default function TransactionsPage() {
                       onClick={() => setFilterType(opt)}
                       className={filterPillClassName(filterType === opt)}
                     >
-                      <span className="font-bold text-sm">
+                      <span className="font-normal text-sm">
                         {opt === 'all' ? t('allTypes') : typeLabels[opt]}
                       </span>
                       {filterType === opt && (
@@ -257,7 +254,7 @@ export default function TransactionsPage() {
                     onClick={() => setFilterStatus(opt)}
                     className={filterPillClassName(filterStatus === opt)}
                   >
-                    <span className="font-bold text-sm capitalize">
+                    <span className="font-normal text-sm">
                       {opt === 'all' ? t('allStatuses') : statusLabels[opt]}
                     </span>
                     {filterStatus === opt && (
@@ -271,18 +268,20 @@ export default function TransactionsPage() {
               </FilterPillSection>
 
               <FilterPillSection title={t('sortBy')}>
-                {[
-                  { label: t('date'), value: 'date' },
-                  { label: t('amount'), value: 'amount' },
-                ].map((opt) => (
+                {(
+                  [
+                    { label: t('date'), value: 'date' },
+                    { label: t('amount'), value: 'amount' },
+                  ] as const
+                ).map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     aria-pressed={sortBy === opt.value}
-                    onClick={() => setSortBy(opt.value as any)}
+                    onClick={() => setSortBy(opt.value)}
                     className={filterPillClassName(sortBy === opt.value)}
                   >
-                    <span className="font-bold text-sm">{opt.label}</span>
+                    <span className="font-normal text-sm">{opt.label}</span>
                     {sortBy === opt.value && (
                       <HugeiconsIcon
                         icon={Check}
@@ -294,19 +293,21 @@ export default function TransactionsPage() {
               </FilterPillSection>
 
               <FilterPillSection title={t('order')}>
-                {[
-                  { label: t('ascending'), value: 'asc', icon: AscIcon },
-                  { label: t('descending'), value: 'desc', icon: DescIcon },
-                ].map((opt) => (
+                {(
+                  [
+                    { label: t('ascending'), value: 'asc', icon: AscIcon },
+                    { label: t('descending'), value: 'desc', icon: DescIcon },
+                  ] as const
+                ).map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     aria-pressed={sortOrder === opt.value}
-                    onClick={() => setSortOrder(opt.value as any)}
+                    onClick={() => setSortOrder(opt.value)}
                     className={filterPillClassName(sortOrder === opt.value)}
                   >
                     <HugeiconsIcon icon={opt.icon} className="h-4 w-4" />
-                    <span className="font-bold text-sm">{opt.label}</span>
+                    <span className="font-normal text-sm">{opt.label}</span>
                   </button>
                 ))}
               </FilterPillSection>
@@ -340,7 +341,10 @@ export default function TransactionsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-start gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
-                      <HugeiconsIcon icon={Money03Icon} className="h-5 w-5" />
+                      <HugeiconsIcon
+                        icon={TransactionIcon}
+                        className="h-5 w-5"
+                      />
                     </div>
                     <div className="min-w-0">
                       <h4 className="text-base font-semibold leading-snug">

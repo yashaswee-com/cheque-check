@@ -15,7 +15,7 @@ export function ReplayTour() {
     <section>
       <Button
         variant="outline"
-        className="w-full"
+        className="w-full font-normal"
         disabled={busy}
         onClick={async () => {
           if (busy) return

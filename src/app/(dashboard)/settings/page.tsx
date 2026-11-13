@@ -1,18 +1,16 @@
 'use client'
 
 import { useProfile } from '@/features/profile/hooks/use-profile'
-import { Button } from '@/components/ui/button'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowRight01Icon as ChevronRight,
-  Logout01Icon as LogOut,
-  File01Icon as FileSpreadsheet,
+  ChartHistogramIcon as FileSpreadsheet,
   Building03Icon as Building2,
   LayoutGridIcon as LayoutGrid,
   Settings02Icon as Settings2,
   Notification01Icon as Notifications,
   MegaphoneIcon as Megaphone,
-  News01Icon as News,
+  SparklesIcon as News,
   ChatFeedbackIcon as FeedbackIcon,
   CustomerSupportIcon as CustomerSupport,
   HelpCircleIcon as Help,
@@ -21,8 +19,8 @@ import {
   Shield02Icon as PrivacyShield,
   UserLock02Icon as SecurityLock,
   LicenseIcon as License,
-  Money03Icon as Money,
-  CrownIcon,
+  ArrowDataTransferHorizontalIcon as Money,
+  SparklesIcon as Features,
   GiftIcon as Gift,
   Tag01Icon as Tag,
   ReceiptIndianRupeeIcon as Refund,
@@ -31,7 +29,6 @@ import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useSettings } from '@/features/settings/hooks/use-settings'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { useTranslations } from 'next-intl'
 import { IconType } from '@/types'
@@ -40,10 +37,17 @@ import { PremiumLink } from '@/features/monetization/components/premium-controls
 import { PremiumMark } from '@/features/monetization/components/premium-mark'
 import type { PremiumFeature } from '@/features/monetization/lib/premium-access'
 import { version } from '../../../../package.json'
-import { ReplayTour } from '@/features/tour/components/replay-tour'
-import { UsageCard } from '@/features/monetization/components/free-usage-banner'
+import { useFreeUsage } from '@/features/monetization/hooks/use-free-usage'
+import { UsageMeter } from '@/components/ui/usage-meter'
+import { InfoPopover } from '@/components/ui/info-popover'
 import { usePremiumAvatarRing } from '@/features/monetization/hooks/use-premium-avatar-ring'
 import { PwaInstallCard } from '@/components/pwa-install-card'
+import {
+  Invoice01Icon,
+  Camera01Icon,
+  Mic01Icon,
+} from '@hugeicons/core-free-icons'
+import { Button } from '@/components/ui/button'
 
 interface SettingsItem {
   name: string
@@ -81,14 +85,15 @@ function memberDuration(createdAt: string, now: Date): string | null {
 
 export default function SettingsPage() {
   const t = useTranslations('Settings')
-  const referrals = useTranslations('Referrals')
   const feedback = useTranslations('Feedback')
+  const referrals = useTranslations('Referrals')
+  const freeUsage = useTranslations('FreeUsage')
   const tpa = useTranslations('PhoneAuth')
   const security = useTranslations('Security')
   const { profile, isLoading: profileLoading } = useProfile()
   const premiumRing = usePremiumAvatarRing()
   const display = useDisplayFormat(profile)
-  const { handleLogout } = useSettings()
+  const usageQuery = useFreeUsage()
   const { isLoading: monetizationLoading } = useMonetization()
   const membershipDuration = profile?.created_at
     ? memberDuration(profile.created_at, new Date())
@@ -141,7 +146,7 @@ export default function SettingsPage() {
         {
           name: t('features'),
           description: t('featuresDesc'),
-          icon: CrownIcon,
+          icon: Features,
           href: '/features/catalog',
         },
         { name: referrals('title'), icon: Gift, href: '/referrals' },
@@ -190,7 +195,7 @@ export default function SettingsPage() {
         },
         {
           name: feedback('submitTitle'),
-          description: feedback('privacyNote'),
+          description: t('feedbackDesc'),
           icon: FeedbackIcon,
           href: '/feedback',
         },
@@ -267,7 +272,80 @@ export default function SettingsPage() {
         </Link>
 
         <PwaInstallCard variant="inline" />
-        <UsageCard alwaysShow />
+        {usageQuery.error ? (
+          <aside
+            className="space-y-3 rounded-xl border p-4"
+            data-testid="usage-card"
+          >
+            <p role="alert">{freeUsage('error')}</p>
+            <Button variant="outline" onClick={() => void usageQuery.refetch()}>
+              {freeUsage('retry')}
+            </Button>
+          </aside>
+        ) : !usageQuery.data ? (
+          <p role="status" data-testid="usage-card">
+            {freeUsage('loading')}
+          </p>
+        ) : (
+          <aside
+            className="space-y-4 rounded-2xl border border-primary/10 bg-card p-4 shadow-sm"
+            aria-label={freeUsage('usageTitle')}
+            data-testid="usage-card"
+            data-always-show="true"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="flex items-center gap-2 font-normal">
+                <HugeiconsIcon
+                  icon={Invoice01Icon}
+                  className="size-5 text-primary"
+                />
+                {freeUsage('usageTitle')}
+              </h2>
+              <InfoPopover title={freeUsage('usageTitle')}>
+                {freeUsage('help')}
+              </InfoPopover>
+            </div>
+            <div className="space-y-4">
+              {[
+                {
+                  label: freeUsage('cheques'),
+                  used: usageQuery.data.cheques_used,
+                  limit: usageQuery.data.cheques_limit,
+                  icon: Invoice01Icon,
+                  unlimited: usageQuery.data.unlimited,
+                },
+                {
+                  label: freeUsage('scans'),
+                  used: usageQuery.data.ai_scans_used,
+                  limit: usageQuery.data.ai_scans_limit,
+                  icon: Camera01Icon,
+                  unlimited: false,
+                },
+                {
+                  label: freeUsage('voice'),
+                  used: usageQuery.data.voice_used,
+                  limit: usageQuery.data.voice_limit,
+                  icon: Mic01Icon,
+                  unlimited: false,
+                },
+              ].map((row) => (
+                <UsageMeter
+                  key={row.label}
+                  label={row.label}
+                  used={row.used}
+                  limit={row.limit}
+                  unlimited={row.unlimited}
+                  icon={row.icon}
+                  usedText={
+                    row.unlimited
+                      ? freeUsage('unlimited')
+                      : freeUsage('used', { used: row.used, limit: row.limit })
+                  }
+                />
+              ))}
+            </div>
+          </aside>
+        )}
       </div>
 
       <div className="space-y-8">
@@ -302,11 +380,9 @@ export default function SettingsPage() {
                         />
                       </div>
                       <div className="flex min-w-0 flex-col">
-                        <span className="text-sm font-semibold">
-                          {item.name}
-                        </span>
+                        <span className="text-sm">{item.name}</span>
                         {item.description && (
-                          <span className="mt-0.5 truncate text-[10px] font-medium leading-tight text-muted-foreground">
+                          <span className="mt-0.5 truncate text-[10px] leading-tight text-muted-foreground">
                             {item.description}
                           </span>
                         )}
@@ -340,16 +416,6 @@ export default function SettingsPage() {
           </div>
         ))}
       </div>
-
-      <ReplayTour />
-      <Button
-        variant="destructive"
-        data-testid="settings-logout-button"
-        className="w-full rounded-full h-14 text-lg font-semibold"
-        onClick={handleLogout}
-      >
-        <HugeiconsIcon icon={LogOut} className="mr-2 h-5 w-5" /> {t('signOut')}
-      </Button>
 
       <div className="text-center pb-8">
         <p className="text-xs text-muted-foreground font-semibold opacity-50 uppercase tracking-wider">

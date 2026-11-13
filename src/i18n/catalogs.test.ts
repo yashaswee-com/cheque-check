@@ -125,11 +125,13 @@ describe('translation catalogs', () => {
   })
 
   it('preserves sample identities, brands and machine-readable formats', () => {
-    expect(hi.Auth.namePlaceholder).toBe(en.Auth.namePlaceholder)
+    expect(en.Auth.namePlaceholder).toBe('Amit Aggarwal')
+    expect(hi.Auth.namePlaceholder).toBe('अमित अग्रवाल')
     expect(hi.Onboarding.businessPhonePlaceholder).toBe(
       en.Onboarding.businessPhonePlaceholder,
     )
-    expect(hi.Accounts.accountNamePlaceholder).toContain('John Doe')
+    expect(en.Accounts.accountNamePlaceholder).toContain('Amit Aggarwal')
+    expect(hi.Accounts.accountNamePlaceholder).toContain('अमित अग्रवाल')
     expect(hi.Accounts.ifscPlaceholder).toBe(en.Accounts.ifscPlaceholder)
     expect(hi.Onboarding.businessNamePlaceholder).toContain('Apple Inc.')
     expect(hi.Settings.teamName).toBe(en.Settings.teamName)

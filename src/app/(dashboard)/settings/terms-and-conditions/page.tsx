@@ -1,8 +1,6 @@
 'use client'
 
-import { HugeiconsIcon } from '@hugeicons/react'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
-import { LicenseIcon as Terms } from '@hugeicons/core-free-icons'
 import { useTranslations } from 'next-intl'
 
 export default function TermsAndConditionsPage() {
@@ -13,13 +11,6 @@ export default function TermsAndConditionsPage() {
     <div className="max-w-2xl space-y-8 pb-20">
       <div className="prose prose-sm dark:prose-invert max-w-none px-2">
         <div className="rounded-lg border bg-card p-6 space-y-4">
-          <div className="flex items-center gap-3 text-primary mb-4">
-            <HugeiconsIcon icon={Terms} className="h-6 w-6" />
-            <span className="font-semibold uppercase tracking-wider text-xs">
-              {t('lastUpdated', { date: display.month('2026-08') })}
-            </span>
-          </div>
-
           <section className="space-y-2">
             <h2 className="text-lg font-bold">1. {t('acceptance')}</h2>
             <p className="text-muted-foreground leading-relaxed">
@@ -55,6 +46,9 @@ export default function TermsAndConditionsPage() {
             </p>
           </section>
         </div>
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          {t('lastUpdated', { date: display.month('2026-08') })}
+        </p>
       </div>
     </div>
   )

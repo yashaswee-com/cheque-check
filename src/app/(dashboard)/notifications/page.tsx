@@ -28,6 +28,7 @@ import {
 } from '@/features/notifications/services/push.service'
 import { matchInboxSearch } from '@/features/notifications/lib/inbox-search'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
+import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
@@ -66,6 +67,7 @@ export default function NotificationsPage() {
   const common = useTranslations('Common')
   const push = useTranslations('Push')
   const { activeBusiness, businesses, setActiveBusiness } = useBusiness()
+  const { profile, isLoading: isProfileLoading } = useProfile()
   const router = useRouter()
   const display = useDisplayFormat()
   const [search, setSearch] = useState('')
@@ -153,6 +155,16 @@ export default function NotificationsPage() {
     })),
   ]
   const filtered = debouncedSearch.trim().length > 0
+  const hasConfiguredChannel = Boolean(
+    profile &&
+    (((profile.voice_call_enabled ||
+      profile.sms_enabled ||
+      profile.whatsapp_enabled) &&
+      profile.phone) ||
+      (profile.push_enabled && pushState === 'enabled')),
+  )
+  const configurationIncomplete =
+    !isProfileLoading && (!profile || !hasConfiguredChannel)
   const clearFilters = () => {
     setSearch('')
     setUnread(false)
@@ -215,7 +227,7 @@ export default function NotificationsPage() {
                     )}
                   >
                     <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-                    <span className="text-sm font-bold">{option.label}</span>
+                    <span className="text-sm">{option.label}</span>
                     {ascending === option.ascending && (
                       <HugeiconsIcon
                         icon={Tick02Icon}
@@ -252,9 +264,9 @@ export default function NotificationsPage() {
                         }
                         className="h-4 w-4"
                       />
-                      <span className="text-sm font-bold">{option.label}</span>
+                      <span className="text-sm">{option.label}</span>
                       {option.id && option.id === activeBusiness?.id && (
-                        <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+                        <span className="text-[10px] uppercase text-muted-foreground">
                           {t('activeBusiness')}
                         </span>
                       )}
@@ -273,7 +285,7 @@ export default function NotificationsPage() {
                     className={filterPillClassName(unread === option.unread)}
                   >
                     <HugeiconsIcon icon={option.icon} className="h-4 w-4" />
-                    <span className="text-sm font-bold">{option.label}</span>
+                    <span className="text-sm">{option.label}</span>
                   </button>
                 ))}
               </FilterPillSection>
@@ -309,14 +321,21 @@ export default function NotificationsPage() {
           <HugeiconsIcon icon={TickDouble02Icon} className="h-5 w-5" />
         </Button>
       </div>
-      {pushState && pushState !== 'enabled' && (
+      {configurationIncomplete && (
         <section
           aria-label={push('title')}
           className="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
         >
-          <p className="text-sm text-muted-foreground">
-            {push('settingsRedirect')}
-          </p>
+          <div className="flex items-center gap-2">
+            <HugeiconsIcon
+              icon={Alert02Icon}
+              className="h-5 w-5 shrink-0 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <p className="text-sm text-muted-foreground">
+              {push('settingsRedirect')}
+            </p>
+          </div>
           <Link
             href="/settings/notifications"
             className="inline-flex h-10 shrink-0 items-center justify-center rounded-sm bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -397,9 +416,19 @@ export default function NotificationsPage() {
                 onClick={() => void perform(() => open(item))}
               >
                 <span>
-                  <span className={item.read_at ? '' : 'font-bold'}>
-                    {t(`events.${item.kind}`)}
-                  </span>
+                  <HugeiconsIcon
+                    icon={
+                      item.kind === 'export_ready'
+                        ? Tick02Icon
+                        : item.kind === 'export_failed'
+                          ? Alert02Icon
+                          : Notification03Icon
+                    }
+                    className="mr-2 inline-block h-5 w-5 align-middle text-primary"
+                    aria-hidden="true"
+                    data-testid="notification-type-icon"
+                  />
+                  <span>{t(`events.${item.kind}`)}</span>
                   {!item.read_at && (
                     <span className="ml-2 text-xs">{t('unread')}</span>
                   )}

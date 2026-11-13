@@ -386,7 +386,8 @@ describe('dashboard page', () => {
     renderPage(<DashboardPage />)
     expect(screen.queryByTestId('usage-card')).not.toBeInTheDocument()
   })
-  it('shows only available overflow arrows and scrolls the quick actions', () => {
+  it('shows only available overflow arrows and scrolls the quick actions', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: false }))
     let onResize!: () => void
     vi.stubGlobal(
       'ResizeObserver',
@@ -404,38 +405,73 @@ describe('dashboard page', () => {
       messages.Common.tags,
     )
     Object.defineProperties(actions, {
-      scrollWidth: { configurable: true, value: 460 },
       clientWidth: { configurable: true, value: 320 },
     })
+    actions.getBoundingClientRect = () =>
+      new DOMRect(0, 0, actions.clientWidth, 112)
+    Array.from(actions.querySelectorAll('button, a')).forEach(
+      (child, index) => {
+        child.getBoundingClientRect = () =>
+          new DOMRect(index * 120 - actions.scrollLeft, 0, 120, 112)
+      },
+    )
     actions.scrollBy = vi.fn()
     act(() => onResize())
     expect(
-      screen.queryByRole('button', { name: 'Previous page' }),
+      screen.queryByRole('button', { name: messages.SharedUI.scrollLeft }),
     ).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: messages.SharedUI.scrollRight,
+      }),
+    )
     expect(actions.scrollBy).toHaveBeenCalledWith({
-      left: 180,
+      left: 320,
       behavior: 'smooth',
     })
-    actions.scrollLeft = 140
+    actions.scrollLeft = 160
     fireEvent.scroll(actions)
-    expect(
-      screen.queryByRole('button', { name: 'Next page' }),
-    ).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Previous page' }))
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: messages.SharedUI.scrollRight }),
+      ).not.toBeInTheDocument(),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.SharedUI.scrollLeft }),
+    )
     expect(actions.scrollBy).toHaveBeenCalledWith({
-      left: -180,
+      left: -320,
       behavior: 'smooth',
     })
     actions.scrollLeft = 0
-    Object.defineProperty(actions, 'clientWidth', { value: 460 })
+    Object.defineProperty(actions, 'clientWidth', { value: 480 })
     act(() => onResize())
-    expect(
-      screen.queryByRole('button', { name: 'Next page' }),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Previous page' }),
-    ).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: messages.SharedUI.scrollRight }),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', { name: messages.SharedUI.scrollLeft }),
+      ).not.toBeInTheDocument()
+    })
+  })
+  it('uses equal-height quick actions in Scan, Reports, Tags, Business order and labels the upcoming window', () => {
+    renderPage(<DashboardPage />)
+    const actions = Array.from(
+      screen
+        .getByTestId('dashboard-quick-actions')
+        .querySelectorAll('button, a'),
+    )
+    expect(actions.map((action) => action.textContent)).toEqual([
+      messages.Dashboard.scanCheque,
+      messages.Reports.title,
+      messages.Common.tags,
+      messages.Common.businesses,
+    ])
+    for (const action of actions)
+      expect(action.firstElementChild).toHaveClass('h-28')
+    expect(screen.getByText(messages.Dashboard.upcoming7d)).toBeVisible()
+    expect(screen.getByTestId('dashboard-page')).not.toHaveClass('pt-2')
   })
   it('places centered status counts before quick actions and removes the quick actions heading', () => {
     renderPage(<DashboardPage />)

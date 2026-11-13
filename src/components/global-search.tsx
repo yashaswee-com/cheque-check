@@ -177,10 +177,10 @@ export function GlobalSearch({
                   <HugeiconsIcon icon={FileText} className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold">
+                  <p className="text-sm font-normal">
                     {display.currency(c.amount)}
                   </p>
-                  <p className="text-[10px] text-muted-foreground truncate font-semibold uppercase tracking-wider">
+                  <p className="text-[10px] text-muted-foreground truncate font-normal uppercase tracking-wider">
                     {c.party?.name} • #{c.cheque_number}
                   </p>
                 </div>
@@ -204,12 +204,12 @@ export function GlobalSearch({
                   <HugeiconsIcon icon={FileText} className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold">
+                  <p className="text-sm font-normal">
                     {c.amount != null
                       ? display.currency(c.amount)
                       : t('untitled')}
                   </p>
-                  <p className="text-[10px] text-muted-foreground truncate font-semibold uppercase tracking-wider">
+                  <p className="text-[10px] text-muted-foreground truncate font-normal uppercase tracking-wider">
                     {c.party?.name}
                     {c.cheque_number ? ` • #${c.cheque_number}` : ''}
                   </p>
@@ -247,9 +247,9 @@ export function GlobalSearch({
                   <TextTruncate
                     text={p.name}
                     maxLength={25}
-                    className="text-sm font-semibold block"
+                    className="text-sm font-normal block"
                   />
-                  <p className="text-[10px] text-muted-foreground truncate font-semibold uppercase tracking-wider">
+                  <p className="text-[10px] text-muted-foreground truncate font-normal uppercase tracking-wider">
                     {p.contact}
                   </p>
                 </div>
@@ -280,9 +280,9 @@ export function GlobalSearch({
                   <TextTruncate
                     text={p.name || t('untitled')}
                     maxLength={25}
-                    className="text-sm font-semibold block"
+                    className="text-sm font-normal block"
                   />
-                  <p className="text-[10px] text-muted-foreground truncate font-semibold uppercase tracking-wider">
+                  <p className="text-[10px] text-muted-foreground truncate font-normal uppercase tracking-wider">
                     {p.contact}
                   </p>
                 </div>
@@ -319,9 +319,9 @@ export function GlobalSearch({
                   <TextTruncate
                     text={a.bank?.name || t('bank')}
                     maxLength={25}
-                    className="text-sm font-semibold block"
+                    className="text-sm font-normal block"
                   />
-                  <p className="text-[10px] text-muted-foreground truncate font-semibold uppercase tracking-wider">
+                  <p className="text-[10px] text-muted-foreground truncate font-normal uppercase tracking-wider">
                     <TextTruncate text={a.account_name} maxLength={15} /> •{' '}
                     {a.account_number}
                   </p>
@@ -353,9 +353,9 @@ export function GlobalSearch({
                   <TextTruncate
                     text={a.account_name || t('untitled')}
                     maxLength={25}
-                    className="text-sm font-semibold block"
+                    className="text-sm font-normal block"
                   />
-                  <p className="text-[10px] text-muted-foreground truncate font-semibold uppercase tracking-wider">
+                  <p className="text-[10px] text-muted-foreground truncate font-normal uppercase tracking-wider">
                     {a.bank?.name}
                     {a.account_number ? ` • ${a.account_number}` : ''}
                   </p>

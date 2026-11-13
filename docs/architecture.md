@@ -29,6 +29,12 @@ The codebase favors feature ownership at the UI/service/repository boundary and 
 
 The app uses bounded reads for interactive pages and aggregates for totals. Cheque lists use the server paging RPC; reports fetch full data only for export workflows, with a durable background path for CSV/JSON ([cheque page repository](../src/features/cheques/repositories/cheque.repository.ts#L53-L168), [report summary and preview](../src/features/reports/hooks/use-report-cheques.ts#L9-L54), [export limits](../supabase/migrations/20261031040000_background_exports.sql#L57-L112)).
 
+Entity creation uses one [docked form action](../src/components/ui/edit-save-bar.tsx): the form validates and advances intermediate steps, then publishes on the final step. Draft-enabled forms place Save Draft to its right, rather than floating behind the dock. Edit forms place their icon-only delete confirmation beside Update in the same dock. Shared dialogs and popovers are full-viewport-width bottom sheets on small screens, overriding caller width constraints while retaining desktop positioning and keyboard dismissal. [Combobox](../src/components/ui/combobox.tsx) contains popup focus guards so opening a selector cannot add spacing to neighboring fields.
+
+Party SMS notifications require explicit opt-in. [The default migration](../supabase/migrations/20261114000000_party_sms_opt_in.sql) disables them for new profiles without changing existing users' saved choices; missing profile data does not enable SMS.
+
+The Features catalog reads active `payment_products` through the [monetization repository](../src/features/monetization/repositories/monetization.repository.ts), including price, currency, pack duration, and included quota. Persisted payment amounts remain in paise; UI formatting converts them to major units. Missing catalog entries disable their purchase actions rather than substituting a hardcoded price. Voice phone setup and test calls are shown only when the service is enabled. Cheque amount filters use bounded lowest/highest amount reads, a two-thumb slider, and numeric inputs for precise amounts.
+
 ## Runtime and verification
 
 The package declares Node.js `>=22.12.0 <23`, npm `11.17.0`, Next.js `16.4.1`, and React `19.2.8` ([runtime](../package.json#L1-L8), [framework dependencies](../package.json#L72-L80)). Available checks include lint, TypeScript, Vitest, Playwright, build, and a local scaling runner; their presence does not mean they have passed in this snapshot ([scripts](../package.json#L9-L24), [CI workflow](../.github/workflows/quality.yml#L39-L71)).

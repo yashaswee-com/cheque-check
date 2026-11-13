@@ -1,6 +1,8 @@
 'use client'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { ArrowRight01Icon, Message01Icon } from '@hugeicons/core-free-icons'
 import { useAnnouncement } from '../hooks/use-announcement'
 import { Button } from '@/components/ui/button'
 import {
@@ -46,7 +48,14 @@ export function DeveloperMessage({
   if (!onboarding)
     return (
       <section className="rounded-xl border p-4 space-y-2">
-        <h2 className="font-semibold">{t('title')}</h2>
+        <h2 className="flex items-center gap-2 font-semibold">
+          <HugeiconsIcon
+            icon={Message01Icon}
+            className="size-5"
+            aria-hidden="true"
+          />
+          {t('title')}
+        </h2>
         <p>{body}</p>
         <p className="text-sm">{message.author}</p>
       </section>
@@ -60,7 +69,14 @@ export function DeveloperMessage({
     >
       <SheetContent showCloseButton={false}>
         <SheetHeader>
-          <SheetTitle>{t('title')}</SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            <HugeiconsIcon
+              icon={Message01Icon}
+              className="size-5"
+              aria-hidden="true"
+            />
+            {t('title')}
+          </SheetTitle>
           <SheetDescription>{body}</SheetDescription>
         </SheetHeader>
         <p className="px-4">{message.author}</p>
@@ -69,8 +85,17 @@ export function DeveloperMessage({
             {t('saveError')}
           </p>
         )}
-        <Button className="m-4" disabled={busy} onClick={() => void dismiss()}>
+        <Button
+          className="m-4 font-normal"
+          disabled={busy}
+          onClick={() => void dismiss()}
+        >
           {t('continue')}
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            className="ml-2 size-4"
+            aria-hidden="true"
+          />
         </Button>
       </SheetContent>
     </Sheet>

@@ -27,7 +27,7 @@ export default function DashboardLayout({
             <TopNav />
             <main
               data-page-scroll
-              className="scroll-fade-y scroll-fade-4 no-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-6 pb-8 flex flex-col"
+              className="scroll-fade-y scroll-fade-4 no-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-6 has-[[data-testid=dashboard-page]]:pt-2 pb-8 flex flex-col"
             >
               <PageTransition>{children}</PageTransition>
             </main>

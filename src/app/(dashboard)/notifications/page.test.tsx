@@ -5,6 +5,15 @@ import messages from '../../../../messages/en.json'
 import NotificationsPage from './page'
 
 const pushMock = vi.hoisted(() => ({ state: vi.fn() }))
+const profileMock = vi.hoisted(() => ({
+  profile: {
+    push_enabled: true,
+    voice_call_enabled: false,
+    sms_enabled: false,
+    whatsapp_enabled: false,
+  },
+  isLoading: false,
+}))
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/features/businesses/hooks/use-business', () => ({
@@ -29,6 +38,9 @@ vi.mock('@/features/notifications/hooks/use-inbox', () => ({
 vi.mock('@/features/notifications/services/push.service', () => ({
   pushService: pushMock,
 }))
+vi.mock('@/features/profile/hooks/use-profile', () => ({
+  useProfile: () => profileMock,
+}))
 vi.mock('@/features/profile/hooks/use-display-format', () => ({
   useDisplayFormat: () => ({ date: (value: string) => value }),
 }))
@@ -36,6 +48,13 @@ vi.mock('@/features/profile/hooks/use-display-format', () => ({
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  profileMock.profile = {
+    push_enabled: true,
+    voice_call_enabled: false,
+    sms_enabled: false,
+    whatsapp_enabled: false,
+  }
+  profileMock.isLoading = false
 })
 
 describe('notifications inbox push settings', () => {
@@ -52,6 +71,47 @@ describe('notifications inbox push settings', () => {
     ).toHaveAttribute('href', '/settings/notifications')
     expect(screen.queryByText(messages.Push.enable)).not.toBeInTheDocument()
     expect(screen.queryByText(messages.Push.disable)).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: messages.Inbox.title }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows the settings redirect when every notification channel is off', async () => {
+    profileMock.profile = {
+      push_enabled: false,
+      voice_call_enabled: false,
+      sms_enabled: false,
+      whatsapp_enabled: false,
+    }
+    pushMock.state.mockResolvedValue('enabled')
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <NotificationsPage />
+      </NextIntlClientProvider>,
+    )
+
+    expect(
+      await screen.findByRole('link', { name: messages.Push.settingsLink }),
+    ).toHaveAttribute('href', '/settings/notifications')
+  })
+
+  it('requires a phone number before treating phone-based channels as configured', async () => {
+    profileMock.profile = {
+      push_enabled: false,
+      voice_call_enabled: false,
+      sms_enabled: true,
+      whatsapp_enabled: false,
+    }
+    pushMock.state.mockResolvedValue('available')
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <NotificationsPage />
+      </NextIntlClientProvider>,
+    )
+
+    expect(
+      await screen.findByRole('link', { name: messages.Push.settingsLink }),
+    ).toHaveAttribute('href', '/settings/notifications')
   })
 
   it('does not show the settings redirect when this device is registered', async () => {

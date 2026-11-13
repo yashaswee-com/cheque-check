@@ -83,42 +83,52 @@ export default function NotificationsPage() {
       </div>
 
       <div className="space-y-3">
-        <PushSettings />
-        {channels.map((channel) => (
-          <div
-            key={channel.key}
-            className="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-          >
-            <div className="space-y-1">
-              <Label className="font-semibold">{channel.label}</Label>
-              <p className="text-xs text-muted-foreground">
-                {channel.description}
-              </p>
+        {channels.map((channel) =>
+          channel.key === 'push_enabled' ? (
+            <PushSettings
+              key={channel.key}
+              enabled={profile.push_enabled}
+              disabled={isSaving}
+              onEnabledChange={(checked) =>
+                void savePreferences({ push_enabled: checked })
+              }
+            />
+          ) : (
+            <div
+              key={channel.key}
+              className="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+            >
+              <div className="space-y-1">
+                <Label>{channel.label}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {channel.description}
+                </p>
+              </div>
+              {channel.key === 'party_sms_enabled' ? (
+                <PremiumSwitch
+                  feature="notify-party"
+                  checked={profile[channel.key]}
+                  onCheckedChange={(checked) =>
+                    void savePreferences({ [channel.key]: checked })
+                  }
+                  disabled={isSaving}
+                  aria-label={channel.label}
+                  data-testid={`notifications-toggle-${channel.key}`}
+                />
+              ) : (
+                <Switch
+                  checked={profile[channel.key]}
+                  onCheckedChange={(checked) =>
+                    void savePreferences({ [channel.key]: checked })
+                  }
+                  disabled={isSaving}
+                  aria-label={channel.label}
+                  data-testid={`notifications-toggle-${channel.key}`}
+                />
+              )}
             </div>
-            {channel.key === 'party_sms_enabled' ? (
-              <PremiumSwitch
-                feature="notify-party"
-                checked={profile[channel.key]}
-                onCheckedChange={(checked) =>
-                  void savePreferences({ [channel.key]: checked })
-                }
-                disabled={isSaving}
-                aria-label={channel.label}
-                data-testid={`notifications-toggle-${channel.key}`}
-              />
-            ) : (
-              <Switch
-                checked={profile[channel.key]}
-                onCheckedChange={(checked) =>
-                  void savePreferences({ [channel.key]: checked })
-                }
-                disabled={isSaving}
-                aria-label={channel.label}
-                data-testid={`notifications-toggle-${channel.key}`}
-              />
-            )}
-          </div>
-        ))}
+          ),
+        )}
       </div>
 
       <fieldset
@@ -127,8 +137,25 @@ export default function NotificationsPage() {
         data-testid="notifications-reminder-schedule"
       >
         <div className="space-y-2">
+          <Label className="text-[11px] uppercase tracking-widest text-muted-foreground">
+            {t('advancedWarning')}
+          </Label>
+          <Combobox
+            options={warningOptions}
+            value={String(profile.default_reminder_days || 3)}
+            testId="notifications-reminder-days"
+            onValueChange={(value) =>
+              void savePreferences({ default_reminder_days: Number(value) })
+            }
+            className="h-14 rounded-sm border-none bg-canvas-parchment text-lg dark:bg-surface-tile-1"
+          />
+          <p className="text-xs text-muted-foreground">
+            {t('notificationsLeadTimeDesc')}
+          </p>
+        </div>
+        <div className="space-y-2">
           <div className="flex items-center gap-1">
-            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            <Label className="text-[11px] uppercase tracking-widest text-muted-foreground">
               {to('dailyFrequency')}
             </Label>
             <InfoPopover title={to('dailyFrequency')}>
@@ -157,24 +184,6 @@ export default function NotificationsPage() {
             void savePreferences({ reminder_times })
           }
         />
-
-        <div className="space-y-2">
-          <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-            {t('advancedWarning')}
-          </Label>
-          <Combobox
-            options={warningOptions}
-            value={String(profile.default_reminder_days || 3)}
-            testId="notifications-reminder-days"
-            onValueChange={(value) =>
-              void savePreferences({ default_reminder_days: Number(value) })
-            }
-            className="h-14 rounded-sm border-none bg-canvas-parchment text-lg dark:bg-surface-tile-1"
-          />
-          <p className="text-xs text-muted-foreground">
-            {t('notificationsLeadTimeDesc')}
-          </p>
-        </div>
       </fieldset>
     </div>
   )

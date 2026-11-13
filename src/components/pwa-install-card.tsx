@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Download04Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons'
 import {
   Dialog,
   DialogContent,
@@ -139,39 +141,56 @@ export function PwaInstallCard({
     return (
       <section
         aria-labelledby="settings-install-title"
-        className="space-y-3 rounded-lg border bg-card p-5"
+        className="rounded-lg border bg-card p-5"
       >
-        <h2 id="settings-install-title" className="text-lg font-semibold">
-          {t('title')}
-        </h2>
-        <p className="text-sm text-muted-foreground">{t('description')}</p>
-        {installing ? (
-          <p role="status" className="text-sm">
-            {t('inlineWaiting')}
-          </p>
-        ) : (
-          !promptAvailable && (
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>{t(instructions)}</p>
-              {!ios && <p role="status">{t('unavailable')}</p>}
-            </div>
-          )
-        )}
-        {declined && !installing && (
-          <p role="status" className="text-sm">
-            {t('declined')}
-          </p>
-        )}
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
-            {t('error')}
-          </p>
-        )}
-        {promptAvailable && !ios && (
-          <Button onClick={install} disabled={busy || installing}>
-            {t('install')}
-          </Button>
-        )}
+        <details open className="group">
+          <summary className="flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
+            <HugeiconsIcon
+              icon={Download04Icon}
+              className="size-5 shrink-0 text-primary"
+            />
+            <h2
+              id="settings-install-title"
+              className="flex-1 text-lg font-normal"
+            >
+              {t('title')}
+            </h2>
+            <HugeiconsIcon
+              icon={ArrowDown01Icon}
+              className="size-4 transition-transform group-open:rotate-180"
+            />
+          </summary>
+          <div className="space-y-3 pt-3">
+            <p className="text-sm text-muted-foreground">{t('description')}</p>
+            {installing ? (
+              <p role="status" className="text-sm">
+                {t('inlineWaiting')}
+              </p>
+            ) : (
+              !promptAvailable && (
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>{t(instructions)}</p>
+                  {!ios && <p role="status">{t('unavailable')}</p>}
+                </div>
+              )
+            )}
+            {declined && !installing && (
+              <p role="status" className="text-sm">
+                {t('declined')}
+              </p>
+            )}
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {t('error')}
+              </p>
+            )}
+            {promptAvailable && !ios && (
+              <Button onClick={install} disabled={busy || installing}>
+                {t('install')}
+              </Button>
+            )}
+          </div>
+        </details>
       </section>
     )
   }
@@ -186,7 +205,13 @@ export function PwaInstallCard({
         scrollable
         className="max-h-[min(90dvh,calc(100dvh-2rem))]"
       >
-        <DialogTitle className="pr-8">{t('title')}</DialogTitle>
+        <DialogTitle className="flex items-center gap-2 pr-8">
+          <HugeiconsIcon
+            icon={Download04Icon}
+            className="size-5 text-primary"
+          />
+          {t('title')}
+        </DialogTitle>
         <DialogDescription>
           {ios ? t('iosInstructions') : t('description')}
         </DialogDescription>

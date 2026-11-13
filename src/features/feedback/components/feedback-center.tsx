@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { TextFontIcon as TextIcon } from '@hugeicons/core-free-icons'
 import { Textarea } from '@/components/ui/textarea'
 import { logger } from '@/lib/logger'
 import {
@@ -96,6 +97,7 @@ export function FeedbackCenter({
           </label>
           <Input
             id="feedback-title"
+            leftIcon={TextIcon}
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             maxLength={120}
