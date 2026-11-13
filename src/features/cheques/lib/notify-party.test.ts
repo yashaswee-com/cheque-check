@@ -83,7 +83,7 @@ describe('notify-party', () => {
     mocks.party.mockResolvedValue({ name: 'Acme', contact: '+919876543210' })
     const action = await buildNotifyPartyAction(
       { ...cheque, party_id: 'p1' },
-      null,
+      { party_sms_enabled: true },
       'Notify',
       true,
       'Access required',
@@ -106,7 +106,7 @@ describe('notify-party', () => {
     await expect(
       buildNotifyPartyAction(
         { ...cheque, party_id: 'p1' },
-        null,
+        { party_sms_enabled: true },
         'Notify',
         true,
       ),
@@ -115,7 +115,7 @@ describe('notify-party', () => {
     await expect(
       buildNotifyPartyAction(
         { ...cheque, party_id: 'p1' },
-        null,
+        { party_sms_enabled: true },
         'Notify',
         true,
       ),
@@ -138,7 +138,7 @@ describe('notify-party', () => {
     await expect(
       buildNotifyPartyAction(
         { ...cheque, party_id: 'p1' },
-        null,
+        { party_sms_enabled: true },
         'Notify',
         true,
       ),
@@ -167,8 +167,9 @@ describe('notify-party', () => {
     })
   })
 
-  it('treats the party SMS preference as on unless explicitly disabled', () => {
-    expect(isPartySmsEnabled(undefined)).toBe(true)
+  it('requires explicit opt-in before offering party SMS notifications', () => {
+    expect(isPartySmsEnabled(undefined)).toBe(false)
+    expect(isPartySmsEnabled(null)).toBe(false)
     expect(isPartySmsEnabled({ party_sms_enabled: true })).toBe(true)
     expect(isPartySmsEnabled({ party_sms_enabled: false })).toBe(false)
   })

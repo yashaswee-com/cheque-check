@@ -68,7 +68,7 @@ export function openPartySms(phone: string, message: string): void {
 export function isPartySmsEnabled(
   profile: Pick<Profile, 'party_sms_enabled'> | null | undefined,
 ): boolean {
-  return profile?.party_sms_enabled !== false
+  return profile?.party_sms_enabled === true
 }
 
 export interface NotifyPartyActionProps {
