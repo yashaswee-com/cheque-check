@@ -7,11 +7,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PublicPrivacyPage() {
-  const [locale, t, tm, tp] = await Promise.all([
+  const [locale, t, tm, tp, to] = await Promise.all([
     getLocale(),
     getTranslations('PublicSite'),
     getTranslations('Monitoring'),
     getTranslations('Settings'),
+    getTranslations('Ocr'),
   ])
   const dateLocale =
     locale === 'hi' ? 'hi-IN' : locale === 'hi-en' ? 'en-IN' : 'en'
@@ -60,6 +61,18 @@ export default async function PublicPrivacyPage() {
           <h2 className="text-lg font-bold">7. {tp('contactUs')}</h2>
           <p className="leading-relaxed text-muted-foreground">
             {tp('privacyContactUsContent')}
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h2 className="text-lg font-bold">{to('title')}</h2>
+          <p className="leading-relaxed text-muted-foreground">
+            {to('disclosure')}
+          </p>
+          <p className="leading-relaxed text-muted-foreground">
+            {to('billingDisclosure')}
+          </p>
+          <p className="leading-relaxed text-muted-foreground">
+            {to('privacyRetention')}
           </p>
         </section>
       </article>

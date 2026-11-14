@@ -1,359 +1,124 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { buildPrivateMediaUrl, PRIVATE_CHEQUE_BUCKET } from '@/lib/storage'
-import type { Database } from '@/types/database.types'
 import { POST } from './route'
-
 const mocks = vi.hoisted(() => ({
-  getUser: vi.fn(),
+  user: vi.fn(),
   profile: vi.fn(),
   rpc: vi.fn(),
-  createSignedUrl: vi.fn(),
-  processImage: vi.fn(),
-  getOpenAiEnv: vi.fn(),
   error: vi.fn(),
-  warn: vi.fn(),
 }))
 vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({
-    auth: { getUser: mocks.getUser },
+    auth: { getUser: mocks.user },
     from: () => ({
       select: () => ({
         eq: () => ({ is: () => ({ maybeSingle: mocks.profile }) }),
       }),
     }),
     rpc: mocks.rpc,
-    storage: { from: () => ({ createSignedUrl: mocks.createSignedUrl }) },
   }),
 }))
-vi.mock('@/features/cheques/services/ocr.service', () => ({
-  DEFAULT_OCR_MODEL: 'gpt-4o-mini',
-  OpenAiOcrProvider: class {
-    processImage = mocks.processImage
-  },
-}))
-vi.mock('@/lib/env/server', () => ({ getOpenAiEnv: mocks.getOpenAiEnv }))
-vi.mock('@/lib/logger', () => ({
-  logger: { info: vi.fn(), error: mocks.error, warn: mocks.warn },
-}))
+vi.mock('@/lib/logger', () => ({ logger: { error: mocks.error } }))
 vi.mock('@/lib/monitoring/server', () => ({
   setRequestUser: vi.fn(),
   withMonitoringRequest: (
-    _request: Request,
-    _operation: string,
+    _: Request,
+    __: string,
     callback: () => Promise<Response>,
   ) => callback(),
 }))
-
-const details = {
-  amount: 10,
-  cheque_number: '000001',
-  cheque_date: '2026-10-01',
-  payee_name: null,
-  account_number: null,
-  account_name: null,
-  ifsc_code: null,
-  bank_name: null,
+const imageUrl =
+  '/api/storage/private-cheque-images/10000000-0000-4000-8000-000000000001/image.jpg'
+const start = {
+  action: 'start',
+  imageUrl,
+  mode: 'Inward',
+  key: '10000000-0000-4000-8000-000000000002',
+  consent: '2026-11-14',
 }
-const imageUrl = buildPrivateMediaUrl(PRIVATE_CHEQUE_BUCKET, 'u1/image.png')
 const request = (body: unknown) =>
   new Request('https://app.test/api/ocr/cheque', {
     method: 'POST',
     body: JSON.stringify(body),
-    headers: { 'Content-Type': 'application/json' },
   })
 beforeEach(() => {
   vi.resetAllMocks()
-  mocks.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
+  mocks.user.mockResolvedValue({ data: { user: { id: 'owner' } }, error: null })
   mocks.profile.mockResolvedValue({
     data: { ai_scan_enabled: true },
     error: null,
   })
-  mocks.rpc.mockImplementation(async (name: string) =>
-    name === 'resolve_ai_scan_model'
-      ? { data: [{ product_id: 'free', model: 'gpt-4o-mini' }], error: null }
-      : { data: true, error: null },
-  )
-  mocks.processImage.mockResolvedValue(details)
-  mocks.createSignedUrl.mockResolvedValue({
-    data: { signedUrl: 'https://app.test/signed' },
-    error: null,
-  })
+  mocks.rpc.mockResolvedValue({ data: true, error: null })
 })
-
-describe('OCR shared contracts and client', () => {
-  it('rejects disabled mode before signing, quota, rate limits, or provider access', async () => {
+describe('durable scan endpoint', () => {
+  it('requires authenticated active profiles and honors disabled mode before rate/quota work', async () => {
+    mocks.profile.mockResolvedValueOnce({
+      data: { ai_scan_enabled: false },
+      error: null,
+    })
+    const response = await POST(request(start))
+    expect(response.status).toBe(403)
+    expect((await response.json()).code).toBe('AI_SCAN_DISABLED')
+    expect(mocks.rpc).not.toHaveBeenCalled()
+    mocks.user.mockResolvedValueOnce({ data: { user: null }, error: null })
+    expect((await POST(request(start))).status).toBe(401)
+  })
+  it('rejects legacy requests, remote URLs and malformed input rather than bypassing the durable contract', async () => {
+    for (const body of [
+      { imageUrl },
+      { ...start, imageUrl: 'https://evil.test/image.jpg' },
+      { ...start, key: 'not-a-key' },
+    ]) {
+      expect((await POST(request(body))).status).toBe(400)
+    }
+    expect(mocks.rpc).not.toHaveBeenCalled()
+  })
+  it('starts through atomic reservation RPC, never direct quota consumption/provider work', async () => {
+    await POST(request(start))
+    expect(mocks.rpc).toHaveBeenCalledWith('begin_cheque_scan', {
+      requested_image: imageUrl,
+      requested_key: start.key,
+      requested_consent: '2026-11-14',
+      requested_mode: 'Inward',
+    })
+    expect(mocks.rpc).not.toHaveBeenCalledWith(
+      'consume_user_quota',
+      expect.anything(),
+    )
+  })
+  it('reads and cancels existing scans even when new scans are disabled', async () => {
     mocks.profile.mockResolvedValue({
       data: { ai_scan_enabled: false },
       error: null,
     })
-    const response = await POST(request({ imageUrl }))
-    expect(response.status).toBe(403)
-    expect(await response.json()).toEqual({
-      error: 'AI Scan Mode is disabled.',
-      code: 'AI_SCAN_DISABLED',
+    expect((await POST(request({ action: 'read', imageUrl }))).status).toBe(200)
+    expect(
+      (await POST(request({ action: 'cancel', jobId: start.key }))).status,
+    ).toBe(200)
+    expect(mocks.rpc).toHaveBeenCalledWith('mutate_cheque_scan', {
+      requested_job: start.key,
+      requested_action: 'cancel',
     })
-    expect(mocks.rpc).not.toHaveBeenCalled()
-    expect(mocks.createSignedUrl).not.toHaveBeenCalled()
-    expect(mocks.getOpenAiEnv).not.toHaveBeenCalled()
-    expect(mocks.processImage).not.toHaveBeenCalled()
   })
-
-  it.each([
-    { data: null, error: null },
-    { data: null, error: new Error('profile lookup failed') },
-  ])('fails closed for an unavailable active profile: %j', async (lookup) => {
-    mocks.profile.mockResolvedValue(lookup)
-    const response = await POST(request({ imageUrl }))
-    expect(response.status).toBe(lookup.error ? 500 : 403)
-    expect(mocks.rpc).not.toHaveBeenCalled()
-    expect(mocks.processImage).not.toHaveBeenCalled()
-    if (lookup.error) expect(mocks.error).toHaveBeenCalled()
-  })
-
-  it.each(['consume_api_rate_limit', 'consume_user_quota'])(
-    'logs %s failures and does not invoke OCR',
-    async (endpoint) => {
-      const error = new Error('database offline')
-      mocks.rpc.mockImplementation(async (name: string) =>
-        name === endpoint ? { data: null, error } : { data: true, error: null },
-      )
-      const response = await POST(request({ imageUrl }))
-      expect(response.status).toBe(500)
-      expect(mocks.error).toHaveBeenCalledWith('[OcrController Error]', error)
-      expect(mocks.processImage).not.toHaveBeenCalled()
-    },
-  )
-
-  it.each([null, {}])(
-    'rejects an unsigned private image even without a storage error: %j',
-    async (data) => {
-      mocks.createSignedUrl.mockResolvedValueOnce({ data, error: null })
-      expect(
-        (
-          await POST(
-            request({
-              imageUrl: buildPrivateMediaUrl(
-                PRIVATE_CHEQUE_BUCKET,
-                'u1/missing.png',
-              ),
-            }),
-          )
-        ).status,
-      ).toBe(404)
-      expect(mocks.processImage).not.toHaveBeenCalled()
-      expect(mocks.warn).toHaveBeenCalledWith(
-        '[OcrController] Storage returned no signed cheque URL',
-      )
-    },
-  )
-  it('rejects invalid JSON before authentication', async () => {
-    const response = await POST(
-      new Request('https://app.test/api/ocr/cheque', {
-        method: 'POST',
-        body: '{broken',
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    )
-    expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: 'Invalid JSON body.' })
-    expect(mocks.getUser).not.toHaveBeenCalled()
-  })
-
-  it('maps a missing signed private image to not found', async () => {
-    mocks.createSignedUrl.mockResolvedValueOnce({
-      data: null,
-      error: Object.assign(new Error('missing'), { status: 403 }),
-    })
-    const response = await POST(
-      request({
-        imageUrl: buildPrivateMediaUrl(PRIVATE_CHEQUE_BUCKET, 'u1/missing.png'),
-      }),
-    )
-    expect(response.status).toBe(404)
-    expect(await response.json()).toEqual({ error: 'Cheque image not found.' })
-    expect(mocks.processImage).not.toHaveBeenCalled()
-    expect(mocks.warn).toHaveBeenCalledWith(
-      '[OcrController] Unable to sign cheque image',
-      { status: 403 },
-    )
-  })
-  it('keeps the typed quota arguments aligned with the committed migration', () => {
-    const args: Database['public']['Functions']['consume_user_quota']['Args'] =
-      {
-        requested_feature: 'ai_scan',
-      }
-    const sql = readFileSync(
-      resolve(
-        'supabase',
-        'migrations',
-        '20260924040000_add_api_limits_and_atomic_quota.sql',
-      ),
-      'utf8',
-    )
-    expect(sql).toMatch(
-      /FUNCTION consume_user_quota\(requested_feature feature_type\)/,
-    )
-    expect(args).toEqual({ requested_feature: 'ai_scan' })
-  })
-
-  it('passes the shared response contract through unchanged after rate and quota checks', async () => {
-    const response = await POST(request({ imageUrl }))
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual(details)
-    expect(mocks.rpc.mock.calls).toEqual([
-      [
-        'consume_api_rate_limit',
-        {
-          requested_endpoint: 'ocr-cheque',
-          request_limit: 10,
-          window_seconds: 60,
-        },
-      ],
-      ['consume_user_quota', { requested_feature: 'ai_scan' }],
-      ['resolve_ai_scan_model'],
-    ])
-    expect(mocks.processImage).toHaveBeenCalledWith(
-      'https://app.test/signed',
-      'gpt-4o-mini',
-    )
-  })
-
-  it.each([
-    ['ai_scanner_30d', 'gpt-4o'],
-    ['lifetime_premium', 'gpt-4o'],
-    ['free', 'gpt-4o-mini'],
-  ])('scans with the %s product model %s', async (product_id, model) => {
+  it('returns typed credit/consent/overload errors and redacts unknown database details', async () => {
     mocks.rpc.mockImplementation(async (name: string) =>
-      name === 'resolve_ai_scan_model'
-        ? { data: [{ product_id, model }], error: null }
-        : { data: true, error: null },
+      name === 'consume_api_rate_limit'
+        ? { data: true }
+        : { error: { message: 'CONSENT_REQUIRED' } },
     )
-    expect((await POST(request({ imageUrl }))).status).toBe(200)
-    expect(mocks.processImage).toHaveBeenCalledWith(
-      'https://app.test/signed',
-      model,
-    )
-  })
-
-  it.each([
-    { data: null, error: new Error('policy lookup failed') },
-    { data: [], error: null },
-  ])(
-    'falls back with a warning when the product policy lookup fails: %j',
-    async (lookup) => {
-      mocks.rpc.mockImplementation(async (name: string) =>
-        name === 'resolve_ai_scan_model' ? lookup : { data: true, error: null },
-      )
-      expect((await POST(request({ imageUrl }))).status).toBe(200)
-      expect(mocks.processImage).toHaveBeenCalledWith(
-        'https://app.test/signed',
-        'gpt-4o-mini',
-      )
-      expect(mocks.warn).toHaveBeenCalledOnce()
-    },
-  )
-
-  it('does not resolve a model when rate-limited or out of quota', async () => {
-    mocks.rpc.mockResolvedValueOnce({ data: false, error: null })
-    await POST(request({ imageUrl }))
-    expect(mocks.rpc).not.toHaveBeenCalledWith('resolve_ai_scan_model')
-  })
-
-  it.each([{}, { imageUrl: 'invalid' }, { imageUrl: 123 }])(
-    'rejects malformed input before auth or provider access: %j',
-    async (body) => {
-      const response = await POST(request(body))
-      expect(response.status).toBe(400)
-      expect(mocks.getUser).not.toHaveBeenCalled()
-      expect(mocks.processImage).not.toHaveBeenCalled()
-    },
-  )
-
-  it('rejects external image URLs before authentication', async () => {
-    const response = await POST(
-      request({ imageUrl: 'https://app.test/image.png' }),
-    )
-    expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({
-      error: 'Only uploaded cheque images can be scanned.',
+    expect((await POST(request(start))).status).toBe(403)
+    mocks.rpc.mockResolvedValue({
+      error: { message: 'private account 123456789' },
     })
-    expect(mocks.getUser).not.toHaveBeenCalled()
+    const response = await POST(request({ action: 'read', imageUrl }))
+    expect(response.status).toBe(503)
+    expect(JSON.stringify(await response.json())).not.toContain('123456789')
+    expect(mocks.error).toHaveBeenCalledWith('ocr.request.failed')
   })
-
-  it.each(['image.gif', 'image.bmp', 'image-without-extension'])(
-    'rejects unsupported stored image formats with a clear client error: %s',
-    async (fileName) => {
-      const response = await POST(
-        request({
-          imageUrl: buildPrivateMediaUrl(
-            PRIVATE_CHEQUE_BUCKET,
-            `u1/${fileName}`,
-          ),
-        }),
-      )
-      expect(response.status).toBe(415)
-      expect(await response.json()).toEqual({
-        error: 'Only PNG, JPEG, and WebP cheque images are supported.',
-      })
-      expect(mocks.getUser).not.toHaveBeenCalled()
-    },
-  )
-
-  it('retains the unauthorized response', async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: null }, error: null })
-    expect((await POST(request({ imageUrl }))).status).toBe(401)
-    expect(mocks.rpc).not.toHaveBeenCalled()
-  })
-
-  it('retains rate-limit responses and does not consume quota', async () => {
-    mocks.rpc.mockResolvedValueOnce({ data: false, error: null })
-    const response = await POST(request({ imageUrl }))
+  it('rate limits new attempts but not result recovery', async () => {
+    mocks.rpc.mockResolvedValue({ data: false })
+    const response = await POST(request(start))
     expect(response.status).toBe(429)
     expect(response.headers.get('Retry-After')).toBe('60')
-    expect(mocks.rpc).toHaveBeenCalledOnce()
-    expect(mocks.processImage).not.toHaveBeenCalled()
-  })
-
-  it('retains exhausted-quota responses and does not invoke the provider', async () => {
-    mocks.rpc
-      .mockResolvedValueOnce({ data: true, error: null })
-      .mockResolvedValueOnce({ data: false, error: null })
-    expect((await POST(request({ imageUrl }))).status).toBe(402)
-    expect(mocks.processImage).not.toHaveBeenCalled()
-  })
-
-  it('signs owned private media before provider access', async () => {
-    const imageUrl = buildPrivateMediaUrl(
-      PRIVATE_CHEQUE_BUCKET,
-      'u1/cheque.png',
-    )
-    expect((await POST(request({ imageUrl }))).status).toBe(200)
-    expect(mocks.createSignedUrl).toHaveBeenCalledWith('u1/cheque.png', 300)
-    expect(mocks.processImage).toHaveBeenCalledWith(
-      'https://app.test/signed',
-      'gpt-4o-mini',
-    )
-  })
-
-  it('retains rejection of another user private media', async () => {
-    const imageUrl = buildPrivateMediaUrl(
-      PRIVATE_CHEQUE_BUCKET,
-      'other/cheque.png',
-    )
-    expect((await POST(request({ imageUrl }))).status).toBe(403)
-    expect(mocks.createSignedUrl).not.toHaveBeenCalled()
-    expect(mocks.processImage).not.toHaveBeenCalled()
-  })
-
-  it('reports provider errors explicitly', async () => {
-    mocks.processImage.mockRejectedValue(new Error('Provider unavailable'))
-    const response = await POST(request({ imageUrl }))
-    expect(response.status).toBe(500)
-    expect(await response.json()).toEqual({
-      error: 'An unexpected error occurred during image processing.',
-    })
-    expect(mocks.error).toHaveBeenCalledOnce()
+    expect((await POST(request({ action: 'read', imageUrl }))).status).toBe(200)
   })
 })

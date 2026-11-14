@@ -281,10 +281,11 @@ export function useCreateCheque(
       }
       return url
     } catch (error) {
-      alert(
-        'Upload failed: ' +
-          (error instanceof Error ? error.message : String(error)),
-      )
+      toast.add({
+        title: tc('error'),
+        description: t('photoUploadFailed'),
+        type: 'error',
+      })
       return null
     } finally {
       uploadingRef.current = false

@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 export default function PrivacyPolicyPage() {
   const t = useTranslations('Settings')
   const tm = useTranslations('Monitoring')
+  const to = useTranslations('Ocr')
   const display = useDisplayFormat()
 
   return (
@@ -61,6 +62,18 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-lg font-bold">7. {t('contactUs')}</h2>
             <p className="text-muted-foreground leading-relaxed">
               {t('privacyContactUsContent')}
+            </p>
+          </section>
+          <section className="space-y-2">
+            <h2 className="text-lg font-bold">{to('title')}</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              {to('disclosure')}
+            </p>
+            <p className="text-muted-foreground leading-relaxed">
+              {to('billingDisclosure')}
+            </p>
+            <p className="text-muted-foreground leading-relaxed">
+              {to('privacyRetention')}
             </p>
           </section>
         </div>

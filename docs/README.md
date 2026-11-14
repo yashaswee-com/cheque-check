@@ -24,6 +24,7 @@ This index points to current feature and system guides. Implementation claims in
 | [Authentication and profile](authentication-and-profile.md)                 | Sessions, phone OTP, profile lifecycle, and application PIN.                 |
 | [Phone OTP authentication](phone-auth.md)                                   | CAPTCHA-aware sign-in, signup, phone linking, and verification behavior.     |
 | [Cheque management](cheque-management.md)                                   | Cheque records, drafts, filters, lifecycle, and dashboard statistics.        |
+| [AI cheque scanning](ai-cheque-scanning.md)                                 | Durable OCR, AI guardrails, review, credits, matching, and deployment gates. |
 | [Bank catalog](bank-catalog.md)                                             | Shared reference banks, private custom banks, and selector behavior.         |
 | [Reports and exports](reports-and-exports.md)                               | Aggregate reports, browser exports, and durable CSV/JSON jobs.               |
 | [Payments and Premium](payments-and-premium.md)                             | Razorpay checkout, entitlement enforcement, referrals, and wallet credit.    |

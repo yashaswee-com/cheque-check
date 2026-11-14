@@ -7,6 +7,7 @@ import {
   validateImageFile,
 } from '@/lib/storage'
 import { ValidationError, mapSupabaseError } from '@/lib/errors'
+import { prepareChequePhoto } from '@/lib/cheque-photo'
 
 export interface IStorageRepository {
   uploadChequeImage(file: File): Promise<string>
@@ -21,8 +22,8 @@ export class SupabaseStorageRepository implements IStorageRepository {
   async uploadChequeImage(file: File): Promise<string> {
     return this.uploadPrivateImage(
       PRIVATE_CHEQUE_BUCKET,
-      file,
-      10 * 1024 * 1024,
+      await prepareChequePhoto(file),
+      5 * 1024 * 1024,
     )
   }
 

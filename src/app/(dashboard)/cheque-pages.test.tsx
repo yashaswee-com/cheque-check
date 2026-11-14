@@ -288,6 +288,11 @@ vi.mock('@/features/cheques/hooks/use-ocr-extraction', () => ({
       isCreatingInline: false,
       extractData: mocks.extract,
       handleInlineCreate: mocks.inline,
+      cancel: vi.fn(),
+      partyContact: '',
+      setPartyContact: vi.fn(),
+      allowDuplicate: false,
+      setAllowDuplicate: vi.fn(),
     }
   },
 }))

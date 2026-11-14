@@ -25,9 +25,11 @@ When a user uploads a cheque image on the create form, the application saves its
 
 The AI scanner section on Features has a per-user AI Scan Mode switch. The saved profile preference syncs across devices through the existing profile reads (including refetch on window focus); it is not an instantaneous cross-device broadcast. Existing and new profiles default to enabled. Users may always disable scanning; re-enabling requires available, unexpired AI scan credits, enforced by the database as well as the UI.
 
-When disabled, camera/image uploads and draft persistence continue normally, while pending scans, image-URL scans, and direct OCR calls skip AI extraction. Existing form values are preserved for manual entry. The API rejects disabled-mode requests before rate-limit, quota, image-signing, or provider work. An already-started scan may finish. Profile lookup failures fail closed, and preference-save failures show an error without changing the saved switch.
+When disabled, camera/image uploads and draft persistence continue normally, while new AI scans are rejected before rate-limit, quota, or provider work. Existing form values are preserved for manual entry. Already-started provider calls may finish, but further attempts recheck the preference. Profile lookup failures fail closed, and preference-save failures show an error without changing the saved switch.
 
 Apply [the AI Scan Mode migration](../supabase/migrations/20261111010000_ai_scan_mode.sql) before deploying the application change; the API requires the new profile column. No hosted migration or QA deployment is performed by a local code commit.
+
+The scanner now uses durable jobs, credit reservations, versioned AI disclosure, field review, and server-side entity matching. Apply the additional durable OCR migration and deploy/configure its Edge worker before enabling scanning. See [AI cheque scanning](ai-cheque-scanning.md) for user behavior, billing rules, the seven-second deadline, production gates, and recovery instructions. The old synchronous consume-before-provider route is no longer available.
 
 ## Dashboard statistics
 

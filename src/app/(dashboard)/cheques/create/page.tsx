@@ -73,6 +73,7 @@ import { buildChequeReturnTo } from '@/lib/cheque-draft'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useDraftTags } from '@/features/tags/hooks/use-draft-tags'
 import { useOcrExtraction } from '@/features/cheques/hooks/use-ocr-extraction'
+import { OcrReview } from '@/features/cheques/components/ocr-review'
 import { DraftLeaveDialog, DraftSaveFab } from '@/features/drafts'
 import { logger } from '@/lib/logger'
 
@@ -82,6 +83,7 @@ export default function CreateChequePage() {
   const locale = useLocale()
   const tCommon = useTranslations('Common')
   const tDrafts = useTranslations('Drafts')
+  const tOcr = useTranslations('Ocr')
   const searchParams = useSearchParams()
   const typeParam = searchParams.get('type')
   const imageUrlParam = searchParams.get('imageUrl')
@@ -92,6 +94,8 @@ export default function CreateChequePage() {
   const [initialDraftId] = useState(() => searchParams.get('draftId'))
   const photoInputRef = useRef<HTMLInputElement>(null)
   const [createdChequeId, setCreatedChequeId] = useState<string | null>(null)
+  const [duplicateAcknowledgment, setDuplicateAcknowledgment] = useState('')
+  const duplicatePublishPending = useRef(false)
   const { activeBusiness } = useBusiness()
   const businessId = activeBusiness?.id
   const { profile } = useProfile()
@@ -158,6 +162,7 @@ export default function CreateChequePage() {
 
   const chequeNumber = watch('cheque_number') ?? ''
   const selectedAccountId = watch('account_id')
+  const duplicateKey = `${selectedAccountId}:${chequeNumber}`
   const { data: hasNumberConflict } = useChequeNumberConflict(
     businessId,
     selectedAccountId,
@@ -176,6 +181,19 @@ export default function CreateChequePage() {
 
   const { parties } = useParties(businessId)
   const { accounts } = useAccounts(businessId)
+  const scan = useOcrExtraction({
+    businessId,
+    imageUrlParam,
+    parties,
+    accounts,
+    banks,
+    watch,
+    setValue,
+    handleImageUpload,
+    isLoadingDraft: draft.isLoadingDraft,
+    isUploading,
+    aiScanEnabled: profile ? profile.ai_scan_enabled !== false : undefined,
+  })
 
   useEffect(() => {
     if (!watch('account_id')) {
@@ -193,18 +211,23 @@ export default function CreateChequePage() {
     isCreatingInline,
     extractData,
     handleInlineCreate,
-  } = useOcrExtraction({
-    businessId,
-    imageUrlParam,
-    parties,
-    accounts,
-    banks,
-    watch,
-    setValue,
-    handleImageUpload,
-    isLoadingDraft: draft.isLoadingDraft,
-    aiScanEnabled: profile ? profile.ai_scan_enabled !== false : undefined,
-  })
+  } = scan
+  const duplicateConfirmation =
+    hasNumberConflict && scan.job ? (
+      <label className="flex items-start gap-3 text-sm text-amber-700">
+        <input
+          type="checkbox"
+          className="mt-1 size-4"
+          checked={duplicateAcknowledgment === duplicateKey}
+          onChange={(event) =>
+            setDuplicateAcknowledgment(event.target.checked ? duplicateKey : '')
+          }
+        />
+        <span>
+          {tOcr('duplicateCheque')} {tOcr('duplicateOverride')}
+        </span>
+      </label>
+    ) : null
 
   const partyOptions =
     parties?.map((p: Party) => ({
@@ -257,7 +280,10 @@ export default function CreateChequePage() {
             <button
               type="button"
               disabled={isUploading}
-              onClick={() => setUserValue('image_url', null)}
+              onClick={() => {
+                void scan.cancel()
+                setUserValue('image_url', null)
+              }}
               className="absolute top-3 right-3 p-2 bg-black/60 text-white rounded-full hover:bg-black transition-colors z-20"
             >
               <HugeiconsIcon icon={X} className="h-4 w-4" />
@@ -303,7 +329,7 @@ export default function CreateChequePage() {
             <input
               ref={photoInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               capture="environment"
               className="hidden"
               onChange={async (e) => {
@@ -319,6 +345,9 @@ export default function CreateChequePage() {
           </div>
         )}
       </div>
+      {watch('image_url') && profile?.ai_scan_enabled !== false && (
+        <OcrReview key={scan.job?.id ?? watch('image_url')} scan={scan} />
+      )}
     </div>
   )
 
@@ -414,6 +443,26 @@ export default function CreateChequePage() {
             event.preventDefault()
             void nextStep()
           } else {
+            if (hasNumberConflict && scan.job) {
+              event.preventDefault()
+              if (
+                duplicateAcknowledgment !== duplicateKey ||
+                duplicatePublishPending.current
+              )
+                return
+              duplicatePublishPending.current = true
+              void (async () => {
+                try {
+                  if (
+                    await scan.confirmDuplicate(selectedAccountId, chequeNumber)
+                  )
+                    await onSubmit()
+                } finally {
+                  duplicatePublishPending.current = false
+                }
+              })()
+              return
+            }
             void onSubmit(event)
           }
         }}
@@ -533,6 +582,7 @@ export default function CreateChequePage() {
                 {validationMessage(errors.cheque_number?.message)}
               </FieldError>
               {numberConflictWarning}
+              {duplicateConfirmation}
             </div>
 
             {!cameFromScan && photoWidget}
@@ -593,6 +643,7 @@ export default function CreateChequePage() {
                 {validationMessage(errors.account_id?.message)}
               </FieldError>
               {numberConflictWarning}
+              {duplicateConfirmation}
             </div>
           </div>
         )}
@@ -789,13 +840,29 @@ export default function CreateChequePage() {
         open={!!unmatchedEntities}
         onOpenChange={(open) => !open && setUnmatchedEntities(null)}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent
+          className="max-w-md"
+          data-monitoring-private
+          data-clarity-mask="true"
+        >
           <DialogHeader>
             <DialogTitle>{t('newEntitiesFound')}</DialogTitle>
             <DialogDescription>{t('newEntitiesDescription')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
+            {scan.duplicateWarning && (
+              <label className="flex items-start gap-2 text-sm" role="alert">
+                <input
+                  type="checkbox"
+                  checked={scan.allowDuplicate}
+                  onChange={(event) =>
+                    scan.setAllowDuplicate(event.target.checked)
+                  }
+                />
+                {tOcr('duplicateConfirm')}
+              </label>
+            )}
             {unmatchedEntities?.payee_name && (
               <div className="flex items-start gap-3 p-3 rounded-lg border bg-canvas-parchment/30">
                 <Checkbox
@@ -822,8 +889,19 @@ export default function CreateChequePage() {
                     </label>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {t('payeeExtracted')}
+                    {watch('type') === 'Inward'
+                      ? tOcr('partyMatches')
+                      : t('payeeExtracted')}
                   </p>
+                  <Label htmlFor="scan-party-contact">{tOcr('contact')}</Label>
+                  <Input
+                    id="scan-party-contact"
+                    type="tel"
+                    value={scan.partyContact}
+                    onChange={(event) =>
+                      scan.setPartyContact(event.target.value)
+                    }
+                  />
                 </div>
               </div>
             )}

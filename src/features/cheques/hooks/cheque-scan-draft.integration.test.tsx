@@ -83,6 +83,7 @@ function setup(initialBusinessId: string | undefined, aiScanEnabled = true) {
         setValue: create.form.setValue,
         handleImageUpload: create.handleImageUpload,
         isLoadingDraft: create.draft.isLoadingDraft,
+        isUploading: create.isUploading,
         aiScanEnabled,
       })
       return { create, ocr }
@@ -98,21 +99,39 @@ beforeEach(() => {
   )
   mocks.getFile.mockReturnValue(null)
   mocks.toast.mockReturnValue('toast')
-  mocks.fetch.mockResolvedValue(
-    new Response(
+  mocks.fetch.mockImplementation(async (_url: string, init: RequestInit) => {
+    const body = JSON.parse(String(init.body))
+    if (body.action === 'read')
+      return new Response(JSON.stringify({ data: null }))
+    return new Response(
       JSON.stringify({
-        amount: 100,
-        cheque_number: '123456',
-        cheque_date: null,
-        payee_name: null,
-        account_number: null,
-        account_name: null,
-        ifsc_code: null,
-        bank_name: null,
+        data: {
+          id: '10000000-0000-4000-8000-000000000001',
+          draft_id: '10000000-0000-4000-8000-000000000002',
+          business_id: '10000000-0000-4000-8000-000000000003',
+          image_url: body.imageUrl,
+          status: 'unusable',
+          mode: 'Outward',
+          credit_state: 'released',
+          deadline_at: new Date().toISOString(),
+          review_expires_at: null,
+          reliability: null,
+          error_code: null,
+          details: {
+            amount: 100,
+            cheque_number: '123456',
+            cheque_date: null,
+            payee_name: null,
+            account_number: null,
+            account_name: null,
+            ifsc_code: null,
+            bank_name: null,
+          },
+        },
       }),
       { status: 200 },
-    ),
-  )
+    )
+  })
 })
 
 afterEach(() => {
@@ -159,14 +178,10 @@ describe('scan and draft integration', () => {
     expect(mocks.fetch).toHaveBeenCalledWith(
       '/api/ocr/cheque',
       expect.objectContaining({
-        body: JSON.stringify({
-          imageUrl: '/api/storage/private-cheque-images/u/image.jpg',
-        }),
+        body: expect.stringContaining('"action":"start"'),
       }),
     )
-    await waitFor(() =>
-      expect(result.current.create.form.getValues('amount')).toBe(100),
-    )
+    expect(result.current.create.form.getValues('amount')).toBe(0)
     expect(result.current.create.draft.draftId).toBe('draft-1')
   })
 
@@ -183,7 +198,11 @@ describe('scan and draft integration', () => {
         type: 'error',
       }),
     )
-    expect(mocks.fetch).not.toHaveBeenCalled()
+    expect(
+      mocks.fetch.mock.calls.some(
+        ([, init]) => JSON.parse(init.body).action === 'start',
+      ),
+    ).toBe(false)
     expect(result.current.create.form.getValues('image_url')).toBeNull()
   })
 
@@ -217,14 +236,22 @@ describe('scan and draft integration', () => {
         image_url: '/api/storage/private-cheque-images/u/replacement.jpg',
       }),
     )
-    expect(mocks.fetch).not.toHaveBeenCalled()
+    expect(
+      mocks.fetch.mock.calls.some(
+        ([, init]) => JSON.parse(init.body).action === 'start',
+      ),
+    ).toBe(false)
     await act(async () => {
       finishUpdate({ id: 'draft-1' })
       const url = await pending
       expect(url).toBe('/api/storage/private-cheque-images/u/replacement.jpg')
       if (url) await result.current.ocr.extractData(url)
     })
-    expect(mocks.fetch).toHaveBeenCalledOnce()
+    expect(
+      mocks.fetch.mock.calls.filter(
+        ([, init]) => JSON.parse(init.body).action === 'start',
+      ),
+    ).toHaveLength(1)
     expect(mocks.createDraft).toHaveBeenCalledOnce()
   })
 })

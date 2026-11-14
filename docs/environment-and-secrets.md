@@ -1,5 +1,7 @@
 # Environment and secrets
 
+AI cheque extraction now runs in the `cheque-ocr` Supabase Edge worker. Configure `OPENAI_API_KEY` there, not only in Next.js. Its durable dispatch uses the existing Vault `project_url` and `service_role_key`; never expose their values in logs or diagnostics. Scanning defaults off until budget/worker readiness is configured. See [AI scanning deployment](ai-cheque-scanning.md#deployment-and-enablement).
+
 Cheque Check has browser-visible build settings, server-only application credentials, Supabase Auth configuration, Edge Function secrets, and operational CLI variables. Their destinations are separate; a value existing in a local example or schema does not prove it is configured in a hosted project ([environment schema](../src/lib/env/schema.ts#L15-L124), [environment examples](../.env.example#L8-L84), [Edge example](../supabase/.env.example#L7-L28)).
 
 ## Quick setup

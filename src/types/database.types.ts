@@ -868,6 +868,78 @@ export interface Database {
       }
     }
     Functions: {
+      acknowledge_cheque_scan_consent: {
+        Args: { requested_version: string }
+        Returns: Json
+      }
+      begin_cheque_scan: {
+        Args: {
+          requested_image: string
+          requested_key: string
+          requested_consent: string
+          requested_mode: string
+        }
+        Returns: Json
+      }
+      read_cheque_scan: {
+        Args: { requested_image: string }
+        Returns: Json
+      }
+      mutate_cheque_scan: {
+        Args: { requested_job: string; requested_action: string }
+        Returns: Json
+      }
+      remap_cheque_scan: {
+        Args: { requested_job: string; requested_mode: string }
+        Returns: Json
+      }
+      claim_cheque_scan: {
+        Args: { requested_job: string }
+        Returns: Json
+      }
+      continue_cheque_scan: {
+        Args: { requested_job: string; requested_token: string }
+        Returns: boolean
+      }
+      finish_cheque_scan: {
+        Args: {
+          requested_job: string
+          requested_token: string
+          requested_status: string
+          requested_details?: Json
+          requested_reliability?: Json
+          requested_error?: string
+        }
+        Returns: Json
+      }
+      recover_cheque_scans: { Args: Record<string, never>; Returns: number }
+      cleanup_cheque_scans: { Args: Record<string, never>; Returns: number }
+      scan_entity_candidates: {
+        Args: { requested_job: string }
+        Returns: Json
+      }
+      confirm_scan_party: {
+        Args: { requested_job: string; requested_party: string }
+        Returns: Json
+      }
+      confirm_scan_duplicate: {
+        Args: {
+          requested_job: string
+          requested_account: string
+          requested_number: string
+        }
+        Returns: Json
+      }
+      create_scan_entity: {
+        Args: {
+          requested_job: string
+          requested_kind: string
+          requested_bank?: string
+          requested_allow_duplicate?: boolean
+          requested_contact?: string
+        }
+        Returns: Json
+      }
       marketing_sync: {
         Args: {
           owner: string | null

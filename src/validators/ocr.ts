@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { parsePrivateMediaUrl } from '@/lib/storage'
 
 export const ChequeDetailsSchema = z.object({
   amount: z
@@ -38,17 +37,7 @@ export const ChequeDetailsSchema = z.object({
     .string()
     .nullable()
     .describe(
-      'The IFSC code (4 alphabets + 7 digits), located at top middle left of the date.',
+      'The IFSC code (four letters, zero, six alphanumeric characters).',
     ),
   bank_name: z.string().nullable().describe('The name of the bank.'),
-})
-
-export const OcrRequestSchema = z.object({
-  imageUrl: z
-    .string()
-    .refine(
-      (value) =>
-        z.url().safeParse(value).success || parsePrivateMediaUrl(value),
-      'A valid image URL is required',
-    ),
 })

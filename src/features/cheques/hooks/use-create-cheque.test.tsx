@@ -221,15 +221,17 @@ describe('useCreateCheque', () => {
     )
     expect(mocks.draft.saveNow).toHaveBeenCalledOnce()
 
-    const alert = vi.spyOn(window, 'alert').mockImplementation(() => undefined)
     mocks.uploadImage.mockRejectedValueOnce(new Error('Storage unavailable'))
     await act(async () => {
       url = await result.current.handleImageUpload(file)
     })
     expect(url).toBeNull()
-    expect(alert).toHaveBeenCalledWith('Upload failed: Storage unavailable')
+    expect(mocks.toastAdd).toHaveBeenCalledWith({
+      title: 'error',
+      description: 'photoUploadFailed',
+      type: 'error',
+    })
     expect(result.current.isUploading).toBe(false)
-    alert.mockRestore()
   })
 
   it('waits for the image reference to be saved and restores it if saving fails', async () => {
@@ -462,7 +464,6 @@ describe('useCreateCheque', () => {
   })
 
   it('uses generic upload and creation errors for non-Error failures', async () => {
-    const alert = vi.spyOn(window, 'alert').mockImplementation(() => undefined)
     const { result } = setup()
     mocks.uploadImage.mockRejectedValueOnce('upload unavailable')
     await act(async () => {
@@ -470,7 +471,11 @@ describe('useCreateCheque', () => {
         new File(['scan'], 'scan.png', { type: 'image/png' }),
       )
     })
-    expect(alert).toHaveBeenCalledWith('Upload failed: upload unavailable')
+    expect(mocks.toastAdd).toHaveBeenCalledWith({
+      title: 'error',
+      description: 'photoUploadFailed',
+      type: 'error',
+    })
 
     mocks.create.mockRejectedValueOnce('service unavailable')
     setValidCheque(result)
@@ -484,7 +489,6 @@ describe('useCreateCheque', () => {
       description: 'error',
       type: 'error',
     })
-    alert.mockRestore()
   })
 
   it('uses nullable reminder defaults when profile data is absent and skips business celebration context', async () => {
