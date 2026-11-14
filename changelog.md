@@ -197,6 +197,84 @@ This log captures the product story across the project’s full Git history: 524
   - Refined the changelog to cover auth reliability, auditability, monitoring, and documentation governance in a clearer release narrative.
   - Commits: `e48b92e`
 
+#### November 8, 2026
+
+- Production readiness and payment operations
+  - Added a comprehensive pre-deployment checklist, advanced production readiness steps, documented incident/payment procedures, and introduced an audited checkout-expiry command plus hosted Supabase Auth URL validation.
+  - Commits: `8b08624`, `a1aafd7`, `de5c386`, `5906108`, `99b80ab`, `2303877`
+
+#### November 9, 2026
+
+- OCR reliability and incident response
+  - Improved scan image handling and persistence, added read-only Sentry incident diagnostics, and documented OCR recovery and deployment-readiness evidence.
+  - Commits: `ef4cfc8`, `6cf4143`, `b0f47c3`, `70f46a0`, `34840e9`, `796bcdf`
+
+- Auth, drafts, and everyday navigation
+  - Streamlined phone OTP entry, exposed confirmed immediate saves for drafts, connected feature navigation to transactions, and polished settings and long account-name handling.
+  - Commits: `7f61269`, `ef4dad7`, `660d57e`, `2d7b6fe`, `ab1367a`, `b04ec42`, `73c8ac1`
+
+- Project workflow and issue hygiene
+  - Added a reusable work-item template and issue guidance, and removed obsolete issue/TODO artifacts and scratch files from normal tracking.
+  - Commits: `c4932f0`, `9460184`, `646b0bc`, `2d83c52`
+
+#### November 10, 2026
+
+- Notifications, tags, and guided setup
+  - Made push behavior more resilient, surfaced pending and failed tag saves, and added voice-reminder setup guidance to the product tour.
+  - Commits: `bc50c23`, `31b97c8`, `e55b98c`, `5fad6e4`
+
+- Auth, filters, and install experience
+  - Reused the shared phone input for OTP, improved filter navigation, stabilized tour focus coverage, and kept the PWA install prompt within the viewport.
+  - Commits: `941e192`, `f33fac3`, `452574a`, `98c6035`, `468cf37`
+
+#### November 11, 2026
+
+- Scanning preferences and app installation
+  - Added per-user AI scan mode and an in-app installation card, while improving queued notification test-call reconciliation.
+  - Commits: `3a8c7ca`, `400263d`, `5455c54`
+
+- Offline support and QA operations
+  - Added a private-data-free offline fallback and recorded scoped QA verification evidence.
+  - Commits: `8af53ae`, `2dd34eb`
+
+#### November 12, 2026
+
+- Public experience, pricing, and onboarding
+  - Reworked the mobile-first landing experience, added on-demand product demos, improved authentication-page responsiveness and copy, and introduced a QA environment indicator.
+  - Commits: `f05f063`, `8c5b77b`, `1e1a4c0`, `20cf515`, `32358b3`
+
+- Localization and reporting
+  - Expanded Hinglish coverage, improved Hindi reminder speech, and replaced PDF export with a business cheque overview report.
+  - Commits: `b5e0610`, `9724dd2`, `3c1f22c`, `29be958`
+
+- Release deployment workflow
+  - Updated the production release process to run database migrations before deploying the main application.
+  - Commits: `3eab0a5`
+
+#### November 13, 2026
+
+- Public pricing and conversion measurement
+  - Added a free-versus-premium comparison to public pages, refined landing-page branding and floating navigation, and enabled Meta conversion tracking with consent.
+  - Commits: `a08091a`, `d55e0e0`, `7bb77aa`
+
+#### November 14, 2026
+
+- Durable cheque scanning and AI pricing
+  - Added guarded, durable cheque scanning and connected product pricing to exact cheque amount bounds.
+  - Commits: `03e893e`, `b14a054`
+
+- Authentication and consent-aware notifications
+  - Included CAPTCHA in PIN reauthentication, refined onboarding and reusable profile verification, and required explicit opt-in before sending party SMS reminders.
+  - Commits: `2ec0097`, `c58320d`, `3b99b7c`
+
+- Forms, navigation, and first-run polish
+  - Unified form feedback and responsive sheet controls, preserved draft workflows while docking entity actions, and polished settings, navigation, first-run feedback, and app icon assets.
+  - Commits: `efb4331`, `d5b5e25`, `22b5b7d`, `b9c770e`, `1472609`
+
+- Marketing and operational follow-up
+  - Added an advertising production guide, recorded Vercel analytics script failures, and prepared QA application icon variants.
+  - Commits: `5e369b4`, `0a3d1e7`, `fdf3dc4`
+
 ---
 
 ## Product arc summary
