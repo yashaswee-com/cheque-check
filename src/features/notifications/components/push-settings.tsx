@@ -7,7 +7,7 @@ import { useProfile } from '@/features/profile/hooks/use-profile'
 import { pushService, type PushState } from '../services/push.service'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
+import { SwitchWithState } from '@/components/ui/switch-with-state'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 
@@ -72,6 +72,9 @@ export function PushSettings({
       <div className="min-w-0 space-y-1">
         <Label>{settings('pushNotifications')}</Label>
         <p className="text-xs text-muted-foreground">{t('privacy')}</p>
+        <p aria-live="polite" className="text-xs text-muted-foreground">
+          {enabled ? settings('pushOn') : settings('pushOff')}
+        </p>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {state && (
             <p role="status" className="text-xs text-muted-foreground">
@@ -111,7 +114,7 @@ export function PushSettings({
           </div>
         )}
       </div>
-      <Switch
+      <SwitchWithState
         checked={enabled}
         onCheckedChange={onEnabledChange}
         disabled={disabled}

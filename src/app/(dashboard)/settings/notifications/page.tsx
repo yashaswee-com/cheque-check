@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Combobox } from '@/components/ui/combobox'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
+import { SwitchWithState } from '@/components/ui/switch-with-state'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { PremiumSwitch } from '@/features/monetization/components/premium-controls'
 import { toast } from '@/components/ui/toast'
@@ -43,26 +43,36 @@ export default function NotificationsPage() {
   const channels = [
     {
       key: 'party_sms_enabled' as const,
+      on: t('partySmsOn'),
+      off: t('partySmsOff'),
       label: t('partySmsNotifications'),
       description: t('partySmsNotificationsDesc'),
     },
     {
       key: 'voice_call_enabled' as const,
+      on: t('voiceOn'),
+      off: t('voiceOff'),
       label: t('voiceNotifications'),
       description: t('voiceNotificationsDesc'),
     },
     {
       key: 'sms_enabled' as const,
+      on: t('smsOn'),
+      off: t('smsOff'),
       label: t('smsNotifications'),
       description: t('smsNotificationsDesc'),
     },
     {
       key: 'push_enabled' as const,
+      on: t('pushOn'),
+      off: t('pushOff'),
       label: t('pushNotifications'),
       description: t('pushNotificationsDesc'),
     },
     {
       key: 'whatsapp_enabled' as const,
+      on: t('whatsappOn'),
+      off: t('whatsappOff'),
       label: t('whatsappNotifications'),
       description: t('whatsappNotificationsDesc'),
     },
@@ -103,6 +113,13 @@ export default function NotificationsPage() {
                 <p className="text-xs text-muted-foreground">
                   {channel.description}
                 </p>
+                <p
+                  aria-live="polite"
+                  className="text-xs text-muted-foreground"
+                  data-testid={`notifications-consequence-${channel.key}`}
+                >
+                  {profile[channel.key] ? channel.on : channel.off}
+                </p>
               </div>
               {channel.key === 'party_sms_enabled' ? (
                 <PremiumSwitch
@@ -116,7 +133,7 @@ export default function NotificationsPage() {
                   data-testid={`notifications-toggle-${channel.key}`}
                 />
               ) : (
-                <Switch
+                <SwitchWithState
                   checked={profile[channel.key]}
                   onCheckedChange={(checked) =>
                     void savePreferences({ [channel.key]: checked })

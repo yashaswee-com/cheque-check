@@ -621,6 +621,17 @@ describe('general preferences page', () => {
     expect(screen.getByText('Monitoring preferences')).toBeVisible()
   })
 
+  it('shows reduce-motion state and consequence, and offers cookie settings', () => {
+    renderPage(<PreferencesPage />)
+    expect(screen.getByText(messages.Settings.reduceMotionOff)).toBeVisible()
+    expect(
+      screen.getByRole('heading', { name: messages.Settings.cookieSettings }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: messages.Settings.cookieManage }),
+    ).toBeInTheDocument()
+  })
+
   it('persists currency, date/time formats, timezone and reduce motion', () => {
     renderPage(<PreferencesPage />)
     const selects = screen.getAllByRole('combobox').slice(1, 6)

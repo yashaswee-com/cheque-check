@@ -98,6 +98,10 @@ export default function PreferencesPage() {
             </InfoPopover>
           }
           checked={profile.reduce_motion}
+          consequence={{
+            on: ts('reduceMotionOn'),
+            off: ts('reduceMotionOff'),
+          }}
           onCheckedChange={(checked) =>
             savePreference({ reduce_motion: checked })
           }

@@ -4,7 +4,8 @@ import type { ComponentProps, ReactNode } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
+import type { Switch } from '@/components/ui/switch'
+import { SwitchWithState } from '@/components/ui/switch-with-state'
 import { Tabs, TabsTrigger } from '@/components/ui/tabs'
 import type { PremiumFeature } from '../lib/premium-access'
 import { usePremiumAction } from './premium-gate'
@@ -79,7 +80,7 @@ export function PremiumSwitch({
   return (
     <span className="inline-flex shrink-0 items-center gap-2">
       <PremiumMark />
-      <Switch
+      <SwitchWithState
         {...props}
         data-premium-feature={feature}
         aria-description={t('marker')}

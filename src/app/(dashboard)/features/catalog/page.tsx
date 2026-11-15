@@ -18,7 +18,7 @@ import {
   usePaymentProducts,
 } from '@/features/monetization/hooks/use-monetization'
 import { useRazorpay } from '@/features/monetization/hooks/use-razorpay'
-import { Switch } from '@/components/ui/switch'
+import { SwitchWithState } from '@/components/ui/switch-with-state'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { FieldError } from '@/components/ui/field-error'
@@ -729,7 +729,7 @@ export default function FeaturesPage() {
                           )}
                         </div>
                         <div className="flex min-h-11 shrink-0 items-center">
-                          <Switch
+                          <SwitchWithState
                             id="ai-scan-enabled"
                             aria-label={t('aiScanMode')}
                             aria-describedby="ai-scan-help"
@@ -762,7 +762,7 @@ export default function FeaturesPage() {
                             </p>
                           </div>
                           <div className="flex min-h-11 shrink-0 items-center">
-                            <Switch
+                            <SwitchWithState
                               id="voice-enabled"
                               aria-label={t('enableService')}
                               checked={!!profile.voice_call_enabled}

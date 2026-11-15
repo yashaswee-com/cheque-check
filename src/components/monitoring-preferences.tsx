@@ -41,6 +41,7 @@ export function MonitoringPreferences() {
       checked={
         allowed && monitoringConfig.enabled && monitoringConfig.policyApproved
       }
+      consequence={{ on: t('trackingOn'), off: t('trackingOff') }}
       disabled={!monitoringConfig.enabled || !monitoringConfig.policyApproved}
       onCheckedChange={setTrackingPreference}
     >

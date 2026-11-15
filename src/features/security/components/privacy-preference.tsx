@@ -18,6 +18,7 @@ export function PrivacyPreference() {
         <InfoPopover title={t('privacyTitle')}>{t('privacyLimit')}</InfoPopover>
       }
       checked={profile?.privacy_cover !== false}
+      consequence={{ on: t('privacyOn'), off: t('privacyOff') }}
       disabled={busy}
       onCheckedChange={async (privacy_cover) => {
         setBusy(true)
