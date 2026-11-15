@@ -24,6 +24,18 @@ so scripts never hang.
 - [Command reference](#command-reference)
 - [Developer tooling](#developer-tooling)
 - [Code layout and conventions](#code-layout-and-conventions)
+- [Notification architecture regression checks](#notification-architecture-regression-checks)
+
+## Notification architecture regression checks
+
+The November 15 dispatcher refactor preserves existing CLI commands and options. Its channel registry, substitution, unknown-channel handling, and pre-/post-provider crash recovery are covered by local tests:
+
+```bash
+npm test -- scripts/test/notification-channel-registry.test.ts scripts/test/voice-dispatch.test.ts scripts/test/web-push-dispatch.test.ts
+deno check --config supabase/functions/notifications-dispatcher/deno.json supabase/functions/notifications-dispatcher/index.ts
+```
+
+Run with the Node version supported by [package.json](../package.json). These tests use mocked boundaries and do not send notifications or verify hosted configuration. Releasing the changed worker requires redeploying `notifications-dispatcher` to the explicitly verified target project; do not run `voice pipeline` as a production connectivity check because it operates across users. See the [release checklist](../deployment-checklist.md#november-15-architecture-refactor-release-specific-checks).
 
 ## One-time setup
 

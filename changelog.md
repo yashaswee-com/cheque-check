@@ -1,6 +1,6 @@
 # Changelog
 
-This log captures the product story across the project’s full Git history: 524 commits from August 5 to November 6, 2026. It is organized by year, month, and date, and grouped by the major themes shipped along the way.
+This log summarizes the project's checked-in history from August 5 through November 15, 2026. It is organized by year, month, and date, and grouped by the major themes developed along the way. Entries describe repository changes, not proof of deployment.
 
 ## Highlights
 
@@ -274,6 +274,23 @@ This log captures the product story across the project’s full Git history: 524
 - Marketing and operational follow-up
   - Added an advertising production guide, recorded Vercel analytics script failures, and prepared QA application icon variants.
   - Commits: `5e369b4`, `0a3d1e7`, `fdf3dc4`
+
+#### November 15, 2026
+
+- SOLID/OOP contracts and domain reliability
+  - Encapsulated cheque snapshots, aligned overdue checks with calendar-day display, bound draft publication inputs/outputs, validated persisted rows, and removed misleading retained-media deletion operations.
+  - Commits: `1a780f1`, `07510c1`, `5211c3e`
+
+- Application and integration boundaries
+  - Extracted checkout orchestration behind explicit ports, unified cheque publication and duplicate confirmation, separated OCR polling/state/field application, and composed notifications through typed channel handlers.
+  - Separated report rendering from download delivery, centralized lazy service wiring, narrowed repository capabilities, and added architectural lint safeguards.
+  - Commits: `fe76adf`, `371d131`, `4841f8c`, `c06da86`, `382b18a`, `99e6902`, `24a98d7`
+
+- Regression verification and release boundaries
+  - Added notification registry substitution/crash-recovery tests and guarded inherited-property channel lookup.
+  - Local production build, TypeScript, ESLint, Deno dispatcher checks, and phase-specific tests passed. The final full suite recorded 3,315 passing tests, six failures already present in the baseline, and the existing admin-environment suite-load error; the complete suite is not green.
+  - No database migrations, new environment variables, CLI command changes, or hosted deployment were introduced. Releasing the worker changes requires redeploying `notifications-dispatcher` as well as the web application.
+  - Commits: `450e6f1`, `10160e4`
 
 ---
 

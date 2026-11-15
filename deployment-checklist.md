@@ -45,6 +45,16 @@ Never put secret values, tokens, customer data, or private credentials in this c
 - [ ] Verify public build-time variables are for the target environment. Rebuild after changing any `NEXT_PUBLIC_*` value.
 - [ ] Check source maps, release identifiers, asset/output contents, and deployment metadata as required by the hosting platform.
 
+### November 15 architecture refactor: release-specific checks
+
+- [ ] Review the [changelog entry](changelog.md#november-15-2026) and [architecture boundaries](docs/architecture.md#design-paradigm). This change adds no migration, environment variable, provider configuration, or CLI command requirement; verify the actual release diff for unrelated additions.
+- [ ] Rerun the affected domain, draft, checkout, creation/OCR, export, architecture, and worker tests on the package-supported runtime. Run `deno check --config supabase/functions/notifications-dispatcher/deno.json supabase/functions/notifications-dispatcher/index.ts` for the changed dispatcher.
+- [ ] Investigate the recorded baseline failures before release: dashboard workspace tests (four), delete-dialog test (one), monitoring configuration test (one), and the admin-environment suite-load error. Local build/type/lint success is not a full-suite pass; document any approved exception separately.
+- [ ] Deploy the changed `notifications-dispatcher` and web application from the approved release commit. Existing scheduler, database, and other workers have no change from this refactor alone. Verify the explicit target project before deploying.
+- [ ] In approved QA, verify incomplete draft saves/publication and reminder retention; date-only/timed cheque comparisons; duplicate acknowledgment; OCR cancellation/recovery without overwriting edits; wallet/provider checkout and uncertain-outcome handling; and raw/localized exports.
+- [ ] Verify scoped voice/push delivery and finalization/reconciliation without blindly retrying sends. Confirm replacing or logically deleting media retains the object and removes access according to active-reference policy.
+- [ ] Record deployed web and dispatcher versions and smoke-test evidence in [deployments.md](deployments.md). No hosted deployment or live verification was performed during the refactor.
+
 ## 4. Prepare the database and storage
 
 - [ ] Confirm the target project and migration plan before any database write.
