@@ -145,7 +145,9 @@ export class DispatcherOrchestrator {
     state: DispatchAttemptState,
     metrics: DeliveryMetrics,
   ): Promise<DispatchResult> {
-    const handler = this.handlers[job.channel]
+    const handler = Object.hasOwn(this.handlers, job.channel)
+      ? this.handlers[job.channel]
+      : undefined
     if (!handler) {
       await this.db.markSkipped(
         job,
