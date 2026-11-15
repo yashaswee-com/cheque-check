@@ -6,6 +6,7 @@ const eslint = new ESLint()
 const architectureRules = new Set([
   'no-restricted-imports',
   'no-restricted-syntax',
+  '@typescript-eslint/no-explicit-any',
 ])
 
 beforeAll(async () => {
@@ -48,6 +49,20 @@ describe('shared-layer lint boundaries', () => {
       "useQuery({ queryKey: ['accounts', id] })",
       'src/features/accounts/hooks/use-accounts.ts',
     ],
+    [
+      "import { createClient } from '@/lib/supabase/server'",
+      'src/domain/example.ts',
+    ],
+    ["import { useState } from 'react'", 'src/domain/example.ts'],
+    [
+      "import Razorpay from 'razorpay'",
+      'src/features/monetization/services/example.use-case.ts',
+    ],
+    [
+      "import { checkout } from './payment-checkout.adapters'",
+      'src/features/monetization/services/example.use-case.ts',
+    ],
+    ['const value: any = 1', 'src/features/drafts/services/example.ts'],
   ])('rejects a layer bypass: %s', async (code, file) => {
     expect(await violations(code, file)).not.toHaveLength(0)
   })
@@ -75,6 +90,22 @@ describe('shared-layer lint boundaries', () => {
     [
       'db.from(TABLES.ACCOUNTS); useQuery({ queryKey: queryKeys.accounts.list(id) })',
       'src/features/accounts/hooks/use-accounts.ts',
+    ],
+    [
+      "import type { SupabaseClient } from '@supabase/supabase-js'",
+      'src/domain/example.ts',
+    ],
+    [
+      "import { localDay } from '@/lib/preference-format'",
+      'src/domain/example.ts',
+    ],
+    [
+      "import type { CheckoutRepository } from './payment-checkout.adapters'",
+      'src/features/monetization/services/example.use-case.ts',
+    ],
+    [
+      "import { createAdminClient } from '@/lib/supabase/admin'",
+      'src/app/api/payments/create-order/route.ts',
     ],
   ])('allows a canonical layer dependency: %s', async (code, file) => {
     expect(await violations(code, file)).toHaveLength(0)

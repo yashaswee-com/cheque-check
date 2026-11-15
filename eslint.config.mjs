@@ -36,6 +36,14 @@ const eslintConfig = defineConfig([
       'src/validators/persisted-cheque.ts',
       'src/validators/premium-workspace.ts',
       'src/app/(dashboard)/reports/page.tsx',
+      'src/domain/**/*.ts',
+      'src/lib/lazy-service.ts',
+      'src/validators/persisted-draft.ts',
+      'src/features/{accounts,auth,businesses,cheques,drafts,monetization,parties,profile,tags}/services/**/*.ts',
+      'src/features/drafts/repositories/**/*.ts',
+      'src/features/cheques/hooks/use-ocr-extraction*.ts',
+      'src/features/cheques/hooks/use-cheque-publish-confirmation.ts',
+      'src/features/cheques/lib/publication.ts',
     ],
     ignores: testFiles,
     rules: {
@@ -134,6 +142,43 @@ const eslintConfig = defineConfig([
           selector: "Property[key.name='queryKey'] > ArrayExpression",
           message:
             'Use queryKeys from @/lib/query-keys instead of declaring a local cache key.',
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/domain/**/*.ts', 'src/features/**/*.use-case.ts'],
+    ignores: testFiles,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [zodImport],
+          patterns: [
+            supabaseImports,
+            {
+              group: [
+                'react',
+                'react/**',
+                'next',
+                'next/**',
+                'razorpay',
+                '@tanstack/react-query',
+                '@/lib/supabase/**',
+                '@/components/**',
+                '@/hooks/**',
+                '@/services/**',
+                '@/repositories/**',
+                '@/features/*/components/**',
+                '@/features/*/hooks/**',
+                '@/features/*/repositories/**',
+                '**/*.adapters',
+              ],
+              allowTypeImports: true,
+              message:
+                'Keep domain rules and application use cases independent of UI, transport, and concrete persistence adapters.',
+            },
+          ],
         },
       ],
     },
