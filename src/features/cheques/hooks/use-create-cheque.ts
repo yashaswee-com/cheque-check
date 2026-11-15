@@ -30,6 +30,10 @@ import { buildNotifyPartyAction } from '@/features/cheques/lib/notify-party'
 import { queryKeys } from '@/lib/query-keys'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
 import { localDay } from '../lib/statistics'
+import {
+  buildChequePublication,
+  type ChequePublicationOutcome,
+} from '../lib/publication'
 
 import type { ChequeFormValues } from '@/types'
 
@@ -116,25 +120,20 @@ export function useCreateCheque(
         throw new Error('Select a business before creating a cheque')
 
       return chequeService.create({
-        ...data,
+        ...buildChequePublication(data, profile?.default_reminder_days ?? null),
         business_id: businessId,
-        image_url: data.image_url ?? null,
-        notes: data.notes || null,
-        remind_before_days: profile?.default_reminder_days ?? null,
-        status: ChequeEntity.initialStatusFor(data.type),
       })
     },
     addToList: (current, newCheque) => {
       if (!businessId) return current
 
       const optimisticCheque = ChequeEntity.fromRow({
-        ...newCheque,
+        ...buildChequePublication(
+          newCheque,
+          profile?.default_reminder_days ?? null,
+        ),
         id: optimisticId(),
         business_id: businessId,
-        image_url: newCheque.image_url ?? null,
-        notes: newCheque.notes || null,
-        remind_before_days: profile?.default_reminder_days ?? null,
-        status: ChequeEntity.initialStatusFor(newCheque.type),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         party: queryClient
@@ -143,25 +142,8 @@ export function useCreateCheque(
       })
       return current ? [optimisticCheque, ...current] : [optimisticCheque]
     },
-    onSuccess: async (created) => {
-      notifyMarketingActivity()
-      await onCreated?.(created)
-      const actionProps = await buildNotifyPartyAction(
-        created,
-        profile,
-        t('notifyParty'),
-        premium.canUse('notify-party'),
-        premium.accessRequiredMessage,
-      )
-      toast.add({
-        title: tc('success'),
-        description: t('chequeCreated'),
-        type: 'success',
-        actionProps,
-      })
-      celebrateCheque(created)
-      setIsSuccess(true)
-    },
+    onSuccess: (created) =>
+      finishPublication({ cheque: created, source: 'direct' }),
     onError: (error) => {
       draft.failPublish()
       showCreateError(error)
@@ -173,6 +155,42 @@ export function useCreateCheque(
       target: '/cheques',
       cheque: cheque && businessId ? { id: cheque.id, businessId } : undefined,
     })
+  }
+
+  async function finishPublication({
+    cheque,
+    source,
+  }: ChequePublicationOutcome) {
+    notifyMarketingActivity()
+    if (source === 'draft') draft.finishPublish()
+    await onCreated?.(cheque)
+    if (source === 'draft') {
+      for (const queryKey of [
+        queryKeys.cheques.list(businessId),
+        queryKeys.cheques.pages(businessId),
+        queryKeys.cheques.summaries(businessId),
+        queryKeys.cheques.analyticsAll(),
+        queryKeys.businesses.summaries(),
+        queryKeys.premiumWorkspace.all(),
+        draftKeys.all(),
+      ])
+        queryClient.invalidateQueries({ queryKey })
+    }
+    const actionProps = await buildNotifyPartyAction(
+      cheque,
+      profile,
+      t('notifyParty'),
+      premium.canUse('notify-party'),
+      premium.accessRequiredMessage,
+    )
+    toast.add({
+      title: tc('success'),
+      description: t('chequeCreated'),
+      type: 'success',
+      actionProps,
+    })
+    celebrateCheque(cheque)
+    setIsSuccess(true)
   }
 
   function showCreateError(error: unknown) {
@@ -204,45 +222,7 @@ export function useCreateCheque(
         data,
         profile?.default_reminder_days ?? null,
       )
-      notifyMarketingActivity()
-      draft.finishPublish()
-      await onCreated?.(published)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.cheques.list(businessId),
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.cheques.pages(businessId),
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.cheques.summaries(businessId),
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.cheques.analyticsAll(),
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.businesses.summaries(),
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.premiumWorkspace.all(),
-      })
-      queryClient.invalidateQueries({
-        queryKey: draftKeys.all(),
-      })
-      const actionProps = await buildNotifyPartyAction(
-        published,
-        profile,
-        t('notifyParty'),
-        premium.canUse('notify-party'),
-        premium.accessRequiredMessage,
-      )
-      toast.add({
-        title: tc('success'),
-        description: t('chequeCreated'),
-        type: 'success',
-        actionProps,
-      })
-      celebrateCheque(published)
-      setIsSuccess(true)
+      await finishPublication({ cheque: published, source: 'draft' })
     } catch (error) {
       draft.failPublish()
       showCreateError(error)

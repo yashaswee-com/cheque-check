@@ -73,6 +73,7 @@ import { buildChequeReturnTo } from '@/lib/cheque-draft'
 import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useDraftTags } from '@/features/tags/hooks/use-draft-tags'
 import { useOcrExtraction } from '@/features/cheques/hooks/use-ocr-extraction'
+import { useChequePublishConfirmation } from '@/features/cheques/hooks/use-cheque-publish-confirmation'
 import { OcrReview } from '@/features/cheques/components/ocr-review'
 import { DraftLeaveDialog, DraftSaveFab } from '@/features/drafts'
 import { logger } from '@/lib/logger'
@@ -94,8 +95,6 @@ export default function CreateChequePage() {
   const [initialDraftId] = useState(() => searchParams.get('draftId'))
   const photoInputRef = useRef<HTMLInputElement>(null)
   const [createdChequeId, setCreatedChequeId] = useState<string | null>(null)
-  const [duplicateAcknowledgment, setDuplicateAcknowledgment] = useState('')
-  const duplicatePublishPending = useRef(false)
   const { activeBusiness } = useBusiness()
   const businessId = activeBusiness?.id
   const { profile } = useProfile()
@@ -162,7 +161,6 @@ export default function CreateChequePage() {
 
   const chequeNumber = watch('cheque_number') ?? ''
   const selectedAccountId = watch('account_id')
-  const duplicateKey = `${selectedAccountId}:${chequeNumber}`
   const { data: hasNumberConflict } = useChequeNumberConflict(
     businessId,
     selectedAccountId,
@@ -212,16 +210,23 @@ export default function CreateChequePage() {
     extractData,
     handleInlineCreate,
   } = scan
+  const publication = useChequePublishConfirmation({
+    step,
+    nextStep,
+    accountId: selectedAccountId,
+    chequeNumber,
+    requiresConfirmation: Boolean(hasNumberConflict && scan.job),
+    confirmDuplicate: scan.confirmDuplicate,
+    submit: onSubmit,
+  })
   const duplicateConfirmation =
     hasNumberConflict && scan.job ? (
       <label className="flex items-start gap-3 text-sm text-amber-700">
         <input
           type="checkbox"
           className="mt-1 size-4"
-          checked={duplicateAcknowledgment === duplicateKey}
-          onChange={(event) =>
-            setDuplicateAcknowledgment(event.target.checked ? duplicateKey : '')
-          }
+          checked={publication.confirmed}
+          onChange={(event) => publication.setConfirmed(event.target.checked)}
         />
         <span>
           {tOcr('duplicateCheque')} {tOcr('duplicateOverride')}
@@ -233,9 +238,9 @@ export default function CreateChequePage() {
     parties?.map((p: Party) => ({
       label: p.name,
       value: p.id,
-      color: (p as any).color,
-      icon: (p as any).icon,
-      imageUrl: (p as any).avatar_url,
+      color: p.color,
+      icon: p.icon,
+      imageUrl: p.avatar_url,
     })) || []
 
   const accountOptions =
@@ -269,10 +274,10 @@ export default function CreateChequePage() {
         </p>
       )}
       <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 bg-canvas-parchment/30 min-h-[140px] transition-colors hover:bg-canvas-parchment/50 border-primary/10 relative overflow-hidden">
-        {watch('image_url' as any) ? (
+        {watch('image_url') ? (
           <div className="relative w-full aspect-video rounded-sm overflow-hidden border">
             <SkeletonImage
-              src={watch('image_url' as any)}
+              src={watch('image_url') ?? ''}
               alt="Cheque"
               containerClassName="h-full w-full"
               className="w-full h-full object-cover"
@@ -438,34 +443,7 @@ export default function CreateChequePage() {
 
       <form
         id="cheque-create-form"
-        onSubmit={(event) => {
-          if (step < 3) {
-            event.preventDefault()
-            void nextStep()
-          } else {
-            if (hasNumberConflict && scan.job) {
-              event.preventDefault()
-              if (
-                duplicateAcknowledgment !== duplicateKey ||
-                duplicatePublishPending.current
-              )
-                return
-              duplicatePublishPending.current = true
-              void (async () => {
-                try {
-                  if (
-                    await scan.confirmDuplicate(selectedAccountId, chequeNumber)
-                  )
-                    await onSubmit()
-                } finally {
-                  duplicatePublishPending.current = false
-                }
-              })()
-              return
-            }
-            void onSubmit(event)
-          }
-        }}
+        onSubmit={publication.handleSubmit}
         className="space-y-3"
       >
         {step === 1 && (

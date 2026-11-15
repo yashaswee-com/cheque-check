@@ -327,6 +327,7 @@ describe('useCreateCheque', () => {
       }),
     )
     expect(onCreated).toHaveBeenCalledWith(createdCheque)
+    expect(onCreated).toHaveBeenCalledOnce()
     expect(mocks.buildNotifyPartyAction).toHaveBeenCalledWith(
       createdCheque,
       { default_reminder_days: 5 },
@@ -397,6 +398,9 @@ describe('useCreateCheque', () => {
       queryKey: ['drafts'],
     })
     expect(onCreated).toHaveBeenCalledWith(createdCheque)
+    expect(onCreated).toHaveBeenCalledOnce()
+    expect(mocks.buildNotifyPartyAction).toHaveBeenCalledOnce()
+    expect(mocks.queueCelebration).toHaveBeenCalledOnce()
     expect(result.current.isSuccess).toBe(true)
     act(() => result.current.continueAfterSuccess())
     expect(mocks.routerPush).toHaveBeenCalledWith('/cheques')

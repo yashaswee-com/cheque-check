@@ -63,38 +63,22 @@ describe('ChequeDraftService', () => {
     const repository = chequeRepository({
       getById: vi.fn().mockResolvedValue({ id: 'd1', image_url: '/img' }),
     })
-    const storage = { deleteChequeImage: vi.fn().mockResolvedValue(undefined) }
     const service = new ChequeDraftService(repository)
 
     await service.delete('d1')
 
     expect(repository.delete).toHaveBeenCalledWith('d1')
-    expect(storage.deleteChequeImage).not.toHaveBeenCalled()
+    expect(repository.getById).not.toHaveBeenCalled()
   })
 
-  it('still deletes the draft when image cleanup fails', async () => {
+  it('propagates logical deletion failures', async () => {
     const repository = chequeRepository({
-      getById: vi.fn().mockResolvedValue({ id: 'd1', image_url: '/img' }),
+      delete: vi.fn().mockRejectedValue(new Error('Deletion unavailable')),
     })
-    const storage = {
-      deleteChequeImage: vi.fn().mockRejectedValue(new Error('storage down')),
-    }
     const service = new ChequeDraftService(repository)
 
-    await expect(service.delete('d1')).resolves.toBeUndefined()
+    await expect(service.delete('d1')).rejects.toThrow('Deletion unavailable')
     expect(repository.delete).toHaveBeenCalledWith('d1')
-  })
-
-  it('skips image cleanup for drafts without an image', async () => {
-    const repository = chequeRepository({
-      getById: vi.fn().mockResolvedValue({ id: 'd1', image_url: null }),
-    })
-    const storage = { deleteChequeImage: vi.fn() }
-    const service = new ChequeDraftService(repository)
-
-    await service.delete('d1')
-
-    expect(storage.deleteChequeImage).not.toHaveBeenCalled()
   })
 
   it('delegates cheque number conflict checks', async () => {

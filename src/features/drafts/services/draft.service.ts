@@ -1,14 +1,15 @@
 import type { z } from 'zod'
+import { createLazyService } from '@/lib/lazy-service'
 import { accountSchema, chequeSchema, partySchema } from '@/validators'
 import { ValidationError } from '@/lib/errors'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
+import { buildChequePublication } from '@/features/cheques/lib/publication'
 import type {
   Account,
   AccountDraft,
   AccountDraftFields,
   ChequeDraft,
   ChequeDraftFields,
-  ChequeWithRelations,
   Cheque,
   Party,
   PartyDraft,
@@ -94,16 +95,15 @@ export class ChequeDraftService extends DraftService<
   ): Promise<ChequeEntity> {
     const data = parseOrThrow(chequeSchema, values)
     const draft = await this.repository.getById(id)
-    const row = await this.repository.publish(id, {
-      ...data,
-      notes: data.notes || null,
-      image_url: data.image_url ?? null,
-      remind_before_days:
+    const row = await this.repository.publish(
+      id,
+      buildChequePublication(
+        data,
         draft?.remind_before_days !== undefined
           ? draft.remind_before_days
           : remindBeforeDays,
-      status: ChequeEntity.initialStatusFor(data.type),
-    })
+      ),
+    )
     return ChequeEntity.fromRow(row)
   }
 
@@ -182,17 +182,15 @@ export class AccountDraftService extends DraftService<
   }
 }
 
-function lazy<T extends object>(factory: () => T): T {
-  let instance: T | undefined
-  return new Proxy({} as T, {
-    get(_target, property) {
-      instance ??= factory()
-      const value = Reflect.get(instance, property, instance)
-      return typeof value === 'function' ? value.bind(instance) : value
-    },
-  })
-}
-
-export const chequeDraftService = lazy(() => new ChequeDraftService())
-export const partyDraftService = lazy(() => new PartyDraftService())
-export const accountDraftService = lazy(() => new AccountDraftService())
+export const chequeDraftService = createLazyService(
+  () => new ChequeDraftService(),
+  ChequeDraftService.prototype,
+)
+export const partyDraftService = createLazyService(
+  () => new PartyDraftService(),
+  PartyDraftService.prototype,
+)
+export const accountDraftService = createLazyService(
+  () => new AccountDraftService(),
+  AccountDraftService.prototype,
+)

@@ -17,6 +17,8 @@ The cheque list uses server-side filters and stable ordering, while accounts and
 
 ## Drafts
 
+Direct creation, optimistic creation, and draft publication share [publication input normalization](../src/features/cheques/lib/publication.ts). The create hook consumes a direct/draft publication outcome through one success handler, retaining draft-specific cache invalidation. The route renders the form; [publication confirmation](../src/features/cheques/hooks/use-cheque-publish-confirmation.ts) owns intermediate-step submission, duplicate acknowledgment, and the in-flight confirmation lock.
+
 Draft repositories bind their published output and publish-input types to the entity rather than letting callers choose a return type. Draft reads, saves, duplication, and publication validate database output with [persisted schemas](../src/validators/persisted-draft.ts); malformed data raises a database error. Cheque duplication is a required repository capability.
 
 The [cheque entity](../src/domain/cheque.entity.ts) owns a snapshot of its input and returns independent relation/serialization snapshots. Due-date display and overdue checks use the same calendar-day comparison; callers supplying an instant can also supply the business time zone. Date-only inputs retain their calendar meaning.
