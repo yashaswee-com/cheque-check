@@ -89,7 +89,7 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('entity edit workflows', () => {
-  it('hydrates business defaults once, preserves user edits on refetch, and cleans up replaced logos', async () => {
+  it('hydrates business defaults once, preserves user edits on refetch, and retains replaced logos', async () => {
     const { client, wrapper } = setup()
     client.setQueryData(queryKeys.businesses.all(), [business])
     const { result } = renderHook(() => useEditBusiness('b1'), { wrapper })
@@ -115,11 +115,8 @@ describe('entity edit workflows', () => {
       'b1',
       expect.objectContaining({ name: 'Edited', logo_url: '/new.png' }),
     )
-    expect(mocks.deleteAvatar).toHaveBeenCalledWith('/old.png')
-    expect(mocks.error).toHaveBeenCalledWith(
-      'Failed to delete previous business logo',
-      expect.any(Error),
-    )
+    expect(mocks.deleteAvatar).not.toHaveBeenCalled()
+    expect(mocks.error).not.toHaveBeenCalled()
     expect(mocks.back).toHaveBeenCalledOnce()
   })
   it('hydrates accounts, validates edits, updates the matching cached entity, and navigates after save', async () => {

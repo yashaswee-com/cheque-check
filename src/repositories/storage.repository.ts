@@ -12,8 +12,6 @@ import { prepareChequePhoto } from '@/lib/cheque-photo'
 export interface IStorageRepository {
   uploadChequeImage(file: File): Promise<string>
   uploadAvatar(file: File): Promise<string>
-  deleteChequeImage(url: string): Promise<void>
-  deleteAvatar(url: string): Promise<void>
 }
 
 export class SupabaseStorageRepository implements IStorageRepository {
@@ -29,22 +27,6 @@ export class SupabaseStorageRepository implements IStorageRepository {
 
   async uploadAvatar(file: File): Promise<string> {
     return this.uploadPrivateImage(PRIVATE_AVATAR_BUCKET, file, 5 * 1024 * 1024)
-  }
-
-  async deleteChequeImage(url: string): Promise<void> {
-    await this.deletePrivateImage(url, PRIVATE_CHEQUE_BUCKET)
-  }
-
-  async deleteAvatar(url: string): Promise<void> {
-    await this.deletePrivateImage(url, PRIVATE_AVATAR_BUCKET)
-  }
-
-  private async deletePrivateImage(
-    _url: string,
-    _bucket: PrivateMediaBucket,
-  ): Promise<void> {
-    // Unlinking/replacing media changes its owning row, never the retained object.
-    // Storage RLS grants reads only while at least one active reference remains.
   }
 
   private async uploadPrivateImage(

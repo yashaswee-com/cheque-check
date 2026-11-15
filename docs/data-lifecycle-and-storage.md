@@ -19,6 +19,8 @@ The lifecycle implementation does not introduce a general hard-erasure/purge pol
 
 ## Private media
 
+The browser storage service exposes uploads, not physical deletion. Replacing an image updates its owning row, and logical entity deletion uses the lifecycle RPC; both retain the storage object. There is no success-shaped `deleteAvatar` or `deleteChequeImage` operation. Physical purge remains outside this application contract and requires a separate authorized retention process.
+
 Private avatar and cheque-image buckets are configured with owner-folder policies and upload constraints ([bucket migration](../supabase/migrations/20260924030000_add_private_media_buckets.sql#L1-L56)). The application route authenticates a request, checks the owner path and active reference, then signs an object URL ([storage route](../src/app/api/storage/%5Bbucket%5D/%5B...path%5D/route.ts#L14-L61), [database reference check](../supabase/migrations/20261021000000_lifecycle.sql#L420-L443)). Private exports use a separate bucket and owner-scoped policies ([export storage policy](../supabase/migrations/20261031040000_background_exports.sql#L29-L55)).
 
 ## Database evolution

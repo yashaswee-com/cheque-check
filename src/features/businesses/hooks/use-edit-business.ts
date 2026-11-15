@@ -7,7 +7,6 @@ import {
 } from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import type { Business, BusinessFormData } from '@/types'
-import { storageService } from '@/services/storage.service'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 
@@ -72,13 +71,7 @@ export function useEditBusiness(id: string, options: EditEntityOptions = {}) {
     isSaving: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     onSubmit: form.handleSubmit(async (data) => {
-      const previousLogoUrl = business?.logo_url
       await updateMutation.mutateAsync(data)
-      if (previousLogoUrl && previousLogoUrl !== data.logo_url) {
-        await storageService.deleteAvatar(previousLogoUrl).catch((error) => {
-          logger.error('Failed to delete previous business logo', error)
-        })
-      }
       if (options.onSaved) options.onSaved()
       else router.back()
     }),

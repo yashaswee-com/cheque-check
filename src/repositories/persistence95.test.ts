@@ -56,6 +56,9 @@ vi.mock('@/lib/supabase/client', () => ({
     storage: { from: boundary.storageFrom },
   }),
 }))
+vi.mock('@/lib/cheque-photo', () => ({
+  prepareChequePhoto: async (file: File) => file,
+}))
 
 // jsdom lacks Blob.arrayBuffer; keep image validation real with a readable slice.
 function imageFile() {
@@ -970,10 +973,8 @@ describe('private storage repository', () => {
       )
     }
     boundary.storageFrom.mockClear()
-    await repository.deleteAvatar('/api/storage/private-avatars/retained.jpg')
-    await repository.deleteChequeImage(
-      '/api/storage/private-cheque-images/retained.jpg',
-    )
+    expect(Reflect.get(repository, 'deleteAvatar')).toBeUndefined()
+    expect(Reflect.get(repository, 'deleteChequeImage')).toBeUndefined()
     expect(boundary.storageFrom).not.toHaveBeenCalled()
   })
 

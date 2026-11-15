@@ -101,7 +101,7 @@ describe('useEditBusiness', () => {
     expect(mocks.back).not.toHaveBeenCalled()
   })
 
-  it('deletes a changed previous logo and navigates after delete', async () => {
+  it('retains a replaced logo and navigates after logical business deletion', async () => {
     const previous = { ...business, logo_url: '/old-logo.png' }
     mocks.getById.mockResolvedValue(previous)
     const { result } = setup()
@@ -111,7 +111,7 @@ describe('useEditBusiness', () => {
     act(() => result.current.form.setValue('logo_url', '/new-logo.png'))
     await act(async () => result.current.onSubmit())
 
-    expect(mocks.deleteAvatar).toHaveBeenCalledWith('/old-logo.png')
+    expect(mocks.deleteAvatar).not.toHaveBeenCalled()
     act(() => result.current.onDelete())
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledWith(business.id))
     expect(mocks.push).toHaveBeenCalledWith('/businesses')

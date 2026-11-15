@@ -44,6 +44,11 @@ import {
 import type { IChequeDraftRepository } from '@/features/drafts/repositories/draft.repository'
 import { storageService, StorageService } from './storage.service'
 import type { IStorageRepository } from '@/repositories/storage.repository'
+import {
+  accountDraftFixture,
+  chequeDraftFixture,
+  partyDraftFixture,
+} from '@/test/draft-fixtures'
 import type {
   Account,
   Business,
@@ -486,23 +491,23 @@ describe('default auth service', () => {
 
 describe('default draft services', () => {
   it('binds all inherited operations and initializes each lazy default repository', async () => {
-    for (const service of [
-      accountDraftService,
-      partyDraftService,
-      chequeDraftService,
-    ]) {
+    for (const [service, fixture] of [
+      [accountDraftService, accountDraftFixture],
+      [partyDraftService, partyDraftFixture],
+      [chequeDraftService, chequeDraftFixture],
+    ] as const) {
       expect(Reflect.get(service, 'missingProperty')).toBeUndefined()
       boundary.result.data = []
       const list = service.list
       await expect(list('business-1')).resolves.toEqual([])
       expect(boundary.query.eq).toHaveBeenCalledWith('is_draft', true)
-      boundary.result.data = { id: 'draft-1' }
-      await expect(service.getById('draft-1')).resolves.toEqual({
-        id: 'draft-1',
-      })
-      await expect(service.create('business-1', {})).resolves.toEqual({
-        id: 'draft-1',
-      })
+      boundary.result.data = { ...fixture, id: 'draft-1' }
+      await expect(service.getById('draft-1')).resolves.toEqual(
+        boundary.result.data,
+      )
+      await expect(service.create('business-1', {})).resolves.toEqual(
+        boundary.result.data,
+      )
       expect(boundary.query.insert).toHaveBeenLastCalledWith([
         { business_id: 'business-1', is_draft: true },
       ])
@@ -516,16 +521,16 @@ describe('default draft services', () => {
         expect.objectContaining({ requested_id: 'draft-1' }),
       )
     }
-    boundary.result.data = { id: 'copied' }
-    await expect(chequeDraftService.duplicate('source')).resolves.toEqual({
-      id: 'copied',
-    })
+    boundary.result.data = { ...chequeDraftFixture, id: 'copied' }
+    await expect(chequeDraftService.duplicate('source')).resolves.toEqual(
+      boundary.result.data,
+    )
     expect(boundary.rpc).toHaveBeenLastCalledWith('duplicate_cheque_draft', {
       requested_cheque: 'source',
     })
   })
 
-  it('rejects duplication when an injected repository has no duplicate implementation', () => {
+  it('requires and delegates the injected duplication capability', async () => {
     const repository = {
       list: vi.fn(),
       getById: vi.fn(),
@@ -534,10 +539,12 @@ describe('default draft services', () => {
       delete: vi.fn(),
       publish: vi.fn(),
       hasNumberConflict: vi.fn(),
+      duplicate: vi.fn().mockResolvedValue(chequeDraftFixture),
     } satisfies IChequeDraftRepository
-    expect(() =>
+    await expect(
       new ChequeDraftService(repository).duplicate('source'),
-    ).toThrow('Duplicate operation unavailable')
+    ).resolves.toEqual(chequeDraftFixture)
+    expect(repository.duplicate).toHaveBeenCalledWith('source')
     expect(repository.create).not.toHaveBeenCalled()
   })
 })
@@ -576,30 +583,20 @@ describe('remaining service exports', () => {
     }
   })
 
-  it('delegates avatar upload and media unlinking and propagates storage errors', async () => {
+  it('exposes uploads only and propagates storage errors', async () => {
     const repository = {
       uploadChequeImage: vi.fn(),
       uploadAvatar: vi.fn().mockResolvedValue('/avatar'),
-      deleteAvatar: vi.fn().mockResolvedValue(undefined),
-      deleteChequeImage: vi.fn().mockResolvedValue(undefined),
     } satisfies IStorageRepository
     const service = new StorageService(repository)
     const file = new File(['image'], 'avatar.jpg', { type: 'image/jpeg' })
     await expect(service.uploadAvatar(file)).resolves.toBe('/avatar')
     expect(repository.uploadAvatar).toHaveBeenCalledWith(file)
-    await service.deleteAvatar('/avatar')
-    await service.deleteChequeImage('/cheque')
-    expect(repository.deleteAvatar).toHaveBeenCalledWith('/avatar')
-    expect(repository.deleteChequeImage).toHaveBeenCalledWith('/cheque')
     repository.uploadAvatar.mockRejectedValue(new Error('Storage unavailable'))
     await expect(service.uploadAvatar(file)).rejects.toThrow(
       'Storage unavailable',
     )
-    await expect(
-      storageService.deleteAvatar('/retained'),
-    ).resolves.toBeUndefined()
-    await expect(
-      storageService.deleteChequeImage('/retained'),
-    ).resolves.toBeUndefined()
+    expect(Reflect.get(storageService, 'deleteAvatar')).toBeUndefined()
+    expect(Reflect.get(storageService, 'deleteChequeImage')).toBeUndefined()
   })
 })
