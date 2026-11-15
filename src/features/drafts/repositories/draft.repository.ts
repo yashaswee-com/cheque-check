@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { createClient } from '@/lib/supabase/client'
 import { SupabaseRepository } from '@/repositories/base.repository'
 import { TABLES } from '@/lib/supabase/tables'
 import type {
@@ -25,15 +26,28 @@ import { parseDatabaseValue } from '@/repositories/base.repository'
 
 export type PublishedChequeInput = Omit<
   Cheque,
-  'id' | 'business_id' | 'created_at' | 'updated_at'
+  | 'id'
+  | 'business_id'
+  | 'created_at'
+  | 'updated_at'
+  | 'deleted_at'
+  | 'deletion_batch_id'
+  | 'is_draft'
+  | 'cheque_number_legacy'
 >
 export type PublishedPartyInput = Omit<
   Party,
-  'id' | 'business_id' | 'created_at' | 'updated_at'
+  'id' | 'business_id' | 'created_at' | 'updated_at' | 'deleted_at' | 'is_draft'
 >
 export type PublishedAccountInput = Omit<
   Account,
-  'id' | 'business_id' | 'created_at' | 'updated_at'
+  | 'id'
+  | 'business_id'
+  | 'created_at'
+  | 'updated_at'
+  | 'deleted_at'
+  | 'is_draft'
+  | 'bank'
 >
 
 type DraftTable =
@@ -62,8 +76,9 @@ export class SupabaseDraftRepository<
     private readonly selection: string,
     private readonly draftSchema: z.ZodType<TDraft>,
     private readonly publishedSchema: z.ZodType<TPublished>,
+    supabase?: ReturnType<typeof createClient>,
   ) {
-    super()
+    super(supabase)
   }
 
   // Draft rows have nullable columns the typed insert/update signatures don't model.
@@ -183,12 +198,13 @@ export class SupabaseChequeDraftRepository
   >
   implements IChequeDraftRepository
 {
-  constructor() {
+  constructor(supabase?: ReturnType<typeof createClient>) {
     super(
       TABLES.CHEQUES,
       '*, party:parties(name, color, icon, avatar_url), account:accounts(account_name, color, icon, bank:banks(name, logo_url))',
       chequeDraftSchema,
       persistedChequeSchema,
+      supabase,
     )
   }
 
@@ -229,8 +245,8 @@ export class SupabasePartyDraftRepository extends SupabaseDraftRepository<
   Party,
   PublishedPartyInput
 > {
-  constructor() {
-    super(TABLES.PARTIES, '*', partyDraftSchema, persistedPartySchema)
+  constructor(supabase?: ReturnType<typeof createClient>) {
+    super(TABLES.PARTIES, '*', partyDraftSchema, persistedPartySchema, supabase)
   }
 }
 
@@ -240,12 +256,13 @@ export class SupabaseAccountDraftRepository extends SupabaseDraftRepository<
   Account,
   PublishedAccountInput
 > {
-  constructor() {
+  constructor(supabase?: ReturnType<typeof createClient>) {
     super(
       TABLES.ACCOUNTS,
       '*, bank:banks(id, name, logo_url)',
       accountDraftSchema,
       persistedAccountSchema,
+      supabase,
     )
   }
 }

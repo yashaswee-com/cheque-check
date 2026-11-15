@@ -4,16 +4,7 @@ import {
   type PaymentProductId,
 } from '@/lib/payments'
 import { monitoredFetch } from '@/lib/monitoring/telemetry'
-
-let defaultPaymentService: PaymentService | undefined
-
-function getDefaultPaymentService(): PaymentService {
-  if (!defaultPaymentService) {
-    defaultPaymentService = new PaymentService()
-  }
-
-  return defaultPaymentService
-}
+import { createLazyService } from '@/lib/lazy-service'
 
 export class PaymentService {
   private pending = new Map<PaymentProductId, string>()
@@ -50,13 +41,7 @@ export class PaymentService {
   }
 }
 
-export const paymentService = new Proxy(
-  Object.create(PaymentService.prototype),
-  {
-    get(_target, property, receiver) {
-      const service = getDefaultPaymentService()
-      const value = Reflect.get(service, property, receiver)
-      return typeof value === 'function' ? value.bind(service) : value
-    },
-  },
+export const paymentService = createLazyService(
+  () => new PaymentService(),
+  PaymentService.prototype,
 )

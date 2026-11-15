@@ -15,7 +15,9 @@ export interface IStorageRepository {
 }
 
 export class SupabaseStorageRepository implements IStorageRepository {
-  private readonly supabase = createClient()
+  constructor(
+    private readonly supabase: ReturnType<typeof createClient> = createClient(),
+  ) {}
 
   async uploadChequeImage(file: File): Promise<string> {
     return this.uploadPrivateImage(

@@ -20,7 +20,7 @@ import { DatabaseError } from '@/lib/errors'
 const RELATIONS =
   '*, party:parties(name, contact, color, icon, avatar_url), account:accounts(account_name, logo_url, color, icon, bank:banks(name, logo_url))'
 
-export interface IChequeRepository {
+export interface ChequeQueries {
   getAmountBounds(businessId: string): Promise<{ min: number; max: number }>
   getAll(businessId: string): Promise<ChequeWithRelations[]>
   getPage(request: ChequeListRequest): Promise<ChequePage<ChequeWithRelations>>
@@ -35,6 +35,9 @@ export interface IChequeRepository {
     range?: ChequeDateRange,
   ): Promise<ChequeSummaryRow[]>
   getById(id: string): Promise<ChequeWithRelations>
+}
+
+export interface ChequeCommands {
   create(
     input: Omit<Cheque, 'id' | 'created_at' | 'updated_at'>,
   ): Promise<Cheque>
@@ -47,9 +50,17 @@ export interface IChequeRepository {
       >
     >,
   ): Promise<Cheque>
-  updateStatus(id: string, status: ChequeStatus): Promise<Cheque>
   delete(id: string): Promise<void>
 }
+
+export interface ChequeStatusWriter {
+  updateStatus(id: string, status: ChequeStatus): Promise<Cheque>
+}
+
+export type ChequeStatusRepository = Pick<ChequeQueries, 'getById'> &
+  ChequeStatusWriter
+export interface IChequeRepository
+  extends ChequeQueries, ChequeCommands, ChequeStatusWriter {}
 
 export class SupabaseChequeRepository
   extends SupabaseRepository

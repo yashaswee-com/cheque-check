@@ -1,4 +1,5 @@
 import { Bank } from '@/types'
+import { createLazyService } from '@/lib/lazy-service'
 import { ValidationError } from '@/lib/errors'
 import { countryName, DEFAULT_COUNTRY_CODE } from '@/lib/countries'
 import { isValidBankName } from '../lib/bank-name'
@@ -12,16 +13,6 @@ import {
   IBankRepository,
   SupabaseBankRepository,
 } from '@/features/accounts/repositories/bank.repository'
-
-let defaultBankService: BankService | undefined
-
-function getDefaultBankService(): BankService {
-  if (!defaultBankService) {
-    defaultBankService = new BankService()
-  }
-
-  return defaultBankService
-}
 
 export class BankService {
   constructor(
@@ -65,13 +56,7 @@ export class BankService {
   }
 }
 
-export const bankService = new Proxy<BankService>(
-  Object.create(BankService.prototype),
-  {
-    get(_target, property, receiver) {
-      const service = getDefaultBankService()
-      const value = Reflect.get(service, property, receiver)
-      return typeof value === 'function' ? value.bind(service) : value
-    },
-  },
+export const bankService = createLazyService(
+  () => new BankService(),
+  BankService.prototype,
 )

@@ -6,16 +6,7 @@ import {
   Transaction,
   type PaymentProduct,
 } from '@/features/monetization/repositories/monetization.repository'
-
-let defaultMonetizationService: MonetizationService | undefined
-
-function getDefaultMonetizationService(): MonetizationService {
-  if (!defaultMonetizationService) {
-    defaultMonetizationService = new MonetizationService()
-  }
-
-  return defaultMonetizationService
-}
+import { createLazyService } from '@/lib/lazy-service'
 
 export type { Entitlement, Quota, Transaction }
 
@@ -41,13 +32,7 @@ export class MonetizationService {
   }
 }
 
-export const monetizationService: MonetizationService = new Proxy(
-  Object.create(MonetizationService.prototype),
-  {
-    get(_target, property, receiver) {
-      const service = getDefaultMonetizationService()
-      const value = Reflect.get(service, property, receiver)
-      return typeof value === 'function' ? value.bind(service) : value
-    },
-  },
+export const monetizationService = createLazyService(
+  () => new MonetizationService(),
+  MonetizationService.prototype,
 )

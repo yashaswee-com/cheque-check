@@ -7,6 +7,7 @@ import {
   type PublishedChequeInput,
 } from './draft.repository'
 import type { Cheque } from '@/types'
+import { createClient } from '@/lib/supabase/client'
 import {
   accountDraftFixture,
   chequeDraftFixture,
@@ -14,7 +15,7 @@ import {
 } from '@/test/draft-fixtures'
 
 const mocks = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn() }))
-vi.mock('@/lib/supabase/client', () => ({ createClient: () => mocks }))
+vi.mock('@/lib/supabase/client', () => ({ createClient: vi.fn(() => mocks) }))
 let data: unknown
 let error: unknown
 const query = {
@@ -42,10 +43,25 @@ beforeEach(() => {
 })
 
 describe('draft repositories', () => {
+  it('uses an injected client across specialized draft adapters', async () => {
+    const client = createClient()
+    vi.mocked(createClient).mockClear()
+    data = []
+    await new SupabaseChequeDraftRepository(client).list('b1')
+    await new SupabasePartyDraftRepository(client).list('b1')
+    await new SupabaseAccountDraftRepository(client).list('b1')
+    expect(createClient).not.toHaveBeenCalled()
+  })
   it('binds publication to the cheque input and persisted return type', () => {
     expectTypeOf<IChequeDraftRepository['publish']>().toEqualTypeOf<
       (id: string, values: PublishedChequeInput) => Promise<Cheque>
     >()
+    expectTypeOf<
+      'deleted_at' extends keyof PublishedChequeInput ? true : false
+    >().toEqualTypeOf<false>()
+    expectTypeOf<
+      'is_draft' extends keyof PublishedChequeInput ? true : false
+    >().toEqualTypeOf<false>()
   })
   it.each([
     [SupabaseChequeDraftRepository, 'cheques', chequeDraftFixture],

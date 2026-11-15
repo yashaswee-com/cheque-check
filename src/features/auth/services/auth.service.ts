@@ -1,4 +1,5 @@
 import type { Provider } from '@supabase/supabase-js'
+import { createLazyService } from '@/lib/lazy-service'
 import { pushService } from '@/features/notifications/services/push.service'
 import type {
   PhoneOtpSendInput,
@@ -8,13 +9,6 @@ import {
   IAuthRepository,
   SupabaseAuthRepository,
 } from '@/features/auth/repositories/auth.repository'
-
-let defaultAuthService: AuthService | undefined
-
-function getDefaultAuthService(): AuthService {
-  if (!defaultAuthService) defaultAuthService = new AuthService()
-  return defaultAuthService
-}
 
 export class AuthService {
   constructor(
@@ -89,13 +83,7 @@ export class AuthService {
   }
 }
 
-export const authService: AuthService = new Proxy(
-  Object.create(AuthService.prototype),
-  {
-    get(_target, property, receiver) {
-      const service = getDefaultAuthService()
-      const value = Reflect.get(service, property, receiver)
-      return typeof value === 'function' ? value.bind(service) : value
-    },
-  },
+export const authService = createLazyService(
+  () => new AuthService(),
+  AuthService.prototype,
 )

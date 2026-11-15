@@ -6,7 +6,8 @@ describe('StorageService', () => {
   it('delegates cheque image uploads to the injected repository', async () => {
     const repository = {
       uploadChequeImage: vi.fn().mockResolvedValue('/api/storage/cheque.jpg'),
-    } as unknown as IStorageRepository
+      uploadAvatar: vi.fn(),
+    } satisfies IStorageRepository
     const service = new StorageService(repository)
     const file = new File(['image'], 'cheque.jpg', { type: 'image/jpeg' })
 

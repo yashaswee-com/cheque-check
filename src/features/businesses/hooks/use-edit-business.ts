@@ -7,7 +7,6 @@ import {
 } from '@/hooks/use-entity-editor'
 import { useEntityMutations } from '@/hooks/use-entity-mutations'
 import type { Business, BusinessFormData } from '@/types'
-import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
 
 export function useEditBusiness(id: string, options: EditEntityOptions = {}) {

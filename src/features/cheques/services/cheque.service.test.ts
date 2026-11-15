@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { ChequeWithRelations } from '@/types'
 import type { IChequeRepository } from '@/features/cheques/repositories/cheque.repository'
-import { ChequeService } from './cheque.service'
+import { ChequeService, ChequeStatusService } from './cheque.service'
 
 const row: ChequeWithRelations = {
   id: '1',
@@ -167,7 +167,7 @@ describe('ChequeService', () => {
       }),
     }
 
-    const service = new ChequeService(repo as any)
+    const service = new ChequeStatusService(repo)
     await service.updateStatus('1', 'Cleared')
 
     expect(repo.getById).toHaveBeenCalledWith('1')
@@ -196,7 +196,7 @@ describe('ChequeService', () => {
       updateStatus: vi.fn(),
     }
 
-    const service = new ChequeService(repo as any)
+    const service = new ChequeStatusService(repo)
 
     await expect(service.updateStatus('1', 'Received')).rejects.toThrow(
       'Cannot transition',

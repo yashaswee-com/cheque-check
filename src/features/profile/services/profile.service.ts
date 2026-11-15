@@ -1,18 +1,9 @@
 import { Profile } from '@/types'
+import { createLazyService } from '@/lib/lazy-service'
 import {
   IProfileRepository,
   SupabaseProfileRepository,
 } from '@/features/profile/repositories/profile.repository'
-
-let defaultProfileService: ProfileService | undefined
-
-function getDefaultProfileService(): ProfileService {
-  if (!defaultProfileService) {
-    defaultProfileService = new ProfileService()
-  }
-
-  return defaultProfileService
-}
 
 export class ProfileService {
   constructor(
@@ -32,13 +23,7 @@ export class ProfileService {
   }
 }
 
-export const profileService = new Proxy(
-  Object.create(ProfileService.prototype),
-  {
-    get(_target, property, receiver) {
-      const service = getDefaultProfileService()
-      const value = Reflect.get(service, property, receiver)
-      return typeof value === 'function' ? value.bind(service) : value
-    },
-  },
+export const profileService = createLazyService(
+  () => new ProfileService(),
+  ProfileService.prototype,
 )

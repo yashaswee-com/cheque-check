@@ -36,20 +36,12 @@ export function parseDatabaseValue<T>(
   return result.data
 }
 
-export interface Repository<
-  Entity,
-  CreateDTO = Partial<Entity>,
-  UpdateDTO = Partial<Entity>,
-> {
-  getAll(...args: unknown[]): Promise<Entity[]>
-  getById(id: string): Promise<Entity>
-  create(input: CreateDTO): Promise<Entity>
-  update(id: string, input: UpdateDTO): Promise<Entity>
-  delete(id: string): Promise<void>
-}
-
 export abstract class SupabaseRepository {
-  protected readonly supabase = createClient()
+  constructor(
+    protected readonly supabase: ReturnType<
+      typeof createClient
+    > = createClient(),
+  ) {}
 
   protected async handle<T>(
     operation: PromiseLike<{ data: T | null; error: unknown }>,

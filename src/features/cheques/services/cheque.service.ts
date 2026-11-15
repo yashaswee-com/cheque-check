@@ -1,4 +1,5 @@
-import { Cheque, ChequeStatus, ChequeWithRelations } from '@/types'
+import { Cheque, ChequeStatus } from '@/types'
+import { createLazyService } from '@/lib/lazy-service'
 import { ValidationError } from '@/lib/errors'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
 import type { ChequeListRequest, ChequePage } from '@/types/cheque-list'
@@ -7,18 +8,22 @@ import { chequeListFiltersSchema } from '@/validators/cheque-list-filters'
 import {
   IChequeRepository,
   SupabaseChequeRepository,
+  type ChequeStatusRepository,
 } from '@/features/cheques/repositories/cheque.repository'
 
-let defaultChequeService: ChequeService | undefined
+export class ChequeStatusService {
+  constructor(private readonly repository: ChequeStatusRepository) {}
 
-function getDefaultChequeService(): ChequeService {
-  if (!defaultChequeService) {
-    defaultChequeService = new ChequeService()
+  async updateStatus(id: string, status: ChequeStatus): Promise<ChequeEntity> {
+    const current = ChequeEntity.fromRow(await this.repository.getById(id))
+    if (!current.canTransition(status)) {
+      throw new ValidationError(
+        `Cannot transition cheque from ${current.status} to ${status}`,
+      )
+    }
+    return ChequeEntity.fromRow(await this.repository.updateStatus(id, status))
   }
-
-  return defaultChequeService
 }
-
 export class ChequeService {
   constructor(
     private readonly repository: IChequeRepository = new SupabaseChequeRepository(),
@@ -71,7 +76,7 @@ export class ChequeService {
     cheque: Omit<Cheque, 'id' | 'created_at' | 'updated_at'>,
   ): Promise<ChequeEntity> {
     const created = await this.repository.create(cheque)
-    return ChequeEntity.fromRow(created as ChequeWithRelations)
+    return ChequeEntity.fromRow(created)
   }
 
   async update(
@@ -84,20 +89,11 @@ export class ChequeService {
     >,
   ): Promise<ChequeEntity> {
     const updated = await this.repository.update(id, cheque)
-    return ChequeEntity.fromRow(updated as ChequeWithRelations)
+    return ChequeEntity.fromRow(updated)
   }
 
   async updateStatus(id: string, status: ChequeStatus): Promise<ChequeEntity> {
-    const current = ChequeEntity.fromRow(await this.repository.getById(id))
-
-    if (!current.canTransition(status)) {
-      throw new ValidationError(
-        `Cannot transition cheque from ${current.status} to ${status}`,
-      )
-    }
-
-    const row = await this.repository.updateStatus(id, status)
-    return ChequeEntity.fromRow(row as ChequeWithRelations)
+    return new ChequeStatusService(this.repository).updateStatus(id, status)
   }
 
   async delete(id: string): Promise<void> {
@@ -105,14 +101,7 @@ export class ChequeService {
   }
 }
 
-const chequeServiceTarget = Object.create(
+export const chequeService = createLazyService(
+  () => new ChequeService(),
   ChequeService.prototype,
-) as ChequeService
-
-export const chequeService = new Proxy(chequeServiceTarget, {
-  get(_target, property, receiver) {
-    const service = getDefaultChequeService()
-    const value = Reflect.get(service, property, receiver)
-    return typeof value === 'function' ? value.bind(service) : value
-  },
-})
+)

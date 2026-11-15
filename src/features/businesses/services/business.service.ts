@@ -1,18 +1,9 @@
 import { Business } from '@/types'
+import { createLazyService } from '@/lib/lazy-service'
 import {
   IBusinessRepository,
   SupabaseBusinessRepository,
 } from '@/features/businesses/repositories/business.repository'
-
-let defaultBusinessService: BusinessService | undefined
-
-function getDefaultBusinessService(): BusinessService {
-  if (!defaultBusinessService) {
-    defaultBusinessService = new BusinessService()
-  }
-
-  return defaultBusinessService
-}
 
 export class BusinessService {
   constructor(
@@ -53,14 +44,7 @@ export class BusinessService {
   }
 }
 
-const businessServiceTarget = Object.create(
+export const businessService = createLazyService(
+  () => new BusinessService(),
   BusinessService.prototype,
-) as BusinessService
-
-export const businessService = new Proxy(businessServiceTarget, {
-  get(_target, property, receiver) {
-    const service = getDefaultBusinessService()
-    const value = Reflect.get(service, property, receiver)
-    return typeof value === 'function' ? value.bind(service) : value
-  },
-})
+)

@@ -1,18 +1,9 @@
 import { Account } from '@/types'
+import { createLazyService } from '@/lib/lazy-service'
 import {
   IAccountRepository,
   SupabaseAccountRepository,
 } from '@/features/accounts/repositories/account.repository'
-
-let defaultAccountService: AccountService | undefined
-
-function getDefaultAccountService(): AccountService {
-  if (!defaultAccountService) {
-    defaultAccountService = new AccountService()
-  }
-
-  return defaultAccountService
-}
 
 export class AccountService {
   constructor(
@@ -58,13 +49,7 @@ export class AccountService {
   }
 }
 
-export const accountService = new Proxy(
-  Object.create(AccountService.prototype),
-  {
-    get(_target, property, receiver) {
-      const service = getDefaultAccountService()
-      const value = Reflect.get(service, property, receiver)
-      return typeof value === 'function' ? value.bind(service) : value
-    },
-  },
+export const accountService = createLazyService(
+  () => new AccountService(),
+  AccountService.prototype,
 )

@@ -18,6 +18,7 @@ import {
 import { SupabaseStorageRepository } from './storage.repository'
 import { TABLES } from '@/lib/supabase/tables'
 import type { Account, Business, Cheque, Party, Tag } from '@/types'
+import { createClient } from '@/lib/supabase/client'
 import type { PrintLayout } from '@/features/cheques/lib/print-cheque'
 
 const boundary = vi.hoisted(() => {
@@ -49,12 +50,12 @@ const boundary = vi.hoisted(() => {
 })
 
 vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({
+  createClient: vi.fn(() => ({
     from: boundary.from,
     rpc: boundary.rpc,
     auth: { getUser: boundary.getUser },
     storage: { from: boundary.storageFrom },
-  }),
+  })),
 }))
 vi.mock('@/lib/cheque-photo', () => ({
   prepareChequePhoto: async (file: File) => file,
@@ -140,6 +141,15 @@ beforeEach(() => {
 })
 
 describe('production CRUD repositories at the Supabase boundary', () => {
+  it('uses an injected authenticated client without constructing a browser default', async () => {
+    const client = createClient()
+    vi.mocked(createClient).mockClear()
+    boundary.result.data = cheque
+    await expect(
+      new SupabaseChequeRepository(client).getById(cheque.id),
+    ).resolves.toMatchObject({ id: cheque.id })
+    expect(createClient).not.toHaveBeenCalled()
+  })
   it('requests and preserves the account logo when loading cheque relations', async () => {
     boundary.result.data = {
       ...cheque,
@@ -954,6 +964,13 @@ describe('premium workspace repository', () => {
 })
 
 describe('private storage repository', () => {
+  it('uploads through an injected client without constructing a browser default', async () => {
+    const client = createClient()
+    vi.mocked(createClient).mockClear()
+    await new SupabaseStorageRepository(client).uploadAvatar(imageFile())
+    expect(createClient).not.toHaveBeenCalled()
+    expect(boundary.upload).toHaveBeenCalledOnce()
+  })
   it('uploads validated images into user-owned paths with non-overwriting options', async () => {
     const repository = new SupabaseStorageRepository()
     const file = imageFile()

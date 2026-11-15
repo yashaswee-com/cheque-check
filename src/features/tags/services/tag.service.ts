@@ -1,16 +1,10 @@
 import type { Tag, TagEntityType } from '@/types'
+import { createLazyService } from '@/lib/lazy-service'
 import {
   SupabaseTagRepository,
   type ITagRepository,
   type TagLink,
 } from '@/features/tags/repositories/tag.repository'
-
-let defaultTagService: TagService | undefined
-
-function getDefaultTagService(): TagService {
-  defaultTagService ??= new TagService()
-  return defaultTagService
-}
 
 export class TagService {
   constructor(
@@ -100,10 +94,7 @@ export class TagService {
   }
 }
 
-export const tagService = new Proxy(Object.create(TagService.prototype), {
-  get(_target, property, receiver) {
-    const service = getDefaultTagService()
-    const value = Reflect.get(service, property, receiver)
-    return typeof value === 'function' ? value.bind(service) : value
-  },
-})
+export const tagService = createLazyService(
+  () => new TagService(),
+  TagService.prototype,
+)

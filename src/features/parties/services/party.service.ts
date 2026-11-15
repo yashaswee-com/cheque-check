@@ -1,18 +1,9 @@
 import { Party } from '@/types'
+import { createLazyService } from '@/lib/lazy-service'
 import {
   IPartyRepository,
   SupabasePartyRepository,
 } from '@/features/parties/repositories/party.repository'
-
-let defaultPartyService: PartyService | undefined
-
-function getDefaultPartyService(): PartyService {
-  if (!defaultPartyService) {
-    defaultPartyService = new PartyService()
-  }
-
-  return defaultPartyService
-}
 
 export class PartyService {
   constructor(
@@ -50,10 +41,7 @@ export class PartyService {
   }
 }
 
-export const partyService = new Proxy(Object.create(PartyService.prototype), {
-  get(_target, property, receiver) {
-    const service = getDefaultPartyService()
-    const value = Reflect.get(service, property, receiver)
-    return typeof value === 'function' ? value.bind(service) : value
-  },
-})
+export const partyService = createLazyService(
+  () => new PartyService(),
+  PartyService.prototype,
+)
