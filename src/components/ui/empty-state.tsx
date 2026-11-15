@@ -9,7 +9,9 @@ import { IconType } from '@/types'
 interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
   icon?: IconType
   title: string
-  description?: string
+  description?: React.ReactNode
+  /** Subtle, muted context: what was checked and what to try next. */
+  detail?: React.ReactNode
   action?: {
     label: string
     onClick?: () => void
@@ -22,6 +24,7 @@ export function EmptyState({
   icon: Icon,
   title,
   description,
+  detail,
   action,
   illustration,
   className,
@@ -47,6 +50,14 @@ export function EmptyState({
         <p className="mx-auto mt-2 max-w-70 text-sm text-muted-foreground">
           {description}
         </p>
+      )}
+      {detail && (
+        <div
+          data-slot="empty-state-detail"
+          className="mx-auto mt-3 max-w-80 space-y-1 text-xs leading-relaxed text-muted-foreground/80"
+        >
+          {detail}
+        </div>
       )}
       {action && (
         <div className="mt-6">

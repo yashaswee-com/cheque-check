@@ -2,6 +2,7 @@
 
 import type { ComponentProps, ReactNode } from 'react'
 import { Switch } from '@/components/ui/switch'
+import { SwitchWithState } from '@/components/ui/switch-with-state'
 
 interface SettingSwitchRowProps extends Omit<
   ComponentProps<typeof Switch>,
@@ -10,6 +11,8 @@ interface SettingSwitchRowProps extends Omit<
   id: string
   label: ReactNode
   description?: ReactNode
+  /** What turning the switch on or off will do, shown for the current state. */
+  consequence?: { on: ReactNode; off: ReactNode }
   info?: ReactNode
   children?: ReactNode
 }
@@ -19,11 +22,15 @@ export function SettingSwitchRow({
   id,
   label,
   description,
+  consequence,
   info,
   children,
   ...switchProps
 }: SettingSwitchRowProps) {
   const descriptionId = description ? `${id}-description` : undefined
+  const consequenceId = consequence ? `${id}-consequence` : undefined
+  const describedBy =
+    [descriptionId, consequenceId].filter(Boolean).join(' ') || undefined
   return (
     <section className="space-y-1" data-slot="setting-switch-row">
       <div className="flex items-center justify-between gap-4">
@@ -37,7 +44,11 @@ export function SettingSwitchRow({
           </label>
           {info}
         </div>
-        <Switch id={id} aria-describedby={descriptionId} {...switchProps} />
+        <SwitchWithState
+          id={id}
+          aria-describedby={describedBy}
+          {...switchProps}
+        />
       </div>
       {description && (
         <p
@@ -46,6 +57,16 @@ export function SettingSwitchRow({
           className="text-xs leading-relaxed text-muted-foreground"
         >
           {description}
+        </p>
+      )}
+      {consequence && (
+        <p
+          id={consequenceId}
+          aria-live="polite"
+          data-slot="setting-switch-consequence"
+          className="text-xs leading-relaxed text-muted-foreground"
+        >
+          {switchProps.checked ? consequence.on : consequence.off}
         </p>
       )}
       {children}

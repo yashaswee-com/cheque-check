@@ -33,6 +33,7 @@ describe('DeleteConfirmationDialog', () => {
     )
     const confirm = screen.getByTestId('delete-dialog-confirm-button')
     expect(confirm).toBeDisabled()
+    expect(confirm).toHaveTextContent('deleteNamed Main')
     fireEvent.change(screen.getByLabelText('typeToConfirm Main'), {
       target: { value: 'main' },
     })
@@ -139,9 +140,7 @@ describe('DeleteConfirmationDialog', () => {
       />,
     )
 
-    expect(
-      screen.getByText('Please tell us why you are deleting your account'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('deleteReasonPrompt')).toBeInTheDocument()
     const reason = screen.getByRole('radio', {
       name: 'I no longer need this account',
     })
@@ -179,5 +178,21 @@ describe('DeleteConfirmationDialog', () => {
     await waitFor(() =>
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
     )
+  })
+
+  it('names exactly what the final button will delete', () => {
+    render(
+      <DeleteConfirmationDialog
+        open
+        title="Delete cheque"
+        description="Permanent"
+        confirmName="123456"
+        confirmLabel="Delete cheque 123456"
+        onDelete={vi.fn()}
+      />,
+    )
+    expect(
+      screen.getByTestId('delete-dialog-confirm-button'),
+    ).toHaveTextContent('Delete cheque 123456')
   })
 })

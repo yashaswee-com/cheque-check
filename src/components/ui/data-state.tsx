@@ -5,6 +5,7 @@ import {
   Alert01Icon as AlertCircle,
 } from '@hugeicons/core-free-icons'
 import { EmptyState } from './empty-state'
+import { NoResultsState, type NoResultsStateProps } from './no-results-state'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
@@ -20,6 +21,8 @@ interface DataStateProps {
   unauthorizedState?: React.ReactNode
   noResultsState?: React.ReactNode
   noResultsTitle?: string
+  /** Describes the search so the no-results state can explain what happened. */
+  noResults?: Omit<NoResultsStateProps, 'total' | 'onClear'>
   onClearFilters?: () => void
   children: React.ReactNode
 }
@@ -36,6 +39,7 @@ export function DataState({
   unauthorizedState,
   noResultsState,
   noResultsTitle,
+  noResults,
   onClearFilters,
   children,
 }: DataStateProps) {
@@ -88,22 +92,29 @@ export function DataState({
 
   // 5. No Results State (Filters applied)
   if (data.length === 0) {
-    return (
-      noResultsState || (
-        <EmptyState
-          icon={Search}
-          title={noResultsTitle ?? t('noRecordsFound')}
-          description={t('noResultsMatch')}
-          action={
-            onClearFilters
-              ? {
-                  label: t('clearAllFilters'),
-                  onClick: onClearFilters,
-                }
-              : undefined
-          }
+    if (noResultsState) return <>{noResultsState}</>
+    if (noResults)
+      return (
+        <NoResultsState
+          {...noResults}
+          total={allData.length}
+          onClear={onClearFilters}
         />
       )
+    return (
+      <EmptyState
+        icon={Search}
+        title={noResultsTitle ?? t('noRecordsFound')}
+        description={t('noResultsMatch')}
+        action={
+          onClearFilters
+            ? {
+                label: t('clearAllFilters'),
+                onClick: onClearFilters,
+              }
+            : undefined
+        }
+      />
     )
   }
 

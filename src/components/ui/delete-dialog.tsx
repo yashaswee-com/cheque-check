@@ -35,6 +35,8 @@ interface DeleteConfirmationDialogProps {
   title: string
   description: string
   confirmName: string
+  /** Final button text naming exactly what will be deleted; defaults to "Delete {confirmName}". */
+  confirmLabel?: string
   onDelete: (selectedReason?: string) => Promise<void> | void
   trigger?: React.ReactElement
   open?: boolean
@@ -46,6 +48,7 @@ export function DeleteConfirmationDialog({
   title,
   description,
   confirmName,
+  confirmLabel,
   onDelete,
   trigger,
   open: controlledOpen,
@@ -174,7 +177,12 @@ export function DeleteConfirmationDialog({
             data-testid="delete-dialog-confirm-button"
             className="w-full rounded-pill h-14 font-normal text-lg"
           >
-            {t('delete')}
+            <span className="truncate">
+              {confirmLabel ??
+                (confirmName
+                  ? t('deleteNamed', { name: confirmName })
+                  : t('delete'))}
+            </span>
           </Button>
         </div>
       </SheetContent>
