@@ -1,71 +1,39 @@
-import { DispatcherDatabaseService } from '../services/database.service.ts'
-import { TwilioVoiceService } from '../../_shared/twilio-voice.service.ts'
 import { Logger } from '../../_shared/logger.ts'
-import { NOTIFICATION_PURPOSE } from '../../_shared/notifications.ts'
-import { WebPushService } from '../../_shared/web-push.service.ts'
-import { numberToHindiWords } from '../../_shared/hindi-numbers.ts'
-import {
+import type {
   ClaimedJob,
-  DispatchCheque,
+  DeliveryMetrics,
+  DispatcherQueuePort,
+  DispatchAttemptState,
   DispatchResult,
   DispatchScope,
 } from '../types.ts'
-
-const E164_PATTERN = /^\+[1-9]\d{6,14}$/
-const CURRENCY_CODES: Record<string, string> = {
-  '₹': 'INR',
-  $: 'USD',
-  '€': 'EUR',
-  '£': 'GBP',
-}
-
-function formatCurrency(
-  amount: number,
-  currency: string | null,
-  language: string,
-) {
-  const usesHindi = language === 'hi' || language === 'hi-en'
-  const formatted = new Intl.NumberFormat(usesHindi ? 'hi-IN' : 'en-IN', {
-    style: 'currency',
-    currency: CURRENCY_CODES[currency ?? '₹'] ?? 'INR',
-    currencyDisplay: 'name',
-    ...(usesHindi ? { minimumFractionDigits: 0 } : {}),
-  }).format(amount)
-  if (!usesHindi) return formatted
-
-  // Spell out only generated amounts, never numbers in user or bank names.
-  return formatted.replace(/[\d,]+(?:\.\d+)?/g, (digits) => {
-    const [integer, fraction] = digits.replaceAll(',', '').split('.')
-    const words = numberToHindiWords(Number(integer))
-    return fraction
-      ? `${words} दशमलव ${Array.from(fraction, (digit) => numberToHindiWords(Number(digit))).join(' ')}`
-      : words
-  })
-}
-
-export interface TestModeConfig {
-  enabled: boolean
-  phone: string
-}
-
-interface DeliveryMetrics {
-  provider_requests: number
-  provider_duration_ms: number
-  provider_accepted: number
-  provider_rejected: number
-  provider_uncertain: number
-  reconciliation_required: number
-  finalization_retries: number
-  provider_throttled: number
-}
+import { createNotificationChannelRegistry } from '../channels/registry.ts'
+import type {
+  TestModeConfig,
+  VoiceDeliveryPort,
+  VoiceProviderPort,
+  PushDeliveryPort,
+  PushProviderPort,
+} from '../channels/channel.types.ts'
+import type { NotificationChannelRegistry } from '../channels/registry.ts'
 
 export class DispatcherOrchestrator {
+  private readonly handlers: NotificationChannelRegistry
+
   constructor(
-    private db: DispatcherDatabaseService,
-    private twilio: TwilioVoiceService | null,
+    private db: DispatcherQueuePort & VoiceDeliveryPort & PushDeliveryPort,
+    twilio: VoiceProviderPort | null,
     private testMode: TestModeConfig = { enabled: false, phone: '' },
-    private push?: WebPushService,
-  ) {}
+    push?: PushProviderPort,
+  ) {
+    this.handlers = createNotificationChannelRegistry({
+      voiceDb: this.db,
+      pushDb: this.db,
+      voice: twilio,
+      testMode,
+      push,
+    })
+  }
 
   /** Without a scope this is the global cron claim; a scope limits the claim itself. */
   async run(batchSize = 50, scope?: DispatchScope): Promise<DispatchResult[]> {
@@ -153,7 +121,7 @@ export class DispatcherOrchestrator {
     job: ClaimedJob,
     metrics: DeliveryMetrics,
   ): Promise<DispatchResult> {
-    const state = { providerStarted: false }
+    const state: DispatchAttemptState = { providerStarted: false }
     try {
       return await this.dispatch(job, state, metrics)
     } catch (error) {
@@ -174,189 +142,24 @@ export class DispatcherOrchestrator {
 
   private async dispatch(
     job: ClaimedJob,
-    state: { providerStarted: boolean },
+    state: DispatchAttemptState,
     metrics: DeliveryMetrics,
   ): Promise<DispatchResult> {
-    if (job.channel === 'push') return this.dispatchPush(job, state, metrics)
-    if (job.channel !== 'voice') {
+    const handler = this.handlers[job.channel]
+    if (!handler) {
       await this.db.markSkipped(
         job,
         `channel '${job.channel}' is not implemented yet`,
       )
       return { jobId: job.id, status: 'skipped' }
     }
-
-    return this.dispatchVoice(job, state, metrics)
-  }
-
-  private async dispatchPush(
-    job: ClaimedJob,
-    state: { providerStarted: boolean },
-    metrics: DeliveryMetrics,
-  ): Promise<DispatchResult> {
-    if (!this.push) throw new Error('Web Push VAPID configuration unavailable')
-    if (!job.payload.inbox_id || !/^\d{1,19}$/.test(job.payload.inbox_id))
-      return this.skip(job, 'Invalid inbox push payload')
-    const profile = await this.db.fetchProfile(job.user_id)
-    if (!profile || profile.deleted_at)
-      return this.skip(job, 'User account is unavailable')
-    const admission = await this.db.startPushDelivery(job)
-    if (admission.status === 'throttled') {
-      metrics.provider_throttled++
-      return { jobId: job.id, status: 'queued' }
-    }
-    if (admission.status === 'skipped')
-      return { jobId: job.id, status: 'skipped' }
-    state.providerStarted = true
-    const result =
-      Date.now() >= admission.startBefore
-        ? { outcome: 'rejected' as const, status: 503 }
-        : await this.push.deliver(
-            admission.subscription,
-            job.payload.inbox_id,
-            profile.language,
-          )
-    metrics.provider_requests++
-    if (result.outcome === 'accepted') metrics.provider_accepted++
-    else if (result.outcome === 'rejected') metrics.provider_rejected++
-    else {
-      metrics.provider_uncertain++
-      metrics.reconciliation_required++
-    }
-    // Retry only database finalization, never the HTTP send, after response loss.
-    for (let attempt = 0; ; attempt++) {
-      try {
-        await this.db.finishPushDelivery(job, result)
-        break
-      } catch (error) {
-        Logger.error(`Push finalization failed for job ${job.id}`, error)
-        if (attempt >= 2) throw error
-        metrics.finalization_retries++
-      }
-    }
-    return {
-      jobId: job.id,
-      status:
-        result.outcome === 'accepted'
-          ? 'sent'
-          : result.status === 404 || result.status === 410
-            ? 'skipped'
-            : 'failed',
-    }
-  }
-
-  private async dispatchVoice(
-    job: ClaimedJob,
-    state: { providerStarted: boolean },
-    metrics: DeliveryMetrics,
-  ): Promise<DispatchResult> {
-    if (!this.twilio)
-      throw new Error('Voice provider configuration unavailable')
-    const profile = await this.db.fetchProfile(job.user_id)
-    if (!profile || profile.deleted_at) {
-      return this.skip(job, 'User account is unavailable')
-    }
-    const recipient = job.payload.to_override || profile.phone
-    if (!recipient) return this.skip(job, 'Profile has no phone number')
-    if (!E164_PATTERN.test(recipient)) {
-      return this.skip(
-        job,
-        'Recipient phone number is not a valid E.164 number',
-      )
-    }
-
-    const isSample = job.purpose === NOTIFICATION_PURPOSE.SAMPLE_VOICE_TEST
-    if (!profile.voice_call_enabled) {
-      return this.skip(job, 'Voice reminders are turned off')
-    }
-
-    let cheques: DispatchCheque[] = []
-    if (!isSample) {
-      if (
-        !job.business_id ||
-        !(await this.db.isBusinessActive(job.business_id, job.user_id))
-      ) {
-        return this.skip(job, 'Business is unavailable')
-      }
-      cheques = await this.db.fetchCheques(
-        job.payload.cheque_ids ?? [],
-        job.business_id,
-      )
-      if (cheques.length === 0) {
-        return this.skip(job, 'No active cheques remain for this reminder')
-      }
-    }
-
-    const language = profile.language || 'en'
-    const message = isSample
-      ? this.buildSampleMessage(profile.name || 'User', language)
-      : this.buildMessage(
-          profile.name || 'User',
-          cheques,
-          language,
-          profile.currency,
-        )
-    const twiml = this.twilio.generateTwiML(message, language)
-    const to = this.testMode.enabled ? this.testMode.phone : recipient
-    // Set before awaiting: a lost database response may already have reserved a credit.
-    state.providerStarted = true
-    const admission = await this.db.startDelivery(job, to)
-    if (admission.status === 'throttled') {
-      state.providerStarted = false
-      metrics.provider_throttled++
-      return {
-        jobId: job.id,
-        status: 'queued',
-        error: 'Provider capacity unavailable; queued',
-      }
-    }
-    if (admission.status === 'quota_exhausted') {
-      state.providerStarted = false
-      return this.skip(job, 'Voice reminder quota exhausted')
-    }
-    if (Date.now() >= admission.startBefore) {
-      await this.finalize(
-        job,
-        metrics,
-        'rejected',
-        undefined,
-        'Provider admission expired before request',
-      )
-      return {
-        jobId: job.id,
-        status: 'failed',
-        error: 'Provider admission expired before request',
-      }
-    }
-
-    metrics.provider_requests++
-    const providerStarted = Date.now()
-    const call = await this.twilio.initiateCall(to, twiml).finally(() => {
-      metrics.provider_duration_ms += Date.now() - providerStarted
-    })
-
-    if (call.success) {
-      metrics.provider_accepted++
-      Logger.info(`Provider accepted job ${job.id}`, { sid: call.sid })
-      await this.finalize(job, metrics, 'accepted', call.sid)
-      Logger.info(`Voice call sent for job ${job.id}`, { sid: call.sid })
-      return { jobId: job.id, status: 'sent', providerMessageId: call.sid }
-    }
-
-    const errorMessage = call.error || 'Twilio call failed'
-    if (call.uncertain) {
-      metrics.provider_uncertain++
-    } else metrics.provider_rejected++
-    await this.finalize(
-      job,
+    return handler.dispatch(job, {
+      state,
       metrics,
-      call.uncertain ? 'uncertain' : 'rejected',
-      undefined,
-      errorMessage,
-    )
-    if (call.uncertain) metrics.reconciliation_required++
-    Logger.error(`Voice call failed for job ${job.id}`, errorMessage)
-    return { jobId: job.id, status: 'failed', error: errorMessage }
+      skip: (skippedJob, reason) => this.skip(skippedJob, reason),
+      finalize: (deliveryJob, outcome, providerId, message) =>
+        this.finalize(deliveryJob, metrics, outcome, providerId, message),
+    })
   }
 
   private async finalize(
@@ -377,63 +180,5 @@ export class DispatcherOrchestrator {
         await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)))
       }
     }
-  }
-
-  private buildMessage(
-    name: string,
-    cheques: DispatchCheque[],
-    language: string,
-    currency: string | null,
-  ): string {
-    const banks: Record<string, { count: number; total: number }> = {}
-    cheques.forEach((cheque) => {
-      const bankName = cheque.account?.bank?.name || 'Unknown Bank'
-      if (!banks[bankName]) banks[bankName] = { count: 0, total: 0 }
-      banks[bankName].count++
-      banks[bankName].total += Number(cheque.amount)
-    })
-
-    if (language === 'hi') {
-      const bankSummaries = Object.entries(banks)
-        .map(
-          ([bank, data]) =>
-            `${bank} में ${numberToHindiWords(data.count)} चेक, कुल ${formatCurrency(data.total, currency, language)}`,
-        )
-        .join(', और ')
-
-      return `नमस्ते ${name}, यह चेक चेक की तरफ से एक रिमाइंडर है। आज आपके ${bankSummaries} आ रहे हैं। कृपया सुनिश्चित करें कि आपके बैंक खाते में पर्याप्त बैलेंस है।`
-    }
-
-    if (language === 'hi-en') {
-      const bankSummaries = Object.entries(banks)
-        .map(
-          ([bank, data]) =>
-            `${numberToHindiWords(data.count)} cheque${data.count > 1 ? 's' : ''} ${bank} mein, total ${formatCurrency(data.total, currency, language)}`,
-        )
-        .join(', aur ')
-
-      return `Namaste ${name}, Cheque Check ki taraf se reminder. Aaj ${bankSummaries} aa rahe hain. Please ensure aapke bank account mein sufficient balance hai.`
-    }
-
-    const bankSummaries = Object.entries(banks)
-      .map(
-        ([bank, data]) =>
-          `${data.count} cheque${data.count > 1 ? 's' : ''} hitting ${bank} for a total of ${formatCurrency(data.total, currency, language)}`,
-      )
-      .join(', and ')
-
-    return `Hello ${name}, this is a reminder from Cheque Check. You have ${bankSummaries} today. Please ensure your accounts are sufficiently funded.`
-  }
-
-  private buildSampleMessage(name: string, language: string): string {
-    if (language === 'hi') {
-      return `नमस्ते ${name}, यह चेक चेक की तरफ से एक टेस्ट कॉल है। अगर आपने यह कॉल सुनी, तो आपकी वॉइस रिमाइंडर सेटिंग सही से काम कर रही है।`
-    }
-
-    if (language === 'hi-en') {
-      return `Namaste ${name}, yeh Cheque Check ki taraf se ek test call hai. Agar aapko yeh call sunai de rahi hai, to aapka Voice Reminder setup sahi kaam kar raha hai.`
-    }
-
-    return `Hello ${name}, this is a test call from Cheque Check. If you can hear this, your Voice Reminder setup is working correctly.`
   }
 }

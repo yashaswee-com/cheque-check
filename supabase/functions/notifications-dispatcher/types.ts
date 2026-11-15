@@ -57,3 +57,24 @@ export type DeliveryAdmission =
   | { status: 'started'; startBefore: number }
   | { status: 'quota_exhausted' }
   | { status: 'throttled' }
+
+export interface DeliveryMetrics {
+  provider_requests: number
+  provider_duration_ms: number
+  provider_accepted: number
+  provider_rejected: number
+  provider_uncertain: number
+  reconciliation_required: number
+  finalization_retries: number
+  provider_throttled: number
+}
+
+export interface DispatchAttemptState {
+  providerStarted: boolean
+}
+
+export interface DispatcherQueuePort {
+  claimJobs(batchSize: number, scope?: DispatchScope): Promise<ClaimedJob[]>
+  markSkipped(job: ClaimedJob, reason: string): Promise<void>
+  markFailedOrRetry(job: ClaimedJob, errorMessage: string): Promise<void>
+}
