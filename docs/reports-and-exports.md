@@ -9,6 +9,7 @@ Reports separate bounded summaries from complete-history exports. Standard repor
 - The PDF is an owner-focused Business Cheque Overview, not a row-only data dump. CSV, JSON, Excel, and the separate party-statement PDF retain their existing formats.
 - CSV/JSON can use durable background export jobs with frozen snapshots and explicit row/size limits ([export migration](../supabase/migrations/20261031040000_background_exports.sql#L57-L112)).
 - Downloads require authentication and current authorization, and stream private storage parts ([download route](../src/app/api/reports/exports/%5Bid%5D/download/route.ts#L8-L108)).
+- For claim tokens, part checkpoints, retry behavior, and the paused schedule, see [durable background work](durable-background-work.md#report-exports).
 
 ## Report reads
 
@@ -41,10 +42,12 @@ The [metrics tests](../src/features/reports/lib/business-overview.test.ts) cover
 
 CSV and JSON can be requested as durable jobs. The database creates a snapshot, enforces an upper bound of 50,000 cheques and 50 MiB, and records the job for resumable worker processing ([snapshot and limits](../supabase/migrations/20261031040000_background_exports.sql#L57-L112), [worker checkpoint fields](../supabase/migrations/20261031040000_background_exports.sql#L140-L190)). The worker schedule is created inactive; enabling it is an operational deployment action, not an outcome proved by the migration file ([cron configuration](../supabase/migrations/20261031040000_background_exports.sql#L217-L234)).
 
+The worker claims one job per tick with a token and a two-minute lease. It writes one 500-row part at a time, then advances the database checkpoint. Repeating an upload after a lost response is safe because the part path and content are deterministic; a stale token cannot advance the job. The claim function retries expired work up to three attempts before marking it failed ([claim and checkpoint functions](../supabase/migrations/20261031040000_background_exports.sql#L115-L163), [worker loop](../supabase/functions/report-exports/worker.ts#L157-L190)).
+
 The download route validates the authenticated owner and export status, then streams private storage content with no-store response behavior ([download route](../src/app/api/reports/exports/%5Bid%5D/download/route.ts#L8-L108), [private bucket policy](../supabase/migrations/20261031040000_background_exports.sql#L29-L55)). A saved job is not a public URL ([storage policy](../supabase/migrations/20261031040000_background_exports.sql#L29-L55)).
 
 ## Access and limits
 
-Reports/exports use Premium authorization checks at execution and database boundaries ([Premium RPC](../supabase/migrations/20261017030000_premium_workspace.sql#L22-L38), [export authorization](../supabase/migrations/20261031040000_background_exports.sql#L57-L112)). The ordinary report preview does not prove export eligibility; the export operation checks its own authorization ([report execution path](<../src/app/(dashboard)/reports/page.tsx>), [export RPC](../supabase/migrations/20261031040000_background_exports.sql#L57-L112)).
+Reports/exports use Premium authorization checks at execution and database boundaries ([Premium RPC](../supabase/migrations/20261017030000_premium_workspace.sql#L22-L38), [export authorization](../supabase/migrations/20261031040000_background_exports.sql#L57-L112)). The ordinary report preview does not prove export eligibility; the export operation checks its own authorization ([report execution path](../src/app/%28dashboard%29/reports/page.tsx#L58-L88), [export RPC](../supabase/migrations/20261031040000_background_exports.sql#L57-L112)).
 
 Known resource limits include the snapshot size/row ceiling and browser memory/final serialization for client-generated files ([export limits](../supabase/migrations/20261031040000_background_exports.sql#L100-L112), [report adapters](../src/features/reports/repositories/report.repository.ts)). Hosted storage throughput and worker completion require environment measurements; the local PGlite benchmark does not establish them ([scaling scope](scaling-and-observability.md#benchmark-scope)).

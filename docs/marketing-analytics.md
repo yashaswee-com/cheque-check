@@ -19,6 +19,8 @@ hosted project or Meta dataset is configured
   `mode` distinguishes live and test traffic. These are observed app events,
   **not** Meta-attributed ad conversions
   ([daily views](../supabase/migrations/20261113000000_event_analytics.sql)).
+- For the worker claim, retry, and maintenance lifecycle, see
+  [durable background work](durable-background-work.md#event-analytics).
 - Never put CAPI tokens or the cookie signing secret in `NEXT_PUBLIC_*`, logs,
   issue descriptions, or source control. Configure secrets through the
   environment provider ([app template](../.env.example),

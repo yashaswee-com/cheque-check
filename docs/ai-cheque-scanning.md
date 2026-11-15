@@ -2,6 +2,8 @@
 
 The scanner is a bounded extraction workflow, not an autonomous agent. The browser uploads an owned cheque-front image and saves its draft before the authenticated [scan API](../src/app/api/ocr/cheque/route.ts) creates a durable database job. The [migration](../supabase/migrations/20261114010000_durable_cheque_ocr.sql) dispatches it through pg_net to the service-authorized [Edge worker](../supabase/functions/cheque-ocr/index.ts). Browser polling observes work; it does not execute or sustain it.
 
+For the shared worker lifecycle and its recovery boundary, see [durable background work](durable-background-work.md#ai-cheque-scanning).
+
 ## User experience
 
 - One Indian cheque front per image; no PDFs, multiple-cheque collages, or back-only extraction.
@@ -39,6 +41,7 @@ Duplicate-cheque warnings are distinct from entity matching and retry identity. 
 - Failure, no useful result, cancellation that wins the completion race, or timeout releases customer credit. Provider processing/cost may nevertheless have occurred.
 - A completion that already won the race remains completed/charged; cancellation must not falsely report a refund.
 - Claim tokens fence stale workers. Before further provider attempts, the worker rechecks deadline, cancellation, configuration, and ownership. Only one retry of a definitive transient HTTP rejection is allowed when Retry-After and remaining time permit. Uncertain network outcomes are not blindly retried.
+- A worker claim in `processing` is not reclaimed after a crash because the provider request may already have started. The recovery tick reconciles deadline-expired work and dispatches still-accepted jobs; it does not extend the original deadline ([claim behavior](../supabase/migrations/20261114010000_durable_cheque_ocr.sql#L309-L325), [recovery function](../supabase/migrations/20261114010000_durable_cheque_ocr.sql#L478-L489)).
 - Reservations are reconciled independently of browsers. Quota-period changes do not refund an old reservation into a new period. Accounting/idempotency evidence is retained separately from temporary scan content.
 
 ## Deployment and enablement
@@ -73,6 +76,7 @@ No local test certifies hosted deployment, latency, throughput, provider terms, 
 - Monitor content-free `ocr.scan.settled`, `ocr.provider.usage`, and worker failure events alongside database job outcomes, reservation age, timeout/failure rate, and admission/spend limits. Provider token counts are usage evidence, not a guaranteed invoice amount.
 - Configure alerts in the deployed monitoring platform for stuck jobs, missed recovery ticks, settlement failures, provider throttling, and spend/deadline spikes; local code does not provision external alert policies.
 - If dispatch or a worker fails, restore it and run recovery. Jobs beyond their original deadline become timed out; do not restart paid inference silently. A retry is a controlled new attempt.
+- If `cheque-ocr-recovery` is active but has no run history while older cron jobs still run, check the scheduler's job-cache refresh. Re-registering a job alone may not resolve stale scheduler state. In QA, a privileged `SELECT pg_reload_conf();` restored scheduling; this reload is database-wide and can apply pending configuration changes, so review operational impact before using it elsewhere. Verify at least two consecutive successful minute-scale runs in `cron.job_run_details`, rather than treating registration or a manual recovery call as proof.
 - Retain normalized results up to seven days, job operational metadata up to 30 days, and confirmed party-bank associations while needed. Ordinary cheque deletion does not automatically erase independently confirmed associations. Active ownership/image checks still govern every access; account/business deletion and explicit erasure follow lifecycle/privacy requirements.
 - Do not persist/log raw provider payloads, signed URLs, image data, prompts containing cheque data, or extracted financial values. The OCR review/creation surfaces are marked private for recording.
 - Verify provider processing/retention/region terms separately; neither local settings nor consent establishes zero provider retention or India-only processing.
