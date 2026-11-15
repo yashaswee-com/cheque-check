@@ -51,6 +51,7 @@ async function clearPwaCache() {
 
 export default function ProfilePage() {
   const t = useTranslations('Settings')
+  const tc = useTranslations('Common')
   const { profile, updateProfile, isLoading } = useProfile()
   const { handleDeleteProfile, handleLogout } = useSettings()
   const premiumRing = usePremiumAvatarRing()
@@ -73,6 +74,8 @@ export default function ProfilePage() {
 
   const trimmedName = name.trim()
   const isDirty = trimmedName !== (profile?.name ?? '')
+  const currentProfileName = profile?.name || profile?.email || t('user')
+  const actionName = trimmedName || currentProfileName
 
   const saveName = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -158,6 +161,7 @@ export default function ProfilePage() {
             title={t('clearCacheTitle')}
             description={t('clearCacheDescription')}
             confirmName="CLEAR"
+            confirmLabel={tc('clearAppCache')}
             onDelete={clearPwaCache}
             trigger={
               <div className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-muted/30">
@@ -185,6 +189,7 @@ export default function ProfilePage() {
             title={t('deleteProfileTitle')}
             description={t('deleteProfileDescription')}
             confirmName={profile?.name || profile?.email || ''}
+            confirmLabel={tc('deleteAccountOf', { name: currentProfileName })}
             reasons={[
               t('deleteReasonNotNeeded'),
               t('deleteReasonPrivacy'),
@@ -226,7 +231,7 @@ export default function ProfilePage() {
       </div>
       <EditSaveBar
         formId="profile-edit-form"
-        label={t('saveProfile')}
+        label={tc('saveProfileOf', { name: actionName })}
         isDirty={isDirty && !!trimmedName}
         isSaving={isSaving}
       />

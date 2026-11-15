@@ -77,6 +77,7 @@ function LinkedRowItem({ row }: { row: LinkedRow }) {
 
 export default function TagDetailPage() {
   const t = useTranslations('Tags')
+  const tc = useTranslations('Common')
   const { id } = useParams() as { id: string }
   const { tag, links, isLoading } = useTagDetail(id)
   const businessId = tag?.business_id
@@ -228,6 +229,7 @@ export default function TagDetailPage() {
         title={t('deleteConfirmTitle')}
         description={t('deleteConfirmDesc')}
         confirmName={tag.name}
+        confirmLabel={tc('deleteNamedTag', { name: tag.name })}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onDelete={async () => {

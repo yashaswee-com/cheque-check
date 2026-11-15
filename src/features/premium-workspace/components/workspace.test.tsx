@@ -257,13 +257,13 @@ describe('workspace workflows', () => {
       }),
     )
     expect(
-      screen.getByRole('button', { name: messages.PremiumWorkspace.confirm }),
+      screen.getByRole('button', { name: 'Save cheque 000003' }),
     ).toBeEnabled()
     fireEvent.change(screen.getByLabelText('Deposit date'), {
       target: { value: 'invalid' },
     })
     expect(
-      screen.getByRole('button', { name: messages.PremiumWorkspace.confirm }),
+      screen.getByRole('button', { name: 'Save cheque 000003' }),
     ).toBeDisabled()
     expect(importRows).not.toHaveBeenCalled()
   })
@@ -351,9 +351,7 @@ describe('workspace workflows', () => {
       screen.getByLabelText(messages.PremiumWorkspace.toolName),
       { target: { value: 'New view' } },
     )
-    fireEvent.click(
-      screen.getByRole('button', { name: messages.PremiumWorkspace.save }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Save New view' }))
     await waitFor(() =>
       expect(saveTool).toHaveBeenCalledWith('b1', 'saved-view', 'New view', {
         status: 'Issued',
@@ -368,20 +366,14 @@ describe('workspace workflows', () => {
       screen.getByRole('button', { name: messages.PremiumWorkspace.apply }),
     )
     await waitFor(() => expect(apply).toHaveBeenCalledWith({ search: '123' }))
-    fireEvent.click(
-      screen.getByRole('button', { name: messages.PremiumWorkspace.delete }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Delete My view' }))
     fireEvent.click(
       screen.getByRole('button', { name: messages.PremiumWorkspace.cancel }),
     )
     expect(deleteTool).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Delete My view' }))
     fireEvent.click(
-      screen.getByRole('button', { name: messages.PremiumWorkspace.delete }),
-    )
-    fireEvent.click(
-      screen
-        .getAllByRole('button', { name: messages.PremiumWorkspace.delete })
-        .at(-1)!,
+      screen.getAllByRole('button', { name: 'Delete My view' }).at(-1)!,
     )
     await waitFor(() => expect(deleteTool).toHaveBeenCalledWith('tool'))
     await waitFor(() =>
@@ -769,7 +761,7 @@ describe('workspace workflows', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Create cheque' }))
     expect(importRows).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save cheque 000002' }))
     await waitFor(() =>
       expect(importRows).toHaveBeenCalledWith('b1', 'cheques', [
         expect.objectContaining({
@@ -975,6 +967,8 @@ describe('workspace workflows', () => {
     fireEvent.change(screen.getByLabelText('Name for this saved tool'), {
       target: { value: 'Invalid template' },
     })
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Save Invalid template' }),
+    ).toBeDisabled()
   })
 })

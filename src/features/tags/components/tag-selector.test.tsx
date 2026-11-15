@@ -100,6 +100,18 @@ describe('Tag Selector modal backdrop', () => {
       target: { value: 'Invoice' },
     })
     fireEvent.click(screen.getByTestId('tag-selector-create-button'))
+    expect(
+      await screen.findByTestId('tag-form-submit-button'),
+    ).toHaveTextContent('Create Invoice')
+    fireEvent.change(screen.getByRole('textbox', { name: /tag name/i }), {
+      target: { value: 'New Invoice' },
+    })
+    expect(screen.getByTestId('tag-form-submit-button')).toHaveTextContent(
+      'Create New Invoice',
+    )
+    fireEvent.change(screen.getByRole('textbox', { name: /tag name/i }), {
+      target: { value: 'Invoice' },
+    })
     fireEvent.click(await screen.findByRole('radio', { name: 'red' }))
     fireEvent.click(screen.getByTestId('tag-form-submit-button'))
     await waitFor(() => expect(change).toHaveBeenCalledWith(['tag-1', 'new']))

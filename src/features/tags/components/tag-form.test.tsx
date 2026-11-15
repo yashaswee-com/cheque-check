@@ -63,6 +63,7 @@ it('supports an external save control that only submits real changes', () => {
   expect(onStateChange).toHaveBeenLastCalledWith({
     isDirty: false,
     canSubmit: false,
+    name: 'Urgent',
   })
   fireEvent.submit(form)
   expect(submit).not.toHaveBeenCalled()
@@ -70,6 +71,7 @@ it('supports an external save control that only submits real changes', () => {
   expect(onStateChange).toHaveBeenLastCalledWith({
     isDirty: true,
     canSubmit: false,
+    name: '',
   })
   fireEvent.change(screen.getByRole('textbox'), {
     target: { value: 'Urgent' },
@@ -78,6 +80,7 @@ it('supports an external save control that only submits real changes', () => {
   expect(onStateChange).toHaveBeenLastCalledWith({
     isDirty: true,
     canSubmit: true,
+    name: 'Urgent',
   })
   fireEvent.submit(form)
   expect(submit).toHaveBeenCalledExactlyOnceWith({

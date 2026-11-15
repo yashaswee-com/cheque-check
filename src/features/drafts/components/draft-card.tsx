@@ -120,7 +120,7 @@ export function DraftCard({
           type="button"
           onClick={() => setConfirmOpen(true)}
           className="relative z-10 p-2 text-muted-foreground hover:text-destructive transition-colors"
-          aria-label={tc('delete')}
+          aria-label={tc('deleteNamed', { name: title })}
         >
           <HugeiconsIcon icon={Trash} className="h-4 w-4" />
         </button>
@@ -151,7 +151,7 @@ export function DraftCard({
               loading={deleting}
               disabled={deleting}
             >
-              {tc('delete')}
+              {tc('deleteNamed', { name: title })}
             </Button>
           </div>
         </SheetContent>

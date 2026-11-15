@@ -29,6 +29,7 @@ const DeleteConfirmationDialog = dynamic(
 
 export default function EditTagPage() {
   const t = useTranslations('Tags')
+  const tc = useTranslations('Common')
   const router = useRouter()
   const { id } = useParams() as { id: string }
   const { tag, isLoading } = useTagDetail(id)
@@ -36,9 +37,11 @@ export default function EditTagPage() {
   const [formState, setFormState] = useState({
     isDirty: false,
     canSubmit: false,
+    name: null as string | null,
   })
   const onStateChange = useCallback(
-    (next: { isDirty: boolean; canSubmit: boolean }) => setFormState(next),
+    (next: { isDirty: boolean; canSubmit: boolean; name: string }) =>
+      setFormState(next),
     [],
   )
   const guard = useUnsavedChangesGuard(formState.isDirty)
@@ -83,7 +86,11 @@ export default function EditTagPage() {
       />
       <EditSaveBar
         formId="tag-edit-form"
-        label={t('updateTag')}
+        label={
+          (formState.name ?? tag.name)
+            ? tc('updateNamed', { name: formState.name ?? tag.name })
+            : tc('updateEntity', { entity: tc('entityTag', { count: 1 }) })
+        }
         isDirty={formState.canSubmit}
         isSaving={isUpdating}
         testId="tag-form-submit-button"
@@ -92,6 +99,7 @@ export default function EditTagPage() {
             title={t('deleteConfirmTitle')}
             description={t('deleteConfirmDesc')}
             confirmName={tag.name}
+            confirmLabel={tc('deleteNamedTag', { name: tag.name })}
             onDelete={async () => {
               await deleteTag(tag.id)
               guard.bypass(() => router.push('/tags'))

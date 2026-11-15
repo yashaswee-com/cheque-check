@@ -9,7 +9,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DraftCard } from './draft-card'
 vi.mock('next-intl', () => ({
   useLocale: () => 'en',
-  useTranslations: () => (key: string) => key,
+  useTranslations: () => (key: string, values?: { name?: string }) =>
+    key === 'deleteNamed' ? `Delete ${values?.name}` : key,
 }))
 afterEach(cleanup)
 
@@ -69,7 +70,7 @@ describe('DraftCard', () => {
   it('requires confirmation and permits canceling', async () => {
     const onDelete = vi.fn().mockResolvedValue(undefined)
     render(<DraftCard {...props} onDelete={onDelete} />)
-    fireEvent.click(screen.getByRole('button', { name: 'delete' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Asha cheque' }))
     expect(await screen.findByRole('dialog')).toHaveTextContent(
       'deleteDescription',
     )
@@ -79,8 +80,10 @@ describe('DraftCard', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
     )
     expect(onDelete).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: 'delete' }))
-    const buttons = await screen.findAllByRole('button', { name: 'delete' })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Asha cheque' }))
+    const buttons = await screen.findAllByRole('button', {
+      name: 'Delete Asha cheque',
+    })
     fireEvent.click(buttons[buttons.length - 1])
     await waitFor(() => expect(onDelete).toHaveBeenCalledOnce())
     await waitFor(() =>

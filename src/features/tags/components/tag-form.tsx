@@ -20,14 +20,18 @@ export interface TagFormValues {
 
 interface TagFormProps {
   defaultValues: TagFormValues
-  submitLabel: string
+  submitLabel: string | ((name: string) => string)
   isSaving: boolean
   onSubmit: (values: TagFormValues) => Promise<void> | void
   children?: React.ReactNode
   /** Lets an external submit control (e.g. a docked save bar) target this form. */
   formId?: string
   hideSubmit?: boolean
-  onStateChange?: (state: { isDirty: boolean; canSubmit: boolean }) => void
+  onStateChange?: (state: {
+    isDirty: boolean
+    canSubmit: boolean
+    name: string
+  }) => void
 }
 
 export function TagForm({
@@ -49,8 +53,8 @@ export function TagForm({
   const canSubmit = !!trimmedName && isDirty
 
   useEffect(() => {
-    onStateChange?.({ isDirty, canSubmit })
-  }, [canSubmit, isDirty, onStateChange])
+    onStateChange?.({ isDirty, canSubmit, name: trimmedName })
+  }, [canSubmit, isDirty, trimmedName, onStateChange])
 
   return (
     <form
@@ -124,7 +128,9 @@ export function TagForm({
               disabled={!trimmedName || isSaving}
               loading={isSaving}
             >
-              {submitLabel}
+              {typeof submitLabel === 'function'
+                ? submitLabel(trimmedName)
+                : submitLabel}
               <HugeiconsIcon icon={Check} className="ml-2 h-5 w-5" />
             </Button>
           )}

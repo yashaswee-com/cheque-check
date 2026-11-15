@@ -436,6 +436,7 @@ export default function ChequeDetailPage() {
         title={t('deleteConfirmTitle')}
         description={t('deleteConfirmDesc')}
         confirmName={cheque.cheque_number}
+        confirmLabel={tc('deleteCheque', { number: cheque.cheque_number })}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onDelete={async () => {

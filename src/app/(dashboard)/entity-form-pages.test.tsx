@@ -691,6 +691,27 @@ describe('account creation page', () => {
 })
 
 describe.each([
+  { name: 'business', Component: CreateBusinessPage, field: 'name' },
+  { name: 'account', Component: CreateAccountPage, field: 'account_name' },
+  { name: 'party', Component: CreatePartyPage, field: 'name' },
+])('$name final create action', ({ name, Component, field }) => {
+  it('names the live form value and falls back when blank', () => {
+    initialStep = 3
+    defaults = { [field]: 'First' }
+    renderPage(<Component />)
+    expect(screen.getByTestId(`${name}-submit-button`)).toHaveTextContent(
+      'Save First',
+    )
+    cleanup()
+    defaults = { [field]: '' }
+    renderPage(<Component />)
+    expect(screen.getByTestId(`${name}-submit-button`)).toHaveTextContent(
+      `Save new ${name}`,
+    )
+  })
+})
+
+describe.each([
   {
     name: 'business',
     Component: EditBusinessPage,
@@ -718,6 +739,7 @@ describe.each([
     defaults = { name: 'Original', account_name: 'Original' }
     renderPage(<Component />)
     expect(saveButton()).toBeDisabled()
+    expect(saveButton()).toHaveTextContent('Update Original')
     expect(saveButton()).toHaveAttribute(
       'title',
       messages.SharedUI.noChangesToSave,
@@ -728,7 +750,10 @@ describe.each([
     renderPage(<Component />)
     expect(saveButton()).toBeDisabled()
     makeDirty()
+    expect(saveButton()).toHaveTextContent('Update Updated')
     expect(saveButton()).toBeEnabled()
+    change(identityField, '   ')
+    expect(saveButton()).toHaveTextContent(`Update ${name}`)
   })
 
   it('ignores submits while nothing has changed', async () => {

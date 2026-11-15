@@ -420,7 +420,15 @@ export default function CreateAccountPage() {
 
       <EditSaveBar
         formId="account-create-form"
-        label={step < 3 ? tc('continue') : t('addAccount')}
+        label={
+          step < 3
+            ? tc('continue')
+            : watch('account_name')?.trim()
+              ? tc('saveNamed', { name: watch('account_name').trim() })
+              : tc('saveNewEntity', {
+                  entity: tc('entityAccount', { count: 1 }),
+                })
+        }
         isContinue={step < 3}
         secondaryAction={
           <DraftSaveFab

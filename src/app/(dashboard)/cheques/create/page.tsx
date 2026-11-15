@@ -796,7 +796,15 @@ export default function CreateChequePage() {
 
       <EditSaveBar
         formId="cheque-create-form"
-        label={step < 3 ? tCommon('continue') : t('saveAction')}
+        label={
+          step < 3
+            ? tCommon('continue')
+            : chequeNumber.trim()
+              ? tCommon('saveCheque', { number: chequeNumber.trim() })
+              : tCommon('saveNewEntity', {
+                  entity: tCommon('entityCheque', { count: 1 }),
+                })
+        }
         isContinue={step < 3}
         secondaryAction={
           <DraftSaveFab

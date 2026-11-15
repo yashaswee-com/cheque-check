@@ -492,7 +492,15 @@ export default function EditChequePage() {
 
       <EditSaveBar
         formId="cheque-edit-form"
-        label={t('updateAction')}
+        label={
+          watch('cheque_number')?.trim()
+            ? tCommon('updateCheque', {
+                number: watch('cheque_number')!.trim(),
+              })
+            : tCommon('updateEntity', {
+                entity: tCommon('entityCheque', { count: 1 }),
+              })
+        }
         isDirty={isDirty}
         isSaving={isBusy}
         testId="cheque-edit-submit-button"
@@ -501,6 +509,9 @@ export default function EditChequePage() {
             title={t('deleteConfirmTitle')}
             description={t('deleteConfirmDesc')}
             confirmName={cheque?.cheque_number || 'Cheque'}
+            confirmLabel={tCommon('deleteCheque', {
+              number: watch('cheque_number') || cheque?.cheque_number || '',
+            })}
             onDelete={async () => {
               guard.bypass(onDelete)
             }}

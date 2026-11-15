@@ -298,6 +298,7 @@ export function BankSelector({
             title={tb('remove')}
             description={tb('removeConfirm')}
             confirmName={selectedBank.name}
+            confirmLabel={t('removeNamed', { name: selectedBank.name })}
             trigger={
               <Button type="button" variant="link" size="sm" className="gap-2">
                 <HugeiconsIcon icon={Trash} className="h-4 w-4" />
@@ -413,7 +414,9 @@ export function BankSelector({
               loading={create.isPending}
               disabled={!name.trim()}
             >
-              {tb('create')}
+              {name.trim()
+                ? t('addNamed', { name: name.trim() })
+                : tb('create')}
             </Button>
           </form>
         </SheetContent>

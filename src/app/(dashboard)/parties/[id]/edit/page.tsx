@@ -284,7 +284,13 @@ export default function EditPartyPage() {
 
       <EditSaveBar
         formId="party-edit-form"
-        label={t('updateParty')}
+        label={
+          watch('name')?.trim()
+            ? tCommon('updateNamed', { name: watch('name').trim() })
+            : tCommon('updateEntity', {
+                entity: tCommon('entityParty', { count: 1 }),
+              })
+        }
         isDirty={isDirty}
         isSaving={isSaving || isSubmitting}
         testId="party-edit-submit-button"

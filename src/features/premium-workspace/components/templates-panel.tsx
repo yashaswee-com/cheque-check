@@ -42,6 +42,7 @@ export function TemplatesPanel({
   busy: boolean
 }) {
   const t = useTranslations('PremiumWorkspace')
+  const tc = useTranslations('Common')
   const display = useDisplayFormat()
   const [form, setForm] = useState(() => empty(display.today()))
   const [chequeDateValid, setChequeDateValid] = useState(true)
@@ -196,7 +197,11 @@ export function TemplatesPanel({
       ) : (
         <Confirmation
           message={t('confirmCreate')}
-          confirm={t('confirm')}
+          confirm={
+            form.cheque_number.trim()
+              ? tc('saveCheque', { number: form.cheque_number.trim() })
+              : t('createCheque')
+          }
           cancel={t('cancel')}
           busy={busy}
           disabled={

@@ -28,7 +28,9 @@ export class AccountsPage {
         .click()
       const dialog = this.page.getByRole('dialog', { name: 'Add private bank' })
       await dialog.getByLabel('Bank name').fill(customBankName)
-      await dialog.getByRole('button', { name: 'Add private bank' }).click()
+      await dialog
+        .getByRole('button', { name: `Add ${customBankName}`, exact: true })
+        .click()
       await expect(dialog).toHaveCount(0)
       await expect(
         this.page.getByTestId('bank-selector-trigger'),

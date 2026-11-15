@@ -326,7 +326,15 @@ export default function CreateBusinessPage() {
 
       <EditSaveBar
         formId="business-create-form"
-        label={step < 3 ? tc('continue') : t('newBusiness')}
+        label={
+          step < 3
+            ? tc('continue')
+            : watch('name')?.trim()
+              ? tc('saveNamed', { name: watch('name').trim() })
+              : tc('saveNewEntity', {
+                  entity: tc('entityBusiness', { count: 1 }),
+                })
+        }
         isContinue={step < 3}
         disabled={
           step === 1 ? !watch('name') : step === 2 ? !watch('email') : false

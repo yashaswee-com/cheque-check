@@ -279,7 +279,11 @@ export default function EditAccountPage() {
 
       <EditSaveBar
         formId="account-edit-form"
-        label={t('updateAccount')}
+        label={
+          watch('account_name')?.trim()
+            ? tc('updateNamed', { name: watch('account_name').trim() })
+            : tc('updateEntity', { entity: tc('entityAccount', { count: 1 }) })
+        }
         isDirty={isDirty}
         isSaving={isSaving || isSubmitting}
         testId="account-edit-submit-button"

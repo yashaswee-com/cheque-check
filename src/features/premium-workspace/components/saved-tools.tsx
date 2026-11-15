@@ -29,6 +29,7 @@ export function SavedTools({
   disabled?: boolean
 }) {
   const t = useTranslations('PremiumWorkspace')
+  const tc = useTranslations('Common')
   const [name, setName] = useState('')
   const [deleting, setDeleting] = useState<string | null>(null)
   return (
@@ -57,7 +58,7 @@ export function SavedTools({
             })
           }
         >
-          {t('save')}
+          {name.trim() ? tc('saveNamed', { name: name.trim() }) : t('save')}
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">{t('syncHelp')}</p>
@@ -87,14 +88,14 @@ export function SavedTools({
                   disabled={busy}
                   onClick={() => setDeleting(tool.id)}
                 >
-                  {t('delete')}
+                  {tc('deleteNamed', { name: tool.name })}
                 </Button>
               </div>
             </div>
             {deleting === tool.id && (
               <Confirmation
                 message={t('confirmDelete')}
-                confirm={t('delete')}
+                confirm={tc('deleteNamed', { name: tool.name })}
                 cancel={t('cancel')}
                 busy={busy}
                 onCancel={() => setDeleting(null)}

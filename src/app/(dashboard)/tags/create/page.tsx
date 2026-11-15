@@ -13,12 +13,13 @@ import { useCallback, useState } from 'react'
 
 export default function CreateTagPage() {
   const t = useTranslations('Tags')
+  const tc = useTranslations('Common')
   const router = useRouter()
   const { activeBusiness } = useBusiness()
   const { tags, isLoading, createTag, isCreating } = useTags(activeBusiness?.id)
-  const [canSubmit, setCanSubmit] = useState(false)
+  const [formState, setFormState] = useState({ canSubmit: false, name: '' })
   const onStateChange = useCallback(
-    (state: { canSubmit: boolean }) => setCanSubmit(state.canSubmit),
+    (state: { canSubmit: boolean; name: string }) => setFormState(state),
     [],
   )
 
@@ -56,8 +57,12 @@ export default function CreateTagPage() {
       />
       <EditSaveBar
         formId="tag-create-form"
-        label={t('createTag')}
-        isDirty={canSubmit}
+        label={
+          formState.name
+            ? tc('saveTag', { name: formState.name })
+            : tc('saveNewEntity', { entity: tc('entityTag', { count: 1 }) })
+        }
+        isDirty={formState.canSubmit}
         isSaving={isCreating}
         testId="tag-form-submit-button"
       />

@@ -571,7 +571,15 @@ export default function CreatePartyPage() {
 
       <EditSaveBar
         formId="party-create-form"
-        label={step < 3 ? t('continue') : t('newParty')}
+        label={
+          step < 3
+            ? t('continue')
+            : watch('name')?.trim()
+              ? tCommon('saveNamed', { name: watch('name').trim() })
+              : tCommon('saveNewEntity', {
+                  entity: tCommon('entityParty', { count: 1 }),
+                })
+        }
         isContinue={step < 3}
         secondaryAction={
           <DraftSaveFab

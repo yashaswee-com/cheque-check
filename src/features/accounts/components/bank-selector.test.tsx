@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BankSelector } from './bank-selector'
@@ -26,8 +27,14 @@ const state = vi.hoisted(() => ({
   toast: vi.fn(),
 }))
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) =>
-    key === 'add' ? 'Add New Bank' : key,
+  useTranslations: () => (key: string, values?: { name: string }) =>
+    key === 'add'
+      ? 'Add New Bank'
+      : key === 'addNamed'
+        ? `Add ${values?.name}`
+        : key === 'removeNamed'
+          ? `Remove ${values?.name}`
+          : key,
 }))
 vi.mock('../hooks/use-banks', () => ({
   useBanks: () => ({
@@ -133,6 +140,16 @@ describe('BankSelector', () => {
     fireEvent.click(option)
     expect(change).toHaveBeenCalledWith('bank4999')
   })
+  it('names the custom bank submit from the live input', async () => {
+    mount()
+    const input = await addForm()
+    fireEvent.change(input, { target: { value: ' First Bank ' } })
+    expect(screen.getByRole('button', { name: 'Add First Bank' })).toBeEnabled()
+    fireEvent.change(input, { target: { value: 'Second Bank' } })
+    expect(
+      screen.getByRole('button', { name: 'Add Second Bank' }),
+    ).toBeEnabled()
+  })
   it('right-aligns the custom bank delete action with an icon and requires confirmation', async () => {
     state.banks[0].owner_id = 'user'
     const change = mount('bank1')
@@ -143,9 +160,10 @@ describe('BankSelector', () => {
     const dialog = await screen.findByRole('dialog')
     const input = dialog.querySelector('input')!
     fireEvent.change(input, { target: { value: 'Example Bank' } })
-    const confirm =
-      dialog.querySelector('[data-testid="delete-confirm-button"]') ??
-      screen.getAllByRole('button', { name: /delete/i }).at(-1)!
+    const confirm = within(dialog).getByRole('button', {
+      name: 'Remove Example Bank',
+    })
+    expect(confirm).toHaveTextContent('Remove Example Bank')
     fireEvent.click(confirm)
     await waitFor(() =>
       expect(state.remove.mutateAsync).toHaveBeenCalledWith('bank1'),

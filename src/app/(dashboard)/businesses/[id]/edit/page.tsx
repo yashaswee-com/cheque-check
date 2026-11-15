@@ -239,7 +239,13 @@ export default function EditBusinessPage() {
 
       <EditSaveBar
         formId="business-edit-form"
-        label={t('updateBusiness')}
+        label={
+          watch('name')?.trim()
+            ? tc('updateNamed', { name: watch('name').trim() })
+            : tc('updateEntity', {
+                entity: tc('entityBusiness', { count: 1 }),
+              })
+        }
         isDirty={isDirty}
         isSaving={isSaving || isSubmitting}
         testId="business-edit-submit-button"

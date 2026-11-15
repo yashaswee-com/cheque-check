@@ -56,6 +56,7 @@ export function TagSelector({
   const [createError, setCreateError] = useState(false)
   const creating = useRef(false)
   const t = useTranslations('SharedUI')
+  const tc = useTranslations('Common')
   const ts = useTranslations('SelectorPolish')
   const { tags, isLoading, error, refetch, createTag, isCreating } =
     useTags(businessId)
@@ -270,7 +271,13 @@ export function TagSelector({
             <TagForm
               key={businessId}
               defaultValues={{ name: paged.query, color: nextTagColor(tags) }}
-              submitLabel={t('createTag')}
+              submitLabel={(name) =>
+                name
+                  ? tc('createNamed', { name })
+                  : tc('saveNewEntity', {
+                      entity: tc('entityTag', { count: 1 }),
+                    })
+              }
               isSaving={isCreating}
               onSubmit={addTag}
             />
