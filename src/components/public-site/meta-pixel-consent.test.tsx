@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -8,6 +9,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MetaPixelConsent } from './meta-pixel-consent'
 import { CONSENT_KEY } from '@/features/analytics/contracts'
+import { openCookieSettings } from '@/features/analytics/consent-store'
 
 const mocks = vi.hoisted(() => ({ sync: vi.fn(), clear: vi.fn() }))
 vi.mock('@/features/analytics/browser', () => ({
@@ -19,7 +21,6 @@ const props = {
   description: 'Marketing events and matching identifiers.',
   acceptLabel: 'Accept',
   rejectLabel: 'Reject',
-  manageLabel: 'Cookie settings',
   saveError: 'Could not save your choice.',
 }
 beforeEach(() => {
@@ -55,7 +56,8 @@ describe('marketing consent', () => {
     await waitFor(() => expect(screen.queryByRole('region')).toBeNull())
     expect(localStorage.getItem(CONSENT_KEY)).toBe('rejected')
     expect(mocks.clear).toHaveBeenCalledOnce()
-    fireEvent.click(screen.getByRole('button', { name: 'Cookie settings' }))
+    expect(screen.queryByRole('button', { name: 'Cookie settings' })).toBeNull()
+    act(() => openCookieSettings())
     expect(screen.getByRole('region')).toBeVisible()
   })
   it('retains the dialog and reports server synchronization failures', async () => {

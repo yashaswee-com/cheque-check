@@ -84,6 +84,14 @@ provider request already in flight or information Meta has already received
 [server validation](../src/features/analytics/server.ts),
 [delivery recheck](../supabase/functions/marketing-delivery/index.ts)).
 
+After a choice is made there is no pinned "Cookie settings" button. People
+reopen the banner from **Settings → Preferences → Cookie settings** in the app
+([preferences](../src/features/analytics/components/cookie-preferences.tsx)) or
+from the public-site footer
+([footer button](../src/components/public-site/cookie-settings-button.tsx)).
+Both dispatch the shared open event from the
+[consent store](../src/features/analytics/consent-store.ts).
+
 There is no replay of pre-consent conversions. Accepting while an eligible
 page is visible can record that current page. Marketing collection excludes
 cheque contents, cheque face values, bank/party details, images, names, arbitrary

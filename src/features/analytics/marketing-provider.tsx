@@ -90,7 +90,6 @@ function EnabledMarketingProvider() {
       description={t('description')}
       acceptLabel={t('accept')}
       rejectLabel={t('reject')}
-      manageLabel={t('manage')}
       saveError={t('saveError')}
     />
   )

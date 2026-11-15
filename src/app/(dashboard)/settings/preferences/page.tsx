@@ -18,6 +18,7 @@ import { AppearancePreference } from '@/features/profile/components/appearance-p
 import { PreferenceField } from '@/features/profile/components/preference-field'
 import { PrivacyPreference } from '@/features/security/components/privacy-preference'
 import { InfoPopover } from '@/components/ui/info-popover'
+import { CookiePreferences } from '@/features/analytics/components/cookie-preferences'
 
 export default function PreferencesPage() {
   const t = useTranslations('Onboarding')
@@ -109,6 +110,10 @@ export default function PreferencesPage() {
 
       <div>
         <PrivacyPreference />
+      </div>
+
+      <div>
+        <CookiePreferences />
       </div>
     </div>
   )

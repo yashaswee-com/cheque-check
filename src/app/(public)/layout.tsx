@@ -13,6 +13,7 @@ import { PublicIcon } from '@/components/public-site/public-icon'
 import { PublicBrand } from '@/components/public-site/public-brand'
 import { PublicHeader } from '@/components/public-site/public-header'
 import { AppEntryLink } from '@/components/public-site/app-entry-link'
+import { CookieSettingsButton } from '@/components/public-site/cookie-settings-button'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -107,6 +108,7 @@ export default async function PublicSiteLayout({
             <span>
               © {new Date().getFullYear()} {t('footer.copyright')}
             </span>
+            <CookieSettingsButton label={t('cookieConsent.manage')} />
           </div>
         </div>
       </footer>

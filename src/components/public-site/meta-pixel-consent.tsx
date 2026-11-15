@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
 import {
   CONSENT_CHANGE_EVENT,
   CONSENT_KEY,
@@ -12,6 +12,7 @@ import {
   clearMarketingStorage,
   syncMarketing,
 } from '@/features/analytics/browser'
+import { useMarketingConsent } from '@/features/analytics/consent-store'
 import { logger } from '@/lib/logger'
 
 type Props = {
@@ -19,28 +20,11 @@ type Props = {
   description: string
   acceptLabel: string
   rejectLabel: string
-  manageLabel: string
   saveError: string
 }
 
-function readConsent() {
-  try {
-    return localStorage.getItem(CONSENT_KEY)
-  } catch {
-    return null
-  }
-}
-function subscribe(onChange: () => void) {
-  window.addEventListener('storage', onChange)
-  window.addEventListener(CONSENT_CHANGE_EVENT, onChange)
-  return () => {
-    window.removeEventListener('storage', onChange)
-    window.removeEventListener(CONSENT_CHANGE_EVENT, onChange)
-  }
-}
-
 export function MetaPixelConsent(props: Props) {
-  const consent = useSyncExternalStore(subscribe, readConsent, () => null)
+  const consent = useMarketingConsent()
   const [editing, setEditing] = useState(false)
   const [storageError, setStorageError] = useState(false)
   useEffect(() => {
@@ -91,13 +75,6 @@ export function MetaPixelConsent(props: Props) {
   }
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setEditing(true)}
-        className="fixed bottom-20 right-2 z-[115] min-h-11 rounded-full border bg-background px-3 text-xs underline shadow-sm"
-      >
-        {props.manageLabel}
-      </button>
       {((consent !== 'accepted' && consent !== 'rejected') || editing) && (
         <section
           aria-label={props.title}
