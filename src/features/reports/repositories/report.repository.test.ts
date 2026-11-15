@@ -8,14 +8,14 @@ import { createBusinessOverviewPdf } from '../lib/business-overview-pdf'
 import hindi from '../../../../messages/hi.json'
 
 const pdf = vi.hoisted(() => ({
-  save: vi.fn(),
+  output: vi.fn(() => new Blob(['pdf'])),
 }))
 const excel = vi.hoisted(() => ({
   book_new: vi.fn(() => ({ workbook: true })),
   aoa_to_sheet: vi.fn(() => ({ sheet: true })),
   sheet_add_aoa: vi.fn(),
   book_append_sheet: vi.fn(),
-  writeFile: vi.fn(),
+  write: vi.fn(() => new Uint8Array([1, 2, 3])),
 }))
 const loaded = vi.hoisted(() => ({ pdf: vi.fn(), excel: vi.fn() }))
 vi.mock('../lib/business-overview-pdf', () => {
@@ -26,7 +26,7 @@ vi.mock('../lib/business-overview-pdf', () => {
 })
 vi.mock('xlsx', () => {
   loaded.excel()
-  return { utils: excel, writeFile: excel.writeFile }
+  return { utils: excel, write: excel.write }
 })
 
 const cheque: ChequeWithRelations = {
@@ -102,15 +102,24 @@ function readBlob(blob: Blob) {
 }
 
 describe('BrowserReportRepository', () => {
+  it('uses the single-method download sink after rendering a format', async () => {
+    const sink = { download: vi.fn() }
+    await new BrowserReportRepository(sink).exportToCSV([cheque], 'report.csv')
+    expect(sink.download).toHaveBeenCalledWith(
+      expect.any(Array),
+      'report.csv',
+      'text/csv;charset=utf-8;',
+    )
+  })
+
   it('passes full records and formatting preferences to the owner PDF renderer', async () => {
     await repository.exportToPDF([cheque], 'localized.pdf', presentation)
     expect(createBusinessOverviewPdf).toHaveBeenCalledWith(
       [cheque],
       presentation,
     )
-    expect(pdf.save).toHaveBeenCalledWith('localized.pdf', {
-      returnPromise: true,
-    })
+    expect(pdf.output).toHaveBeenCalledWith('blob')
+    expect(downloaded.type).toBe('application/pdf')
     expect(cheque.cheque_date).toBe('2026-10-31')
   })
   it('exports translated Excel cells and preferred currency formatting without turning amounts into text', async () => {
@@ -164,8 +173,8 @@ describe('BrowserReportRepository', () => {
     async (method) => {
       await repository[method]([], 'empty')
       expect(URL.createObjectURL).not.toHaveBeenCalled()
-      expect(pdf.save).not.toHaveBeenCalled()
-      expect(excel.writeFile).not.toHaveBeenCalled()
+      expect(pdf.output).not.toHaveBeenCalled()
+      expect(excel.write).not.toHaveBeenCalled()
     },
   )
 
@@ -180,7 +189,7 @@ describe('BrowserReportRepository', () => {
       }),
     ).rejects.toThrow(hindi.Reports.pdfReport.empty)
     expect(createBusinessOverviewPdf).not.toHaveBeenCalled()
-    expect(pdf.save).not.toHaveBeenCalled()
+    expect(pdf.output).not.toHaveBeenCalled()
   })
 
   it('downloads CSV with headers, monetary data, and optional-field fallbacks', async () => {
@@ -210,7 +219,7 @@ describe('BrowserReportRepository', () => {
       expect.arrayContaining([cheque]),
       undefined,
     )
-    expect(pdf.save).toHaveBeenCalledWith('report.pdf', { returnPromise: true })
+    expect(pdf.output).toHaveBeenCalledWith('blob')
   })
 
   it('writes mapped Excel rows to a named worksheet and file', async () => {
@@ -237,9 +246,12 @@ describe('BrowserReportRepository', () => {
       { sheet: true },
       'Cheques',
     )
-    expect(excel.writeFile).toHaveBeenCalledWith(
+    expect(excel.write).toHaveBeenCalledWith(
       { workbook: true },
-      'report.xlsx',
+      { type: 'array', bookType: 'xlsx' },
+    )
+    expect(downloaded.type).toBe(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     )
   })
 
@@ -297,11 +309,13 @@ describe('BrowserReportRepository', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:report')
   })
 
-  it('propagates asynchronous PDF save failures', async () => {
-    pdf.save.mockRejectedValueOnce(new Error('Save failed'))
+  it('propagates PDF rendering failures', async () => {
+    pdf.output.mockImplementationOnce(() => {
+      throw new Error('Render failed')
+    })
     await expect(
       repository.exportToPDF([cheque], 'blocked.pdf'),
-    ).rejects.toThrow('Save failed')
+    ).rejects.toThrow('Render failed')
   })
   it('passes every cheque to the PDF renderer without a preview limit', async () => {
     await repository.exportToPDF(

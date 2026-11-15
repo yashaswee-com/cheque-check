@@ -5,6 +5,7 @@ import {
   type ReportPresentation,
 } from '@/features/reports/repositories/report.repository'
 import { monitorOperation } from '@/lib/monitoring/telemetry'
+import { createLazyService } from '@/lib/lazy-service'
 
 export class ReportService {
   constructor(
@@ -54,9 +55,7 @@ export class ReportService {
   }
 }
 
-export const reportService = new Proxy(new ReportService(), {
-  get(_target, property, receiver) {
-    const value = Reflect.get(_target, property, receiver)
-    return typeof value === 'function' ? value.bind(_target) : value
-  },
-})
+export const reportService = createLazyService(
+  () => new ReportService(),
+  ReportService.prototype,
+)

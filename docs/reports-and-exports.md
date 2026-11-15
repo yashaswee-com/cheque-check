@@ -5,7 +5,7 @@ Reports separate bounded summaries from complete-history exports. Standard repor
 ## Quick reference
 
 - The report page preview is limited to ten recent cheques and summary totals ([report hook](../src/features/reports/hooks/use-report-cheques.ts#L9-L54)).
-- Browser PDF/Excel adapters load on demand and operate on requested export data ([report repository](../src/features/reports/repositories/report.repository.ts)).
+- Export formats are rendered separately from the narrow browser download sink; PDF/Excel dependencies load on demand and operate on requested export data ([renderers](../src/features/reports/lib/report-export-renderers.ts), [download sink](../src/features/reports/lib/report-download.ts)).
 - The PDF is an owner-focused Business Cheque Overview, not a row-only data dump. CSV, JSON, Excel, and the separate party-statement PDF retain their existing formats.
 - CSV/JSON can use durable background export jobs with frozen snapshots and explicit row/size limits ([export migration](../supabase/migrations/20261031040000_background_exports.sql#L57-L112)).
 - Downloads require authentication and current authorization, and stream private storage parts ([download route](../src/app/api/reports/exports/%5Bid%5D/download/route.ts#L8-L108)).
@@ -17,7 +17,7 @@ The report hook requests summary data and a bounded preview instead of downloadi
 
 ## Export paths
 
-PDF and Excel use browser-side adapters. Their dependencies are dynamically imported for the chosen format; final file serialization still happens in the browser ([report repository](../src/features/reports/repositories/report.repository.ts), [dependency declarations](../package.json#L49-L92)).
+PDF and Excel use browser-side renderers. Their dependencies are dynamically imported for the chosen format; CSV/JSON keep bounded formatting batches, then all rendered content is handed to the browser download sink ([report repository](../src/features/reports/repositories/report.repository.ts), [renderers](../src/features/reports/lib/report-export-renderers.ts), [download sink](../src/features/reports/lib/report-download.ts), [dependency declarations](../package.json#L49-L92)).
 
 ### Business Cheque Overview PDF
 

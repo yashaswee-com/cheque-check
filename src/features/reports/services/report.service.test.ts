@@ -1,8 +1,23 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ReportService } from './report.service'
+import { ReportService, reportService } from './report.service'
+import { BrowserReportRepository } from '../repositories/report.repository'
 import type { IReportRepository } from '@/features/reports/repositories/report.repository'
 
 describe('ReportService', () => {
+  it('preserves instanceof and binds detached singleton methods', async () => {
+    expect(reportService).toBeInstanceOf(ReportService)
+    const exported = vi
+      .spyOn(BrowserReportRepository.prototype, 'exportToCSV')
+      .mockResolvedValue(undefined)
+    try {
+      const exportToCSV = reportService.exportToCSV
+      await exportToCSV([], 'detached.csv')
+      expect(exported).toHaveBeenCalledWith([], 'detached.csv')
+    } finally {
+      exported.mockRestore()
+    }
+  })
+
   it('delegates CSV exports to the injected repository', async () => {
     const repository = {
       exportToCSV: vi.fn(),
