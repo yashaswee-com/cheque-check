@@ -14,6 +14,14 @@ For the shared worker lifecycle and its recovery boundary, see [durable backgrou
 - The server processing deadline is seven seconds from acceptance, including dispatch and retries, not upload or human review. Expired work cannot be revived by polling/restart or apply late results. This is a deadline policy, not a guarantee of seven-second provider success or instantaneous feedback on a disconnected device.
 - Retake guidance and manual entry remain available when the image is unreadable. Newer manual field edits and superseded-image results are protected by the [client controller](../src/features/cheques/hooks/use-ocr-extraction.ts).
 
+## Browser controller boundaries
+
+The React hook coordinates form integration and user actions; the scan polling loop, result-to-form field policy, and OCR UI state reducer are separate units. Poll requests and their delay are abortable when a scan is cancelled, superseded, or the hook unmounts. A generation token and current business/image/direction checks fence late responses before they can update visible scan state.
+
+Automatic field application is a pure policy: it accepts only requested, non-null OCR fields whose form values still match the captured snapshot. Recovery uses an intentionally empty baseline so populated draft values are never replaced. Candidate matching is separate: fuzzy party/account suggestions are never selected automatically, and account selection requires exactly one server-confirmed exact candidate with the account unchanged since capture. Explicitly chosen candidate IDs remain user-controlled.
+
+Start retries reuse the same idempotency key after uncertain outcomes; a known terminal job can start a fresh attempt. Consent is acknowledged only through the explicit user action, then the existing image is retried. Cancellation stops local polling immediately and separately asks the durable server job to cancel; it does not claim that a completion which already won the server race was refunded.
+
 ## Reliability and matching
 
 The [shared extraction contract](../supabase/functions/cheque-ocr/contract.ts) separates drawer account/name from payee, preserves leading zeros, checks real dates, positive two-decimal amounts and IFSC format, and rejects invalid candidates rather than inventing repairs. Image content is untrusted data. The provider has no tools, browsing, record-writing, or directory access. Structured output is validated independently; schema validity and a model's certainty do not prove correctness.

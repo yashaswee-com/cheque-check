@@ -187,6 +187,35 @@ describe('durable scan client', () => {
     expect(starts).toHaveLength(2)
     expect(starts[0].key).toBe(starts[1].key)
   })
+  it('aborts the active polling request and timer when cancelled', async () => {
+    let startSignal: AbortSignal | undefined
+    mocks.fetch.mockImplementation(async (_: string, init: RequestInit) => {
+      const action = JSON.parse(String(init.body))
+      if (action.action === 'start') {
+        startSignal = init.signal as AbortSignal
+        return response({ ...job, status: 'processing' })
+      }
+      if (action.action === 'cancel')
+        return response({ ...job, status: 'cancelled' })
+      return response({ parties: [], accounts: [] })
+    })
+    const { result } = setup()
+    let pending!: Promise<void>
+    await act(async () => {
+      pending = result.current.scan.extractData(image)
+    })
+
+    await act(() => result.current.scan.cancel())
+    await act(async () => pending)
+
+    expect(startSignal?.aborted).toBe(true)
+    expect(result.current.scan.job?.status).toBe('cancelled')
+    expect(
+      mocks.fetch.mock.calls.some(
+        ([, init]) => JSON.parse(String(init.body)).action === 'read',
+      ),
+    ).toBe(false)
+  })
   it('shows consent required without silently acknowledging it', async () => {
     mocks.fetch.mockResolvedValueOnce(
       new Response(JSON.stringify({ code: 'CONSENT_REQUIRED' }), {

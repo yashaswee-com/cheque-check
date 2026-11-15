@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useReducer, useRef } from 'react'
+import type { SetStateAction } from 'react'
 import type { UseFormSetValue, UseFormWatch } from 'react-hook-form'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
@@ -8,25 +9,29 @@ import { queryKeys } from '@/lib/query-keys'
 import { ScanStore } from '@/lib/scan-store'
 import { OCR_CONSENT_VERSION, type OcrField } from '../services/ocr-contract'
 import {
+  canApplyOcrResult,
+  getOcrFieldUpdates,
+  getUniqueExactAccountId,
+  type OcrFieldSnapshot,
+} from '../services/ocr-field-policy'
+import { pollScanJob } from '../services/ocr-poller'
+import {
   isScanPending,
   ScanCandidatesSchema,
   ScanJobSchema,
   ScanEntitySchema,
   ScanAcknowledgmentSchema,
   type ScanJob,
-  type ScanCandidates,
 } from '@/validators/cheque-scan'
 import { scanRequest, ScanRequestError } from '../services/scan-client'
+import {
+  initialOcrExtractionState,
+  ocrExtractionReducer,
+  type OcrExtractionState,
+  type OcrUnmatchedEntities,
+} from './use-ocr-extraction.reducer'
 import type { Account, Bank, Party, ChequeFormValues } from '@/types'
 
-interface UnmatchedEntities {
-  payee_name?: string
-  account_name?: string
-  account_number?: string
-  ifsc_code?: string
-  bank_name?: string
-  bank_id?: string
-}
 interface Options {
   businessId: string | undefined
   imageUrlParam: string | null
@@ -40,15 +45,7 @@ interface Options {
   isUploading?: boolean
   aiScanEnabled: boolean | undefined
 }
-const editable = [
-  'amount',
-  'cheque_number',
-  'cheque_date',
-  'party_id',
-  'account_id',
-] as const
-type Editable = (typeof editable)[number]
-type Snapshot = Pick<ChequeFormValues, Editable>
+type Snapshot = OcrFieldSnapshot
 
 export function useOcrExtraction(options: Options) {
   const {
@@ -61,25 +58,46 @@ export function useOcrExtraction(options: Options) {
   } = options
   const t = useTranslations('Ocr')
   const queryClient = useQueryClient()
-  const [job, setJob] = useState<ScanJob | null>(null)
-  const [isExtracting, setIsExtracting] = useState(false)
-  const [isCreatingInline, setIsCreatingInline] = useState(false)
-  const [errorCode, setErrorCode] = useState<string | null>(null)
-  const [needsConsent, setNeedsConsent] = useState(false)
-  const [candidates, setCandidates] = useState<ScanCandidates>({
-    parties: [],
-    accounts: [],
-  })
-  const [unmatchedEntities, setUnmatchedEntities] =
-    useState<UnmatchedEntities | null>(null)
-  const [createOptions, setCreateOptions] = useState({
-    party: false,
-    account: false,
-  })
-  const [partyContact, setPartyContact] = useState('')
-  const [allowDuplicate, setAllowDuplicate] = useState(false)
-  const [duplicateWarning, setDuplicateWarning] = useState(false)
-  const [applied, setApplied] = useState(false)
+  const [state, dispatch] = useReducer(
+    ocrExtractionReducer,
+    initialOcrExtractionState,
+  )
+  const {
+    job,
+    isExtracting,
+    isCreatingInline,
+    errorCode,
+    needsConsent,
+    candidates,
+    unmatchedEntities,
+    createOptions,
+    partyContact,
+    allowDuplicate,
+    duplicateWarning,
+    applied,
+  } = state
+  function setOcrState<K extends keyof OcrExtractionState>(
+    key: K,
+    value: SetStateAction<OcrExtractionState[K]>,
+  ) {
+    dispatch({
+      type: 'update',
+      update: (previous) => ({
+        ...previous,
+        [key]: typeof value === 'function' ? value(previous[key]) : value,
+      }),
+    })
+  }
+  const setUnmatchedEntities = (
+    value: SetStateAction<OcrUnmatchedEntities | null>,
+  ) => setOcrState('unmatchedEntities', value)
+  const setCreateOptions = (
+    value: SetStateAction<OcrExtractionState['createOptions']>,
+  ) => setOcrState('createOptions', value)
+  const setPartyContact = (value: SetStateAction<string>) =>
+    setOcrState('partyContact', value)
+  const setAllowDuplicate = (value: SetStateAction<boolean>) =>
+    setOcrState('allowDuplicate', value)
   const current = useRef(options)
   useEffect(() => {
     current.current = options
@@ -87,6 +105,7 @@ export function useOcrExtraction(options: Options) {
   const mounted = useRef(true)
   const generation = useRef(0)
   const snapshot = useRef<Snapshot | null>(null)
+  const pollController = useRef<AbortController | null>(null)
   const attempt = useRef<{ image: string; key: string } | null>(null)
   const activeJob = useRef<ScanJob | null>(null)
   const processedParam = useRef<string | null>(null)
@@ -98,6 +117,7 @@ export function useOcrExtraction(options: Options) {
     mounted.current = true
     return () => {
       mounted.current = false
+      pollController.current?.abort()
     }
   }, [])
 
@@ -105,8 +125,8 @@ export function useOcrExtraction(options: Options) {
     if (!mounted.current) return
     const code =
       error instanceof ScanRequestError ? error.code : 'SCAN_UNAVAILABLE'
-    setErrorCode(code)
-    if (code === 'CONSENT_REQUIRED') setNeedsConsent(true)
+    setOcrState('errorCode', code)
+    if (code === 'CONSENT_REQUIRED') setOcrState('needsConsent', true)
     logger.error('ocr.client.failed', undefined, { code })
   }
   function capture() {
@@ -119,57 +139,70 @@ export function useOcrExtraction(options: Options) {
     }
   }
   function canApply(result: ScanJob) {
-    return (
-      mounted.current &&
-      current.current.businessId === result.business_id &&
-      current.current.watch('image_url') === result.image_url &&
-      current.current.watch('type') === result.mode
-    )
+    return canApplyOcrResult(result, {
+      mounted: mounted.current,
+      businessId: current.current.businessId,
+      imageUrl: current.current.watch('image_url'),
+      mode: current.current.watch('type'),
+    })
   }
   function applyFields(result: ScanJob, fields: OcrField[]) {
     if (!result.details || !canApply(result)) return
-    for (const field of ['amount', 'cheque_number', 'cheque_date'] as const) {
-      if (
-        !fields.includes(field) ||
-        result.details[field] === null ||
-        current.current.watch(field) !== snapshot.current?.[field]
-      )
-        continue
-      if (field === 'amount')
-        setValue(field, result.details.amount!, {
-          shouldDirty: true,
-          shouldValidate: true,
-        })
-      else
-        setValue(field, result.details[field]!, {
-          shouldDirty: true,
-          shouldValidate: true,
-        })
-    }
-    setApplied(true)
+    const updates = getOcrFieldUpdates(result, fields, snapshot.current, {
+      amount: current.current.watch('amount'),
+      cheque_number: current.current.watch('cheque_number'),
+      cheque_date: current.current.watch('cheque_date'),
+      party_id: current.current.watch('party_id'),
+      account_id: current.current.watch('account_id'),
+    })
+    if (updates.amount !== undefined)
+      setValue('amount', updates.amount, {
+        shouldDirty: true,
+        shouldValidate: true,
+      })
+    if (updates.cheque_number !== undefined)
+      setValue('cheque_number', updates.cheque_number, {
+        shouldDirty: true,
+        shouldValidate: true,
+      })
+    if (updates.cheque_date !== undefined)
+      setValue('cheque_date', updates.cheque_date, {
+        shouldDirty: true,
+        shouldValidate: true,
+      })
+    setOcrState('applied', true)
   }
-  async function loadCandidates(result: ScanJob) {
+  async function loadCandidates(result: ScanJob, token?: number) {
     const matches = await scanRequest(
       { action: 'candidates', jobId: result.id },
       ScanCandidatesSchema,
     )
-    if (!canApply(result)) return
-    setCandidates(matches)
-    const exact = matches.accounts.filter((account) => account.exact)
     if (
-      exact.length === 1 &&
-      watch('account_id') === snapshot.current?.account_id
-    ) {
-      setValue('account_id', exact[0].id, {
+      (token !== undefined && generation.current !== token) ||
+      !canApply(result)
+    )
+      return
+    setOcrState('candidates', matches)
+    const exactAccountId = getUniqueExactAccountId(
+      matches,
+      snapshot.current,
+      watch('account_id'),
+    )
+    if (exactAccountId) {
+      setValue('account_id', exactAccountId, {
         shouldDirty: true,
         shouldValidate: true,
       })
     }
   }
-  async function receive(result: ScanJob) {
-    if (!canApply(result)) return
+  async function receive(result: ScanJob, token?: number) {
+    if (
+      (token !== undefined && generation.current !== token) ||
+      !canApply(result)
+    )
+      return
     activeJob.current = result
-    setJob(result)
+    setOcrState('job', result)
     if (
       ['ready_high', 'ready_partial', 'accepted_partial'].includes(
         result.status,
@@ -178,29 +211,24 @@ export function useOcrExtraction(options: Options) {
       if (result.status === 'ready_high') {
         applyFields(result, ['amount', 'cheque_number', 'cheque_date'])
       }
-      await loadCandidates(result)
+      await loadCandidates(result, token)
     }
   }
-  async function poll(result: ScanJob, token: number) {
-    let next = result
-    while (
-      isScanPending(next) &&
-      generation.current === token &&
-      mounted.current
-    ) {
-      await new Promise<void>((resolve) => setTimeout(resolve, 600))
-      if (generation.current !== token || !mounted.current) return
-      const read = await scanRequest(
-        { action: 'read', imageUrl: next.image_url },
-        ScanJobSchema.nullable(),
-      )
-      if (!read) throw new ScanRequestError('IMAGE_NOT_FOUND')
-      next = read
-      if (!canApply(next)) return
-      activeJob.current = next
-      setJob(next)
-    }
-    if (generation.current === token) await receive(next)
+  async function poll(
+    result: ScanJob,
+    token: number,
+    controller: AbortController,
+  ) {
+    const next = await pollScanJob(result, {
+      signal: controller.signal,
+      isCurrent: (candidate) =>
+        generation.current === token && canApply(candidate),
+      onJob: (candidate) => {
+        activeJob.current = candidate
+        setOcrState('job', candidate)
+      },
+    })
+    if (next && generation.current === token) await receive(next, token)
   }
   async function run(url: string, recover: boolean) {
     const ctx = current.current
@@ -211,19 +239,19 @@ export function useOcrExtraction(options: Options) {
       !url
     )
       return
+    pollController.current?.abort()
     const token = ++generation.current
-    setErrorCode(null)
-    setApplied(false)
-    setCandidates({ parties: [], accounts: [] })
-    setUnmatchedEntities(null)
+    const controller = new AbortController()
+    pollController.current = controller
+    dispatch({ type: 'scan-started' })
     capture()
-    setIsExtracting(true)
     try {
       let result: ScanJob | null
       if (recover) {
         result = await scanRequest(
           { action: 'read', imageUrl: url },
           ScanJobSchema.nullable(),
+          controller.signal,
         )
         // Recovery never overwrites populated fields, including edits from another device.
         if (snapshot.current) {
@@ -248,19 +276,28 @@ export function useOcrExtraction(options: Options) {
             consent: OCR_CONSENT_VERSION,
           },
           ScanJobSchema,
+          controller.signal,
         )
       }
-      if (generation.current !== token || !mounted.current) return
+      if (
+        generation.current !== token ||
+        !mounted.current ||
+        controller.signal.aborted
+      )
+        return
       if (result) {
         activeJob.current = result
-        setJob(result)
-        await poll(result, token)
+        setOcrState('job', result)
+        await poll(result, token, controller)
       }
     } catch (error) {
-      if (generation.current === token) report(error)
+      if (generation.current === token && !controller.signal.aborted)
+        report(error)
     } finally {
-      if (generation.current === token && mounted.current)
-        setIsExtracting(false)
+      if (generation.current === token && mounted.current) {
+        setOcrState('isExtracting', false)
+        if (pollController.current === controller) pollController.current = null
+      }
     }
   }
   const extractData = async (url: string) => {
@@ -287,7 +324,7 @@ export function useOcrExtraction(options: Options) {
         { action: 'consent', version: OCR_CONSENT_VERSION },
         ScanAcknowledgmentSchema,
       )
-      setNeedsConsent(false)
+      setOcrState('needsConsent', false)
       await retry()
     } catch (error) {
       report(error)
@@ -295,10 +332,12 @@ export function useOcrExtraction(options: Options) {
   }
   async function cancel() {
     const latest = activeJob.current
+    pollController.current?.abort()
+    pollController.current = null
     generation.current++
-    setIsExtracting(false)
-    setNeedsConsent(false)
-    setErrorCode(null)
+    setOcrState('isExtracting', false)
+    setOcrState('needsConsent', false)
+    setOcrState('errorCode', null)
     if (!latest) return
     try {
       await receive(
@@ -323,7 +362,7 @@ export function useOcrExtraction(options: Options) {
       )
     )
       return
-    setIsExtracting(true)
+    setOcrState('isExtracting', true)
     try {
       const accepted =
         job.status === 'ready_partial'
@@ -333,10 +372,11 @@ export function useOcrExtraction(options: Options) {
             )
           : job
       if (!canApply(accepted)) return
-      setJob(accepted)
+      setOcrState('job', accepted)
       activeJob.current = accepted
       if (!['accepted_partial', 'ready_high'].includes(accepted.status)) {
-        setErrorCode(
+        setOcrState(
+          'errorCode',
           accepted.status === 'expired_review'
             ? 'REVIEW_EXPIRED'
             : 'SCAN_NOT_READY',
@@ -350,7 +390,7 @@ export function useOcrExtraction(options: Options) {
     } catch (error) {
       report(error)
     } finally {
-      setIsExtracting(false)
+      setOcrState('isExtracting', false)
     }
   }
   async function chooseParty(id: string) {
@@ -374,7 +414,7 @@ export function useOcrExtraction(options: Options) {
         ScanJobSchema,
       )
       capture()
-      setApplied(false)
+      setOcrState('applied', false)
       setUnmatchedEntities(null)
       await receive(updated)
     } catch (error) {
@@ -416,12 +456,12 @@ export function useOcrExtraction(options: Options) {
         mode === 'Outward' ? (details.bank_name ?? undefined) : undefined,
     })
     setCreateOptions({ party: false, account: false })
-    setDuplicateWarning(false)
-    setAllowDuplicate(false)
+    setOcrState('duplicateWarning', false)
+    setOcrState('allowDuplicate', false)
   }
   async function handleInlineCreate() {
     if (!job || !canApply(job) || isCreatingInline) return
-    setIsCreatingInline(true)
+    setOcrState('isCreatingInline', true)
     try {
       for (const kind of ['party', 'account'] as const) {
         if (!createOptions[kind]) continue
@@ -459,10 +499,10 @@ export function useOcrExtraction(options: Options) {
         error instanceof ScanRequestError &&
         error.code === 'DUPLICATE_ENTITY'
       )
-        setDuplicateWarning(true)
+        setOcrState('duplicateWarning', true)
       report(error)
     } finally {
-      setIsCreatingInline(false)
+      setOcrState('isCreatingInline', false)
     }
   }
 
@@ -505,6 +545,8 @@ export function useOcrExtraction(options: Options) {
     }
     if (!activeImage) {
       generation.current++
+      pollController.current?.abort()
+      pollController.current = null
       activeJob.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
