@@ -492,6 +492,32 @@ describe('payment order route', () => {
     expect(await response.json()).toEqual({ error: 'Could not record order' })
   })
 
+  it.each([
+    ['23505', 409],
+    ['42501', 403],
+    ['XX000', 500],
+  ])('maps quote error %s to HTTP %i', async (code, status) => {
+    const error = { code, message: 'Could not reserve checkout' }
+    mocks.adminRpc.mockResolvedValueOnce({ data: null, error })
+    const response = await POST(
+      request(
+        JSON.stringify({
+          productId: PRODUCT_IDS.LIFETIME_PREMIUM,
+          checkoutId: '90000000-0000-4000-8000-000000000001',
+        }),
+      ),
+    )
+    expect(response.status).toBe(status)
+    expect(await response.json()).toEqual({ error: error.message })
+    expect(mocks.adminRpc).toHaveBeenCalledWith('prepare_payment_checkout', {
+      requested_id: '90000000-0000-4000-8000-000000000001',
+      requested_user: user.id,
+      requested_product: PRODUCT_IDS.LIFETIME_PREMIUM,
+    })
+    expect(mocks.error).toHaveBeenCalledWith('Payment quote failed', error)
+    expect(mocks.createOrder).not.toHaveBeenCalled()
+  })
+
   it('logs unexpected provider and Supabase errors', async () => {
     const error = new Error('Razorpay unavailable')
     mocks.createOrder.mockRejectedValue(error)
@@ -508,5 +534,12 @@ describe('payment order route', () => {
       'Failed to create payment order',
       error,
     )
+    expect(mocks.error).toHaveBeenCalledWith(
+      'Provider order creation failed; reservation awaits expiry',
+      error,
+    )
+    expect(mocks.adminRpc.mock.calls.map(([name]) => name)).toEqual([
+      'prepare_payment_checkout',
+    ])
   })
 })

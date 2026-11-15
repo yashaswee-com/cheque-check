@@ -2,6 +2,62 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { paymentService, PaymentService } from './payment.service'
 
 describe('PaymentService', () => {
+  it('injects transport and UUID generation while preserving retry and instance state', async () => {
+    const transport = vi.fn<typeof fetch>()
+    const uuid = vi
+      .fn()
+      .mockReturnValueOnce('first')
+      .mockReturnValueOnce('second')
+      .mockReturnValueOnce('third')
+    const service = new PaymentService(transport, uuid)
+    transport.mockRejectedValueOnce(new Error('offline'))
+    transport.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'conflict' }), { status: 409 }),
+    )
+    transport.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'Closed' }), { status: 410 }),
+    )
+    transport.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          id: 'order',
+          amount: 5000,
+          currency: 'INR',
+          productId: 'ai_scan_250',
+          name: 'Top-up',
+        }),
+      ),
+    )
+    await expect(service.createOrder('ai_scan_250')).rejects.toThrow('offline')
+    await expect(service.createOrder('ai_scan_250')).rejects.toThrow('conflict')
+    await expect(service.createOrder('ai_scan_250')).rejects.toThrow('Closed')
+    await service.createOrder('ai_scan_250')
+    expect(
+      transport.mock.calls.map(
+        (call) => JSON.parse(call[1]?.body as string).checkoutId,
+      ),
+    ).toEqual(['first', 'first', 'first', 'second'])
+    service.complete('ai_scan_250')
+    const other = new PaymentService(transport, () => 'other')
+    transport.mockResolvedValue(
+      new Response(JSON.stringify({ error: 'unavailable' }), { status: 503 }),
+    )
+    await expect(other.createOrder('ai_scan_250')).rejects.toThrow(
+      'unavailable',
+    )
+    expect(
+      JSON.parse(transport.mock.calls[4][1]?.body as string).checkoutId,
+    ).toBe('other')
+    transport.mockResolvedValue(
+      new Response(JSON.stringify({ error: 'unavailable' }), { status: 503 }),
+    )
+    await expect(service.createOrder('ai_scan_250')).rejects.toThrow(
+      'unavailable',
+    )
+    expect(
+      JSON.parse(transport.mock.calls[5][1]?.body as string).checkoutId,
+    ).toBe('third')
+  })
   it('reuses a request ID across retries and starts a new ID only after a closed quote', async () => {
     const service = new PaymentService()
     const order = {

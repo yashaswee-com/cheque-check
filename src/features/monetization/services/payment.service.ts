@@ -17,10 +17,16 @@ function getDefaultPaymentService(): PaymentService {
 
 export class PaymentService {
   private pending = new Map<PaymentProductId, string>()
+
+  constructor(
+    private readonly transport: typeof monitoredFetch = monitoredFetch,
+    private readonly randomUUID: () => string = () => crypto.randomUUID(),
+  ) {}
+
   async createOrder(productId: PaymentProductId): Promise<PaymentOrder> {
-    const checkoutId = this.pending.get(productId) ?? crypto.randomUUID()
+    const checkoutId = this.pending.get(productId) ?? this.randomUUID()
     this.pending.set(productId, checkoutId)
-    const response = await monitoredFetch('/api/payments/create-order', {
+    const response = await this.transport('/api/payments/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ productId, checkoutId }),
