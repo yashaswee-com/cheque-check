@@ -292,6 +292,15 @@ This log summarizes the project's checked-in history from August 5 through Novem
   - No database migrations, new environment variables, CLI command changes, or hosted deployment were introduced. Releasing the worker changes requires redeploying `notifications-dispatcher` as well as the web application.
   - Commits: `450e6f1`, `10160e4`
 
+- Clearer feedback for settings, filters, empty states, and final actions
+  - Removed the pinned cookie settings button; consent is now reviewed from **Settings → Preferences → Cookie settings** or the public footer, both reopening the existing banner.
+  - Every toggle shows its On/Off state with a line explaining what the current state does (reduce motion, privacy, error tracking, notification channels, push, premium features).
+  - Sort & Filter sheets show a live "X <entities> selected" count; paged cheque and notification lists count the full matching set rather than one page.
+  - Empty and no-results states explain what was searched, in which business, how many filters are applied, and how to clear them.
+  - Final create, update, and delete buttons name their target (for example "Save Nitin Enterprises" or "Delete cheque 12343"); intermediate wizard steps still use "Continue". New copy ships in English, Hindi, and Hinglish.
+  - TypeScript, ESLint, and Prettier passed; the full suite recorded 3,334 passing tests with only the six baseline failures and the admin-environment suite-load error. No migrations, environment variables, or hosted deployment were introduced.
+  - Commits: `7fc54cb`, `b9a8e51`, `3c49acf`, `4df4e72`, `394e232`, `92449a2`
+
 ---
 
 ## Product arc summary
