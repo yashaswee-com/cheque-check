@@ -2,7 +2,6 @@ import type { z } from 'zod'
 import { accountSchema, chequeSchema, partySchema } from '@/validators'
 import { ValidationError } from '@/lib/errors'
 import { Cheque as ChequeEntity } from '@/domain/cheque.entity'
-import { storageService } from '@/services/storage.service'
 import type {
   Account,
   AccountDraft,
@@ -10,6 +9,7 @@ import type {
   ChequeDraft,
   ChequeDraftFields,
   ChequeWithRelations,
+  Cheque,
   Party,
   PartyDraft,
   PartyDraftFields,
@@ -20,6 +20,9 @@ import {
   SupabaseAccountDraftRepository,
   SupabaseChequeDraftRepository,
   SupabasePartyDraftRepository,
+  type PublishedChequeInput,
+  type PublishedPartyInput,
+  type PublishedAccountInput,
 } from '../repositories/draft.repository'
 
 function parseOrThrow<T extends z.ZodTypeAny>(
@@ -33,9 +36,14 @@ function parseOrThrow<T extends z.ZodTypeAny>(
   return result.data
 }
 
-class DraftService<TDraft, TFields> {
+class DraftService<TDraft, TFields, TPublished, TPublishInput> {
   constructor(
-    protected readonly repository: IDraftRepository<TDraft, TFields>,
+    protected readonly repository: IDraftRepository<
+      TDraft,
+      TFields,
+      TPublished,
+      TPublishInput
+    >,
   ) {}
 
   list(businessId: string) {
@@ -59,15 +67,14 @@ class DraftService<TDraft, TFields> {
   }
 }
 
-type ImageStorage = { deleteChequeImage(url: string): Promise<void> }
-
 export class ChequeDraftService extends DraftService<
   ChequeDraft,
-  ChequeDraftFields
+  ChequeDraftFields,
+  Cheque,
+  PublishedChequeInput
 > {
   constructor(
     protected readonly repository: IChequeDraftRepository = new SupabaseChequeDraftRepository(),
-    private readonly storage: ImageStorage = storageService,
   ) {
     super(repository)
   }
@@ -77,8 +84,6 @@ export class ChequeDraftService extends DraftService<
   }
 
   duplicate(sourceId: string): Promise<ChequeDraft> {
-    if (!this.repository.duplicate)
-      throw new Error('Duplicate operation unavailable')
     return this.repository.duplicate(sourceId)
   }
 
@@ -89,7 +94,7 @@ export class ChequeDraftService extends DraftService<
   ): Promise<ChequeEntity> {
     const data = parseOrThrow(chequeSchema, values)
     const draft = await this.repository.getById(id)
-    const row = await this.repository.publish<ChequeWithRelations>(id, {
+    const row = await this.repository.publish(id, {
       ...data,
       notes: data.notes || null,
       image_url: data.image_url ?? null,
@@ -119,12 +124,16 @@ export class ChequeDraftService extends DraftService<
 
 export class PartyDraftService extends DraftService<
   PartyDraft,
-  PartyDraftFields
+  PartyDraftFields,
+  Party,
+  PublishedPartyInput
 > {
   constructor(
     repository: IDraftRepository<
       PartyDraft,
-      PartyDraftFields
+      PartyDraftFields,
+      Party,
+      PublishedPartyInput
     > = new SupabasePartyDraftRepository(),
   ) {
     super(repository)
@@ -132,7 +141,7 @@ export class PartyDraftService extends DraftService<
 
   async publish(id: string, values: unknown): Promise<Party> {
     const data = parseOrThrow(partySchema, values)
-    return this.repository.publish<Party>(id, {
+    return this.repository.publish(id, {
       ...data,
       email: data.email || null,
       address: data.address || null,
@@ -144,12 +153,16 @@ export class PartyDraftService extends DraftService<
 
 export class AccountDraftService extends DraftService<
   AccountDraft,
-  AccountDraftFields
+  AccountDraftFields,
+  Account,
+  PublishedAccountInput
 > {
   constructor(
     repository: IDraftRepository<
       AccountDraft,
-      AccountDraftFields
+      AccountDraftFields,
+      Account,
+      PublishedAccountInput
     > = new SupabaseAccountDraftRepository(),
   ) {
     super(repository)
@@ -160,7 +173,7 @@ export class AccountDraftService extends DraftService<
       opening_balance: 0,
       ...(values as Record<string, unknown>),
     })
-    return this.repository.publish<Account>(id, {
+    return this.repository.publish(id, {
       ...data,
       ifsc_code: data.ifsc_code || null,
       notes: data.notes || null,

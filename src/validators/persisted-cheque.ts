@@ -15,6 +15,7 @@ export const persistedChequeSchema = z.object({
   party_id: z.string(),
   account_id: z.string(),
   cheque_number: z.string(),
+  cheque_number_legacy: z.boolean().optional(),
   amount: z.number().finite(),
   cheque_date: z.string(),
   deposit_date: z.string().nullable(),

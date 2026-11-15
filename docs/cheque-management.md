@@ -17,6 +17,10 @@ The cheque list uses server-side filters and stable ordering, while accounts and
 
 ## Drafts
 
+Draft repositories bind their published output and publish-input types to the entity rather than letting callers choose a return type. Draft reads, saves, duplication, and publication validate database output with [persisted schemas](../src/validators/persisted-draft.ts); malformed data raises a database error. Cheque duplication is a required repository capability.
+
+The [cheque entity](../src/domain/cheque.entity.ts) owns a snapshot of its input and returns independent relation/serialization snapshots. Due-date display and overdue checks use the same calendar-day comparison; callers supplying an instant can also supply the business time zone. Date-only inputs retain their calendar meaning.
+
 Drafts preserve incomplete values and are stored in the account, party, or cheque entity tables with the `is_draft` marker; draft repository methods list, save, delete, and publish those rows ([draft schema](../supabase/migrations/20260928000000_add_drafts.sql#L1-L76), [draft repository](../src/features/drafts/repositories/draft.repository.ts#L28-L110)). Database lifecycle rules exclude drafts from published cheque semantics ([lifecycle draft guards](../supabase/migrations/20261021000000_lifecycle.sql#L300-L354)).
 
 When a user uploads a cheque image on the create form, the application saves its reference in a new or existing draft before starting optical character recognition (OCR). If the draft cannot be saved, it restores the previous form image and does not start OCR; a user-visible error is shown ([upload handler](../src/features/cheques/hooks/use-create-cheque.ts#L247-L286), [pending scan](../src/features/cheques/hooks/use-ocr-extraction.ts#L215-L225)). The existing private-media policy still requires an active record reference ([storage policy](../supabase/migrations/20261021000000_lifecycle.sql#L419-L443)).

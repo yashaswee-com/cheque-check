@@ -27,6 +27,7 @@ function chequeRepository(overrides: Record<string, unknown> = {}) {
     delete: vi.fn().mockResolvedValue(undefined),
     publish: vi.fn().mockResolvedValue({ ...completeCheque, id: 'd1' }),
     hasNumberConflict: vi.fn().mockResolvedValue(true),
+    duplicate: vi.fn(),
     ...overrides,
   }
 }
@@ -34,9 +35,7 @@ function chequeRepository(overrides: Record<string, unknown> = {}) {
 describe('ChequeDraftService', () => {
   it('publishes a complete draft with its initial status and reminder', async () => {
     const repository = chequeRepository()
-    const service = new ChequeDraftService(repository, {
-      deleteChequeImage: vi.fn(),
-    })
+    const service = new ChequeDraftService(repository)
 
     const published = await service.publish('d1', completeCheque, 3)
 
@@ -52,9 +51,7 @@ describe('ChequeDraftService', () => {
 
   it('refuses to publish an incomplete draft', async () => {
     const repository = chequeRepository()
-    const service = new ChequeDraftService(repository, {
-      deleteChequeImage: vi.fn(),
-    })
+    const service = new ChequeDraftService(repository)
 
     await expect(
       service.publish('d1', { ...completeCheque, cheque_number: '12' }, null),
@@ -67,7 +64,7 @@ describe('ChequeDraftService', () => {
       getById: vi.fn().mockResolvedValue({ id: 'd1', image_url: '/img' }),
     })
     const storage = { deleteChequeImage: vi.fn().mockResolvedValue(undefined) }
-    const service = new ChequeDraftService(repository, storage)
+    const service = new ChequeDraftService(repository)
 
     await service.delete('d1')
 
@@ -82,7 +79,7 @@ describe('ChequeDraftService', () => {
     const storage = {
       deleteChequeImage: vi.fn().mockRejectedValue(new Error('storage down')),
     }
-    const service = new ChequeDraftService(repository, storage)
+    const service = new ChequeDraftService(repository)
 
     await expect(service.delete('d1')).resolves.toBeUndefined()
     expect(repository.delete).toHaveBeenCalledWith('d1')
@@ -93,7 +90,7 @@ describe('ChequeDraftService', () => {
       getById: vi.fn().mockResolvedValue({ id: 'd1', image_url: null }),
     })
     const storage = { deleteChequeImage: vi.fn() }
-    const service = new ChequeDraftService(repository, storage)
+    const service = new ChequeDraftService(repository)
 
     await service.delete('d1')
 
@@ -102,9 +99,7 @@ describe('ChequeDraftService', () => {
 
   it('delegates cheque number conflict checks', async () => {
     const repository = chequeRepository()
-    const service = new ChequeDraftService(repository, {
-      deleteChequeImage: vi.fn(),
-    })
+    const service = new ChequeDraftService(repository)
 
     await expect(service.hasNumberConflict('b1', 'a1', '123456')).resolves.toBe(
       true,

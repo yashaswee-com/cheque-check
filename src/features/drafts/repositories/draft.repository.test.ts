@@ -1,9 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import {
   SupabaseAccountDraftRepository,
   SupabaseChequeDraftRepository,
   SupabasePartyDraftRepository,
+  type IChequeDraftRepository,
+  type PublishedChequeInput,
 } from './draft.repository'
+import type { Cheque } from '@/types'
+import {
+  accountDraftFixture,
+  chequeDraftFixture,
+  partyDraftFixture,
+} from '@/test/draft-fixtures'
 
 const mocks = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn() }))
 vi.mock('@/lib/supabase/client', () => ({ createClient: () => mocks }))
@@ -24,34 +32,47 @@ const query = {
 }
 beforeEach(() => {
   vi.clearAllMocks()
-  data = { id: 'd1' }
+  data = partyDraftFixture
   error = null
   mocks.from.mockReturnValue(query)
-  mocks.rpc.mockResolvedValue({ data: { id: 'copy' }, error: null })
+  mocks.rpc.mockResolvedValue({
+    data: { ...chequeDraftFixture, id: 'copy' },
+    error: null,
+  })
 })
 
 describe('draft repositories', () => {
-  it.each([
-    [SupabaseChequeDraftRepository, 'cheques'],
-    [SupabasePartyDraftRepository, 'parties'],
-    [SupabaseAccountDraftRepository, 'accounts'],
-  ] as const)('lists only active drafts in %s', async (Repository, table) => {
-    data = [{ id: 'd1' }]
-    await expect(new Repository().list('b1')).resolves.toEqual(data)
-    expect(mocks.from).toHaveBeenCalledWith(table)
-    expect(query.eq.mock.calls).toEqual([
-      ['business_id', 'b1'],
-      ['is_draft', true],
-    ])
-    expect(query.is).toHaveBeenCalledWith('deleted_at', null)
-    expect(query.order).toHaveBeenCalledWith('updated_at', { ascending: false })
+  it('binds publication to the cheque input and persisted return type', () => {
+    expectTypeOf<IChequeDraftRepository['publish']>().toEqualTypeOf<
+      (id: string, values: PublishedChequeInput) => Promise<Cheque>
+    >()
   })
+  it.each([
+    [SupabaseChequeDraftRepository, 'cheques', chequeDraftFixture],
+    [SupabasePartyDraftRepository, 'parties', partyDraftFixture],
+    [SupabaseAccountDraftRepository, 'accounts', accountDraftFixture],
+  ] as const)(
+    'lists only active drafts in %s',
+    async (Repository, table, fixture) => {
+      data = [fixture]
+      await expect(new Repository().list('b1')).resolves.toEqual(data)
+      expect(mocks.from).toHaveBeenCalledWith(table)
+      expect(query.eq.mock.calls).toEqual([
+        ['business_id', 'b1'],
+        ['is_draft', true],
+      ])
+      expect(query.is).toHaveBeenCalledWith('deleted_at', null)
+      expect(query.order).toHaveBeenCalledWith('updated_at', {
+        ascending: false,
+      })
+    },
+  )
 
   it('creates drafts with trusted business identity and draft status', async () => {
     const repository = new SupabasePartyDraftRepository()
-    await expect(repository.create('b1', { name: 'Asha' })).resolves.toEqual({
-      id: 'd1',
-    })
+    await expect(repository.create('b1', { name: 'Asha' })).resolves.toEqual(
+      partyDraftFixture,
+    )
     expect(query.insert).toHaveBeenCalledWith([
       { name: 'Asha', business_id: 'b1', is_draft: true },
     ])
@@ -96,13 +117,30 @@ describe('draft repositories', () => {
   })
 
   it('publishes a draft in place without inserting a second record', async () => {
+    data = {
+      id: 'd1',
+      business_id: 'b1',
+      name: 'Asha',
+      contact: '+919876543210',
+      email: null,
+      address: null,
+      notes: null,
+      created_at: '',
+      updated_at: '',
+    }
     await new SupabasePartyDraftRepository().publish('d1', {
       name: 'Asha',
       contact: '+919876543210',
+      email: null,
+      address: null,
+      notes: null,
     })
     expect(query.update).toHaveBeenCalledWith({
       name: 'Asha',
       contact: '+919876543210',
+      email: null,
+      address: null,
+      notes: null,
       is_draft: false,
       updated_at: expect.any(String),
     })
@@ -116,7 +154,7 @@ describe('draft repositories', () => {
   it('duplicates a cheque through the authorized RPC', async () => {
     await expect(
       new SupabaseChequeDraftRepository().duplicate('c1'),
-    ).resolves.toEqual({ id: 'copy' })
+    ).resolves.toEqual({ ...chequeDraftFixture, id: 'copy' })
     expect(mocks.rpc).toHaveBeenCalledWith('duplicate_cheque_draft', {
       requested_cheque: 'c1',
     })
@@ -156,5 +194,25 @@ describe('draft repositories', () => {
     ).resolves.toBe(false)
     expect(query.neq).toHaveBeenCalledExactlyOnceWith('id', 'c1')
     expect(query.limit).toHaveBeenCalledWith(1)
+  })
+
+  it('rejects malformed database drafts and published rows', async () => {
+    data = { id: 'd1' }
+    await expect(
+      new SupabasePartyDraftRepository().getById('d1'),
+    ).rejects.toThrow('Invalid draft')
+    await expect(
+      new SupabasePartyDraftRepository().publish('d1', {
+        name: 'Asha',
+        contact: '+919876543210',
+        email: null,
+        address: null,
+        notes: null,
+      }),
+    ).rejects.toThrow('Invalid published draft')
+    mocks.rpc.mockResolvedValue({ data: { id: 'copy' }, error: null })
+    await expect(
+      new SupabaseChequeDraftRepository().duplicate('d1'),
+    ).rejects.toThrow('Invalid duplicated')
   })
 })
