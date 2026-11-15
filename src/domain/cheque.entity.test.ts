@@ -49,6 +49,20 @@ describe('Cheque entity', () => {
     expect(json).not.toBe(row)
     json.notes = 'Modified'
     expect(entity.notes).toBe('Note')
+    row.amount = 200
+    row.party.name = 'External mutation'
+    row.account.bank.name = 'External bank'
+    expect(entity.amount).toBe(100)
+    expect(entity.party?.name).toBe('Acme')
+    expect(entity.account?.bank?.name).toBe('Bank')
+    if (json.party) json.party.name = 'Serialized mutation'
+    if (json.account?.bank) json.account.bank.name = 'Serialized bank'
+    const exposedParty = entity.party
+    const exposedAccount = entity.account
+    if (exposedParty) exposedParty.name = 'Getter mutation'
+    if (exposedAccount?.bank) exposedAccount.bank.name = 'Getter bank'
+    expect(entity.party?.name).toBe('Acme')
+    expect(entity.account?.bank?.name).toBe('Bank')
     expect(Cheque.fromRow({ ...row, is_draft: undefined }).is_draft).toBe(false)
     expect(entity.cheque_number_legacy).toBe(false)
     expect(
@@ -63,6 +77,33 @@ describe('Cheque entity', () => {
   it('derives initial statuses by cheque type', () => {
     expect(Cheque.initialStatusFor('Outward')).toBe('Issued')
     expect(Cheque.initialStatusFor('Inward')).toBe('Received')
+  })
+
+  it('compares due dates as calendar days in the explicit business timezone', () => {
+    const cheque = Cheque.fromRow({
+      id: '1',
+      business_id: 'b1',
+      party_id: 'p1',
+      account_id: 'a1',
+      cheque_number: '123456',
+      amount: 100,
+      cheque_date: '2026-11-15',
+      deposit_date: null,
+      remind_before_days: null,
+      status: 'Issued',
+      type: 'Outward',
+      notes: null,
+      image_url: null,
+      created_at: '',
+      updated_at: '',
+    })
+    expect(cheque.displayStatus('2026-11-15T12:00:00Z', 'UTC')).toBe('Today')
+    expect(cheque.isOverdue('2026-11-15T12:00:00Z', 'UTC')).toBe(false)
+    expect(cheque.isOverdue('2026-11-15T20:00:00Z', 'Asia/Kolkata')).toBe(true)
+    expect(
+      cheque.displayStatus('2026-11-15T01:00:00Z', 'America/New_York'),
+    ).toBe('Upcoming')
+    expect(() => cheque.isOverdue('invalid', 'UTC')).toThrow()
   })
 
   it('allows status corrections and blocks no-op or wrong-type transitions', () => {

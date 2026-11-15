@@ -1,15 +1,32 @@
-import {
-  Cheque as ChequeRow,
-  ChequeStatus,
-  ChequeType,
-  ChequeWithRelations,
-} from '@/types'
+import { ChequeStatus, ChequeType, ChequeWithRelations } from '@/types'
+import { localDay } from '@/lib/preference-format'
+
+function copyRow(row: ChequeWithRelations): ChequeWithRelations {
+  return {
+    ...row,
+    ...(row.party ? { party: { ...row.party } } : {}),
+    ...(row.account
+      ? {
+          account: {
+            ...row.account,
+            ...(row.account.bank ? { bank: { ...row.account.bank } } : {}),
+          },
+        }
+      : {}),
+  }
+}
+
+function comparisonDay(asOf: Date | string, timeZone?: string): string {
+  return typeof asOf === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(asOf)
+    ? asOf
+    : localDay(new Date(asOf), timeZone)
+}
 
 export class Cheque {
   private readonly row: ChequeWithRelations
 
   private constructor(row: ChequeWithRelations) {
-    this.row = row
+    this.row = copyRow(row)
   }
 
   static initialStatusFor(type: ChequeType): ChequeStatus {
@@ -102,11 +119,11 @@ export class Cheque {
   }
 
   get party(): ChequeWithRelations['party'] {
-    return this.row.party
+    return this.row.party ? { ...this.row.party } : undefined
   }
 
   get account(): ChequeWithRelations['account'] {
-    return this.row.account
+    return copyRow(this.row).account
   }
 
   canTransition(nextStatus: ChequeStatus): boolean {
@@ -115,25 +132,19 @@ export class Cheque {
     return Cheque.canTransitionFor(this.type, this.status, nextStatus)
   }
 
-  displayStatus(asOf = new Date().toISOString().split('T')[0]) {
+  displayStatus(asOf: Date | string = new Date(), timeZone?: string) {
+    const today = comparisonDay(asOf, timeZone)
     if (this.status === 'Cleared' || this.status === 'Bounced')
       return this.status
-    if (this.cheque_date === asOf) return 'Today'
-    return this.cheque_date < asOf ? 'Overdue' : 'Upcoming'
+    if (this.cheque_date === today) return 'Today'
+    return this.cheque_date < today ? 'Overdue' : 'Upcoming'
   }
 
-  isOverdue(asOf: Date | string = new Date()): boolean {
-    if (this.status !== 'Issued' && this.status !== 'Received') {
-      return false
-    }
-
-    const comparisonDate = new Date(asOf)
-    const paymentDate = new Date(this.cheque_date)
-
-    return paymentDate < comparisonDate
+  isOverdue(asOf: Date | string = new Date(), timeZone?: string): boolean {
+    return this.displayStatus(asOf, timeZone) === 'Overdue'
   }
 
-  toJSON(): ChequeRow {
-    return { ...this.row }
+  toJSON(): ChequeWithRelations {
+    return copyRow(this.row)
   }
 }
