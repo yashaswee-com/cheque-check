@@ -337,6 +337,9 @@ function ReportsContent() {
             icon={Building03Icon}
             title={t('welcomeTitle')}
             description={t('welcomeDescription')}
+            detail={tc('emptyCheckedAll', {
+              entity: tc('entityBusiness', { count: 2 }),
+            })}
             action={{
               label: t('createBusiness'),
               href: '/businesses/create',
@@ -412,6 +415,16 @@ function ReportsContent() {
                 icon={FileText}
                 title={tr('noChequesYet')}
                 description={tr('noChequesToReport')}
+                detail={
+                  activeBusiness
+                    ? tc('emptyCheckedScope', {
+                        scope: activeBusiness.name,
+                        entity: tc('entityCheque', { count: 2 }),
+                      })
+                    : tc('emptyCheckedAll', {
+                        entity: tc('entityCheque', { count: 2 }),
+                      })
+                }
                 className="py-10 bg-canvas-parchment/30"
               />
             ) : (

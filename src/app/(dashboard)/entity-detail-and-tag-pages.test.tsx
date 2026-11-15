@@ -402,15 +402,17 @@ vi.mock('@/components/ui/delete-dialog', () => ({
     onDelete,
     trigger,
     open,
+    confirmLabel,
   }: {
     onDelete: () => void
     trigger?: ReactNode
     open?: boolean
+    confirmLabel?: string
   }) => (
     <div>
       {trigger}
       {(open === undefined || open) && (
-        <button onClick={onDelete}>Confirm deletion</button>
+        <button onClick={onDelete}>{confirmLabel ?? 'Confirm deletion'}</button>
       )}
     </div>
   ),
@@ -445,7 +447,7 @@ afterEach(cleanup)
 /** The list-level "Clear all filters" action, not the one in the filter sheet. */
 function listClearButton() {
   return screen
-    .queryAllByRole('button', { name: messages.Common.clearAllFilters })
+    .queryAllByRole('button', { name: messages.Common.clearSearchAndFilters })
     .find((button) => !button.closest('section[aria-label="Advanced filters"]'))
 }
 
@@ -600,12 +602,18 @@ describe.each([
     expect(
       screen.queryByRole('button', { name: 'Clear cheque' }),
     ).not.toBeInTheDocument()
-    if (kind !== 'business')
-      expect(
-        document.querySelector('a[href="/cheques/create"]'),
-      ).toBeInTheDocument()
-    else
-      expect(screen.getByText(messages.Businesses.noChequesTitle)).toBeVisible()
+    const scope =
+      kind === 'business'
+        ? business.name
+        : kind === 'account'
+          ? account.account_name
+          : party.name
+    expect(
+      screen.getByText(`We looked in ${scope} and found no cheques yet.`),
+    ).toBeVisible()
+    expect(
+      document.querySelector('a[href="/cheques/create"]'),
+    ).toBeInTheDocument()
   })
   if (kind !== 'business')
     it('hides published details while a draft redirect is pending', () => {
@@ -693,6 +701,9 @@ describe('tag create and edit pages', () => {
     fireEvent.change(input, { target: { value: '   ' } })
     expect(screen.getByTestId('tag-form-submit-button')).toBeDisabled()
     fireEvent.change(input, { target: { value: '  Priority  ' } })
+    expect(screen.getByTestId('tag-form-submit-button')).toHaveTextContent(
+      'Save tag Priority',
+    )
     fireEvent.click(screen.getByTestId('tag-form-submit-button'))
     await waitFor(() =>
       expect(mocks.replace).toHaveBeenCalledWith('/tags/created-tag'),
@@ -795,6 +806,7 @@ describe('tag create and edit pages', () => {
     fireEvent.change(input, { target: { value: 'Urgent' } })
     expect(save).toBeDisabled()
     fireEvent.change(input, { target: { value: 'Later' } })
+    expect(save).toHaveTextContent('Update Later')
     expect(save).toBeEnabled()
   })
   it('prefills the existing tag, saves its update, and returns only after success', async () => {
@@ -824,7 +836,7 @@ describe('tag create and edit pages', () => {
   it('deletes the existing tag and returns to the tag list', async () => {
     renderPage(<EditTagPage />)
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Confirm deletion' }),
+      await screen.findByRole('button', { name: 'Delete tag Urgent' }),
     )
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/tags'))
     expect(mocks.delete).toHaveBeenCalledWith('tag')
@@ -904,14 +916,14 @@ describe('tag detail page', () => {
     renderPage(<TagDetailPage />)
     expect(screen.getByText(messages.Tags.noLinkedItems)).toBeVisible()
     expect(
-      screen.queryByRole('button', { name: 'Confirm deletion' }),
+      screen.queryByRole('button', { name: 'Delete tag Urgent' }),
     ).not.toBeInTheDocument()
     fireEvent.click(
       screen.getByRole('button', { name: messages.Tags.deleteTag }),
     )
     expect(mocks.delete).not.toHaveBeenCalled()
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Confirm deletion' }),
+      await screen.findByRole('button', { name: 'Delete tag Urgent' }),
     )
     await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/tags'))
     expect(mocks.delete).toHaveBeenCalledWith('tag')

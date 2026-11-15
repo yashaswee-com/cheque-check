@@ -1,4 +1,10 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
@@ -25,7 +31,7 @@ vi.mock('@/features/businesses/hooks/use-business', () => ({
 }))
 vi.mock('@/features/notifications/hooks/use-inbox', () => ({
   useInbox: () => ({
-    data: { items: [], snapshot: 'snapshot' },
+    data: { items: [], total: 4, snapshot: 'snapshot' },
     isLoading: false,
     error: null,
     isFetching: false,
@@ -112,6 +118,32 @@ describe('notifications inbox push settings', () => {
     expect(
       await screen.findByRole('link', { name: messages.Push.settingsLink }),
     ).toHaveAttribute('href', '/settings/notifications')
+  })
+
+  it('shows live filter counts and explains search misses', async () => {
+    pushMock.state.mockResolvedValue('enabled')
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <NotificationsPage />
+      </NextIntlClientProvider>,
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Common.sortAndFilter }),
+    )
+    expect(await screen.findByTestId('filter-result-count')).toHaveTextContent(
+      '4 notifications selected',
+    )
+    fireEvent.keyDown(document, { key: 'Escape' })
+    fireEvent.change(screen.getByRole('searchbox'), {
+      target: { value: 'missing' },
+    })
+    expect(await screen.findByTestId('no-results-state')).toHaveTextContent(
+      'missing',
+    )
+    expect(screen.getByTestId('no-results-state')).toHaveTextContent(
+      messages.Common.clearSearchAndFilters,
+    )
   })
 
   it('does not show the settings redirect when this device is registered', async () => {

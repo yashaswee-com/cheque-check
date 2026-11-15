@@ -357,6 +357,7 @@ vi.mock('@/components/ui/data-state', () => ({
     onClearFilters,
     loadingComponent,
     emptyState,
+    noResults,
   }: {
     children: ReactNode
     isLoading: boolean
@@ -366,11 +367,20 @@ vi.mock('@/components/ui/data-state', () => ({
     onClearFilters: () => void
     loadingComponent: ReactNode
     emptyState: ReactNode
+    noResults?: { entity: string; search?: string; filterCount?: number }
   }) => {
     if (isLoading) return loadingComponent
     if (isError) return <p role="alert">Could not load cheques</p>
     if (!data.length && allData.length)
-      return <button onClick={onClearFilters}>Clear filters</button>
+      return (
+        <div
+          data-testid="cheque-no-results"
+          data-entity={noResults?.entity}
+          data-filter-count={noResults?.filterCount}
+        >
+          <button onClick={onClearFilters}>Clear search &amp; filters</button>
+        </div>
+      )
     if (!data.length) return emptyState
     return <>{children}</>
   },
@@ -529,13 +539,15 @@ vi.mock('@/components/ui/delete-dialog', () => ({
   DeleteConfirmationDialog: ({
     onDelete,
     open,
+    confirmLabel,
   }: {
     onDelete: () => void
     open?: boolean
+    confirmLabel?: string
   }) =>
     open === undefined || open ? (
       <button type="button" onClick={onDelete}>
-        Confirm deletion
+        {confirmLabel ?? 'Confirm deletion'}
       </button>
     ) : null,
 }))
@@ -789,8 +801,16 @@ describe('cheque list page', () => {
   it('clears local and native filters after no results', () => {
     renderPage(<ChequesPage />)
     fireEvent.click(screen.getByRole('button', { name: 'Native filter' }))
-    expect(screen.getByRole('button', { name: 'Clear filters' })).toBeVisible()
-    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+    expect(screen.getByTestId('cheque-no-results')).toHaveAttribute(
+      'data-entity',
+      'cheque',
+    )
+    expect(
+      screen.getByRole('button', { name: 'Clear search & filters' }),
+    ).toBeVisible()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Clear search & filters' }),
+    )
     expect(mocks.filterSearch).toHaveBeenCalledWith('')
     expect(mocks.filterStatus).toHaveBeenCalledWith('All')
     expect(mocks.filterSortBy).not.toHaveBeenCalled()
@@ -850,6 +870,9 @@ describe('cheque creation page', () => {
     change('cheque_date', '2026-10-31')
     change('deposit_date', '2026-11-01')
     change('notes', 'Invoice')
+    expect(screen.getByTestId('cheque-submit-button')).toHaveTextContent(
+      messages.Common.saveCheque.replace('{number}', '100123'),
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Choose tags' }))
     fireEvent.click(screen.getByTestId('cheque-submit-button'))
     await waitFor(() =>
@@ -1046,8 +1069,12 @@ describe('cheque edit page', () => {
     expect(saveButton()).toBeEnabled()
     cleanup()
     renderPage(<EditChequePage />)
+    change('cheque_number', '100124')
     makeDirty()
     expect(saveButton()).toBeEnabled()
+    expect(saveButton()).toHaveTextContent(
+      messages.Common.updateCheque.replace('{number}', '100124'),
+    )
     expect(saveButton()).toHaveAttribute('form', 'cheque-edit-form')
     expect(screen.getByTestId('edit-save-bar')).toContainElement(saveButton())
   })
@@ -1173,7 +1200,9 @@ describe('cheque edit page', () => {
       mocks.submit.mock.invocationCallOrder[0],
     )
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Confirm deletion' }),
+      await screen.findByRole('button', {
+        name: messages.Common.deleteCheque.replace('{number}', '999999'),
+      }),
     )
     expect(mocks.delete).toHaveBeenCalledOnce()
   })
@@ -1465,7 +1494,9 @@ describe('cheque detail page', () => {
     )
     expect(mocks.delete).not.toHaveBeenCalled()
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Confirm deletion' }),
+      await screen.findByRole('button', {
+        name: messages.Common.deleteCheque.replace('{number}', '100123'),
+      }),
     )
     expect(mocks.delete).toHaveBeenCalledWith('cheque')
     expect(mocks.replace).toHaveBeenCalledWith('/cheques')

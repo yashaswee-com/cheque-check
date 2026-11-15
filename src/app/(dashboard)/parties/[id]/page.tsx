@@ -158,6 +158,10 @@ export default function PartyDetailPage() {
               icon={ReceiptText}
               title={t('noChequesTitle')}
               description={t('noChequesDesc')}
+              detail={tCommon('emptyCheckedScope', {
+                scope: party.name,
+                entity: tCommon('entityCheque', { count: 2 }),
+              })}
               action={{
                 label: t('recordNewCheque'),
                 href: '/cheques/create',

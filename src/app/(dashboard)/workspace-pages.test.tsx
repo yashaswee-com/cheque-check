@@ -307,12 +307,14 @@ vi.mock('@/components/ui/delete-dialog', () => ({
   DeleteConfirmationDialog: ({
     onDelete,
     confirmName,
+    confirmLabel,
   }: {
-    onDelete: () => void
+    onDelete: (selectedReason?: string) => void
     confirmName: string
+    confirmLabel?: string
   }) => (
-    <button type="button" onClick={onDelete}>
-      Confirm {confirmName}
+    <button type="button" onClick={() => onDelete()}>
+      {confirmLabel ?? `Confirm ${confirmName}`}
     </button>
   ),
 }))
@@ -500,6 +502,12 @@ describe('dashboard page', () => {
       expect(
         screen.queryByTestId('dashboard-current-balance'),
       ).not.toBeInTheDocument()
+      if (!pending)
+        expect(
+          document.querySelector('[data-slot="empty-state-detail"]'),
+        ).toHaveTextContent(
+          'We looked across your workspace and found no businesses yet.',
+        )
       if (pending)
         expect(
           container.querySelector('[data-slot="skeleton"]'),
@@ -546,6 +554,9 @@ describe('dashboard page', () => {
     expect(
       screen.getByText(messages.Dashboard.noChequesTodayTitle),
     ).toBeVisible()
+    expect(
+      document.querySelector('[data-slot="empty-state-detail"]'),
+    ).toHaveTextContent('We looked in Acme and found no cheques yet.')
     fireEvent.click(screen.getByRole('button', { name: 'Today chart' }))
     expect(await screen.findByText('Chart records: 0')).toBeVisible()
   })
@@ -879,6 +890,9 @@ describe('reports page', () => {
     renderPage(<ReportsPage />)
     expect(screen.getByTestId('reports-export-trigger')).toBeDisabled()
     expect(screen.getByText(messages.Reports.noChequesYet)).toBeVisible()
+    expect(
+      document.querySelector('[data-slot="empty-state-detail"]'),
+    ).toHaveTextContent('We looked in Acme and found no cheques yet.')
     cleanup()
     active = false
     renderPage(<ReportsPage />)
@@ -914,18 +928,29 @@ describe('profile page', () => {
   it('rejects unchanged and empty names then trims valid changes before saving', async () => {
     renderPage(<ProfilePage />)
     const name = screen.getByLabelText(messages.Settings.fullName)
+    const initialSaveLabel = messages.Common.saveProfileOf.replace(
+      '{name}',
+      'Original Person',
+    )
     expect(
-      screen.getByRole('button', { name: messages.Settings.saveProfile }),
+      screen.getByRole('button', { name: initialSaveLabel }),
     ).toBeDisabled()
     fireEvent.change(name, { target: { value: '   ' } })
     expect(
-      screen.getByRole('button', { name: messages.Settings.saveProfile }),
+      screen.getByRole('button', {
+        name: messages.Common.saveProfileOf.replace(
+          '{name}',
+          'Original Person',
+        ),
+      }),
     ).toBeDisabled()
     fireEvent.submit(name.closest('form')!)
     expect(mocks.update).not.toHaveBeenCalled()
     fireEvent.change(name, { target: { value: '  Revised Person  ' } })
     fireEvent.click(
-      screen.getByRole('button', { name: messages.Settings.saveProfile }),
+      screen.getByRole('button', {
+        name: messages.Common.saveProfileOf.replace('{name}', 'Revised Person'),
+      }),
     )
     await waitFor(() =>
       expect(mocks.update).toHaveBeenCalledWith({ name: 'Revised Person' }),
@@ -942,7 +967,9 @@ describe('profile page', () => {
       target: { value: 'Revised' },
     })
     fireEvent.click(
-      screen.getByRole('button', { name: messages.Settings.saveProfile }),
+      screen.getByRole('button', {
+        name: messages.Common.saveProfileOf.replace('{name}', 'Revised'),
+      }),
     )
     await waitFor(() =>
       expect(mocks.toast).toHaveBeenCalledWith({
@@ -954,7 +981,9 @@ describe('profile page', () => {
       'Revised',
     )
     expect(
-      screen.getByRole('button', { name: messages.Settings.saveProfile }),
+      screen.getByRole('button', {
+        name: messages.Common.saveProfileOf.replace('{name}', 'Revised'),
+      }),
     ).toBeEnabled()
   })
   it('updates avatars and invokes profile deletion only from confirmation', async () => {
@@ -964,7 +993,12 @@ describe('profile page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove avatar' }))
     expect(mocks.update).toHaveBeenCalledWith({ avatar_url: null })
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Confirm Original Person' }),
+      await screen.findByRole('button', {
+        name: messages.Common.deleteAccountOf.replace(
+          '{name}',
+          'Original Person',
+        ),
+      }),
     )
     expect(mocks.deleteProfile).toHaveBeenCalledOnce()
   })
@@ -987,7 +1021,9 @@ describe('profile page', () => {
     })
     renderPage(<ProfilePage />)
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Confirm CLEAR' }),
+      await screen.findByRole('button', {
+        name: messages.Common.clearAppCache,
+      }),
     )
     await waitFor(() => expect(cacheDelete).toHaveBeenCalledWith('app-cache'))
     expect(unregister).toHaveBeenCalledOnce()
@@ -998,7 +1034,9 @@ describe('profile page', () => {
     renderPage(<ProfilePage />)
 
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Confirm CLEAR' }),
+      await screen.findByRole('button', {
+        name: messages.Common.clearAppCache,
+      }),
     )
 
     await waitFor(() => expect(reload).toHaveBeenCalledOnce())
@@ -1009,6 +1047,14 @@ describe('profile page', () => {
     renderPage(<ProfilePage />)
     expect(screen.getByLabelText(messages.Settings.fullName)).toHaveValue('')
     expect(screen.getByLabelText(messages.Common.email)).toHaveValue('')
+    expect(
+      screen.getByRole('button', {
+        name: messages.Common.saveProfileOf.replace(
+          '{name}',
+          messages.Settings.user,
+        ),
+      }),
+    ).toBeDisabled()
   })
 })
 
@@ -1076,8 +1122,16 @@ describe('business list page', () => {
       screen.getByRole('button', { name: messages.Common.descending }),
     )
     expect(search).toHaveValue('Missing')
+    expect(screen.getByTestId('no-results-state')).toHaveTextContent(
+      'No businesses matched “Missing”',
+    )
+    expect(screen.getByTestId('no-results-state')).toHaveTextContent(
+      'We searched all 1 business.',
+    )
     fireEvent.click(
-      screen.getByRole('button', { name: messages.Common.clearAllFilters }),
+      screen.getByRole('button', {
+        name: messages.Common.clearSearchAndFilters,
+      }),
     )
     expect(search).toHaveValue('')
   })

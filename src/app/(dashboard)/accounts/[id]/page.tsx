@@ -189,6 +189,10 @@ export default function AccountDetailPage() {
               icon={ReceiptText}
               title={tc('noData')}
               description={t('noChequesDesc')}
+              detail={tc('emptyCheckedScope', {
+                scope: account.account_name,
+                entity: tc('entityCheque', { count: 2 }),
+              })}
               action={{
                 label: tc('recordNewCheque'),
                 href: '/cheques/create',

@@ -28,6 +28,7 @@ import {
 import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterResultCount } from '@/components/ui/filter-result-count'
 import { TextTruncate } from '@/components/ui/text-truncate'
 import { AccountName } from '@/features/accounts/components/account-name'
 import { useTranslations } from 'next-intl'
@@ -203,6 +204,11 @@ export default function AccountsPage() {
                 ))}
               </FilterPillSection>
             </div>
+            <FilterResultCount
+              count={filteredAccounts.length}
+              total={accounts?.length ?? 0}
+              entity="account"
+            />
           </SheetContent>
         </Sheet>
       </div>
@@ -216,7 +222,12 @@ export default function AccountsPage() {
           data={filteredAccounts}
           allData={accounts}
           onClearFilters={clearFilters}
-          noResultsTitle={tc('noAccountsMatch')}
+          noResults={{
+            entity: 'account',
+            search,
+            filterCount: bankFilter === 'All' ? 0 : 1,
+            scope: activeBusiness?.name,
+          }}
           loadingComponent={
             <div className="grid gap-4">
               {[1, 2, 3].map((i) => (
@@ -229,6 +240,16 @@ export default function AccountsPage() {
               icon={Landmark}
               title={t('noAccountsTitle')}
               description={t('noAccountsDesc')}
+              detail={
+                activeBusiness
+                  ? tc('emptyCheckedScope', {
+                      scope: activeBusiness.name,
+                      entity: tc('entityAccount', { count: 2 }),
+                    })
+                  : tc('emptyCheckedAll', {
+                      entity: tc('entityAccount', { count: 2 }),
+                    })
+              }
               action={{
                 label: t('addFirstAccount'),
                 href: '/accounts/create',

@@ -60,6 +60,8 @@ it('routes search and every sorting and filtering action to its controlled sette
       setSortBy={sort}
       sortOrder="desc"
       setSortOrder={order}
+      resultCount={2}
+      totalCount={5}
     />,
   )
   fireEvent.change(screen.getByTestId('cheque-search-input'), {
@@ -81,6 +83,12 @@ it('routes search and every sorting and filtering action to its controlled sette
     'aria-pressed',
     'false',
   )
+  expect(screen.getByTestId('filter-result-count')).toHaveTextContent(
+    '2 cheques selected',
+  )
+  expect(screen.getByTestId('filter-result-count')).toHaveTextContent(
+    'out of 5',
+  )
   for (const status of ['all', 'issued', 'received', 'cleared', 'bounced'])
     fireEvent.click(screen.getByTestId(`cheque-filter-status-${status}`))
   expect(filter).toHaveBeenLastCalledWith('Bounced')
@@ -101,6 +109,8 @@ it('shows icons for every cheque search sort and status option', async () => {
       setSortBy={vi.fn()}
       sortOrder="desc"
       setSortOrder={vi.fn()}
+      resultCount={0}
+      totalCount={0}
     />,
   )
   fireEvent.click(screen.getByTestId('cheque-filter-trigger'))
@@ -132,6 +142,8 @@ it('marks a non-default filter selection on the trigger', () => {
       setSortBy={vi.fn()}
       sortOrder="desc"
       setSortOrder={vi.fn()}
+      resultCount={0}
+      totalCount={0}
     />,
   )
   expect(screen.getByTestId('cheque-filter-trigger')).toHaveClass('bg-primary')
@@ -143,6 +155,9 @@ it('marks a non-default filter selection on the trigger', () => {
 it('renders empty statistics and formats chart values, percentages and legend labels', () => {
   const { unmount } = wrap(<ChequeStatsChart chartData={[]} totalCheques={0} />)
   expect(screen.getByText(messages.Common.noData)).toBeInTheDocument()
+  expect(
+    screen.getByText(/We looked across your workspace/),
+  ).toBeInTheDocument()
   unmount()
   wrap(
     <ChequeStatsChart

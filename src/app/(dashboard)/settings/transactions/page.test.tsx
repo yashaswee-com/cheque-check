@@ -177,6 +177,7 @@ describe('payment history cards', () => {
     expect(
       screen.getByText(messages.Transactions.noTransactionsYet),
     ).toBeVisible()
+    expect(screen.getByText(/We looked across your workspace/)).toBeVisible()
   })
 
   it('filters by type and status, then sorts by amount in ascending order', () => {
@@ -200,6 +201,9 @@ describe('payment history cards', () => {
     page()
     fireEvent.click(
       screen.getByRole('button', { name: messages.Transactions.sortAndFilter }),
+    )
+    expect(screen.getByTestId('filter-result-count')).toHaveTextContent(
+      '3 transactions selected',
     )
     expectHorizontalPillRows([
       messages.Transactions.type,
@@ -274,6 +278,7 @@ describe('payment history cards', () => {
       screen.getByPlaceholderText(messages.Transactions.searchPlaceholder),
       { target: { value: 'absent' } },
     )
-    expect(screen.getByText(messages.Transactions.adjustFilters)).toBeVisible()
+    expect(screen.getByTestId('no-results-state')).toBeVisible()
+    expect(screen.getByTestId('no-results-state')).toHaveTextContent('absent')
   })
 })

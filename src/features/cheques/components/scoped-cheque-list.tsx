@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
+import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { StickyPagination } from '@/components/ui/sticky-pagination'
 import { ChequeCard } from '@/components/cheque-card'
 import { DataState } from '@/components/ui/data-state'
@@ -29,6 +30,7 @@ export function ScopedChequeList({
   emptyState: ReactNode
 }) {
   const t = useTranslations('Cheques')
+  const { activeBusiness } = useBusiness()
   const state = useChequeListFilterState()
   const list = useChequeList(
     state.invalidFilters ? undefined : businessId,
@@ -41,6 +43,7 @@ export function ScopedChequeList({
     list.cheques.map((row) => row.id),
   )
   const clearFilters = () => {
+    list.setSearch('')
     list.setFilter('All')
     state.resetFilters()
   }
@@ -52,6 +55,8 @@ export function ScopedChequeList({
         list={list}
         businessId={businessId}
         onClear={clearFilters}
+        resultCount={list.matchingCount}
+        totalCount={totalCount}
       />
       {state.invalidFilters ? (
         <p role="alert">{t('invalidFilters')}</p>
@@ -61,9 +66,19 @@ export function ScopedChequeList({
             isLoading={list.isLoading}
             isError={!!list.error}
             data={list.cheques}
-            allData={totalCount ? [totalCount] : []}
+            allData={new Array(totalCount)}
             onClearFilters={clearFilters}
-            noResultsTitle={t('noChequesMatch')}
+            noResults={{
+              entity: 'cheque',
+              search: list.search,
+              filterCount:
+                Object.keys(state.filters).length +
+                (list.filter !== 'All' && !('status' in state.filters) ? 1 : 0),
+              scope:
+                activeBusiness && activeBusiness.id === businessId
+                  ? (activeBusiness.name ?? undefined)
+                  : undefined,
+            }}
             loadingComponent={
               <div className="space-y-4">
                 {[1, 2].map((i) => (

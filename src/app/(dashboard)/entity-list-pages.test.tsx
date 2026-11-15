@@ -91,7 +91,9 @@ function useList() {
 }
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/features/businesses/hooks/use-business', () => ({
-  useBusiness: () => ({ activeBusiness: { id: 'business' } }),
+  useBusiness: () => ({
+    activeBusiness: { id: 'business', name: 'Nitin Enterprises' },
+  }),
 }))
 vi.mock('@/features/profile/hooks/use-profile', () => ({
   useProfile: () => ({ profile }),
@@ -204,6 +206,12 @@ describe.each([
   it('lays out every sort and filter section as a horizontally scrollable pill row', () => {
     renderPage(<Component />)
     expectHorizontalPillRows(sections)
+    expect(screen.getByTestId('filter-result-count')).toHaveTextContent(
+      `1 ${kind === 'accounts' ? 'account' : kind === 'parties' ? 'party' : 'tag'} selected`,
+    )
+    expect(screen.getByTestId('filter-result-count')).toHaveTextContent(
+      'out of 1',
+    )
     for (const section of sections.filter(
       (title) => title !== messages.Tags.filterColor,
     )) {
@@ -269,8 +277,18 @@ describe.each([
       screen.getByRole('button', { name: messages.Common.descending }),
     )
     expect(input).toHaveValue('Missing')
+    const pluralEntity =
+      kind === 'accounts' ? 'accounts' : kind === 'parties' ? 'parties' : 'tags'
+    expect(screen.getByTestId('no-results-state')).toHaveTextContent(
+      `No ${pluralEntity} matched “Missing”`,
+    )
+    expect(screen.getByTestId('no-results-state')).toHaveTextContent(
+      `We searched 1 ${kind === 'accounts' ? 'account' : kind === 'parties' ? 'party' : 'tag'} in Nitin Enterprises.`,
+    )
     fireEvent.click(
-      screen.getByRole('button', { name: messages.Common.clearAllFilters }),
+      screen.getByRole('button', {
+        name: messages.Common.clearSearchAndFilters,
+      }),
     )
     expect(input).toHaveValue('')
   })
@@ -286,10 +304,16 @@ describe.each([
         expect(
           container.querySelector('[data-slot="skeleton"]'),
         ).toBeInTheDocument()
-      if (state === 'empty')
+      if (state === 'empty') {
         expect(
           document.querySelector(`a[href="/${kind}/create"]`),
         ).toBeInTheDocument()
+        expect(
+          container.querySelector('[data-slot="empty-state-detail"]'),
+        ).toHaveTextContent(
+          `We looked in Nitin Enterprises and found no ${kind === 'accounts' ? 'accounts' : kind === 'parties' ? 'parties' : 'tags'} yet.`,
+        )
+      }
       if (state === 'error')
         expect(screen.getByText(messages.Common.loadDataError)).toBeVisible()
     },
@@ -379,9 +403,14 @@ describe('list-specific filters', () => {
     expect(all).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(vendor)
     expect(vendor).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByTestId('no-results-state')).toHaveTextContent(
+      '1 filter is applied.',
+    )
     expect(all).toHaveAttribute('aria-pressed', 'false')
     fireEvent.click(
-      screen.getByRole('button', { name: messages.Common.clearAllFilters }),
+      screen.getByRole('button', {
+        name: messages.Common.clearSearchAndFilters,
+      }),
     )
     expect(all).toHaveAttribute('aria-pressed', 'true')
   })

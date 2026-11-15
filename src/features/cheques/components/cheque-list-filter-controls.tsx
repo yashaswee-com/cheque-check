@@ -14,6 +14,8 @@ export function ChequeListFilterControls({
   businessId,
   onClear,
   hasAdvancedFilters = Object.keys(state.filters).length > 0,
+  resultCount,
+  totalCount,
 }: {
   state: ChequeListFilterState
   list: Pick<
@@ -30,6 +32,8 @@ export function ChequeListFilterControls({
   businessId?: string
   onClear: () => void
   hasAdvancedFilters?: boolean
+  resultCount: number
+  totalCount: number
 }) {
   return (
     <ChequeFilterBar
@@ -42,6 +46,8 @@ export function ChequeListFilterControls({
       sortOrder={list.sortOrder}
       setSortOrder={list.setSortOrder}
       hasAdvancedFilters={hasAdvancedFilters}
+      resultCount={resultCount}
+      totalCount={totalCount}
       advancedFilters={
         <AdvancedChequeFilters
           key={state.filterReset}

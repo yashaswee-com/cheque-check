@@ -17,6 +17,9 @@ let page = {
   hasNextPage: true,
   totalPages: 3,
 }
+vi.mock('@/features/businesses/hooks/use-business', () => ({
+  useBusiness: () => ({ activeBusiness: { id: 'b1', name: 'Acme' } }),
+}))
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams('party_id=spoofed&type=Outward'),
   usePathname: () => '/parties/p1',
@@ -109,6 +112,7 @@ it('hides pagination for a single page and separates empty from no-match states'
   ).not.toBeInTheDocument()
   cleanup()
   renderList(3)
-  expect(screen.getByText(messages.Cheques.noChequesMatch)).toBeVisible()
+  expect(screen.getByTestId('no-results-state')).toBeVisible()
+  expect(screen.getByTestId('no-results-state')).toHaveTextContent('Acme')
   expect(screen.queryByText('Nothing yet')).not.toBeInTheDocument()
 })

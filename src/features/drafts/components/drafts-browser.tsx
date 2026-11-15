@@ -21,6 +21,8 @@ import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterResultCount } from '@/components/ui/filter-result-count'
+import { NoResultsState } from '@/components/ui/no-results-state'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -186,10 +188,11 @@ export function DraftsBrowser() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [outOfRange, totalPages])
 
-  const filtered = !!params.search.trim()
-  const clearSearch = () => {
+  const filtered = !!params.search.trim() || params.type !== null
+  const totalDrafts = counts ? counts.cheque + counts.party + counts.account : 0
+  const clearFilters = () => {
     setSearch('')
-    navigate({ search: '' })
+    navigate({ search: '', type: null })
   }
   const typeOptions: {
     value: DraftEntity | null
@@ -292,6 +295,11 @@ export function DraftsBrowser() {
                 })}
               </FilterPillSection>
             </div>
+            <FilterResultCount
+              entity="draft"
+              count={total}
+              total={totalDrafts}
+            />
           </SheetContent>
         </Sheet>
       </div>
@@ -352,13 +360,13 @@ export function DraftsBrowser() {
         />
       ) : !items.length ? (
         filtered ? (
-          <EmptyState
-            role="status"
-            data-testid="drafts-no-match"
-            icon={Search01Icon}
-            title={t('noMatchTitle')}
-            description={t('noMatchDescription')}
-            action={{ label: t('clearSearch'), onClick: clearSearch }}
+          <NoResultsState
+            entity="draft"
+            total={totalDrafts}
+            search={params.search}
+            filterCount={Number(params.type !== null)}
+            scope={activeBusiness?.name ?? undefined}
+            onClear={clearFilters}
           />
         ) : (
           <EmptyState
@@ -367,6 +375,16 @@ export function DraftsBrowser() {
             icon={NoteEditIcon}
             title={t('emptyTitle')}
             description={t('emptyDescription')}
+            detail={
+              activeBusiness?.name
+                ? common('emptyCheckedScope', {
+                    scope: activeBusiness.name,
+                    entity: common('entityDraft', { count: 2 }),
+                  })
+                : common('emptyCheckedAll', {
+                    entity: common('entityDraft', { count: 2 }),
+                  })
+            }
           />
         )
       ) : (

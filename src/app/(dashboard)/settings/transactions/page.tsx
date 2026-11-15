@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react'
 import { useTransactions } from '@/features/monetization/hooks/use-transactions'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterResultCount } from '@/components/ui/filter-result-count'
+import { NoResultsState } from '@/components/ui/no-results-state'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Search01Icon as Search,
@@ -42,6 +44,7 @@ import type { Transaction } from '@/features/monetization/repositories/monetizat
 export default function TransactionsPage() {
   const t = useTranslations('Transactions')
   const display = useDisplayFormat()
+  const common = useTranslations('Common')
   const tp = useTranslations('Premium')
   const tf = useTranslations('Features')
   const productNames = useTranslations('ProductNames')
@@ -312,20 +315,35 @@ export default function TransactionsPage() {
                 ))}
               </FilterPillSection>
             </div>
+            <FilterResultCount
+              entity="transaction"
+              count={filteredAndSortedTransactions.length}
+              total={transactions?.length ?? 0}
+            />
           </SheetContent>
         </Sheet>
       </div>
 
       {filteredAndSortedTransactions.length === 0 ? (
-        <EmptyState
-          icon={ReceiptTextIcon}
-          title={t('noTransactions')}
-          description={
-            searchQuery || filterType !== 'all' || filterStatus !== 'all'
-              ? t('adjustFilters')
-              : t('noTransactionsYet')
-          }
-        />
+        searchQuery.trim() || filterType !== 'all' || filterStatus !== 'all' ? (
+          <NoResultsState
+            entity="transaction"
+            total={transactions?.length ?? 0}
+            search={searchQuery}
+            filterCount={
+              Number(filterType !== 'all') + Number(filterStatus !== 'all')
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={ReceiptTextIcon}
+            title={t('noTransactions')}
+            description={t('noTransactionsYet')}
+            detail={common('emptyCheckedAll', {
+              entity: common('entityTransaction', { count: 2 }),
+            })}
+          />
+        )
       ) : (
         <div className="space-y-4">
           {filteredAndSortedTransactions.map((tx) => {

@@ -44,6 +44,9 @@ export function ChequeStatsChart({
           icon={PieChartIcon}
           title={t('noData')}
           description={t('addChequesForStats')}
+          detail={t('emptyCheckedAll', {
+            entity: t('entityCheque', { count: 2 }),
+          })}
           className="border-none p-0"
         />
       </div>

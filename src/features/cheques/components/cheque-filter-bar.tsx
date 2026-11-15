@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { FilterResultCount } from '@/components/ui/filter-result-count'
 import {
   FilterPillSection,
   filterPillClassName,
@@ -44,6 +45,8 @@ export interface ChequeFilterBarProps {
   setSortOrder: (value: SortOrder) => void
   advancedFilters?: React.ReactNode
   hasAdvancedFilters?: boolean
+  resultCount: number
+  totalCount: number
 }
 
 export function ChequeFilterBar({
@@ -57,6 +60,8 @@ export function ChequeFilterBar({
   setSortOrder,
   advancedFilters,
   hasAdvancedFilters,
+  resultCount,
+  totalCount,
 }: ChequeFilterBarProps) {
   const t = useTranslations('Cheques')
   const tCommon = useTranslations('Common')
@@ -185,6 +190,11 @@ export function ChequeFilterBar({
               </FilterPillSection>
             )}
           </div>
+          <FilterResultCount
+            count={resultCount}
+            total={totalCount}
+            entity="cheque"
+          />
         </SheetContent>
       </Sheet>
     </div>

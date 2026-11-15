@@ -38,7 +38,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(state.query),
 }))
 vi.mock('@/features/businesses/hooks/use-business', () => ({
-  useBusiness: () => ({ activeBusiness: { id: 'b1' } }),
+  useBusiness: () => ({ activeBusiness: { id: 'b1', name: 'Acme' } }),
 }))
 vi.mock('../hooks/use-drafts', () => ({
   useDraftsPage: (businessId: string, request: unknown) => {
@@ -235,6 +235,9 @@ describe('DraftsBrowser', () => {
     const sortOption = await screen.findByRole('button', {
       name: messages.Drafts.sortOldest,
     })
+    expect(screen.getByTestId('filter-result-count')).toHaveTextContent(
+      '0 drafts',
+    )
     expect(sortOption.querySelector('span')).toHaveClass('font-normal')
     fireEvent.click(sortOption)
     expect(state.replace).toHaveBeenCalledWith('/drafts?sort=oldest', {
@@ -245,9 +248,11 @@ describe('DraftsBrowser', () => {
   it('offers to clear a search that matches nothing', () => {
     state.query = 'q=zzz'
     mount(<DraftsBrowser />)
-    const empty = screen.getByTestId('drafts-no-match')
+    const empty = screen.getByTestId('no-results-state')
     fireEvent.click(
-      screen.getByRole('button', { name: messages.Drafts.clearSearch }),
+      screen.getByRole('button', {
+        name: messages.Common.clearSearchAndFilters,
+      }),
     )
     expect(empty).toBeInTheDocument()
     expect(state.replace).toHaveBeenCalledWith('/drafts', { scroll: false })

@@ -30,5 +30,8 @@ describe('announcements page', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /mark all read/i }))
     expect(screen.getByText(/all caught up/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/checked announcements for “security”/i),
+    ).toBeInTheDocument()
   })
 })

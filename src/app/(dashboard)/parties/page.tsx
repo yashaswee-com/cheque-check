@@ -27,6 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterResultCount } from '@/components/ui/filter-result-count'
 import { TextTruncate } from '@/components/ui/text-truncate'
 import { useTranslations } from 'next-intl'
 import { DraftsLink } from '@/features/drafts'
@@ -200,6 +201,11 @@ export default function PartiesPage() {
                 ))}
               </FilterPillSection>
             </div>
+            <FilterResultCount
+              count={filteredParties.length}
+              total={parties?.length ?? 0}
+              entity="party"
+            />
           </SheetContent>
         </Sheet>
       </div>
@@ -214,7 +220,12 @@ export default function PartiesPage() {
           data={filteredParties}
           allData={parties}
           onClearFilters={clearFilters}
-          noResultsTitle={tCommon('noPartiesMatch')}
+          noResults={{
+            entity: 'party',
+            search,
+            filterCount: partyType === 'all' ? 0 : 1,
+            scope: activeBusiness?.name,
+          }}
           loadingComponent={
             <div className="space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -227,6 +238,16 @@ export default function PartiesPage() {
               icon={User}
               title={t('noPartiesTitle')}
               description={t('noPartiesDesc')}
+              detail={
+                activeBusiness
+                  ? tCommon('emptyCheckedScope', {
+                      scope: activeBusiness.name,
+                      entity: tCommon('entityParty', { count: 2 }),
+                    })
+                  : tCommon('emptyCheckedAll', {
+                      entity: tCommon('entityParty', { count: 2 }),
+                    })
+              }
               action={{
                 label: t('addFirstParty'),
                 href: '/parties/create',

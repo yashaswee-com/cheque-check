@@ -81,6 +81,7 @@ export function useChequeList(
   return {
     cheques: query.data?.rows ?? [],
     activeCount: query.data?.activeCount ?? 0,
+    matchingCount,
     isLoading: query.isLoading,
     error: query.error,
     search,

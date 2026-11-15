@@ -170,6 +170,13 @@ export default function AnnouncementsPage() {
               ? 'All caught up. Everything is up to date.'
               : 'Try a different search or switch back to all updates.'
           }
+          detail={
+            search.trim()
+              ? `We checked announcements for “${search.trim()}”. Try another term or view all updates.`
+              : filter === 'unread'
+                ? 'We checked all announcements for unread updates. View all updates to continue.'
+                : 'We checked all announcements. Try a different filter or search.'
+          }
           action={
             filter === 'unread'
               ? { label: 'View all', onClick: () => setFilter('all') }

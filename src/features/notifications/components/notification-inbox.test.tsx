@@ -243,10 +243,11 @@ describe('inbox and header bell', () => {
       fireEvent.change(search, { target: { value: 'zzz' } })
       act(() => vi.advanceTimersByTime(250))
       const empty = screen.getByTestId('inbox-no-match')
-      expect(empty).toHaveTextContent(messages.Inbox.noMatchTitle)
+      expect(empty).toHaveTextContent('No notifications matched “zzz”')
+      expect(empty).toHaveTextContent('We searched')
       fireEvent.click(
         within(empty).getByRole('button', {
-          name: messages.Inbox.clearFilters,
+          name: messages.Common.clearSearchAndFilters,
         }),
       )
       expect(search).toHaveValue('')

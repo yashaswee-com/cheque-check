@@ -162,6 +162,11 @@ export default function BusinessDetailPage() {
               icon={ReceiptText}
               title={t('noChequesTitle')}
               description={t('noChequesDesc')}
+              detail={tc('emptyCheckedScope', {
+                scope: business.name,
+                entity: tc('entityCheque', { count: 2 }),
+              })}
+              action={{ label: tc('recordNewCheque'), href: '/cheques/create' }}
             />
           }
         />

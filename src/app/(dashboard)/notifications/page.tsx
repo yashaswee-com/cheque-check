@@ -32,6 +32,8 @@ import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterResultCount } from '@/components/ui/filter-result-count'
+import { NoResultsState } from '@/components/ui/no-results-state'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { InfoPopover } from '@/components/ui/info-popover'
@@ -160,7 +162,13 @@ export default function NotificationsPage() {
       label: business.name ?? '',
     })),
   ]
-  const filtered = debouncedSearch.trim().length > 0
+  const filterCount = Number(unread) + Number(businessFilter !== undefined)
+  const scope =
+    businessFilter === undefined
+      ? activeBusiness?.name
+      : businessFilter
+        ? businesses.find((business) => business.id === businessFilter)?.name
+        : undefined
   const hasConfiguredChannel = Boolean(
     profile &&
     (((profile.voice_call_enabled ||
@@ -174,6 +182,7 @@ export default function NotificationsPage() {
   const clearFilters = () => {
     setSearch('')
     setUnread(false)
+    setBusinessFilter(undefined)
   }
   const sortOptions = [
     { ascending: false, label: t('sortNewest'), icon: SortByDown02Icon },
@@ -296,6 +305,10 @@ export default function NotificationsPage() {
                 ))}
               </FilterPillSection>
             </div>
+            <FilterResultCount
+              entity="notification"
+              count={inbox.data?.total ?? 0}
+            />
           </SheetContent>
         </Sheet>
         <Button
@@ -387,15 +400,16 @@ export default function NotificationsPage() {
           }}
         />
       ) : !inbox.data?.items.length ? (
-        filtered ? (
-          <EmptyState
-            role="status"
-            data-testid="inbox-no-match"
-            icon={Search01Icon}
-            title={t('noMatchTitle')}
-            description={t('noMatchDescription')}
-            action={{ label: t('clearFilters'), onClick: clearFilters }}
-          />
+        debouncedSearch.trim() || businessFilter !== undefined ? (
+          <div role="status" data-testid="inbox-no-match">
+            <NoResultsState
+              entity="notification"
+              search={debouncedSearch}
+              filterCount={filterCount}
+              scope={scope}
+              onClear={clearFilters}
+            />
+          </div>
         ) : unread ? (
           <EmptyState
             role="status"
@@ -403,6 +417,14 @@ export default function NotificationsPage() {
             icon={MailOpen01Icon}
             title={t('noUnreadTitle')}
             description={t('noUnreadDescription')}
+            detail={
+              scope
+                ? common('emptyCheckedScope', {
+                    scope,
+                    entity: common('entityNotification', { count: 2 }),
+                  })
+                : undefined
+            }
             action={{ label: t('showAll'), onClick: () => setUnread(false) }}
           />
         ) : (
@@ -412,6 +434,16 @@ export default function NotificationsPage() {
             icon={Notification03Icon}
             title={t('emptyTitle')}
             description={t('emptyDescription')}
+            detail={
+              scope
+                ? common('emptyCheckedScope', {
+                    scope,
+                    entity: common('entityNotification', { count: 2 }),
+                  })
+                : common('emptyCheckedAll', {
+                    entity: common('entityNotification', { count: 2 }),
+                  })
+            }
           />
         )
       ) : (

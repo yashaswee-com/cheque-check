@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterResultCount } from '@/components/ui/filter-result-count'
 import { TextTruncate } from '@/components/ui/text-truncate'
 import {
   Sheet,
@@ -233,6 +234,11 @@ export default function TagsPage() {
                 ))}
               </FilterPillSection>
             </div>
+            <FilterResultCount
+              count={filteredTags.length}
+              total={tags?.length ?? 0}
+              entity="tag"
+            />
           </SheetContent>
         </Sheet>
       </div>
@@ -244,7 +250,12 @@ export default function TagsPage() {
           data={filteredTags}
           allData={tags}
           onClearFilters={clearFilters}
-          noResultsTitle={tCommon('noTagsMatch')}
+          noResults={{
+            entity: 'tag',
+            search,
+            filterCount: Number(!!color) + Number(usage !== 'all'),
+            scope: activeBusiness?.name,
+          }}
           loadingComponent={
             <div className="space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -257,6 +268,16 @@ export default function TagsPage() {
               icon={TagIcon}
               title={t('noTagsTitle')}
               description={t('noTagsDesc')}
+              detail={
+                activeBusiness
+                  ? tCommon('emptyCheckedScope', {
+                      scope: activeBusiness.name,
+                      entity: tCommon('entityTag', { count: 2 }),
+                    })
+                  : tCommon('emptyCheckedAll', {
+                      entity: tCommon('entityTag', { count: 2 }),
+                    })
+              }
               action={{ label: t('addFirstTag'), href: '/tags/create' }}
             />
           }

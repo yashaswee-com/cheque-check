@@ -44,6 +44,7 @@ import {
 import dynamic from 'next/dynamic'
 import { DataState } from '@/components/ui/data-state'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterResultCount } from '@/components/ui/filter-result-count'
 import { TextTruncate } from '@/components/ui/text-truncate'
 import { useTranslations } from 'next-intl'
 import {
@@ -186,6 +187,11 @@ export default function BusinessesPage() {
                 ))}
               </FilterPillSection>
             </div>
+            <FilterResultCount
+              count={filteredBusinesses.length}
+              total={businesses.length}
+              entity="business"
+            />
           </SheetContent>
         </Sheet>
       </div>
@@ -197,7 +203,7 @@ export default function BusinessesPage() {
           data={filteredBusinesses}
           allData={businesses}
           onClearFilters={clearFilters}
-          noResultsTitle={tc('noBusinessesMatch')}
+          noResults={{ entity: 'business', search, filterCount: 0 }}
           loadingComponent={
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -210,6 +216,9 @@ export default function BusinessesPage() {
               icon={Building2}
               title={t('noBusinessesTitle')}
               description={t('noBusinessesDesc')}
+              detail={tc('emptyCheckedAll', {
+                entity: tc('entityBusiness', { count: 2 }),
+              })}
               action={{
                 label: t('createFirstBusiness'),
                 href: '/businesses/create',

@@ -100,6 +100,9 @@ export default function HomePage() {
             icon={Building03Icon}
             title={tDashboard('welcomeTitle')}
             description={tDashboard('welcomeDescription')}
+            detail={tCommon('emptyCheckedAll', {
+              entity: tCommon('entityBusiness', { count: 2 }),
+            })}
             action={{
               label: tDashboard('createBusiness'),
               href: '/businesses/create',
@@ -275,6 +278,16 @@ export default function HomePage() {
                 icon={Calendar01Icon}
                 title={tDashboard('noChequesTodayTitle')}
                 description={tDashboard('noChequesTodayDescription')}
+                detail={
+                  activeBusiness
+                    ? tCommon('emptyCheckedScope', {
+                        scope: activeBusiness.name,
+                        entity: tCommon('entityCheque', { count: 2 }),
+                      })
+                    : tCommon('emptyCheckedAll', {
+                        entity: tCommon('entityCheque', { count: 2 }),
+                      })
+                }
                 className="py-10 bg-canvas-parchment/30"
               />
             ) : (

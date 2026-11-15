@@ -27,6 +27,7 @@ import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 function ChequesContent() {
   const display = useDisplayFormat()
   const t = useTranslations('Cheques')
+  const common = useTranslations('Common')
   const searchParams = useSearchParams()
   const filterState = useChequeListFilterState()
   const requestedDate = searchParams.get('date')
@@ -87,6 +88,8 @@ function ChequesContent() {
       <ChequeListFilterControls
         state={filterState}
         list={list}
+        resultCount={list.matchingCount}
+        totalCount={activeCount}
         businessId={businessId}
         onClear={clearFilters}
         hasAdvancedFilters={Object.keys(filters).length > 0}
@@ -130,9 +133,16 @@ function ChequesContent() {
             isLoading={isLoading}
             isError={!!error}
             data={visibleCheques}
-            allData={activeCount ? [activeCount] : []}
+            allData={new Array(activeCount)}
             onClearFilters={clearFilters}
-            noResultsTitle={t('noChequesMatch')}
+            noResults={{
+              entity: 'cheque',
+              search: list.search,
+              filterCount:
+                Object.keys(filters).length +
+                (list.filter !== 'All' && !('status' in filters) ? 1 : 0),
+              scope: activeBusiness?.name ?? undefined,
+            }}
             loadingComponent={
               <div className="space-y-4">
                 {[1, 2, 3, 4].map((i) => (
@@ -146,6 +156,16 @@ function ChequesContent() {
                 data-testid="cheques-empty-state"
                 title={t('noChequesTitle')}
                 description={t('noChequesDesc')}
+                detail={
+                  activeBusiness?.name
+                    ? common('emptyCheckedScope', {
+                        scope: activeBusiness.name,
+                        entity: common('entityCheque', { count: 2 }),
+                      })
+                    : common('emptyCheckedAll', {
+                        entity: common('entityCheque', { count: 2 }),
+                      })
+                }
                 action={{
                   label: t('recordFirst'),
                   href: '/cheques/create',
