@@ -60,6 +60,8 @@ Use the filters to quickly focus on what matters.
 
 This helps when you need to find a specific payment fast.
 
+The bottom of the Sort & Filter sheet shows how many cheques match as you change filters, for example "12 cheques selected". If nothing matches, the screen tells you what was searched, how many filters are applied, and offers **Clear search & filters**.
+
 ## How to group or sort cheques
 
 You can organise cheques by:

@@ -19,6 +19,12 @@ Look for preferences such as:
 
 Update these based on what feels most useful to you.
 
+Every switch shows **On** or **Off** next to it, and the line underneath tells you what that setting does right now — for example, "Motion is reduced — animations and transitions are minimised across the app.".
+
+## How to change cookie settings
+
+Open **Settings → Preferences → Cookie settings** to see whether you accepted or rejected marketing cookies, and choose **Manage cookie settings** to change your choice. On public pages, use the **Cookie settings** link in the footer.
+
 ## How to protect your account
 
 Use the following habits:

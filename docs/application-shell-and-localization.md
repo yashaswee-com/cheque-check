@@ -19,6 +19,15 @@ The dashboard layout mounts authenticated application providers and shell-level 
 
 The app resolves the locale from the request and falls back to Hinglish if the cookie is missing or unsupported; a valid saved locale remains in effect ([locale resolution](../src/i18n/request.ts#L1-L17)). New profiles and onboarding default to Hinglish, while existing profile preferences are preserved. The catalog test checks message-key and placeholder compatibility across the shipped locales ([catalog tests](../src/i18n/catalogs.test.ts#L1-L70)). Profile preferences feed shared formatting context for dates, times, and amounts ([display-format hook](../src/features/profile/hooks/use-display-format.ts#L1-L19), [formatting implementation](../src/lib/preference-format.ts#L1-L27)).
 
+## Interaction feedback conventions
+
+Shared primitives keep feedback consistent across screens; use them instead of ad-hoc copy.
+
+- **Toggles** use [`SwitchWithState`](../src/components/ui/switch-with-state.tsx) so the current state is printed as On/Off beside the switch. [`SettingSwitchRow`](../src/components/ui/setting-switch-row.tsx) accepts a `consequence={{ on, off }}` pair and announces what the current state does (for example, "Motion is reduced — animations and transitions are minimised").
+- **Sort & Filter sheets** end with [`FilterResultCount`](../src/components/ui/filter-result-count.tsx), a live "X <entities> selected" line. Paged lists pass the server's matching total, not the length of the current page.
+- **No-results states** use [`NoResultsState`](../src/components/ui/no-results-state.tsx) (or `DataState`'s `noResults` prop): what was searched, how many records were checked and in which business, how many filters are applied, and a clear-search-and-filters action. Plain empty states add muted `detail` text via [`EmptyState`](../src/components/ui/empty-state.tsx) explaining what was checked.
+- **Final actions** name their target: create, update and delete buttons use the `Common.saveNamed`, `updateNamed`, `deleteNamed`, `saveCheque`, `deleteCheque` and related keys. [`DeleteConfirmationDialog`](../src/components/ui/delete-dialog.tsx) defaults its confirm button to "Delete <name>". Intermediate wizard steps keep "Continue".
+
 ## PWA behavior
 
 The app manifest defines its install metadata ([manifest](../public/site.webmanifest#L1-L17)). The registrar uses browser install support and explicit user interaction before requesting installation ([registrar](../src/components/pwa-registrar.tsx#L1-L28)).
