@@ -86,7 +86,7 @@ function setup(channel = 'email') {
   return { job, db, log }
 }
 
-function runMetric(log: ReturnType<typeof vi.spyOn>) {
+function runMetric(log: { mock: { calls: unknown[][] } }) {
   const line = log.mock.calls
     .map(([value]) => value)
     .find(
