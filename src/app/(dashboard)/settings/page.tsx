@@ -128,6 +128,7 @@ export default function SettingsPage() {
         },
         {
           name: security('pinTitle'),
+          description: t('pinLockDesc'),
           icon: SecurityLock,
           href: '/settings/security',
         },
@@ -149,7 +150,12 @@ export default function SettingsPage() {
           icon: Features,
           href: '/features/catalog',
         },
-        { name: referrals('title'), icon: Gift, href: '/referrals' },
+        {
+          name: referrals('title'),
+          description: t('referralsDesc'),
+          icon: Gift,
+          href: '/referrals',
+        },
       ],
     },
     {

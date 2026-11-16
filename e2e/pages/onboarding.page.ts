@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test'
 
-/** Drives the 5-step onboarding wizard (business name is the only required field). */
+/** Drives the four-step wizard, including required terms acceptance. */
 export class OnboardingPage {
   constructor(private readonly page: Page) {}
 
@@ -17,6 +17,7 @@ export class OnboardingPage {
     await this.page.getByTestId('onboarding-step1-continue').click()
     await this.page.getByTestId('onboarding-step2-continue').click()
     await this.page.getByTestId('onboarding-step3-continue').click()
+    await this.page.getByTestId('onboarding-accept-terms-checkbox').check()
     await this.page.getByTestId('onboarding-step4-finish').click()
     await this.page.getByTestId('onboarding-enter-dashboard').click()
   }

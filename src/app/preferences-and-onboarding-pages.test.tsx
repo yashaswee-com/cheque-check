@@ -124,13 +124,19 @@ vi.mock('@/components/ui/editable-avatar', () => ({
   EditableAvatar: ({
     onUpload,
     onDelete,
+    imageUrl,
   }: {
     onUpload: (url: string) => void
     onDelete: () => void
+    imageUrl?: string | null
   }) => (
-    <div>
-      <button onClick={() => onUpload('business-logo')}>Upload logo</button>
-      <button onClick={onDelete}>Remove logo</button>
+    <div data-testid="editable-avatar" data-image-url={imageUrl ?? ''}>
+      <button type="button" onClick={() => onUpload('business-logo')}>
+        Upload logo
+      </button>
+      <button type="button" onClick={onDelete}>
+        Remove logo
+      </button>
     </div>
   ),
 }))
@@ -188,26 +194,63 @@ afterEach(() => {
 })
 
 describe('onboarding page', () => {
+  it('does not submit the form when a progress indicator is clicked', () => {
+    renderPage(<OnboardingPage />)
+    fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
+      target: { value: 'Acme' },
+    })
+    fireEvent.click(screen.getAllByRole('tab')[0])
+    expect(screen.getByTestId('onboarding-business-name-input')).toHaveValue(
+      'Acme',
+    )
+    expect(screen.getByTestId('onboarding-step1-continue')).toBeEnabled()
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+
+  it('docks the shared primary action outside the scrolling form on every step', () => {
+    renderPage(<OnboardingPage />)
+    const form = document.getElementById('onboarding-form')
+    const slot = screen.getByTestId('shell-bottom-slot')
+    expect(form).toHaveClass('overflow-y-auto', 'min-h-0', 'flex-1')
+    fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
+      target: { value: 'Acme' },
+    })
+    for (let step = 1; step <= 4; step += 1) {
+      const action = screen.getByTestId(
+        step === 4
+          ? 'onboarding-step4-finish'
+          : `onboarding-step${step}-continue`,
+      )
+      expect(slot).toContainElement(action)
+      expect(form).not.toContainElement(action)
+      expect(action).toHaveAttribute('form', 'onboarding-form')
+      expect(action).toHaveClass('bg-primary', 'rounded-full', 'h-12')
+      if (step < 4) fireEvent.click(action)
+    }
+    expect(screen.getByTestId('onboarding-step4-finish')).toHaveTextContent(
+      messages.Onboarding.finishSetup,
+    )
+    fireEvent.submit(form!)
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+
   function reachFinalStep() {
     fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
       target: { value: 'Acme' },
     })
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
     fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
-    fireEvent.change(
-      screen.getByPlaceholderText(messages.Onboarding.businessPhonePlaceholder),
-      { target: { value: '+919876543210' } },
-    )
-    fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
   }
   function advanceThroughTerms() {
-    fireEvent.click(screen.getByTestId('onboarding-step4-continue'))
+    fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
     expect(screen.getByTestId('onboarding-next-button')).toBeDisabled()
+    expect(screen.getByTestId('onboarding-step4-finish')).toBeDisabled()
     expect(screen.getByText(messages.Onboarding.termsRequired)).toBeVisible()
     fireEvent.click(screen.getByTestId('onboarding-accept-terms-checkbox'))
     expect(screen.getByTestId('onboarding-next-button')).toBeEnabled()
+    expect(screen.getByTestId('onboarding-step4-finish')).toBeEnabled()
   }
-  it('omits optional business color, email and logo customization from onboarding', () => {
+  it('offers an optional logo without business color or email customization', () => {
     renderPage(<OnboardingPage />)
     expect(
       screen.queryByTestId('onboarding-brand-colors'),
@@ -217,32 +260,39 @@ describe('onboarding page', () => {
         messages.Onboarding.businessEmailPlaceholder,
       ),
     ).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Upload logo' })).toBeNull()
+    expect(
+      screen.getByText(messages.Onboarding.businessLogoOptional),
+    ).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Upload logo' })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Upload logo' }))
+    expect(screen.getByTestId('editable-avatar')).toHaveAttribute(
+      'data-image-url',
+      'business-logo',
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Remove logo' }))
+    expect(screen.getByTestId('editable-avatar')).toHaveAttribute(
+      'data-image-url',
+      '',
+    )
   })
-  it('requires a business name and valid optional phone, while preserving values on back navigation', () => {
+  it('requires only a business name and preserves the name and logo on back navigation', () => {
     renderPage(<OnboardingPage />)
     expect(screen.getByTestId('onboarding-step1-continue')).toBeDisabled()
     fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
       target: { value: 'Acme' },
     })
+    fireEvent.click(screen.getByRole('button', { name: 'Upload logo' }))
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
     fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
-    fireEvent.change(
-      screen.getByPlaceholderText(messages.Onboarding.businessPhonePlaceholder),
-      { target: { value: '123' } },
-    )
-    expect(screen.getByTestId('onboarding-step3-continue')).toBeDisabled()
-    expect(screen.getByTestId('onboarding-next-button')).toBeDisabled()
-    expect(screen.getByText(messages.Common.invalidPhone)).toBeVisible()
-    fireEvent.change(
-      screen.getByPlaceholderText(messages.Onboarding.businessPhonePlaceholder),
-      { target: { value: '+919876543210' } },
-    )
     expect(screen.getByTestId('onboarding-step3-continue')).toBeEnabled()
     fireEvent.click(screen.getByTestId('onboarding-back-button'))
     fireEvent.click(screen.getByTestId('onboarding-back-button'))
     expect(screen.getByTestId('onboarding-business-name-input')).toHaveValue(
       'Acme',
+    )
+    expect(screen.getByTestId('editable-avatar')).toHaveAttribute(
+      'data-image-url',
+      'business-logo',
     )
   })
   it('creates a business, activates it, persists selected preferences, and celebrates completion', async () => {
@@ -250,6 +300,7 @@ describe('onboarding page', () => {
     fireEvent.change(screen.getByTestId('onboarding-business-name-input'), {
       target: { value: 'Acme' },
     })
+    fireEvent.click(screen.getByRole('button', { name: 'Upload logo' }))
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
     const preferences = screen.getAllByRole('combobox')
     preferences.forEach((select) => {
@@ -257,15 +308,6 @@ describe('onboarding page', () => {
       if (option) fireEvent.change(select, { target: { value: option.value } })
     })
     fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
-    fireEvent.change(
-      screen.getByPlaceholderText(messages.Onboarding.businessPhonePlaceholder),
-      { target: { value: '+919876543210' } },
-    )
-    fireEvent.change(
-      screen.getByPlaceholderText(messages.Onboarding.headquartersPlaceholder),
-      { target: { value: 'Warehouse Road' } },
-    )
-    fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
     const advancedWarning = screen.getByTestId('onboarding-advanced-warning')
     const dailyFrequency = screen.getByTestId('onboarding-daily-frequency')
     expect(
@@ -279,15 +321,15 @@ describe('onboarding page', () => {
       target: { value: '2' },
     })
     advanceThroughTerms()
-    fireEvent.click(screen.getByTestId('onboarding-next-button'))
+    fireEvent.click(screen.getByTestId('onboarding-step4-finish'))
     await waitFor(() => expect(mocks.celebrate).toHaveBeenCalledOnce())
     expect(mocks.create).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Acme',
         email: null,
-        phone: '+919876543210',
-        address: 'Warehouse Road',
-        logo_url: null,
+        phone: null,
+        address: null,
+        logo_url: 'business-logo',
         color: expect.any(String),
       }),
     )
@@ -340,7 +382,6 @@ describe('onboarding page', () => {
     })
     fireEvent.click(screen.getByTestId('onboarding-step1-continue'))
     fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
-    fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
     advanceThroughTerms()
     fireEvent.click(screen.getByTestId('onboarding-next-button'))
 
@@ -353,6 +394,7 @@ describe('onboarding page', () => {
         email: null,
         phone: null,
         address: null,
+        logo_url: null,
       }),
     )
   })
@@ -396,7 +438,7 @@ describe('onboarding page', () => {
     expect(preferences[4]).toHaveValue('Asia/Kolkata')
   })
 
-  it('orders preferences, contact, notifications and terms steps', () => {
+  it('orders preferences, notifications and terms without a contact step', () => {
     renderPage(<OnboardingPage />)
     const heading = screen.getByTestId('onboarding-heading')
     expect(heading).toHaveTextContent(messages.Onboarding.welcome)
@@ -407,10 +449,14 @@ describe('onboarding page', () => {
     expect(heading).toHaveTextContent(messages.Onboarding.personalizeExperience)
     expect(heading.querySelector('button')).toBeNull()
     fireEvent.click(screen.getByTestId('onboarding-step2-continue'))
-    expect(heading).toHaveTextContent(messages.Onboarding.businessDetails)
-    fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
     expect(heading).toHaveTextContent(messages.Onboarding.notifications)
-    fireEvent.click(screen.getByTestId('onboarding-step4-continue'))
+    expect(
+      screen.queryByPlaceholderText(
+        messages.Onboarding.businessPhonePlaceholder,
+      ),
+    ).toBeNull()
+    expect(screen.queryByTestId('onboarding-headquarters-input')).toBeNull()
+    fireEvent.click(screen.getByTestId('onboarding-step3-continue'))
     expect(heading).toHaveTextContent(messages.Onboarding.acceptTerms)
     expect(screen.getByTestId('onboarding-next-button')).toBeDisabled()
     expect(screen.getByText(messages.Onboarding.termsRequired)).toBeVisible()

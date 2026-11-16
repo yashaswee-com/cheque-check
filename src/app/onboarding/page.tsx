@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import {
   Calendar03Icon as Calendar,
-  CallIcon as Phone,
   Clock01Icon as Clock,
   TextFontIcon as TextIcon,
   Wallet01Icon as Wallet,
@@ -41,11 +40,14 @@ import {
 import { useTranslations } from 'next-intl'
 import type { IconSvgElement } from '@hugeicons/react'
 import { FieldError } from '@/components/ui/field-error'
-import { LocationInput } from '@/components/ui/location-input'
+import { EditSaveBar } from '@/components/ui/edit-save-bar'
+import { EditableAvatar } from '@/components/ui/editable-avatar'
+import {
+  ShellBottomSlot,
+  ShellBottomSlotProvider,
+} from '@/components/shell-bottom-slot'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
 import { InfoPopover } from '@/components/ui/info-popover'
-import { PhoneInput } from '@/components/ui/phone-input'
-import { businessSchema } from '@/validators'
 import { CreationSuccessScreen } from '@/components/ui/creation-success-screen'
 import {
   CURRENCY_OPTIONS,
@@ -76,8 +78,7 @@ export default function OnboardingPage() {
   // Form State
   const [formData, setFormData] = useState({
     businessName: '',
-    businessPhone: '',
-    businessAddress: '',
+    businessLogo: null as string | null,
     businessColor: '#6b7280',
     currency: '₹',
     dateFormat: 'dd/MM/yyyy',
@@ -107,13 +108,10 @@ export default function OnboardingPage() {
   }
 
   const nextStep = () => {
-    if (step === 4) setTermsAttempted(true)
-    setStep((current) => Math.min(current + 1, 6))
+    if (step === 3) setTermsAttempted(true)
+    setStep((current) => Math.min(current + 1, 4))
   }
   const prevStep = () => setStep((s) => Math.max(s - 1, 1))
-  const isBusinessPhoneValid = businessSchema.shape.phone.safeParse(
-    formData.businessPhone,
-  ).success
   const arePreferencesComplete = [
     formData.currency,
     formData.language,
@@ -124,9 +122,8 @@ export default function OnboardingPage() {
   const canAdvance =
     (step === 1 && Boolean(formData.businessName.trim())) ||
     (step === 2 && arePreferencesComplete) ||
-    (step === 3 && isBusinessPhoneValid) ||
-    step === 4 ||
-    (step === 5 && termsAccepted)
+    step === 3 ||
+    (step === 4 && termsAccepted)
   const preferenceFields: Array<{
     id: string
     key: 'currency' | 'language' | 'dateFormat' | 'timeFormat' | 'timeZone'
@@ -182,10 +179,10 @@ export default function OnboardingPage() {
       const business = await businessService.create({
         name: formData.businessName,
         email: null,
-        phone: formData.businessPhone || null,
-        address: formData.businessAddress || null,
+        phone: null,
+        address: null,
         color: formData.businessColor,
-        logo_url: null,
+        logo_url: formData.businessLogo,
       })
       await queryClient.invalidateQueries({
         queryKey: queryKeys.businesses.all(),
@@ -204,7 +201,7 @@ export default function OnboardingPage() {
       })
 
       void syncMarketing('onboarding_completed')
-      setStep(6)
+      setStep(5)
     } catch (error) {
       alert(error instanceof Error ? error.message : tc('error'))
     } finally {
@@ -219,474 +216,419 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-full bg-background dark:bg-black selection:bg-muted transition-colors duration-500">
-      <ClipboardGuard />
-      <div className="mx-auto max-w-2xl space-y-8 px-6 py-8 md:py-16">
-        {/* Header */}
-        <div className="flex items-center justify-center min-h-[64px]">
-          <div className="text-center" data-testid="onboarding-heading">
-            {step < 6 ? (
-              <h1 className="text-display-md md:text-display-lg font-semibold tracking-tight text-ink dark:text-white flex items-center justify-center gap-3">
-                {step === 1 && (
-                  <HugeiconsIcon
-                    icon={Wallet}
-                    className="h-8 w-8 text-muted-foreground"
-                  />
-                )}
-                {step === 2 && (
-                  <HugeiconsIcon
-                    icon={Settings2}
-                    className="h-8 w-8 text-muted-foreground"
-                  />
-                )}
-                {step === 3 && (
-                  <HugeiconsIcon
-                    icon={Building2}
-                    className="h-8 w-8 text-muted-foreground"
-                  />
-                )}
-                {step === 4 && (
-                  <HugeiconsIcon
-                    icon={Bell}
-                    className="h-8 w-8 text-muted-foreground"
-                  />
-                )}
-                {step === 5 && (
-                  <HugeiconsIcon
-                    icon={Check}
-                    className="h-8 w-8 text-muted-foreground"
-                  />
-                )}
-                <span>
-                  {step === 1 && t('welcome')}
-                  {step === 2 && t('personalizeExperience')}
-                  {step === 3 && t('businessDetails')}
-                  {step === 4 && t('notifications')}
-                  {step === 5 && t('acceptTerms')}
-                </span>
-              </h1>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Progress Bar */}
-        {step < 6 && (
-          <Stepper
-            value={Math.min(step, 5)}
-            className="w-full max-w-xl mx-auto space-y-8"
-            indicators={{
-              completed: <HugeiconsIcon icon={Check} className="size-3.5" />,
-            }}
-          >
-            <div className="flex items-start gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={prevStep}
-                disabled={step === 1}
-                data-testid="onboarding-back-button"
-                className="rounded-full h-8 w-8 shrink-0 hover:bg-canvas-parchment"
-              >
-                <HugeiconsIcon icon={ArrowLeft} className="h-4 w-4" />
-              </Button>
-
-              <StepperNav className="gap-3 flex-1">
-                {[
-                  {
-                    title: tc('welcome'),
-                    icon: <HugeiconsIcon icon={Wallet} className="size-4" />,
-                  },
-                  {
-                    title: t('personalizeExperience'),
-                    icon: <HugeiconsIcon icon={Settings2} className="size-4" />,
-                  },
-                  {
-                    title: t('businessDetails'),
-                    icon: <HugeiconsIcon icon={Building2} className="size-4" />,
-                  },
-                  {
-                    title: t('notifications'),
-                    icon: <HugeiconsIcon icon={Bell} className="size-4" />,
-                  },
-                  {
-                    title: t('acceptTerms'),
-                    icon: <HugeiconsIcon icon={Check} className="size-4" />,
-                  },
-                ].map((s, index) => (
-                  <StepperItem
-                    key={index}
-                    step={index + 1}
-                    className="relative flex-1 items-center"
-                  >
-                    <StepperTrigger className="flex grow flex-col items-center justify-center gap-2.5">
-                      <StepperIndicator className="data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=completed]:bg-success size-8 border-2 data-[state=completed]:text-white data-[state=inactive]:bg-background z-10">
-                        {s.icon}
-                      </StepperIndicator>
-                    </StepperTrigger>
-                    {5 > index + 1 && (
-                      <StepperSeparator className="group-data-[state=completed]/step:bg-success absolute inset-x-0 left-[50%] top-4 m-0 w-full z-0" />
-                    )}
-                  </StepperItem>
-                ))}
-              </StepperNav>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  if (step === 5) {
-                    if (!termsAccepted) {
-                      setTermsAttempted(true)
-                      return
-                    }
-                    void handleFinish()
-                  } else {
-                    nextStep()
-                  }
-                }}
-                disabled={!canAdvance || (step === 5 && isSubmitting)}
-                data-testid="onboarding-next-button"
-                className="rounded-full h-8 w-8 shrink-0 hover:bg-canvas-parchment"
-              >
-                <HugeiconsIcon icon={ArrowRight} className="h-4 w-4" />
-              </Button>
+    <ShellBottomSlotProvider>
+      <div className="flex h-full min-h-0 shrink-0 flex-col bg-background dark:bg-black selection:bg-muted transition-colors duration-500">
+        <ClipboardGuard />
+        <form
+          id="onboarding-form"
+          className="mx-auto w-full max-w-2xl min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-8 px-6 py-8 md:py-16"
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (isSubmitting || !canAdvance) return
+            if (step === 4) {
+              void handleFinish()
+            } else {
+              nextStep()
+            }
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-center min-h-[64px]">
+            <div className="text-center" data-testid="onboarding-heading">
+              {step < 5 ? (
+                <h1 className="text-display-md md:text-display-lg font-semibold tracking-tight text-ink dark:text-white flex items-center justify-center gap-3">
+                  {step === 1 && (
+                    <HugeiconsIcon
+                      icon={Wallet}
+                      className="h-8 w-8 text-muted-foreground"
+                    />
+                  )}
+                  {step === 2 && (
+                    <HugeiconsIcon
+                      icon={Settings2}
+                      className="h-8 w-8 text-muted-foreground"
+                    />
+                  )}
+                  {step === 3 && (
+                    <HugeiconsIcon
+                      icon={Bell}
+                      className="h-8 w-8 text-muted-foreground"
+                    />
+                  )}
+                  {step === 4 && (
+                    <HugeiconsIcon
+                      icon={Check}
+                      className="h-8 w-8 text-muted-foreground"
+                    />
+                  )}
+                  <span>
+                    {step === 1 && t('welcome')}
+                    {step === 2 && t('personalizeExperience')}
+                    {step === 3 && t('notifications')}
+                    {step === 4 && t('acceptTerms')}
+                  </span>
+                </h1>
+              ) : null}
             </div>
-          </Stepper>
-        )}
+          </div>
 
-        <div className="relative min-h-[400px]">
-          <AnimatePresence mode="wait">
-            {step === 1 && (
-              <motion.div
-                key="step1"
-                variants={containerVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                className="space-y-6"
-              >
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="onboarding-business-name"
-                      required
-                      className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground ml-1"
+          {/* Progress Bar */}
+          {step < 5 && (
+            <Stepper
+              value={step}
+              className="w-full max-w-xl mx-auto space-y-8"
+              indicators={{
+                completed: <HugeiconsIcon icon={Check} className="size-3.5" />,
+              }}
+            >
+              <div className="flex items-start gap-4">
+                <Button
+                  variant="ghost"
+                  type="button"
+                  size="icon"
+                  onClick={prevStep}
+                  disabled={step === 1}
+                  data-testid="onboarding-back-button"
+                  className="rounded-full h-8 w-8 shrink-0 hover:bg-canvas-parchment"
+                >
+                  <HugeiconsIcon icon={ArrowLeft} className="h-4 w-4" />
+                </Button>
+
+                <StepperNav className="gap-3 flex-1">
+                  {[
+                    {
+                      title: tc('welcome'),
+                      icon: <HugeiconsIcon icon={Wallet} className="size-4" />,
+                    },
+                    {
+                      title: t('personalizeExperience'),
+                      icon: (
+                        <HugeiconsIcon icon={Settings2} className="size-4" />
+                      ),
+                    },
+                    {
+                      title: t('notifications'),
+                      icon: <HugeiconsIcon icon={Bell} className="size-4" />,
+                    },
+                    {
+                      title: t('acceptTerms'),
+                      icon: <HugeiconsIcon icon={Check} className="size-4" />,
+                    },
+                  ].map((s, index) => (
+                    <StepperItem
+                      key={index}
+                      step={index + 1}
+                      className="relative flex-1 items-center"
                     >
-                      {t('businessName')}
-                    </Label>
-                    <div className="relative group">
-                      <Input
-                        id="onboarding-business-name"
-                        leftIcon={Building2}
-                        data-testid="onboarding-business-name-input"
-                        placeholder={t('businessNamePlaceholder')}
-                        value={formData.businessName}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            businessName: e.target.value,
-                          })
-                        }
-                        className="h-12 bg-background text-base rounded-sm transition-all focus:ring-2 focus:ring-muted-foreground/20"
-                      />
-                    </div>
-                  </div>
-                </div>
+                      <StepperTrigger
+                        type="button"
+                        className="flex grow flex-col items-center justify-center gap-2.5"
+                      >
+                        <StepperIndicator className="data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=completed]:bg-success size-8 border-2 data-[state=completed]:text-white data-[state=inactive]:bg-background z-10">
+                          {s.icon}
+                        </StepperIndicator>
+                      </StepperTrigger>
+                      {4 > index + 1 && (
+                        <StepperSeparator className="group-data-[state=completed]/step:bg-success absolute inset-x-0 left-[50%] top-4 m-0 w-full z-0" />
+                      )}
+                    </StepperItem>
+                  ))}
+                </StepperNav>
 
                 <Button
-                  className="w-full rounded-pill h-12 bg-foreground text-background font-medium hover:bg-foreground/90 active:scale-95 transition-transform"
-                  data-testid="onboarding-step1-continue"
-                  onClick={nextStep}
-                  disabled={!formData.businessName.trim()}
+                  variant="ghost"
+                  size="icon"
+                  type="submit"
+                  disabled={!canAdvance || isSubmitting}
+                  data-testid="onboarding-next-button"
+                  className="rounded-full h-8 w-8 shrink-0 hover:bg-canvas-parchment"
                 >
-                  {t('getStarted')}{' '}
-                  <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
+                  <HugeiconsIcon icon={ArrowRight} className="h-4 w-4" />
                 </Button>
-              </motion.div>
-            )}
+              </div>
+            </Stepper>
+          )}
 
-            {step === 2 && (
-              <motion.div
-                key="step2"
-                variants={containerVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                className="space-y-6"
-              >
-                <div
-                  className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2"
-                  data-testid="onboarding-preferences"
+          <div className="relative min-h-[400px]">
+            <AnimatePresence mode="wait">
+              {step === 1 && (
+                <motion.div
+                  key="step1"
+                  variants={containerVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="space-y-6"
                 >
-                  {preferenceFields.map((field) => (
-                    <div key={field.id} className="min-w-0 space-y-2">
+                  <div
+                    className="flex flex-col items-center gap-3 py-2"
+                    data-testid="onboarding-business-logo"
+                  >
+                    <EditableAvatar
+                      name={formData.businessName || t('businessName')}
+                      color={formData.businessColor}
+                      imageUrl={formData.businessLogo}
+                      onUpload={async (businessLogo) =>
+                        setFormData((previous) => ({
+                          ...previous,
+                          businessLogo,
+                        }))
+                      }
+                      onDelete={async () =>
+                        setFormData((previous) => ({
+                          ...previous,
+                          businessLogo: null,
+                        }))
+                      }
+                      size="xl"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t('businessLogoOptional')}
+                    </p>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
                       <Label
-                        htmlFor={`onboarding-${field.id}`}
+                        htmlFor="onboarding-business-name"
                         required
-                        className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1"
+                        className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground ml-1"
                       >
-                        <HugeiconsIcon
-                          icon={field.icon}
-                          className="mr-1 inline size-4 align-text-bottom"
-                          aria-hidden="true"
-                        />
-                        {field.label}
+                        {t('businessName')}
                       </Label>
+                      <div className="relative group">
+                        <Input
+                          id="onboarding-business-name"
+                          leftIcon={Building2}
+                          data-testid="onboarding-business-name-input"
+                          placeholder={t('businessNamePlaceholder')}
+                          value={formData.businessName}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              businessName: e.target.value,
+                            })
+                          }
+                          className="h-12 bg-background text-base rounded-sm transition-all focus:ring-2 focus:ring-muted-foreground/20"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 2 && (
+                <motion.div
+                  key="step2"
+                  variants={containerVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="space-y-6"
+                >
+                  <div
+                    className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2"
+                    data-testid="onboarding-preferences"
+                  >
+                    {preferenceFields.map((field) => (
+                      <div key={field.id} className="min-w-0 space-y-2">
+                        <Label
+                          htmlFor={`onboarding-${field.id}`}
+                          required
+                          className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1"
+                        >
+                          <HugeiconsIcon
+                            icon={field.icon}
+                            className="mr-1 inline size-4 align-text-bottom"
+                            aria-hidden="true"
+                          />
+                          {field.label}
+                        </Label>
+                        <Combobox
+                          id={`onboarding-${field.id}`}
+                          testId={`onboarding-${field.id}`}
+                          options={field.options}
+                          value={formData[field.key]}
+                          onValueChange={(v) =>
+                            setFormData((prev) => ({ ...prev, [field.key]: v }))
+                          }
+                          className="h-12 bg-background border border-border rounded-sm text-base font-normal"
+                        />
+                        {!formData[field.key] && (
+                          <FieldError>{t('fieldRequired')}</FieldError>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 3 && (
+                <motion.div
+                  key="step3"
+                  variants={containerVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="space-y-4"
+                >
+                  <div className="space-y-3">
+                    <div className="min-w-0 space-y-2">
+                      <div className="flex items-center gap-1">
+                        <Label className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1">
+                          {t('advancedWarning')}
+                        </Label>
+                        <InfoPopover title={t('advancedWarning')}>
+                          {t('advancedWarningHelp')}
+                        </InfoPopover>
+                      </div>
                       <Combobox
-                        id={`onboarding-${field.id}`}
-                        testId={`onboarding-${field.id}`}
-                        options={field.options}
-                        value={formData[field.key]}
+                        options={REMINDER_FREQUENCY_OPTIONS}
+                        value={formData.defaultReminderDays}
+                        allowDeselect={false}
+                        testId="onboarding-advanced-warning"
                         onValueChange={(v) =>
-                          setFormData((prev) => ({ ...prev, [field.key]: v }))
+                          setFormData({ ...formData, defaultReminderDays: v })
                         }
                         className="h-12 bg-background border border-border rounded-sm text-base font-normal"
                       />
-                      {!formData[field.key] && (
-                        <FieldError>{t('fieldRequired')}</FieldError>
-                      )}
                     </div>
-                  ))}
-                </div>
-
-                <Button
-                  className="w-full rounded-pill h-12 bg-foreground text-background text-base font-medium hover:bg-foreground/90 active:scale-95 transition-transform"
-                  data-testid="onboarding-step2-continue"
-                  onClick={nextStep}
-                  disabled={!arePreferencesComplete}
-                >
-                  {t('looksGood')}{' '}
-                  <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-                </Button>
-              </motion.div>
-            )}
-
-            {step === 3 && (
-              <motion.div
-                key="step3"
-                variants={containerVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                className="space-y-6"
-              >
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="onboarding-business-phone"
-                      className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1"
-                    >
-                      <HugeiconsIcon
-                        icon={Phone}
-                        className="mr-1 inline size-4 align-text-bottom"
-                        aria-hidden="true"
+                    <div className="min-w-0 space-y-2">
+                      <div className="flex items-center gap-1">
+                        <Label className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1">
+                          {t('dailyFrequency')}
+                        </Label>
+                        <InfoPopover title={t('dailyFrequency')}>
+                          {t('dailyFrequencyHelp')}
+                        </InfoPopover>
+                      </div>
+                      <Combobox
+                        options={REMINDERS_PER_DAY_OPTIONS}
+                        value={formData.remindersPerDay}
+                        allowDeselect={false}
+                        testId="onboarding-daily-frequency"
+                        onValueChange={(v) =>
+                          setFormData({ ...formData, remindersPerDay: v })
+                        }
+                        className="h-12 bg-background border border-border rounded-sm text-base font-normal"
                       />
-                      {t('businessPhone')}
-                    </Label>
-                    <PhoneInput
-                      id="onboarding-business-phone"
-                      placeholder={t('businessPhonePlaceholder')}
-                      value={formData.businessPhone}
-                      onChange={(businessPhone) =>
-                        setFormData((prev) => ({ ...prev, businessPhone }))
-                      }
-                      aria-invalid={!isBusinessPhoneValid}
-                      className="h-12 dark:bg-surface-tile-1 text-base"
-                    />
-                    {formData.businessPhone && !isBusinessPhoneValid && (
-                      <FieldError id="onboarding-business-phone-error">
-                        {tc('invalidPhone')}
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-lg bg-muted/40 border border-border space-y-4">
+                    <div className="flex items-center gap-4">
+                      <EntityAvatar
+                        name={formData.businessName}
+                        imageUrl={formData.businessLogo}
+                        size="lg"
+                      />
+                      <div className="min-w-0">
+                        <h3 className="truncate font-semibold text-ink dark:text-white">
+                          {formData.businessName}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {t('readyToManage')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 4 && (
+                <motion.div
+                  key="step4"
+                  variants={containerVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="space-y-6"
+                >
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-medium">{t('acceptTerms')}</h2>
+                    <p className="text-sm text-muted-foreground">
+                      {t('termsDescription')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-border p-4">
+                    <div className="flex items-start gap-3">
+                      <input
+                        id="onboarding-accept-terms"
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(event) => {
+                          setTermsAccepted(event.target.checked)
+                          setTermsAttempted(false)
+                        }}
+                        className="mt-1 size-4 shrink-0 accent-foreground"
+                        data-testid="onboarding-accept-terms-checkbox"
+                      />
+                      <Label
+                        htmlFor="onboarding-accept-terms"
+                        required
+                        className="text-sm font-normal leading-6"
+                      >
+                        {t('termsAgreementPrefix')}{' '}
+                        <Link
+                          href="/settings/terms-and-conditions"
+                          className="text-foreground underline underline-offset-2"
+                        >
+                          {t('termsAndConditions')}
+                        </Link>{' '}
+                        {t('and')}{' '}
+                        <Link
+                          href="/settings/privacy-policy"
+                          className="text-foreground underline underline-offset-2"
+                        >
+                          {t('privacyPolicy')}
+                        </Link>
+                      </Label>
+                    </div>
+                    {termsAttempted && !termsAccepted && (
+                      <FieldError className="mt-2">
+                        {t('termsRequired')}
                       </FieldError>
                     )}
                   </div>
+                </motion.div>
+              )}
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="onboarding-headquarters"
-                      className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1"
-                    >
-                      <HugeiconsIcon
-                        icon={MapPin}
-                        className="mr-1 inline size-4 align-text-bottom"
-                        aria-hidden="true"
-                      />
-                      {t('headquarters')}
-                    </Label>
-                    <LocationInput
-                      id="onboarding-headquarters"
-                      data-testid="onboarding-headquarters-input"
-                      placeholder={t('headquartersPlaceholder')}
-                      value={formData.businessAddress}
-                      onChange={(businessAddress) =>
-                        setFormData((previous) => ({
-                          ...previous,
-                          businessAddress,
-                        }))
-                      }
-                      className="h-12 bg-background border border-border text-base rounded-sm"
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  className="w-full rounded-pill h-12 bg-foreground text-background text-base font-medium hover:bg-foreground/90 active:scale-95 transition-transform"
-                  data-testid="onboarding-step3-continue"
-                  onClick={nextStep}
-                  disabled={!isBusinessPhoneValid}
-                >
-                  {tc('continue')}{' '}
-                  <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-                </Button>
-              </motion.div>
-            )}
-
-            {step === 4 && (
-              <motion.div
-                key="step4"
-                variants={containerVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                className="space-y-4"
-              >
-                <div className="space-y-3">
-                  <div className="min-w-0 space-y-2">
-                    <div className="flex items-center gap-1">
-                      <Label className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1">
-                        {t('advancedWarning')}
-                      </Label>
-                      <InfoPopover title={t('advancedWarning')}>
-                        {t('advancedWarningHelp')}
-                      </InfoPopover>
-                    </div>
-                    <Combobox
-                      options={REMINDER_FREQUENCY_OPTIONS}
-                      value={formData.defaultReminderDays}
-                      allowDeselect={false}
-                      testId="onboarding-advanced-warning"
-                      onValueChange={(v) =>
-                        setFormData({ ...formData, defaultReminderDays: v })
-                      }
-                      className="h-12 bg-background border border-border rounded-sm text-base font-normal"
-                    />
-                  </div>
-                  <div className="min-w-0 space-y-2">
-                    <div className="flex items-center gap-1">
-                      <Label className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1">
-                        {t('dailyFrequency')}
-                      </Label>
-                      <InfoPopover title={t('dailyFrequency')}>
-                        {t('dailyFrequencyHelp')}
-                      </InfoPopover>
-                    </div>
-                    <Combobox
-                      options={REMINDERS_PER_DAY_OPTIONS}
-                      value={formData.remindersPerDay}
-                      allowDeselect={false}
-                      testId="onboarding-daily-frequency"
-                      onValueChange={(v) =>
-                        setFormData({ ...formData, remindersPerDay: v })
-                      }
-                      className="h-12 bg-background border border-border rounded-sm text-base font-normal"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-lg bg-muted/40 border border-border space-y-4">
-                  <div className="flex items-center gap-4">
-                    <EntityAvatar name={formData.businessName} size="lg" />
-                    <div className="min-w-0">
-                      <h3 className="truncate font-semibold text-ink dark:text-white">
-                        {formData.businessName}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t('readyToManage')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  className="w-full rounded-pill h-12 bg-foreground text-background text-base font-medium hover:bg-foreground/90 active:scale-95 transition-transform"
-                  data-testid="onboarding-step4-continue"
-                  onClick={nextStep}
-                >
-                  {tc('continue')}{' '}
-                  <HugeiconsIcon icon={ArrowRight} className="ml-2 h-5 w-5" />
-                </Button>
-              </motion.div>
-            )}
-
-            {step === 5 && (
-              <motion.div
-                key="step5"
-                variants={containerVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                className="space-y-6"
-              >
-                <div className="space-y-2">
-                  <h2 className="text-xl font-medium">{t('acceptTerms')}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {t('termsDescription')}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border p-4">
-                  <div className="flex items-start gap-3">
-                    <input
-                      id="onboarding-accept-terms"
-                      type="checkbox"
-                      checked={termsAccepted}
-                      onChange={(event) => {
-                        setTermsAccepted(event.target.checked)
-                        setTermsAttempted(false)
-                      }}
-                      className="mt-1 size-4 shrink-0 accent-foreground"
-                      data-testid="onboarding-accept-terms-checkbox"
-                    />
-                    <Label
-                      htmlFor="onboarding-accept-terms"
-                      required
-                      className="text-sm font-normal leading-6"
-                    >
-                      {t('termsAgreementPrefix')}{' '}
-                      <Link
-                        href="/settings/terms-and-conditions"
-                        className="text-foreground underline underline-offset-2"
-                      >
-                        {t('termsAndConditions')}
-                      </Link>{' '}
-                      {t('and')}{' '}
-                      <Link
-                        href="/settings/privacy-policy"
-                        className="text-foreground underline underline-offset-2"
-                      >
-                        {t('privacyPolicy')}
-                      </Link>
-                    </Label>
-                  </div>
-                  {termsAttempted && !termsAccepted && (
-                    <FieldError className="mt-2">
-                      {t('termsRequired')}
-                    </FieldError>
-                  )}
-                </div>
-              </motion.div>
-            )}
-
-            {step === 6 && (
-              <CreationSuccessScreen
-                key="step6"
-                description={t('successMessage')}
-                ctaLabel={t('enterDashboard')}
-                continueTestId="onboarding-enter-dashboard"
-                onContinue={() => router.push('/dashboard')}
-              />
-            )}
-          </AnimatePresence>
-        </div>
+              {step === 5 && (
+                <CreationSuccessScreen
+                  key="step5"
+                  description={t('successMessage')}
+                  ctaLabel={t('enterDashboard')}
+                  continueTestId="onboarding-enter-dashboard"
+                  onContinue={() => router.push('/dashboard')}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+        </form>
+        <ShellBottomSlot />
+        {step < 5 && (
+          <EditSaveBar
+            formId="onboarding-form"
+            label={
+              step === 1
+                ? t('getStarted')
+                : step === 2
+                  ? t('looksGood')
+                  : step === 4
+                    ? t('finishSetup')
+                    : tc('continue')
+            }
+            isDirty
+            isSaving={isSubmitting}
+            isContinue={step < 4}
+            disabled={!canAdvance}
+            testId={
+              step === 4
+                ? 'onboarding-step4-finish'
+                : `onboarding-step${step}-continue`
+            }
+          />
+        )}
       </div>
-    </div>
+    </ShellBottomSlotProvider>
   )
 }

@@ -82,6 +82,15 @@ afterEach(() => {
 })
 
 describe('settings page', () => {
+  it('describes the app PIN and referrals settings links', () => {
+    renderPage()
+    expect(
+      document.querySelector('a[href="/settings/security"]'),
+    ).toHaveTextContent(messages.Settings.pinLockDesc)
+    expect(document.querySelector('a[href="/referrals"]')).toHaveTextContent(
+      messages.Settings.referralsDesc,
+    )
+  })
   it('places the inline install card immediately below the profile summary', () => {
     renderPage()
     const profileLink = document.querySelector('a[href="/profile"]')!

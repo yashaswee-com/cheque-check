@@ -17,6 +17,8 @@ The client parses the returned data through a Zod schema, acknowledges through t
 
 ## First-run tour
 
+Before the tour, the onboarding wizard collects a business name with an optional logo, personal preferences, reminder settings, and required acceptance of the Terms and Conditions and Privacy Policy. Business phone and headquarters are not collected during onboarding; they can be added later through business management. Every wizard step uses the shared docked primary action bar, including the final Finish Setup action ([onboarding page](../src/app/onboarding/page.tsx), [shared action bar](../src/components/ui/edit-save-bar.tsx)).
+
 The first-run migration adds `tour_status`, marks existing profiles as skipped, and sets new profiles to pending ([migration](../supabase/migrations/20261105020000_first_run_tour.sql#L1-L5)). The tour component contains five guided targets and records completion or skip through its profile callback; failed saves leave the tour retryable ([tour component](../src/features/tour/components/first-run-tour.tsx#L1-L120)). The onboarding message component only starts the tour after the announcement is acknowledged or absent ([onboarding integration](../src/features/announcements/components/developer-message.tsx#L20-L62)).
 
 ## Publishing and environment limits
