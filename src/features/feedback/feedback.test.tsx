@@ -70,6 +70,11 @@ vi.mock('next/navigation', () => ({
   },
 }))
 vi.mock('@/components/ui/toast', () => ({ toast: { add: mocks.toast } }))
+vi.mock('./components/feedback-attachments', () => ({
+  FeedbackAttachments: () => null,
+  FeedbackAttachmentsProvider: ({ children }: { children: React.ReactNode }) =>
+    children,
+}))
 
 vi.mock('./hooks/use-feedback', () => ({
   useMyFeedback: (request: unknown) => {
@@ -147,13 +152,15 @@ describe('feedback center', () => {
         value: 'The scanner stays on the loading screen after capture.',
       },
     })
-    expect(document.querySelector('input[type="file"]')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Send feedback' }))
     await waitFor(() =>
       expect(mocks.submit).toHaveBeenCalledWith({
-        category: 'bug',
-        title: 'Camera scan is stuck',
-        description: 'The scanner stays on the loading screen after capture.',
+        submission: {
+          category: 'bug',
+          title: 'Camera scan is stuck',
+          description: 'The scanner stays on the loading screen after capture.',
+        },
+        attachments: [],
       }),
     )
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/feedback'))
@@ -167,6 +174,54 @@ describe('feedback center', () => {
     expect(
       screen.getByRole('button', { name: 'Send feedback' }),
     ).toHaveAttribute('form', 'feedback-create-form')
+  })
+
+  it('only submits selected attachments when the user sends feedback', async () => {
+    mount(<FeedbackCenter mode="create" />)
+    const file = new File(['some details'], 'details.txt', {
+      type: 'text/plain',
+    })
+    fireEvent.change(screen.getByLabelText('Attachments'), {
+      target: { files: [file] },
+    })
+    expect(screen.getByText(/details.txt/)).toBeInTheDocument()
+    expect(mocks.submit).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Attachment test' },
+    })
+    fireEvent.change(screen.getByLabelText('Description'), {
+      target: { value: 'Description for attachment test.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Send feedback' }))
+    await waitFor(() =>
+      expect(mocks.submit).toHaveBeenCalledWith({
+        submission: {
+          category: 'other',
+          title: 'Attachment test',
+          description: 'Description for attachment test.',
+        },
+        attachments: [file],
+      }),
+    )
+  })
+
+  it('rejects unsupported and excessive files while keeping valid selections', () => {
+    mount(<FeedbackCenter mode="create" />)
+    const file = new File(['data'], 'note.txt', { type: 'text/plain' })
+    fireEvent.change(screen.getByLabelText('Attachments'), {
+      target: { files: [file] },
+    })
+    fireEvent.change(screen.getByLabelText('Attachments'), {
+      target: {
+        files: [new File(['bad'], 'script.js', { type: 'text/javascript' })],
+      },
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      messages.Feedback.attachmentsInvalid,
+    )
+    expect(screen.getByText(/note.txt/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Remove note.txt' }))
+    expect(screen.queryByText(/note.txt/)).not.toBeInTheDocument()
   })
 
   it('shows only the signed-in user submission list and its admin status', () => {

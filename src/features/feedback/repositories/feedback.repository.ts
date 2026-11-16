@@ -17,6 +17,51 @@ import {
 } from '@/validators/feedback'
 
 export const feedbackRepository = {
+  async submitWithAttachments(
+    submission: FeedbackSubmission,
+    attachments: { name: string; type: string; data: string }[],
+  ) {
+    const result = await createClient().rpc(
+      'submit_feedback_with_attachments',
+      {
+        requested_category: submission.category,
+        requested_title: submission.title,
+        requested_description: submission.description,
+        requested_attachments: attachments,
+      },
+    )
+    if (result.error) {
+      if (
+        result.error.code === 'P0001' &&
+        (result.error.details?.includes('feedback_rate_limited') ||
+          result.error.message.includes('Feedback submission limit reached'))
+      ) {
+        throw new Error('FEEDBACK_RATE_LIMIT')
+      }
+      throw result.error
+    }
+    return result.data
+  },
+
+  async attachments(ids: string[]) {
+    return unwrapSupabaseResult(
+      await createClient().rpc('list_my_feedback_attachments', {
+        requested_ids: ids,
+      }),
+    )
+  },
+
+  async readAttachment(id: string) {
+    const rows = unwrapSupabaseResult(
+      await createClient().rpc('read_my_feedback_attachment', {
+        requested_id: id,
+      }),
+    )
+    const row = rows[0]
+    if (!row) throw new Error('Attachment not found')
+    return row
+  },
+
   async submit(submission: FeedbackSubmission, userId: string) {
     const result = await createClient()
       .from(TABLES.FEEDBACK_ITEMS)

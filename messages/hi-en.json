@@ -669,6 +669,12 @@
     "refreshFailed": "Feedback refresh nahi hua. Pichhle results dikh rahe hain.",
     "staleNotice": "Feedback purana ho sakta hai.",
     "refresh": "Refresh karein",
+    "attachmentsLabel": "Attachments",
+    "attachmentsHint": "Maximum 2 files, kul 10 MB. JPEG, PNG, WebP, PDF ya plain text.",
+    "attachmentsInvalid": "Maximum 2 supported, non-empty files chunein; kul size 10 MB tak ho.",
+    "removeAttachment": "{name} hataayein",
+    "attachmentsLoadFailed": "Attachments load nahi hue.",
+    "attachmentDownloadFailed": "Attachment download nahi hua. Dobara try karein.",
     "retry": "Dobara try karein",
     "clearFilters": "Search aur filters clear karein",
     "statuses": {

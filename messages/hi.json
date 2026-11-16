@@ -669,6 +669,12 @@
     "refreshFailed": "प्रतिक्रियाएँ अपडेट नहीं हुईं। पहले लोड हुए परिणाम दिख रहे हैं।",
     "staleNotice": "प्रतिक्रियाएँ पुरानी हो सकती हैं।",
     "refresh": "अपडेट करें",
+    "attachmentsLabel": "संलग्न फ़ाइलें",
+    "attachmentsHint": "अधिकतम 2 फ़ाइलें, कुल 10 MB। JPEG, PNG, WebP, PDF या सामान्य टेक्स्ट।",
+    "attachmentsInvalid": "अधिकतम 2 समर्थित, खाली न हों ऐसी फ़ाइलें चुनें; कुल आकार 10 MB तक हो।",
+    "removeAttachment": "{name} हटाएँ",
+    "attachmentsLoadFailed": "संलग्न फ़ाइलें लोड नहीं हुईं।",
+    "attachmentDownloadFailed": "फ़ाइल डाउनलोड नहीं हुई। फिर प्रयास करें।",
     "retry": "फिर प्रयास करें",
     "clearFilters": "खोज और फ़िल्टर हटाएँ",
     "statuses": {

@@ -31,6 +31,26 @@ export function useMyFeedback(
   return query
 }
 
+export function useFeedbackAttachments(ids: string[]) {
+  const { profile } = useProfile()
+  const query = useQuery({
+    queryKey: queryKeys.feedback.attachments(profile?.user_id, ids),
+    queryFn: () => feedbackService.attachments(ids),
+    enabled: !!profile && ids.length > 0,
+  })
+  useEffect(() => {
+    if (query.error)
+      logger.error('Feedback attachments failed to load', query.error)
+  }, [query.error])
+  return query
+}
+
+export function useFeedbackAttachmentDownload() {
+  return useMutation({
+    mutationFn: (id: string) => feedbackService.readAttachment(id),
+  })
+}
+
 export function useRoadmap(request: FeedbackPageRequest = {}) {
   const { profile } = useProfile()
   const query = useQuery({
@@ -49,9 +69,15 @@ export function useSubmitFeedback() {
   const { profile } = useProfile()
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (submission: FeedbackSubmission) => {
+    mutationFn: ({
+      submission,
+      attachments,
+    }: {
+      submission: FeedbackSubmission
+      attachments: File[]
+    }) => {
       if (!profile?.user_id) throw new Error('Sign in to send feedback.')
-      return feedbackService.submit(submission, profile.user_id)
+      return feedbackService.submit(submission, profile.user_id, attachments)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({

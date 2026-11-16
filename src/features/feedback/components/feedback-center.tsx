@@ -40,6 +40,15 @@ import {
 } from '@/components/ui/pill-scroller'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
+import { AttachmentPicker } from '@/components/ui/attachment-picker'
+import {
+  attachmentTypes,
+  validateAttachmentFiles,
+} from '@/lib/attachment-files'
+import {
+  FeedbackAttachments,
+  FeedbackAttachmentsProvider,
+} from './feedback-attachments'
 
 function subscribeOnline(callback: () => void) {
   window.addEventListener('online', callback)
@@ -69,6 +78,8 @@ export function FeedbackCenter({
     useState<(typeof feedbackCategories)[number]>(initialCategory)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [attachmentError, setAttachmentError] = useState(false)
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [pageRequest, setPageRequest] = useState<PrivateFeedbackPageRequest>({
@@ -90,13 +101,21 @@ export function FeedbackCenter({
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (submitting.current || !navigator.onLine) return
+    if (submitting.current || !navigator.onLine || attachmentError) return
     submitting.current = true
     setError(null)
     try {
-      await submit.mutateAsync({ category, title, description })
+      if (!validateAttachmentFiles(attachments)) {
+        setAttachmentError(true)
+        return
+      }
+      await submit.mutateAsync({
+        submission: { category, title, description },
+        attachments,
+      })
       setTitle('')
       setDescription('')
+      setAttachments([])
       toast.add({ title: t('submitSuccess'), type: 'success' })
       router.push('/feedback')
     } catch (reason) {
@@ -181,6 +200,23 @@ export function FeedbackCenter({
               {t('characterCount', { count: description.length })}
             </p>
           </div>
+          <AttachmentPicker
+            files={attachments}
+            onChange={(files) => {
+              setAttachments(files)
+              setAttachmentError(false)
+            }}
+            onInvalid={() => setAttachmentError(true)}
+            validate={validateAttachmentFiles}
+            label={t('attachmentsLabel')}
+            hint={t('attachmentsHint')}
+            accept={attachmentTypes.join(',')}
+            removeLabel={(name) => t('removeAttachment', { name })}
+            disabled={submit.isPending}
+          />
+          {attachmentError && (
+            <FieldError>{t('attachmentsInvalid')}</FieldError>
+          )}
           {error && <FieldError>{t(error)}</FieldError>}
         </form>
       )}
@@ -190,7 +226,7 @@ export function FeedbackCenter({
           label={t('submitFeedback')}
           isDirty={true}
           isSaving={submit.isPending}
-          disabled={!online}
+          disabled={!online || attachmentError}
           testId="feedback-submit-button"
         />
       )}
@@ -383,33 +419,38 @@ export function FeedbackCenter({
               )}
             </p>
           ) : (
-            <ul className="space-y-3">
-              {submissions.data.items.map((item) => (
-                <li key={item.id} className="space-y-2 rounded-lg border p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="font-semibold">{item.title}</h3>
-                    <span className="rounded-full bg-muted px-2 py-1 text-xs">
-                      {t(`statuses.${item.status}`)}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t(`categories.${item.category}`)} ·{' '}
-                    {display.date(item.created_at)}
-                  </p>
-                  <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                    {item.description}
-                  </p>
-                  {item.category === 'feature' && item.roadmap_published && (
-                    <Link
-                      className="text-sm text-primary underline-offset-4 hover:underline"
-                      href="/roadmap"
-                    >
-                      {t('nowOnRoadmap')}
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <FeedbackAttachmentsProvider
+              ids={submissions.data.items.map((item) => item.id)}
+            >
+              <ul className="space-y-3">
+                {submissions.data.items.map((item) => (
+                  <li key={item.id} className="space-y-2 rounded-lg border p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="font-semibold">{item.title}</h3>
+                      <span className="rounded-full bg-muted px-2 py-1 text-xs">
+                        {t(`statuses.${item.status}`)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t(`categories.${item.category}`)} ·{' '}
+                      {display.date(item.created_at)}
+                    </p>
+                    <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                      {item.description}
+                    </p>
+                    <FeedbackAttachments feedbackId={item.id} />
+                    {item.category === 'feature' && item.roadmap_published && (
+                      <Link
+                        className="text-sm text-primary underline-offset-4 hover:underline"
+                        href="/roadmap"
+                      >
+                        {t('nowOnRoadmap')}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </FeedbackAttachmentsProvider>
           )}
           <div className="flex justify-between gap-2">
             <Button

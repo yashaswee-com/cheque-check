@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   myItems: vi.fn(),
   roadmap: vi.fn(),
   vote: vi.fn(),
+  submitWithAttachments: vi.fn(),
 }))
 vi.mock('@/features/feedback/repositories/feedback.repository', () => ({
   feedbackRepository: mocks,
@@ -46,7 +47,30 @@ describe('feedback service validation', () => {
     await expect(feedbackService.roadmap({ limit: 51 })).rejects.toMatchObject({
       code: 'VALIDATION_ERROR',
     })
+
     expect(mocks.submit).not.toHaveBeenCalled()
     expect(mocks.roadmap).not.toHaveBeenCalled()
+  })
+
+  it('encodes files only during submission and uses the atomic attachment endpoint', async () => {
+    const file = new File(['hello'], 'note.txt', { type: 'text/plain' })
+    await feedbackService.submit(
+      {
+        category: 'bug',
+        title: 'Broken scan',
+        description: 'The scanner stopped working.',
+      },
+      '10000000-0000-4000-8000-000000000001',
+      [file],
+    )
+    expect(mocks.submitWithAttachments).toHaveBeenCalledWith(
+      {
+        category: 'bug',
+        title: 'Broken scan',
+        description: 'The scanner stopped working.',
+      },
+      [{ name: 'note.txt', type: 'text/plain', data: 'aGVsbG8=' }],
+    )
+    expect(mocks.submit).not.toHaveBeenCalled()
   })
 })

@@ -11,6 +11,8 @@ export const queryKeys = {
     latest: (userId?: string) => ['developer-announcement', userId] as const,
   },
   feedback: {
+    attachments: (userId: string | undefined, ids: string[]) =>
+      ['feedback-attachments', userId, ids] as const,
     mine: (
       userId?: string,
       request?: import('@/validators/feedback').PrivateFeedbackPageRequest,

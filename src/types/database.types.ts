@@ -1030,6 +1030,29 @@ export interface Database {
         }
         Returns: boolean
       }
+      submit_feedback_with_attachments: {
+        Args: {
+          requested_category: string
+          requested_title: string
+          requested_description: string
+          requested_attachments: Json
+        }
+        Returns: string
+      }
+      list_my_feedback_attachments: {
+        Args: { requested_ids: string[] }
+        Returns: {
+          id: string
+          feedback_id: string
+          filename: string
+          mime_type: string
+          size_bytes: number
+        }[]
+      }
+      read_my_feedback_attachment: {
+        Args: { requested_id: string }
+        Returns: { filename: string; mime_type: string; data: string }[]
+      }
       search_my_feedback: {
         Args: {
           requested_before_created_at?: string

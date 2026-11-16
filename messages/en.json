@@ -669,6 +669,12 @@
     "refreshFailed": "Could not refresh feedback. Showing the last loaded results.",
     "staleNotice": "Feedback may be out of date.",
     "refresh": "Refresh",
+    "attachmentsLabel": "Attachments",
+    "attachmentsHint": "Up to 2 files, 10 MB total. JPEG, PNG, WebP, PDF or plain text.",
+    "attachmentsInvalid": "Choose up to 2 non-empty supported files with a combined size of at most 10 MB.",
+    "removeAttachment": "Remove {name}",
+    "attachmentsLoadFailed": "Attachments could not be loaded.",
+    "attachmentDownloadFailed": "Attachment could not be downloaded. Try again.",
     "retry": "Retry",
     "clearFilters": "Clear search & filters",
     "statuses": {

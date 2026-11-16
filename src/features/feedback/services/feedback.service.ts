@@ -1,6 +1,10 @@
 import { ValidationError } from '@/lib/errors'
 import { feedbackRepository } from '@/features/feedback/repositories/feedback.repository'
 import {
+  encodeAttachment,
+  validateAttachmentFiles,
+} from '@/lib/attachment-files'
+import {
   feedbackPageRequestSchema,
   privateFeedbackPageRequestSchema,
   feedbackSubmissionSchema,
@@ -10,11 +14,28 @@ import {
 } from '@/validators/feedback'
 
 export const feedbackService = {
-  async submit(input: FeedbackSubmission, userId: string) {
+  attachments(ids: string[]) {
+    return feedbackRepository.attachments(ids)
+  },
+
+  readAttachment(id: string) {
+    return feedbackRepository.readAttachment(id)
+  },
+
+  async submit(
+    input: FeedbackSubmission,
+    userId: string,
+    attachments: File[] = [],
+  ) {
     const parsed = feedbackSubmissionSchema.safeParse(input)
     if (!parsed.success)
       throw new ValidationError('Review the feedback form and try again.')
-    return feedbackRepository.submit(parsed.data, userId)
+    if (!validateAttachmentFiles(attachments))
+      throw new ValidationError('Invalid feedback attachments')
+    if (!attachments.length)
+      return feedbackRepository.submit(parsed.data, userId)
+    const encoded = await Promise.all(attachments.map(encodeAttachment))
+    return feedbackRepository.submitWithAttachments(parsed.data, encoded)
   },
 
   async myItems(request: PrivateFeedbackPageRequest) {

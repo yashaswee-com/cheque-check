@@ -11,11 +11,12 @@ beforeAll(async () => {
   db = await createMigratedDb([
     '20261106020000_feedback_roadmap.sql',
     '20261116010000_search_my_feedback.sql',
+    '20261116020000_feedback_attachments.sql',
   ])
   await db.exec(`
     INSERT INTO auth.users(id, email)
     VALUES ('${userA}', 'feedback-a@test.invalid'), ('${userB}', 'feedback-b@test.invalid');
-    REVOKE ALL ON feedback_items, feedback_votes FROM authenticated;
+    REVOKE ALL ON feedback_items, feedback_votes, feedback_attachments FROM authenticated;
     GRANT SELECT, INSERT ON feedback_items TO authenticated;
     GRANT SELECT, INSERT, DELETE ON feedback_votes TO authenticated;
   `)
@@ -35,6 +36,105 @@ async function asService<T>(sql: string) {
 }
 
 describe('private feedback and published roadmap', () => {
+  it('stores attachments atomically and keeps them private even for published feedback', async () => {
+    const owner = '10000000-0000-4000-8000-000000000106'
+    const other = '10000000-0000-4000-8000-000000000107'
+    await db.exec(
+      `INSERT INTO auth.users(id, email) VALUES ('${owner}', 'attachment-owner@test.invalid'), ('${other}', 'attachment-other@test.invalid')`,
+    )
+    const created = await asUser<{ id: string }>(
+      db,
+      owner,
+      `SELECT submit_feedback_with_attachments('feature', 'Attachment request', 'Please consider this request.', '[{"name":"note.txt","type":"text/plain","data":"SGVsbG8="}]'::jsonb) AS id`,
+    )
+    const feedbackId = created.rows[0].id
+    const metadata = await asUser<{ id: string; filename: string }>(
+      db,
+      owner,
+      `SELECT id, filename FROM list_my_feedback_attachments(ARRAY['${feedbackId}'::uuid])`,
+    )
+    expect(metadata.rows).toHaveLength(1)
+    expect(metadata.rows[0].filename).toBe('note.txt')
+    await asService(
+      `SELECT admin_update_feedback('${feedbackId}', 'planned', TRUE, 'operator@test.invalid', NULL)`,
+    )
+    expect(
+      (
+        await asUser(
+          db,
+          other,
+          `SELECT * FROM list_my_feedback_attachments(ARRAY['${feedbackId}'::uuid])`,
+        )
+      ).rows,
+    ).toEqual([])
+    expect(
+      (
+        await asUser(
+          db,
+          other,
+          `SELECT * FROM read_my_feedback_attachment('${metadata.rows[0].id}')`,
+        )
+      ).rows,
+    ).toEqual([])
+    expect(
+      (
+        await asUser<{ data: string }>(
+          db,
+          owner,
+          `SELECT data FROM read_my_feedback_attachment('${metadata.rows[0].id}')`,
+        )
+      ).rows[0].data,
+    ).toBe('SGVsbG8=')
+    await asService(
+      `SELECT admin_update_feedback('${feedbackId}', 'planned', FALSE, 'operator@test.invalid', NULL)`,
+    )
+    await expect(
+      asUser(
+        db,
+        owner,
+        `SELECT submit_feedback_with_attachments('bug', 'Invalid upload', 'Description is long enough.', '[{"name":"bad.pdf","type":"application/pdf","data":"SGVsbG8="}]'::jsonb)`,
+      ),
+    ).rejects.toThrow(/Invalid feedback attachment content/)
+    expect(
+      (
+        await asService<{ count: number }>(
+          `SELECT count(*)::int AS count FROM feedback_items WHERE user_id='${owner}'`,
+        )
+      ).rows[0].count,
+    ).toBe(1)
+    await expect(
+      asUser(db, other, 'SELECT * FROM feedback_attachments'),
+    ).rejects.toThrow(/permission/i)
+  })
+  it('enforces the combined ten MiB limit within the database transaction', async () => {
+    const user = '10000000-0000-4000-8000-000000000108'
+    await db.exec(
+      `INSERT INTO auth.users(id, email) VALUES ('${user}', 'attachment-limit@test.invalid')`,
+    )
+    const contents = `replace(encode(convert_to(repeat('a', 10485760), 'UTF8'), 'base64'), E'\\n', '')`
+    const first = `jsonb_build_object('name', 'large.txt', 'type', 'text/plain', 'data', ${contents})`
+    const second = `jsonb_build_object('name', 'extra.txt', 'type', 'text/plain', 'data', 'eA==')`
+    await expect(
+      asUser(
+        db,
+        user,
+        `SELECT submit_feedback_with_attachments('bug', 'Too large', 'Description is long enough.', jsonb_build_array(${first}, ${second}))`,
+      ),
+    ).rejects.toThrow(/Invalid feedback attachment content/)
+    expect(
+      (
+        await asService<{ count: number }>(
+          `SELECT count(*)::int AS count FROM feedback_items WHERE user_id='${user}'`,
+        )
+      ).rows[0].count,
+    ).toBe(0)
+    const result = await asUser<{ id: string }>(
+      db,
+      user,
+      `SELECT submit_feedback_with_attachments('bug', 'Maximum file', 'Description is long enough.', jsonb_build_array(${first})) AS id`,
+    )
+    expect(result.rows[0].id).toBeTruthy()
+  }, 60000)
   it('searches and filters the whole private list before paginating in either order', async () => {
     const owner = '10000000-0000-4000-8000-000000000104'
     const other = '10000000-0000-4000-8000-000000000105'
