@@ -91,6 +91,22 @@ function EnabledMarketingProvider() {
       acceptLabel={t('accept')}
       rejectLabel={t('reject')}
       saveError={t('saveError')}
+      settingsLabel={t('settingsLabel')}
+      settingsDescription={t('settingsDescription')}
+      essentialTitle={t('essentialTitle')}
+      essentialDescription={t('essentialDescription')}
+      alwaysActive={t('alwaysActive')}
+      marketingTitle={t('marketingTitle')}
+      marketingDescription={t('marketingDescription')}
+      showDetails={t('showDetails')}
+      hideDetails={t('hideDetails')}
+      marketingDetails={t('marketingDetails')}
+      aboutLabel={t('aboutLabel')}
+      aboutTitle={t('aboutTitle')}
+      aboutDescription={t('aboutDescription')}
+      privacyLink={t('privacyLink')}
+      rejectOptional={t('rejectOptional')}
+      savePreferences={t('savePreferences')}
     />
   )
 }
