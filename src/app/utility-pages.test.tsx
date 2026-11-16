@@ -274,14 +274,17 @@ describe('settings and draft routes', () => {
           name: `${translations.Settings.releaseTitle} - v${version}`,
         }),
       ).toBeVisible()
-      const date = '31/10/2026'
+      const date = '16/11/2026'
       expect(
         screen.getByText(
           translations.Settings.lastUpdated.replace('{date}', date),
         ),
       ).toBeVisible()
-      expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(8)
+      expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(11)
       for (const key of [
+        'releaseFeedback',
+        'releaseHelp',
+        'releaseOffline',
         'releasePhone',
         'releaseBanks',
         'releaseTags',
@@ -298,7 +301,7 @@ describe('settings and draft routes', () => {
           screen.getByText(translations.Settings[`${key}Desc`]),
         ).toBeVisible()
       }
-      expect(screen.queryByText('v1.0.0')).not.toBeInTheDocument()
+      expect(screen.getByText('v1.0.0')).toBeVisible()
     },
   )
 })

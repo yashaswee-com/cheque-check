@@ -15,8 +15,11 @@ import { APP_VERSION } from '@/lib/app-version'
 export default function WhatsNewPage() {
   const t = useTranslations('Settings')
   const display = useDisplayFormat()
-  const updatedDate = display.date('2026-10-31')
+  const updatedDate = display.date('2026-11-16')
   const features = [
+    { key: 'releaseFeedback', icon: Zap, image: undefined },
+    { key: 'releaseHelp', icon: Shield, image: undefined },
+    { key: 'releaseOffline', icon: Shield, image: undefined },
     { key: 'releasePhone', icon: Shield, image: undefined },
     { key: 'releaseBanks', icon: Shield, image: undefined },
     { key: 'releaseTags', icon: Tag, image: undefined },

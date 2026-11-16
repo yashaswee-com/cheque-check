@@ -1030,6 +1030,27 @@ export interface Database {
         }
         Returns: boolean
       }
+      search_my_feedback: {
+        Args: {
+          requested_before_created_at?: string
+          requested_before_id?: string
+          requested_limit?: number
+          requested_search?: string
+          requested_category?: string
+          requested_status?: string
+          requested_order?: string
+        }
+        Returns: {
+          id: string
+          category: 'bug' | 'feature' | 'other'
+          title: string
+          description: string
+          status:
+            'under_review' | 'planned' | 'in_progress' | 'shipped' | 'declined'
+          roadmap_published: boolean
+          created_at: string
+        }[]
+      }
       list_my_feedback: {
         Args: {
           requested_before_created_at?: string

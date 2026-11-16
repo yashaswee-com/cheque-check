@@ -2,9 +2,11 @@ import { ValidationError } from '@/lib/errors'
 import { feedbackRepository } from '@/features/feedback/repositories/feedback.repository'
 import {
   feedbackPageRequestSchema,
+  privateFeedbackPageRequestSchema,
   feedbackSubmissionSchema,
   type FeedbackPageRequest,
   type FeedbackSubmission,
+  type PrivateFeedbackPageRequest,
 } from '@/validators/feedback'
 
 export const feedbackService = {
@@ -15,8 +17,8 @@ export const feedbackService = {
     return feedbackRepository.submit(parsed.data, userId)
   },
 
-  async myItems(request: FeedbackPageRequest) {
-    const parsed = feedbackPageRequestSchema.safeParse(request)
+  async myItems(request: PrivateFeedbackPageRequest) {
+    const parsed = privateFeedbackPageRequestSchema.safeParse(request)
     if (!parsed.success) throw new ValidationError('Invalid feedback page.')
     return feedbackRepository.myItems(parsed.data)
   },

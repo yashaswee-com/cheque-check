@@ -48,6 +48,7 @@ import {
   Mic01Icon,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
+import { ScrollToTopButton } from '@/components/ui/scroll-to-top-button'
 
 interface SettingsItem {
   name: string
@@ -247,6 +248,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-8 pb-20">
+      <ScrollToTopButton />
       <div className="space-y-4 sm:space-y-5">
         <Link
           href="/profile"

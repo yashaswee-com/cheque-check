@@ -51,6 +51,10 @@ The route reads forwarded address headers, so production infrastructure must rep
 
 Feedback rows are private to the submitter and operators; published feature requests are the only requests exposed to the signed-in roadmap and votes ([feedback policies](../supabase/migrations/20261106020000_feedback_roadmap.sql#L1-L95)). The repository submits bounded request fields and reads paginated results ([feedback repository](../src/features/feedback/repositories/feedback.repository.ts#L1-L89)). NPS prompt timing and response handling are maintained separately ([NPS service](../src/features/feedback/services/nps.service.ts#L1-L46)).
 
+The private feedback list searches titles and descriptions and filters by category or status on the server before cursor pagination. Users can sort by submission date in either direction. Deployments must apply the [search migration](../supabase/migrations/20261116010000_search_my_feedback.sql) before using this version of the list.
+
+The list keeps previously fetched results visible while refreshing and reports refresh failures with a retry action. Cached results can remain visible offline, but feedback is not persisted for offline use and submissions are not queued: the form remains on screen until the user reconnects and submits it. The list exposes a manual refresh when its query becomes stale; it does not subscribe to live updates.
+
 ## Route-policy check
 
 A route's location under the public route group does not itself make it public; middleware uses the explicit allowlist ([public route policy](../src/lib/supabase/public-routes.ts#L1-L17), [middleware](../src/lib/supabase/middleware.ts#L49-L68)). Review new public pages against both the allowlist and route tests before release ([route tests](../src/lib/supabase/public-routes.test.ts#L1-L24)).

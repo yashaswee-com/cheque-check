@@ -239,6 +239,31 @@ beforeEach(() => {
 })
 
 describe('Features page', () => {
+  it('opens a plan comparison with accessible inclusion indicators', () => {
+    renderPage()
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: messages.PublicSite.comparison.tableTitle,
+      }),
+    )
+    const dialog = screen.getByRole('dialog', {
+      name: messages.PublicSite.comparison.tableTitle,
+    })
+    expect(
+      within(dialog).getByText(messages.PublicSite.comparison.freeLimit),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(messages.PublicSite.comparison.unlimited),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getAllByText(messages.PublicSite.comparison.included)
+        .length,
+    ).toBeGreaterThan(0)
+    expect(
+      within(dialog).getAllByText(messages.PublicSite.comparison.notIncluded)
+        .length,
+    ).toBeGreaterThan(0)
+  })
   it('uses catalog price, currency, duration and quota rather than fixed amounts', () => {
     catalogOverrides = [
       {

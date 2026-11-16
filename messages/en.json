@@ -659,6 +659,18 @@
     "mySubmissions": "Your submissions",
     "privateListNote": "Only you and the support team can see your private reports.",
     "noSubmissions": "You have not sent any feedback yet.",
+    "searchLabel": "Search feedback",
+    "statusLabel": "Status",
+    "newestFirst": "Newest first",
+    "oldestFirst": "Oldest first",
+    "noMatches": "No feedback matches your search or filters.",
+    "offlineNotice": "You are offline. Previously loaded feedback may be shown; reconnect to refresh or send feedback.",
+    "refreshing": "Refreshing feedback…",
+    "refreshFailed": "Could not refresh feedback. Showing the last loaded results.",
+    "staleNotice": "Feedback may be out of date.",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "clearFilters": "Clear search & filters",
     "statuses": {
       "under_review": "Under review",
       "planned": "Planned",
@@ -698,6 +710,34 @@
     "reportIssue": "Report issue",
     "noResults": "No questions match your search.",
     "questions": {
+      "add_party": {
+        "question": "How do I add a party?",
+        "answer": "Open Parties, add the person or organisation, and save their details. You can then select that party when recording a cheque."
+      },
+      "add_account": {
+        "question": "How do I add a bank account?",
+        "answer": "Open Accounts, add the account and bank details, and save. Choose the correct account when recording a cheque."
+      },
+      "find_cheque": {
+        "question": "How do I find a cheque?",
+        "answer": "Open Cheques and use search or Sort & Filter to narrow the list by details such as status, date, party, account, or tags."
+      },
+      "update_cheque": {
+        "question": "How do I correct or update a cheque?",
+        "answer": "Find and open the cheque, edit the details that need correcting, and save. Keep its status up to date as the payment progresses."
+      },
+      "use_tags": {
+        "question": "What are tags for?",
+        "answer": "Tags help you group records and find related work quickly. Add useful labels to your records and use filters to review them."
+      },
+      "use_dashboard": {
+        "question": "What can I see on the dashboard?",
+        "answer": "The dashboard gives you an overview of your business and helps you find cheque work that needs attention."
+      },
+      "export_reports": {
+        "question": "How do I review and export reports?",
+        "answer": "Open Reports, choose the view and filters you need, and review the results before exporting. Report and export tools depend on your plan."
+      },
       "create_business": {
         "question": "How do I create a business?",
         "answer": "From your dashboard, choose the option to create a business and enter its details. You can then add accounts, parties, and cheques for that business."
@@ -807,6 +847,7 @@
     }
   },
   "Common": {
+    "scrollToTop": "Scroll to top",
     "pages": "Pages",
     "notificationSettings": "Notification settings",
     "noChequesMatch": "No cheques match these filters",
@@ -1889,6 +1930,12 @@
     "releaseRemindersDesc": "Choose whether to send party SMS updates when adding or updating a cheque. Configure voice reminders and try a sample call with voice credits.",
     "releaseReliabilityTitle": "A smoother everyday experience",
     "releaseReliabilityDesc": "Enjoy clearer navigation, more reliable loading for large cheque lists, and fixes that help the installed app open correctly.",
+    "releaseFeedbackTitle": "Track your feedback",
+    "releaseFeedbackDesc": "Search your submissions, filter by type or status, and follow published feature requests on the roadmap.",
+    "releaseHelpTitle": "More answers when you need them",
+    "releaseHelpDesc": "Explore practical help for accounts, parties, cheques, tags, dashboards, and reports.",
+    "releaseOfflineTitle": "A clearer offline experience",
+    "releaseOfflineDesc": "If a page cannot load while offline, retry when your connection returns. Your records and edits are not saved offline.",
     "launchTitle": "The Grand Launch",
     "launchFeat1Title": "Cheque Tracking",
     "launchFeat1Desc": "Efficiently manage issued and received cheques with ease.",

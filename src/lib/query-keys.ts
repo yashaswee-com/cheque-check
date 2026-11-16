@@ -13,7 +13,7 @@ export const queryKeys = {
   feedback: {
     mine: (
       userId?: string,
-      request?: import('@/validators/feedback').FeedbackPageRequest,
+      request?: import('@/validators/feedback').PrivateFeedbackPageRequest,
     ) =>
       request
         ? (['feedback-mine', userId, request] as const)

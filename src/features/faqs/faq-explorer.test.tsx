@@ -15,6 +15,18 @@ function mount() {
 afterEach(cleanup)
 
 describe('searchable branched FAQs', () => {
+  it('includes practical help from the help center', () => {
+    mount()
+    fireEvent.change(screen.getByLabelText('Search FAQs'), {
+      target: { value: 'bank account' },
+    })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'How do I add a bank account?' }),
+    )
+    expect(
+      screen.getByText(/Open Accounts, add the account/),
+    ).toBeInTheDocument()
+  })
   it('searches answers and reports when there are no matches', () => {
     mount()
     fireEvent.change(screen.getByLabelText('Search FAQs'), {

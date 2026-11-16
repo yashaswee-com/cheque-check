@@ -13,6 +13,7 @@ import {
   type FeedbackSubmission,
   type PrivateFeedbackPage,
   type RoadmapPage,
+  type PrivateFeedbackPageRequest,
 } from '@/validators/feedback'
 
 export const feedbackRepository = {
@@ -41,16 +42,19 @@ export const feedbackRepository = {
     )
   },
 
-  async myItems(request: {
-    before?: FeedbackCursor
-    limit?: number
-  }): Promise<PrivateFeedbackPage> {
+  async myItems(
+    request: PrivateFeedbackPageRequest,
+  ): Promise<PrivateFeedbackPage> {
     const limit = request.limit ?? 25
     const result = unwrapSupabaseResult(
-      await createClient().rpc('list_my_feedback', {
+      await createClient().rpc('search_my_feedback', {
         requested_before_created_at: request.before?.createdAt,
         requested_before_id: request.before?.id,
         requested_limit: limit,
+        requested_search: request.search ?? '',
+        requested_category: request.category,
+        requested_status: request.status,
+        requested_order: request.order ?? 'desc',
       }),
     )
     const rows = result.slice(0, limit)

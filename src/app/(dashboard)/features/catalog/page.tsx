@@ -11,7 +11,11 @@ import { useTranslations } from 'next-intl'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { useQueryClient } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
+import {
+  ArrowRight01Icon,
+  Tick02Icon,
+  Cancel01Icon,
+} from '@hugeicons/core-free-icons'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import {
   useMonetization,
@@ -34,6 +38,14 @@ import { usePremiumAccess } from '@/features/monetization/hooks/use-premium-acce
 import { PREMIUM_FEATURES } from '@/features/monetization/lib/premium-access'
 import { PremiumMark } from '@/features/monetization/components/premium-mark'
 import type { PaymentProduct } from '@/features/monetization/repositories/monetization.repository'
+import { InfoPopover } from '@/components/ui/info-popover'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 
 function FeatureStatus({
   children,
@@ -287,16 +299,100 @@ export default function FeaturesPage() {
                 <Link className="text-sm underline" href="/referrals">
                   {referrals('title')}
                 </Link>
-                <p className="text-sm text-muted-foreground">
-                  {comparison('premiumDescription')}
-                </p>
+                <InfoPopover title={comparison('premium')}>
+                  {comparison('premiumDescription')} {comparison('limitNote')}{' '}
+                  {comparison('creditsSeparate')}
+                </InfoPopover>
               </div>
-              <ul className="space-y-3 text-sm">
-                <li>{comparison('unlimited')}</li>
-                <li>{tp('features.reports')}</li>
-                <li>{tp('features.bulk-import')}</li>
-                <li>{comparison('creditsSeparate')}</li>
-              </ul>
+              <Sheet>
+                <SheetTrigger
+                  render={<Button type="button" variant="outline" />}
+                >
+                  {comparison('tableTitle')}
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>{comparison('tableTitle')}</SheetTitle>
+                  </SheetHeader>
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr>
+                        <th className="py-3">{comparison('feature')}</th>
+                        <th className="p-2 text-center">
+                          {comparison('free')}
+                        </th>
+                        <th className="p-2 text-center">
+                          {comparison('premium')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-t">
+                        <th className="py-3 font-normal">
+                          {comparison('core')}
+                        </th>
+                        {[comparison('free'), comparison('premium')].map(
+                          (plan) => (
+                            <td key={plan} className="p-2 text-center">
+                              <HugeiconsIcon
+                                icon={Tick02Icon}
+                                className="mx-auto size-5 text-green-600"
+                                aria-hidden="true"
+                              />
+                              <span className="sr-only">
+                                {comparison('included')}
+                              </span>
+                            </td>
+                          ),
+                        )}
+                      </tr>
+                      <tr className="border-t">
+                        <th className="py-3 font-normal">
+                          {comparison('cheques')}
+                        </th>
+                        <td className="p-2 text-center">
+                          {comparison('freeLimit')}
+                        </td>
+                        <td className="p-2 text-center">
+                          {comparison('unlimited')}
+                        </td>
+                      </tr>
+                      {PREMIUM_FEATURES.filter(
+                        (feature) => feature !== 'unlimited-cheques',
+                      ).map((feature) => (
+                        <tr key={feature} className="border-t">
+                          <th className="py-3 font-normal">
+                            {tp(`features.${feature}`)}
+                          </th>
+                          <td className="p-2 text-center">
+                            <HugeiconsIcon
+                              icon={Cancel01Icon}
+                              className="mx-auto size-5 text-red-600"
+                              aria-hidden="true"
+                            />
+                            <span className="sr-only">
+                              {comparison('notIncluded')}
+                            </span>
+                          </td>
+                          <td className="p-2 text-center">
+                            <HugeiconsIcon
+                              icon={Tick02Icon}
+                              className="mx-auto size-5 text-green-600"
+                              aria-hidden="true"
+                            />
+                            <span className="sr-only">
+                              {comparison('included')}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="text-sm text-muted-foreground">
+                    {comparison('creditsSeparate')} {comparison('limitNote')}
+                  </p>
+                </SheetContent>
+              </Sheet>
               <div className="space-y-3">
                 {premium.hasLifetimePurchase ? (
                   <p className="text-sm font-semibold">
@@ -416,9 +512,9 @@ export default function FeaturesPage() {
             </div>
             <div className="space-y-4 border-t p-5 @min-[640px]:p-8">
               <h3 className="text-lg font-semibold">{tp('benefitsTitle')}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {tp('benefitsDescription')}
-              </p>
+              <InfoPopover title={tp('benefitsTitle')}>
+                {tp('benefitsDescription')} {tp('coreUnaffected')}
+              </InfoPopover>
               <ul className="grid gap-3 text-sm @min-[640px]:grid-cols-2">
                 {PREMIUM_FEATURES.filter(
                   (feature) =>
@@ -440,9 +536,6 @@ export default function FeaturesPage() {
                 {tp('openTools')}{' '}
                 <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
               </PremiumLink>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                {tp('coreUnaffected')}
-              </p>
             </div>
           </section>
 

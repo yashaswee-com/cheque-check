@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   redirect: vi.fn(),
   toast: vi.fn(),
   vote: vi.fn(),
+  myFeedback: vi.fn(),
   privatePage: {
     data: {
       items: [
@@ -36,7 +37,10 @@ const mocks = vi.hoisted(() => ({
     },
     isLoading: false,
     isFetching: false,
-    error: null,
+    isPending: false,
+    isStale: false,
+    error: null as Error | null,
+    refetch: vi.fn(),
   },
   roadmapPage: {
     data: {
@@ -68,7 +72,10 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/components/ui/toast', () => ({ toast: { add: mocks.toast } }))
 
 vi.mock('./hooks/use-feedback', () => ({
-  useMyFeedback: () => mocks.privatePage,
+  useMyFeedback: (request: unknown) => {
+    mocks.myFeedback(request)
+    return mocks.privatePage
+  },
   useSubmitFeedback: () => ({
     mutateAsync: mocks.submit,
     isPending: false,
@@ -80,6 +87,8 @@ vi.mock('./hooks/use-feedback', () => ({
   }),
 }))
 
+const privateData = mocks.privatePage.data
+
 function mount(node: React.ReactNode) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -90,6 +99,12 @@ function mount(node: React.ReactNode) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.privatePage.isLoading = false
+  mocks.privatePage.isFetching = false
+  mocks.privatePage.isPending = false
+  mocks.privatePage.isStale = false
+  mocks.privatePage.error = null
+  mocks.privatePage.data = privateData
   mocks.submit.mockResolvedValue(undefined)
   mocks.vote.mockResolvedValue(undefined)
 })
@@ -103,7 +118,9 @@ describe('feedback center', () => {
     })
     mount(page)
     await waitFor(() =>
-      expect(screen.getByLabelText('Feedback type')).toHaveValue('bug'),
+      expect(
+        screen.getByRole('button', { name: 'Report a bug' }),
+      ).toHaveAttribute('aria-pressed', 'true'),
     )
   })
   it('keeps existing Report issue links working through the new create route', async () => {
@@ -118,7 +135,9 @@ describe('feedback center', () => {
   it('prefills Report issue, submits only category/title/description, and resets the form', async () => {
     mount(<FeedbackCenter mode="create" initialCategory="bug" />)
     await waitFor(() =>
-      expect(screen.getByLabelText('Feedback type')).toHaveValue('bug'),
+      expect(
+        screen.getByRole('button', { name: 'Report a bug' }),
+      ).toHaveAttribute('aria-pressed', 'true'),
     )
     fireEvent.change(screen.getByLabelText('Title'), {
       target: { value: 'Camera scan is stuck' },
@@ -160,12 +179,40 @@ describe('feedback center', () => {
     ).toBeInTheDocument()
   })
 
+  it('sends search and filter controls to the private list and resets the cursor', () => {
+    mount(<FeedbackCenter />)
+    fireEvent.change(
+      screen.getByRole('searchbox', { name: 'Search feedback' }),
+      {
+        target: { value: 'camera' },
+      },
+    )
+    expect(mocks.myFeedback).toHaveBeenLastCalledWith({
+      limit: 25,
+      search: 'camera',
+      before: undefined,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Sort & Filter' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Planned' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Report a bug' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Oldest first' }))
+    expect(mocks.myFeedback).toHaveBeenLastCalledWith({
+      limit: 25,
+      search: 'camera',
+      status: 'planned',
+      category: 'bug',
+      order: 'asc',
+      before: undefined,
+    })
+  })
+
   it('maps the database submission throttle to a clear message', async () => {
     mocks.submit.mockRejectedValueOnce(new Error('FEEDBACK_RATE_LIMIT'))
     mount(<FeedbackCenter mode="create" />)
     fireEvent.change(screen.getByLabelText('Title'), {
       target: { value: 'Another issue' },
     })
+
     fireEvent.change(screen.getByLabelText('Description'), {
       target: { value: 'This report is complete and describes an issue.' },
     })
@@ -173,6 +220,94 @@ describe('feedback center', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'You can send up to five submissions per hour. Please try again later.',
     )
+  })
+
+  it('keeps loaded results visible during refresh and offers retry after refresh failure', () => {
+    mocks.privatePage.isFetching = true
+    const view = mount(<FeedbackCenter />)
+    expect(screen.getByText('Refreshing feedback…')).toBeInTheDocument()
+    expect(screen.getByText('Private request')).toBeInTheDocument()
+    mocks.privatePage.isFetching = false
+    mocks.privatePage.error = new Error('network')
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <FeedbackCenter />
+      </NextIntlClientProvider>,
+    )
+    expect(screen.getByText('Private request')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(mocks.privatePage.refetch).toHaveBeenCalledOnce()
+  })
+
+  it('shows stale data with an explicit refresh action', () => {
+    mocks.privatePage.isStale = true
+    mount(<FeedbackCenter />)
+    expect(screen.getByText('Feedback may be out of date.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+    expect(mocks.privatePage.refetch).toHaveBeenCalledOnce()
+  })
+
+  it('distinguishes idle, loading, error, and empty list states', () => {
+    Object.assign(mocks.privatePage, {
+      data: undefined,
+      isPending: true,
+      isFetching: false,
+    })
+    const view = mount(<FeedbackCenter />)
+    expect(screen.getByRole('status')).toHaveTextContent(
+      messages.Common.loading,
+    )
+    Object.assign(mocks.privatePage, { isLoading: true, isFetching: true })
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <FeedbackCenter />
+      </NextIntlClientProvider>,
+    )
+    expect(screen.getByRole('status')).toHaveTextContent(
+      messages.Common.loading,
+    )
+    Object.assign(mocks.privatePage, {
+      isLoading: false,
+      isFetching: false,
+      isPending: false,
+      error: new Error('failed'),
+    })
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <FeedbackCenter />
+      </NextIntlClientProvider>,
+    )
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      messages.Common.loadDataError,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(mocks.privatePage.refetch).toHaveBeenCalledOnce()
+    Object.assign(mocks.privatePage, {
+      error: null,
+      data: { items: [], next_cursor: null },
+    })
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <FeedbackCenter />
+      </NextIntlClientProvider>,
+    )
+    expect(
+      screen.getByText(messages.Feedback.noSubmissions),
+    ).toBeInTheDocument()
+  })
+
+  it('prevents submission while offline without clearing the form', () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    mount(<FeedbackCenter mode="create" />)
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Offline issue' },
+    })
+    expect(screen.getByRole('button', { name: 'Send feedback' })).toBeDisabled()
+    expect(
+      screen.getByText(messages.Feedback.offlineNotice),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Title')).toHaveValue('Offline issue')
+    vi.restoreAllMocks()
   })
 })
 

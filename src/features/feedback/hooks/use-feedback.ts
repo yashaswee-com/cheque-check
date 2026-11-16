@@ -9,14 +9,19 @@ import { feedbackService } from '../services/feedback.service'
 import type {
   FeedbackPageRequest,
   FeedbackSubmission,
+  PrivateFeedbackPageRequest,
 } from '@/validators/feedback'
 
-export function useMyFeedback(request: FeedbackPageRequest = {}) {
+export function useMyFeedback(
+  request: PrivateFeedbackPageRequest = {},
+  enabled = true,
+) {
   const { profile } = useProfile()
   const query = useQuery({
     queryKey: queryKeys.feedback.mine(profile?.user_id, request),
     queryFn: () => feedbackService.myItems(request),
-    enabled: !!profile,
+    enabled: enabled && !!profile,
+    staleTime: 30_000,
     refetchOnWindowFocus: true,
   })
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../../messages/en.json'
@@ -82,6 +82,27 @@ afterEach(() => {
 })
 
 describe('settings page', () => {
+  it('offers the reusable scroll-to-top control when scrolling up', () => {
+    const scroller = document.createElement('main')
+    scroller.setAttribute('data-page-scroll', '')
+    document.body.appendChild(scroller)
+    render(
+      <NextIntlClientProvider locale="en" messages={messages} timeZone="UTC">
+        <PremiumPromptProvider>
+          <SettingsPage />
+        </PremiumPromptProvider>
+      </NextIntlClientProvider>,
+      { container: scroller },
+    )
+    scroller.scrollTop = 500
+    fireEvent.scroll(scroller)
+    expect(screen.queryByRole('button', { name: 'Scroll to top' })).toBeNull()
+    scroller.scrollTop = 400
+    fireEvent.scroll(scroller)
+    expect(screen.getByRole('button', { name: 'Scroll to top' })).toBeVisible()
+    cleanup()
+    scroller.remove()
+  })
   it('describes the app PIN and referrals settings links', () => {
     renderPage()
     expect(

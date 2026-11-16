@@ -21,6 +21,13 @@ export type FaqId =
   | 'notification_settings'
   | 'data_privacy'
   | 'secure_account'
+  | 'add_party'
+  | 'add_account'
+  | 'find_cheque'
+  | 'update_cheque'
+  | 'use_tags'
+  | 'use_dashboard'
+  | 'export_reports'
 
 export interface FaqEntry {
   id: FaqId
@@ -29,6 +36,41 @@ export interface FaqEntry {
 }
 
 export const FAQ_ENTRIES: readonly FaqEntry[] = [
+  {
+    id: 'add_party',
+    category: 'gettingStarted',
+    related: ['add_cheque', 'add_account'],
+  },
+  {
+    id: 'add_account',
+    category: 'gettingStarted',
+    related: ['add_cheque', 'add_party'],
+  },
+  {
+    id: 'use_dashboard',
+    category: 'gettingStarted',
+    related: ['find_cheque', 'export_reports'],
+  },
+  {
+    id: 'find_cheque',
+    category: 'chequesScanning',
+    related: ['update_cheque', 'use_tags'],
+  },
+  {
+    id: 'update_cheque',
+    category: 'chequesScanning',
+    related: ['find_cheque', 'add_cheque'],
+  },
+  {
+    id: 'use_tags',
+    category: 'chequesScanning',
+    related: ['find_cheque', 'add_party'],
+  },
+  {
+    id: 'export_reports',
+    category: 'plansPayments',
+    related: ['use_dashboard', 'plans_payment'],
+  },
   {
     id: 'create_business',
     category: 'gettingStarted',

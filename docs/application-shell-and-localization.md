@@ -5,7 +5,7 @@ The authenticated shell centralizes navigation, onboarding, profile preferences,
 ## Quick reference
 
 - Shared route classification lives in the navigation route registry ([route definitions](../src/lib/navigation-routes.ts#L1-L77)).
-- Locale resolution uses the locale cookie with Hinglish fallback ([request locale](../src/i18n/request.ts#L1-L17)).
+- Locale resolution uses the saved locale cookie, then supported browser language preferences, with Hinglish fallback ([request locale](../src/i18n/request.ts)).
 - The service worker supports push handling and a generic offline navigation fallback, but never caches application data ([worker](../public/sw.js)).
 - Browser installation prompts are explicit and separate from push permission ([PWA registration](../src/components/pwa-registrar.tsx#L1-L28), [manifest](../public/site.webmanifest#L1-L17)).
 
@@ -17,12 +17,13 @@ The dashboard layout mounts authenticated application providers and shell-level 
 
 ## Preferences and localization
 
-The app resolves the locale from the request and falls back to Hinglish if the cookie is missing or unsupported; a valid saved locale remains in effect ([locale resolution](../src/i18n/request.ts#L1-L17)). New profiles and onboarding default to Hinglish, while existing profile preferences are preserved. The catalog test checks message-key and placeholder compatibility across the shipped locales ([catalog tests](../src/i18n/catalogs.test.ts#L1-L70)). Profile preferences feed shared formatting context for dates, times, and amounts ([display-format hook](../src/features/profile/hooks/use-display-format.ts#L1-L19), [formatting implementation](../src/lib/preference-format.ts#L1-L27)).
+The app uses a valid locale cookie first, otherwise it selects a supported language from the browser's `Accept-Language` preference. Missing or unsupported browser languages fall back to Hinglish; an invalid cookie also falls back to Hinglish. Signed-in profile language takes precedence and is synchronized to the cookie. New profiles and onboarding default to Hinglish, while existing profile preferences are preserved. The catalog test checks message-key and placeholder compatibility across the shipped locales ([catalog tests](../src/i18n/catalogs.test.ts#L1-L70)). Profile preferences feed shared formatting context for dates, times, and amounts ([display-format hook](../src/features/profile/hooks/use-display-format.ts#L1-L19), [formatting implementation](../src/lib/preference-format.ts#L1-L27)).
 
 ## Interaction feedback conventions
 
 Shared primitives keep feedback consistent across screens; use them instead of ad-hoc copy.
 
+- [`ScrollToTopButton`](../src/components/ui/scroll-to-top-button.tsx) is opt-in on Settings. It appears after scrolling up away from the top, hides on downward scrolling, and scrolls the nearest page scroller (or the window) to the top. It respects reduced-motion preferences and hides while the software keyboard is open. Other pages can opt in and override its positioning with `className`.
 - **Toggles** use [`SwitchWithState`](../src/components/ui/switch-with-state.tsx) so the current state is printed as On/Off beside the switch. [`SettingSwitchRow`](../src/components/ui/setting-switch-row.tsx) accepts a `consequence={{ on, off }}` pair and announces what the current state does (for example, "Motion is reduced — animations and transitions are minimised").
 - **Sort & Filter sheets** end with [`FilterResultCount`](../src/components/ui/filter-result-count.tsx), a live "X <entities> selected" line. Paged lists pass the server's matching total, not the length of the current page.
 - **No-results states** use [`NoResultsState`](../src/components/ui/no-results-state.tsx) (or `DataState`'s `noResults` prop): what was searched, how many records were checked and in which business, how many filters are applied, and a clear-search-and-filters action. Plain empty states add muted `detail` text via [`EmptyState`](../src/components/ui/empty-state.tsx) explaining what was checked.

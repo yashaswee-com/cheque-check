@@ -659,6 +659,18 @@
     "mySubmissions": "Aapke submissions",
     "privateListNote": "Private reports sirf aap aur support team dekh sakte hain.",
     "noSubmissions": "Aapne abhi tak feedback nahi bheja hai.",
+    "searchLabel": "Feedback search karein",
+    "statusLabel": "Status",
+    "newestFirst": "Sabse naye pehle",
+    "oldestFirst": "Sabse purane pehle",
+    "noMatches": "Search ya filters se koi feedback match nahi hua.",
+    "offlineNotice": "Aap offline hain. Pehle load hua feedback dikh sakta hai; refresh ya send karne ke liye reconnect karein.",
+    "refreshing": "Feedback refresh ho raha hai…",
+    "refreshFailed": "Feedback refresh nahi hua. Pichhle results dikh rahe hain.",
+    "staleNotice": "Feedback purana ho sakta hai.",
+    "refresh": "Refresh karein",
+    "retry": "Dobara try karein",
+    "clearFilters": "Search aur filters clear karein",
     "statuses": {
       "under_review": "Review ho raha hai",
       "planned": "Planned",
@@ -698,6 +710,34 @@
     "reportIssue": "Problem report karein",
     "noResults": "Aapki search se match karta koi question nahi mila.",
     "questions": {
+      "add_party": {
+        "question": "Party kaise add karein?",
+        "answer": "Parties kholein, person ya organisation ki details add karke save karein. Cheque record karte waqt party select kar sakte hain."
+      },
+      "add_account": {
+        "question": "Bank account kaise add karein?",
+        "answer": "Accounts kholein, account aur bank details add karke save karein. Cheque record karte waqt sahi account choose karein."
+      },
+      "find_cheque": {
+        "question": "Cheque kaise dhoondhein?",
+        "answer": "Cheques kholein aur search ya Sort & Filter se status, date, party, account ya tags ke hisaab se list dekhein."
+      },
+      "update_cheque": {
+        "question": "Cheque details kaise update karein?",
+        "answer": "Cheque dhoondhkar kholein, galat details edit karein aur save karein. Payment badalne par status bhi update karein."
+      },
+      "use_tags": {
+        "question": "Tags kis kaam aate hain?",
+        "answer": "Tags se records ko group karna aur related kaam dhoondhna aasaan hota hai. Labels add karke filters se unhein dekhein."
+      },
+      "use_dashboard": {
+        "question": "Dashboard par kya dikhta hai?",
+        "answer": "Dashboard aapke business ka overview deta hai aur zaroori cheque work dhoondhne mein madad karta hai."
+      },
+      "export_reports": {
+        "question": "Reports kaise dekhein aur export karein?",
+        "answer": "Reports kholein, view aur filters choose karein, aur export se pehle results check karein. Report aur export tools aapke plan par depend karte hain."
+      },
       "create_business": {
         "question": "Main business kaise banaoon?",
         "answer": "Dashboard se business banane ka option choose karein aur details bharein. Phir us business ke liye accounts, parties aur cheques add karein."
@@ -807,6 +847,7 @@
     }
   },
   "Common": {
+    "scrollToTop": "Upar jaayein",
     "pages": "Pages",
     "notificationSettings": "Notification settings",
     "noChequesMatch": "In filters se koi cheque match nahi karta",
@@ -1908,6 +1949,12 @@
     "releaseRemindersDesc": "Cheque add ya update karte waqt party ko SMS bhejna hai ya nahi, chunein. Voice reminders set karein aur voice credits se sample call try karein.",
     "releaseReliabilityTitle": "Roz ka kaam ab aur smooth",
     "releaseReliabilityDesc": "Clearer navigation, badi cheque lists ki reliable loading, aur installed app ko sahi kholne mein madad karne wale fixes.",
+    "releaseFeedbackTitle": "Apna feedback track karein",
+    "releaseFeedbackDesc": "Apne submissions search karein, type ya status se filter karein, aur published feature requests roadmap par dekhein.",
+    "releaseHelpTitle": "Zyada madad, jab zaroorat ho",
+    "releaseHelpDesc": "Accounts, parties, cheques, tags, dashboard aur reports ke practical answers dekhein.",
+    "releaseOfflineTitle": "Offline hone par clear guidance",
+    "releaseOfflineDesc": "Offline hone par page load na ho to connection wapas aane par retry karein. Records aur edits offline save nahi hote.",
     "launchTitle": "The Grand Launch",
     "launchFeat1Title": "Cheque Tracking",
     "launchFeat1Desc": "Issued aur received cheques ko aasani se manage karein.",

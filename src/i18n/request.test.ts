@@ -1,8 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import requestConfig from './request'
 
-const mocks = vi.hoisted(() => ({ get: vi.fn(), warn: vi.fn() }))
-vi.mock('next/headers', () => ({ cookies: async () => ({ get: mocks.get }) }))
+const mocks = vi.hoisted(() => ({
+  get: vi.fn(),
+  header: vi.fn(),
+  warn: vi.fn(),
+}))
+vi.mock('next/headers', () => ({
+  cookies: async () => ({ get: mocks.get }),
+  headers: async () => ({ get: mocks.header }),
+}))
 vi.mock('next-intl/server', () => ({
   getRequestConfig: (callback: unknown) => callback,
 }))
@@ -32,6 +39,30 @@ describe('request locale contract', () => {
     expect(mocks.warn).not.toHaveBeenCalled()
   })
 
+  it.each([
+    ['hi-IN, en;q=0.8', 'hi'],
+    ['fr, en-US;q=0.8, hi;q=0.9', 'hi'],
+    ['hi;q=0, en-GB;q=0.5', 'en'],
+    ['fr, *;q=0.8', 'hi-en'],
+  ])(
+    'uses the best supported browser language: %s',
+    async (header, expected) => {
+      mocks.header.mockReturnValue(header)
+      const config = await requestConfig({
+        requestLocale: Promise.resolve(undefined),
+      })
+      expect(config.locale).toBe(expected)
+    },
+  )
+
+  it('keeps an explicit cookie over the browser preference', async () => {
+    mocks.get.mockReturnValue({ value: 'hi-en' })
+    mocks.header.mockReturnValue('en')
+    const config = await requestConfig({
+      requestLocale: Promise.resolve(undefined),
+    })
+    expect(config.locale).toBe('hi-en')
+  })
   it('logs and uses Hinglish for an unsupported cookie', async () => {
     mocks.get.mockReturnValue({ value: '../../unknown' })
     const config = await requestConfig({

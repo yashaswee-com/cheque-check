@@ -25,6 +25,14 @@ export const feedbackPageRequestSchema = z.object({
   limit: z.number().int().min(1).max(50).default(25),
 })
 
+export const privateFeedbackPageRequestSchema =
+  feedbackPageRequestSchema.extend({
+    search: z.string().max(120).default(''),
+    category: z.enum(feedbackCategories).optional(),
+    status: z.enum(feedbackStatuses).optional(),
+    order: z.enum(['asc', 'desc']).default('desc'),
+  })
+
 const feedbackFields = {
   id: z.uuid(),
   title: z.string(),
@@ -60,6 +68,9 @@ export type FeedbackStatus = (typeof feedbackStatuses)[number]
 export type FeedbackSubmission = z.infer<typeof feedbackSubmissionSchema>
 export type FeedbackCursor = z.infer<typeof feedbackCursorSchema>
 export type FeedbackPageRequest = z.input<typeof feedbackPageRequestSchema>
+export type PrivateFeedbackPageRequest = z.input<
+  typeof privateFeedbackPageRequestSchema
+>
 export type PrivateFeedbackItem = z.infer<typeof privateFeedbackItemSchema>
 export type RoadmapItem = z.infer<typeof roadmapItemSchema>
 export type PrivateFeedbackPage = z.infer<typeof privateFeedbackPageSchema>

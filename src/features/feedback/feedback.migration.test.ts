@@ -8,7 +8,10 @@ const userB = '10000000-0000-4000-8000-000000000102'
 let db: PGlite
 
 beforeAll(async () => {
-  db = await createMigratedDb(['20261106020000_feedback_roadmap.sql'])
+  db = await createMigratedDb([
+    '20261106020000_feedback_roadmap.sql',
+    '20261116010000_search_my_feedback.sql',
+  ])
   await db.exec(`
     INSERT INTO auth.users(id, email)
     VALUES ('${userA}', 'feedback-a@test.invalid'), ('${userB}', 'feedback-b@test.invalid');
@@ -32,6 +35,82 @@ async function asService<T>(sql: string) {
 }
 
 describe('private feedback and published roadmap', () => {
+  it('searches and filters the whole private list before paginating in either order', async () => {
+    const owner = '10000000-0000-4000-8000-000000000104'
+    const other = '10000000-0000-4000-8000-000000000105'
+    await db.exec(`INSERT INTO auth.users(id, email) VALUES
+      ('${owner}', 'search-owner@test.invalid'), ('${other}', 'search-other@test.invalid')`)
+    for (const [user, title] of [
+      [owner, 'Search alpha'],
+      [owner, 'Search beta'],
+      [owner, 'Search gamma'],
+      [other, 'Search private'],
+    ]) {
+      await asUser(
+        db,
+        user,
+        `INSERT INTO feedback_items(category, title, description)
+        VALUES ('bug', '${title}', 'Details for this feedback item.')`,
+      )
+    }
+    await asService(
+      `UPDATE feedback_items SET created_at = '2026-01-01T00:00:00Z' WHERE user_id = '${owner}'`,
+    )
+    const first = await asUser<{
+      id: string
+      created_at: Date
+      title: string
+    }>(
+      db,
+      owner,
+      `SELECT id, created_at, title FROM search_my_feedback(NULL, NULL, 1, 'SEARCH', 'bug', 'under_review', 'asc')`,
+    )
+    expect(first.rows).toHaveLength(2)
+    const next = await asUser<{ id: string; title: string }>(
+      db,
+      owner,
+      `SELECT id, title FROM search_my_feedback('${first.rows[0].created_at.toISOString()}', '${first.rows[0].id}', 1, 'SEARCH', 'bug', 'under_review', 'asc')`,
+    )
+    expect(next.rows[0].id).toBe(first.rows[1].id)
+    const descending = await asUser<{ id: string; title: string }>(
+      db,
+      owner,
+      `SELECT id, title FROM search_my_feedback(NULL, NULL, 5, 'search', 'bug', 'under_review', 'desc')`,
+    )
+    expect(descending.rows.map((row) => row.id)).toEqual([
+      next.rows[1].id,
+      first.rows[1].id,
+      first.rows[0].id,
+    ])
+    expect(descending.rows.some((row) => row.title === 'Search private')).toBe(
+      false,
+    )
+    expect(
+      (
+        await asUser(
+          db,
+          owner,
+          `SELECT id FROM search_my_feedback(NULL, NULL, 25, '%', NULL, NULL, 'desc')`,
+        )
+      ).rows,
+    ).toEqual([])
+    expect(
+      (
+        await asUser(
+          db,
+          owner,
+          `SELECT id FROM search_my_feedback(NULL, NULL, 25, '', 'feature', NULL, 'desc')`,
+        )
+      ).rows,
+    ).toEqual([])
+    await expect(
+      asUser(
+        db,
+        owner,
+        `SELECT id FROM search_my_feedback(NULL, NULL, 25, '', NULL, NULL, 'invalid')`,
+      ),
+    ).rejects.toThrow(/Invalid feedback page/)
+  })
   it('creates indexes for owner, admin, status, roadmap, and vote pagination', async () => {
     const indexes = await db.query<{ indexname: string }>(`
       SELECT indexname FROM pg_indexes
