@@ -319,15 +319,17 @@ export function useOcrExtraction(options: Options) {
     if (url) await run(url, true)
   }
   async function acknowledgeConsent() {
+    const token = generation.current
     try {
       await scanRequest(
         { action: 'consent', version: OCR_CONSENT_VERSION },
         ScanAcknowledgmentSchema,
       )
+      if (!mounted.current || generation.current !== token) return
       setOcrState('needsConsent', false)
       await retry()
     } catch (error) {
-      report(error)
+      if (generation.current === token) report(error)
     }
   }
   async function cancel() {
@@ -395,6 +397,7 @@ export function useOcrExtraction(options: Options) {
   }
   async function chooseParty(id: string) {
     if (!job || !canApply(job)) return
+    setOcrState('errorCode', null)
     try {
       await scanRequest(
         { action: 'confirm-party', jobId: job.id, partyId: id },
@@ -408,6 +411,7 @@ export function useOcrExtraction(options: Options) {
   }
   async function remap() {
     if (!job || !mounted.current) return
+    setOcrState('errorCode', null)
     try {
       const updated = await scanRequest(
         { action: 'remap', jobId: job.id, mode: watch('type') },
@@ -441,6 +445,7 @@ export function useOcrExtraction(options: Options) {
   }
   function openCreate() {
     if (!job?.details || !canApply(job)) return
+    setOcrState('errorCode', null)
     const details = job.details
     setUnmatchedEntities({
       payee_name:
@@ -461,6 +466,7 @@ export function useOcrExtraction(options: Options) {
   }
   async function handleInlineCreate() {
     if (!job || !canApply(job) || isCreatingInline) return
+    setOcrState('errorCode', null)
     setOcrState('isCreatingInline', true)
     try {
       for (const kind of ['party', 'account'] as const) {

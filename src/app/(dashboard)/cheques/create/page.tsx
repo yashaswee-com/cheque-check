@@ -6,7 +6,6 @@ import {
   Money03Icon,
   HashtagIcon,
   Tag01Icon,
-  CallIcon,
 } from '@hugeicons/core-free-icons'
 import { useCreateCheque } from '@/features/cheques/hooks/use-create-cheque'
 import { useParties } from '@/features/parties/hooks/use-parties'
@@ -14,7 +13,6 @@ import { useAccounts } from '@/features/accounts/hooks/use-accounts'
 import { Button } from '@/components/ui/button'
 import { EditSaveBar } from '@/components/ui/edit-save-bar'
 import { FieldError } from '@/components/ui/field-error'
-import { Spinner } from '@/components/ui/spinner'
 import { Input } from '@/components/ui/input'
 import { DigitSlotsInput } from '@/components/ui/digit-slots-input'
 import { Controller } from 'react-hook-form'
@@ -27,14 +25,11 @@ import {
   ArrowLeft01Icon as ArrowLeft,
   Tick02Icon as Check,
   Camera01Icon as Camera,
-  Cancel01Icon as X,
   ArrowUpRight01Icon as ArrowUpRight,
   ArrowDownLeft01Icon as ArrowDownLeft,
   Invoice01Icon as ReceiptText,
   UserIcon as User,
   CreditCardIcon as CreditCard,
-  BankIcon as Bank,
-  Delete02Icon as Trash,
   Calendar03Icon as Calendar,
   Note01Icon as Note,
 } from '@hugeicons/core-free-icons'
@@ -42,7 +37,6 @@ import { cn, numberToIndianWords } from '@/lib/utils'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { Combobox } from '@/components/ui/combobox'
 import { EntityAvatar } from '@/components/ui/entity-avatar'
-import { SkeletonImage } from '@/components/ui/skeleton-image'
 import {
   Stepper,
   StepperIndicator,
@@ -58,17 +52,7 @@ import { useValidationMessage } from '@/hooks/use-validation-message'
 import { useState, useEffect, useRef } from 'react'
 import { useBanks } from '@/features/accounts/hooks/use-banks'
 import { useChequeNumberConflict } from '@/features/cheques/hooks/use-cheque-number-conflict'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
 import type { Account, Party } from '@/types'
-import { Checkbox } from '@/components/ui/checkbox'
-import { BankSelector } from '@/components/bank-selector'
 import { ScanStore } from '@/lib/scan-store'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
@@ -81,7 +65,7 @@ import { TagSelector } from '@/features/tags/components/tag-selector'
 import { useDraftTags } from '@/features/tags/hooks/use-draft-tags'
 import { useOcrExtraction } from '@/features/cheques/hooks/use-ocr-extraction'
 import { useChequePublishConfirmation } from '@/features/cheques/hooks/use-cheque-publish-confirmation'
-import { OcrReview } from '@/features/cheques/components/ocr-review'
+import { OcrScanSheet } from '@/features/cheques/components/ocr-scan-sheet'
 import { DraftLeaveDialog, DraftSaveFab } from '@/features/drafts'
 import { logger } from '@/lib/logger'
 
@@ -98,6 +82,7 @@ export default function CreateChequePage() {
   // Computed once at mount: whether the user arrived here from scanning/OCR,
   // so the photo widget can be shown first instead of buried at the bottom.
   const [cameFromScan] = useState(() => !!imageUrlParam || ScanStore.hasFile())
+  const [scanSheetOpen, setScanSheetOpen] = useState(cameFromScan)
   // Read once: autosave later writes a new draftId into the URL for the same form.
   const [initialDraftId] = useState(() => searchParams.get('draftId'))
   const photoInputRef = useRef<HTMLInputElement>(null)
@@ -207,16 +192,6 @@ export default function CreateChequePage() {
     }
   }, [accounts, setValue, watch])
 
-  const {
-    isExtracting,
-    unmatchedEntities,
-    setUnmatchedEntities,
-    createOptions,
-    setCreateOptions,
-    isCreatingInline,
-    extractData,
-    handleInlineCreate,
-  } = scan
   const publication = useChequePublishConfirmation({
     step,
     nextStep,
@@ -243,6 +218,20 @@ export default function CreateChequePage() {
         </span>
       </FormLabel>
     ) : null
+  const duplicateReview = duplicateConfirmation ? (
+    <Button
+      type="button"
+      variant="outline"
+      className="h-auto min-h-11 w-full whitespace-normal text-amber-700"
+      onClick={() => setScanSheetOpen(true)}
+    >
+      {tOcr(
+        publication.confirmed
+          ? 'flow.duplicateReviewed'
+          : 'flow.reviewDuplicate',
+      )}
+    </Button>
+  ) : null
 
   const partyOptions =
     parties?.map((p: Party) => ({
@@ -252,6 +241,11 @@ export default function CreateChequePage() {
       icon: p.icon,
       imageUrl: p.avatar_url,
     })) || []
+  const scanPartyOptions =
+    parties?.map((party) => ({
+      value: party.id,
+      label: `${party.name}${party.contact ? ` (${party.contact})` : ''}`,
+    })) || []
 
   const accountOptions =
     accounts?.map((b: Account) => ({
@@ -260,6 +254,11 @@ export default function CreateChequePage() {
       color: b.color,
       icon: b.icon,
       imageUrl: b.logo_url ?? b.bank?.logo_url,
+    })) || []
+  const scanAccountOptions =
+    accounts?.map((account) => ({
+      value: account.id,
+      label: `${account.account_name} · ${account.bank?.name || tCommon('bank')} (${account.account_number.slice(-4)})`,
     })) || []
 
   const selectedParty = parties?.find((p: Party) => p.id === watch('party_id'))
@@ -273,101 +272,10 @@ export default function CreateChequePage() {
     locale,
   )
 
-  const photoWidget = (
-    <div className="space-y-2">
-      <FormLabel
-        icon={Camera}
-        className="text-xs font-semibold text-muted-foreground ml-1"
-      >
-        {t('photo')}
-      </FormLabel>
-      {profile?.ai_scan_enabled === false && (
-        <p className="text-xs text-muted-foreground" role="status">
-          {t('aiScanDisabledHelp')}
-        </p>
-      )}
-      <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 bg-canvas-parchment/30 min-h-[140px] transition-colors hover:bg-canvas-parchment/50 border-primary/10 relative overflow-hidden">
-        {watch('image_url') ? (
-          <div className="relative w-full aspect-video rounded-sm overflow-hidden border">
-            <SkeletonImage
-              src={watch('image_url') ?? ''}
-              alt="Cheque"
-              containerClassName="h-full w-full"
-              className="w-full h-full object-cover"
-            />
-            <button
-              type="button"
-              disabled={isUploading}
-              onClick={() => {
-                void scan.cancel()
-                setUserValue('image_url', null)
-              }}
-              className="absolute top-3 right-3 p-2 bg-black/60 text-white rounded-full hover:bg-black transition-colors z-20"
-            >
-              <HugeiconsIcon icon={X} className="h-4 w-4" />
-            </button>
-            {isExtracting && (
-              <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 z-10 animate-in fade-in duration-300">
-                <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <Spinner className="size-7" />
-                </div>
-                <div className="text-center">
-                  <span className="text-sm font-semibold text-primary block">
-                    {t('loading')}
-                  </span>
-                  <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-semibold">
-                    {t('photoInstruction')}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="w-full">
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-auto w-full flex-col gap-3 border-0 px-0 py-6 hover:bg-transparent active:scale-100"
-              aria-label={t('scanUpload')}
-              loading={isUploading || isExtracting}
-              onClick={() => photoInputRef.current?.click()}
-            >
-              <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <HugeiconsIcon icon={Camera} className="h-7 w-7" />
-              </div>
-              <div className="text-center">
-                <span className="text-sm font-semibold text-primary block">
-                  {t('scanUpload')}
-                </span>
-                <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-semibold">
-                  {t('photoInstruction')}
-                </p>
-              </div>
-            </Button>
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              capture="environment"
-              className="hidden"
-              onChange={async (e) => {
-                const file = e.target.files?.[0]
-                e.target.value = ''
-                if (file) {
-                  const url = await handleImageUpload(file)
-                  if (url) extractData(url)
-                }
-              }}
-              disabled={isUploading || isExtracting}
-            />
-          </div>
-        )}
-      </div>
-      {watch('image_url') && profile?.ai_scan_enabled !== false && (
-        <OcrReview key={scan.job?.id ?? watch('image_url')} scan={scan} />
-      )}
-    </div>
-  )
+  const removePhoto = () => {
+    void scan.cancel()
+    setUserValue('image_url', null)
+  }
 
   if (isSuccess && draftTags.saveState !== 'idle' && createdChequeId) {
     return (
@@ -454,15 +362,73 @@ export default function CreateChequePage() {
 
       <DraftLeaveDialog {...draft.leaveDialogProps} />
 
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        capture="environment"
+        aria-label={t('scanUpload')}
+        className="hidden"
+        onChange={async (event) => {
+          const file = event.target.files?.[0]
+          event.target.value = ''
+          if (file) {
+            const url = await handleImageUpload(file)
+            if (url) await scan.extractData(url)
+          }
+        }}
+        disabled={isUploading || scan.isExtracting || scan.isCreatingInline}
+      />
+      {profile?.ai_scan_enabled !== false ? (
+        <OcrScanSheet
+          scan={scan}
+          imageUrl={watch('image_url')}
+          isUploading={isUploading}
+          open={scanSheetOpen}
+          onOpenChange={setScanSheetOpen}
+          onUpload={() => photoInputRef.current?.click()}
+          onRemove={removePhoto}
+          partyOptions={scanPartyOptions}
+          accountOptions={scanAccountOptions}
+          partyId={watch('party_id')}
+          accountId={selectedAccountId}
+          duplicateConfirmation={duplicateConfirmation}
+        />
+      ) : (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border p-3">
+          <p className="flex-1 text-xs text-muted-foreground">
+            {t('aiScanDisabledHelp')}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            loading={isUploading}
+            onClick={() => photoInputRef.current?.click()}
+          >
+            {t('scanUpload')}
+          </Button>
+          {watch('image_url') && (
+            <Button type="button" variant="ghost" onClick={removePhoto}>
+              {tOcr('flow.removePhoto')}
+            </Button>
+          )}
+        </div>
+      )}
+
       <form
         id="cheque-create-form"
-        onSubmit={publication.handleSubmit}
+        onSubmit={(event) => {
+          if (step === 3 && duplicateConfirmation && !publication.confirmed) {
+            event.preventDefault()
+            setScanSheetOpen(true)
+            return
+          }
+          return publication.handleSubmit(event)
+        }}
         className="space-y-3"
       >
         {step === 1 && (
           <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
-            {cameFromScan && photoWidget}
-
             <div className="space-y-2">
               <FormLabel
                 icon={ArrowUpDownIcon}
@@ -576,10 +542,8 @@ export default function CreateChequePage() {
                 {validationMessage(errors.cheque_number?.message)}
               </FieldError>
               {numberConflictWarning}
-              {duplicateConfirmation}
+              {duplicateReview}
             </div>
-
-            {!cameFromScan && photoWidget}
           </div>
         )}
 
@@ -627,10 +591,12 @@ export default function CreateChequePage() {
                 testId="cheque-account-combobox"
                 onCreateClick={(query) =>
                   openCreatePage('/accounts/create', {
-                    name: unmatchedEntities?.account_name || query,
-                    number: unmatchedEntities?.account_number || '',
-                    ifsc: unmatchedEntities?.ifsc_code || '',
-                    auto: unmatchedEntities?.account_name ? 'true' : 'false',
+                    name: scan.unmatchedEntities?.account_name || query,
+                    number: scan.unmatchedEntities?.account_number || '',
+                    ifsc: scan.unmatchedEntities?.ifsc_code || '',
+                    auto: scan.unmatchedEntities?.account_name
+                      ? 'true'
+                      : 'false',
                   })
                 }
                 className="h-14 bg-canvas-parchment border-none rounded-sm"
@@ -639,7 +605,7 @@ export default function CreateChequePage() {
                 {validationMessage(errors.account_id?.message)}
               </FieldError>
               {numberConflictWarning}
-              {duplicateConfirmation}
+              {duplicateReview}
             </div>
           </div>
         )}
@@ -845,164 +811,6 @@ export default function CreateChequePage() {
           step < 3 ? `cheque-step${step}-continue` : 'cheque-submit-button'
         }
       />
-
-      <Dialog
-        open={!!unmatchedEntities}
-        onOpenChange={(open) => !open && setUnmatchedEntities(null)}
-      >
-        <DialogContent
-          className="max-w-md"
-          data-monitoring-private
-          data-clarity-mask="true"
-        >
-          <DialogHeader>
-            <DialogTitle>{t('newEntitiesFound')}</DialogTitle>
-            <DialogDescription>{t('newEntitiesDescription')}</DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            {scan.duplicateWarning && (
-              <FormLabel
-                icon={ReceiptText}
-                className="flex items-start gap-2 text-sm"
-                role="alert"
-              >
-                <input
-                  type="checkbox"
-                  className="order-first"
-                  checked={scan.allowDuplicate}
-                  onChange={(event) =>
-                    scan.setAllowDuplicate(event.target.checked)
-                  }
-                />
-                {tOcr('duplicateConfirm')}
-              </FormLabel>
-            )}
-            {unmatchedEntities?.payee_name && (
-              <div className="flex items-start gap-3 p-3 rounded-lg border bg-canvas-parchment/30">
-                <Checkbox
-                  id="create-party"
-                  checked={createOptions.party}
-                  onCheckedChange={(checked) =>
-                    setCreateOptions((prev) => ({ ...prev, party: !!checked }))
-                  }
-                  className="mt-1"
-                />
-                <div className="flex-1 grid gap-1.5 leading-none">
-                  <div className="flex items-center gap-2">
-                    <FormLabel
-                      icon={User}
-                      htmlFor="create-party"
-                      className="text-sm font-semibold"
-                    >
-                      {t('createPartyFromScan', {
-                        name: unmatchedEntities.payee_name,
-                      })}
-                    </FormLabel>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {watch('type') === 'Inward'
-                      ? tOcr('partyMatches')
-                      : t('payeeExtracted')}
-                  </p>
-                  <FormLabel icon={CallIcon} htmlFor="scan-party-contact">
-                    {tOcr('contact')}
-                  </FormLabel>
-                  <Input
-                    id="scan-party-contact"
-                    type="tel"
-                    value={scan.partyContact}
-                    onChange={(event) =>
-                      scan.setPartyContact(event.target.value)
-                    }
-                  />
-                </div>
-              </div>
-            )}
-
-            {unmatchedEntities?.account_number && (
-              <div className="space-y-4 p-3 rounded-lg border bg-canvas-parchment/30">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="create-account"
-                    checked={createOptions.account}
-                    onCheckedChange={(checked) =>
-                      setCreateOptions((prev) => ({
-                        ...prev,
-                        account: !!checked,
-                      }))
-                    }
-                    className="mt-1"
-                  />
-                  <div className="flex-1 grid gap-1.5 leading-none">
-                    <div className="flex items-center gap-2">
-                      <FormLabel
-                        icon={CreditCard}
-                        htmlFor="create-account"
-                        className="text-sm font-semibold"
-                      >
-                        {t('createAccountFromScan', {
-                          name:
-                            unmatchedEntities.account_name ||
-                            unmatchedEntities.account_number ||
-                            '',
-                        })}
-                      </FormLabel>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {t('accountExtracted')}
-                    </p>
-                  </div>
-                </div>
-
-                {createOptions.account && (
-                  <div className="space-y-2 ml-7">
-                    <FormLabel
-                      icon={Bank}
-                      is_required
-                      className="text-[10px] font-semibold text-muted-foreground flex items-center gap-2"
-                    >
-                      {tCommon('selectBank')}
-                    </FormLabel>
-                    <BankSelector
-                      value={unmatchedEntities.bank_id}
-                      onValueChange={(val) =>
-                        setUnmatchedEntities((prev) =>
-                          prev ? { ...prev, bank_id: val } : null,
-                        )
-                      }
-                      className="h-10 text-sm rounded-xl"
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="flex-row gap-3">
-            <Button
-              variant="ghost"
-              className="flex-1 rounded-full gap-2"
-              onClick={() => setUnmatchedEntities(null)}
-            >
-              <HugeiconsIcon icon={Trash} className="h-4 w-4" />
-              {tCommon('skip')}
-            </Button>
-            <Button
-              className="flex-1 rounded-full gap-2"
-              onClick={handleInlineCreate}
-              loading={isCreatingInline}
-              disabled={
-                isCreatingInline ||
-                (!createOptions.party && !createOptions.account)
-              }
-            >
-              <HugeiconsIcon icon={Check} className="h-4 w-4" />
-              {t('createSelected')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

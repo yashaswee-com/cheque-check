@@ -44,6 +44,7 @@ const mocks = vi.hoisted(() => ({
   filterSortOrder: vi.fn(),
   listRequest: vi.fn(),
   conflictCheck: vi.fn(),
+  confirmScanDuplicate: vi.fn(),
 }))
 let loading = false
 let saving = false
@@ -62,6 +63,7 @@ let defaults: Record<string, unknown> = {}
 let legacyNumber = false
 let errors: Record<string, { message: string }> = {}
 let unmatched: Record<string, string> | null = null
+let scanned = false
 let listedCheques: Array<typeof cheque> = []
 let filteredCheques: Array<typeof cheque> | null = null
 let listError: Error | null = null
@@ -135,8 +137,8 @@ function useChequeForm(options?: {
     isSuccess: success,
     handleImageUpload: mocks.upload,
     continueAfterSuccess: mocks.continue,
-    onSubmit: async (event: React.FormEvent) => {
-      event.preventDefault()
+    onSubmit: async (event?: React.FormEvent) => {
+      event?.preventDefault()
       await options?.beforePublish?.('draft')
       mocks.submit(form.getValues())
       await options?.onCreated?.({ id: 'created' })
@@ -280,6 +282,19 @@ vi.mock('@/features/cheques/hooks/use-ocr-extraction', () => ({
       bank_id: '',
     })
     return {
+      job:
+        unmatched || scanned
+          ? {
+              id: 'scan',
+              status: 'accepted_partial',
+              mode: 'Outward',
+              credit_state: 'charged',
+              details: { amount: 1500, cheque_number: '100123' },
+              reliability: {},
+            }
+          : null,
+      applied: !!unmatched || scanned,
+      candidates: { parties: [], accounts: [] },
       unmatchedEntities,
       setUnmatchedEntities,
       createOptions,
@@ -293,6 +308,7 @@ vi.mock('@/features/cheques/hooks/use-ocr-extraction', () => ({
       setPartyContact: vi.fn(),
       allowDuplicate: false,
       setAllowDuplicate: vi.fn(),
+      confirmDuplicate: mocks.confirmScanDuplicate,
     }
   },
 }))
@@ -622,6 +638,7 @@ beforeEach(() => {
   defaults = {}
   errors = {}
   unmatched = null
+  scanned = false
   listError = null
   listPages = 1
   listedCheques = [cheque]
@@ -633,6 +650,7 @@ beforeEach(() => {
   mocks.verify.mockResolvedValue(true)
   mocks.duplicate.mockResolvedValue({ id: 'copy' })
   mocks.layout.mockResolvedValue({ remote: true })
+  mocks.confirmScanDuplicate.mockResolvedValue(true)
 })
 afterEach(cleanup)
 
@@ -932,6 +950,39 @@ describe('cheque creation page', () => {
     expect(screen.getByTestId('draft-save-button')).not.toHaveClass('fixed')
     expect(mocks.save).toHaveBeenCalledOnce()
   })
+  it('moves duplicate acknowledgment into the sheet and reopens it before publication', async () => {
+    conflict = true
+    scanned = true
+    initialStep = 3
+    defaults = { ...cheque }
+    renderPage(<CreateChequePage />)
+    expect(
+      screen.queryByRole('checkbox', { name: /I reviewed the duplicate/ }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('cheque-submit-button'))
+    expect(mocks.submit).not.toHaveBeenCalled()
+    const sheet = await screen.findByRole('dialog', {
+      name: messages.Ocr.title,
+    })
+    expect(sheet).toHaveTextContent(messages.Ocr.duplicateCheque)
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: /I reviewed the duplicate/ }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Ocr.flow.done }),
+    )
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    )
+    fireEvent.click(screen.getByTestId('cheque-submit-button'))
+    await waitFor(() =>
+      expect(mocks.confirmScanDuplicate).toHaveBeenCalledWith(
+        'account',
+        '100123',
+      ),
+    )
+    await waitFor(() => expect(mocks.submit).toHaveBeenCalledOnce())
+  })
   it('saves before opening related creation pages with a safe draft return destination', () => {
     initialStep = 2
     renderPage(<CreateChequePage />)
@@ -981,29 +1032,38 @@ describe('cheque creation page', () => {
       expect(mocks.extract).toHaveBeenCalledWith('scan-image'),
     )
   })
-  it('uses one spinner instead of upload text and keeps the file picker disabled while uploading', () => {
+  it('keeps upload feedback inside the sheet and disables the file picker while uploading', () => {
     uploading = true
+    query = new URLSearchParams({ imageUrl: 'scan-image' })
     const { container } = renderPage(<CreateChequePage />)
-    const button = screen.getByRole('button', {
-      name: messages.Cheques.scanUpload,
-    })
-    expect(button).toHaveAttribute('aria-busy', 'true')
-    expect(button).toBeDisabled()
-    expect(button.querySelectorAll('.animate-spin')).toHaveLength(1)
-    expect(button.querySelector('[data-slot="button-content"]')).toHaveClass(
-      'opacity-0',
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      messages.Ocr.flow.uploading,
     )
+    expect(
+      screen.getByRole('dialog').querySelectorAll('.animate-spin'),
+    ).toHaveLength(1)
+    expect(
+      screen.getByRole('button', { name: messages.Cheques.scanUpload }),
+    ).toBeDisabled()
     expect(container.querySelector('input[type="file"]')).toBeDisabled()
   })
   it('displays scanning feedback and lets a user remove the imported photo', () => {
     query = new URLSearchParams({ imageUrl: 'scan-image' })
     defaults = { image_url: 'scan-image' }
     extracting = true
-    const { container } = renderPage(<CreateChequePage />)
-    expect(screen.getByText(messages.Cheques.loading)).toBeVisible()
-    expect(screen.getByAltText('Cheque')).toHaveAttribute('src', 'scan-image')
-    fireEvent.click(container.querySelector('form button.absolute')!)
-    expect(screen.queryByAltText('Cheque')).not.toBeInTheDocument()
+    renderPage(<CreateChequePage />)
+    expect(screen.getByText(messages.Ocr.scanning)).toBeVisible()
+    fireEvent.click(screen.getByText(messages.Ocr.flow.viewPhoto))
+    expect(screen.getByAltText(messages.Cheques.photo)).toHaveAttribute(
+      'src',
+      'scan-image',
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: messages.Ocr.flow.removePhoto }),
+    )
+    expect(
+      screen.queryByAltText(messages.Cheques.photo),
+    ).not.toBeInTheDocument()
   })
   it('displays unmatched OCR entities and invokes inline creation', async () => {
     unmatched = {
@@ -1012,6 +1072,8 @@ describe('cheque creation page', () => {
       account_name: 'New account',
       ifsc_code: 'TEST0000001',
     }
+    query = new URLSearchParams({ imageUrl: 'scan-image' })
+    defaults = { image_url: 'scan-image' }
     renderPage(<CreateChequePage />)
     expect(await screen.findByText('Create party: New payee')).toBeVisible()
     expect(screen.getByText('Create account: New account')).toBeVisible()

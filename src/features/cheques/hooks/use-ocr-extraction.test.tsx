@@ -105,6 +105,40 @@ beforeEach(() => {
 })
 afterEach(cleanup)
 describe('durable scan client', () => {
+  it('does not start a scan when consent finishes after switching to manual entry', async () => {
+    let acknowledge!: (value: Response) => void
+    mocks.fetch.mockImplementation(async (_: string, init: RequestInit) => {
+      const { action } = JSON.parse(String(init.body))
+      if (action === 'consent')
+        return new Promise<Response>((resolve) => {
+          acknowledge = resolve
+        })
+      if (action === 'start')
+        return new Response(JSON.stringify({ code: 'CONSENT_REQUIRED' }), {
+          status: 403,
+        })
+      return response(null)
+    })
+    const { result } = setup()
+    await act(() => result.current.scan.extractData(image))
+    expect(result.current.scan.needsConsent).toBe(true)
+    let pending!: Promise<void>
+    await act(async () => {
+      pending = result.current.scan.acknowledgeConsent()
+    })
+    await act(() => result.current.scan.cancel())
+    await act(async () => {
+      acknowledge(response(true))
+      await pending
+    })
+    expect(result.current.scan.needsConsent).toBe(false)
+    expect(
+      mocks.fetch.mock.calls.filter(
+        ([, init]) => JSON.parse(init.body).action === 'start',
+      ),
+    ).toHaveLength(1)
+  })
+
   it('does not send disabled-mode uploads to AI', async () => {
     const { result } = setup(false)
     await act(() => result.current.scan.extractData(image))
