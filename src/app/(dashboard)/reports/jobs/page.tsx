@@ -16,6 +16,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { StickyPagination } from '@/components/ui/sticky-pagination'
 import { toast } from '@/components/ui/toast'
 import { logger } from '@/lib/logger'
+import { FormLabel } from '@/components/ui/form-label'
+import { FilterIcon, File01Icon } from '@hugeicons/core-free-icons'
 
 export default function JobsPage() {
   return (
@@ -68,9 +70,12 @@ function JobsContent() {
       <h1 className="text-2xl font-bold">{t('exportJobs')}</h1>
       <p className="text-sm text-muted-foreground">{t('exportJobsHelp')}</p>
       <div className="flex flex-wrap gap-3">
-        <label className="flex flex-col gap-1 text-sm">
-          {t('jobStatusFilter')}
+        <div className="flex flex-col gap-1 text-sm">
+          <FormLabel htmlFor="export-job-status" icon={FilterIcon}>
+            {t('jobStatusFilter')}
+          </FormLabel>
           <select
+            id="export-job-status"
             className="rounded-md border bg-background p-2"
             value={request.status ?? ''}
             onChange={(event) => {
@@ -88,10 +93,13 @@ function JobsContent() {
               </option>
             ))}
           </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          {t('jobFormatFilter')}
+        </div>
+        <div className="flex flex-col gap-1 text-sm">
+          <FormLabel htmlFor="export-job-format" icon={File01Icon}>
+            {t('jobFormatFilter')}
+          </FormLabel>
           <select
+            id="export-job-format"
             className="rounded-md border bg-background p-2"
             value={request.format ?? ''}
             onChange={(event) => {
@@ -107,7 +115,7 @@ function JobsContent() {
             <option value="csv">CSV</option>
             <option value="json">JSON</option>
           </select>
-        </label>
+        </div>
         <Button
           variant="outline"
           disabled={jobs.isFetching || !activeBusiness}

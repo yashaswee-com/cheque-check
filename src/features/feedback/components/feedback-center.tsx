@@ -1,5 +1,7 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { Note01Icon } from '@hugeicons/core-free-icons'
 import Link from 'next/link'
 import { useRef, useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
@@ -17,7 +19,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { EditSaveBar } from '@/components/ui/edit-save-bar'
 import { FieldError } from '@/components/ui/field-error'
 import { toast } from '@/components/ui/toast'
-import { Label } from '@/components/ui/label'
 import { logger } from '@/lib/logger'
 import {
   feedbackCategories,
@@ -153,13 +154,14 @@ export function FeedbackCenter({
         >
           <FeedbackTypeSelector value={category} onChange={setCategory} />
           <div className="space-y-2">
-            <Label
-              required
+            <FormLabel
+              icon={TextIcon}
+              is_required
               htmlFor="feedback-title"
-              className="text-xs font-normal uppercase tracking-wider text-muted-foreground"
+              className="text-xs font-normal text-muted-foreground"
             >
               {t('titleLabel')}
-            </Label>
+            </FormLabel>
             <Input
               id="feedback-title"
               leftIcon={TextIcon}
@@ -172,13 +174,14 @@ export function FeedbackCenter({
             />
           </div>
           <div className="space-y-2">
-            <Label
-              required
+            <FormLabel
+              icon={Note01Icon}
+              is_required
               htmlFor="feedback-description"
-              className="text-xs font-normal uppercase tracking-wider text-muted-foreground"
+              className="text-xs font-normal text-muted-foreground"
             >
               {t('descriptionLabel')}
-            </Label>
+            </FormLabel>
             <div className="relative">
               <HugeiconsIcon
                 icon={Comment01Icon}

@@ -1,5 +1,7 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { Calendar03Icon } from '@hugeicons/core-free-icons'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react'
 import {
@@ -12,7 +14,6 @@ import {
   UnavailableIcon,
 } from '@hugeicons/core-free-icons'
 import { DateInput } from '@/components/ui/date-input'
-import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
 import {
@@ -154,7 +155,9 @@ export function AdvancedChequeFilters({
       <div className="grid grid-cols-2 gap-3">
         {['from', 'to', 'due_from', 'due_to'].map((key) => (
           <div key={key} className="space-y-2">
-            <Label htmlFor={`filter-${key}`}>{t(`filter_${key}`)}</Label>
+            <FormLabel icon={Calendar03Icon} htmlFor={`filter-${key}`}>
+              {t(`filter_${key}`)}
+            </FormLabel>
             <DateInput
               id={`filter-${key}`}
               value={

@@ -1013,19 +1013,19 @@ describe('cheque creation page', () => {
       ifsc_code: 'TEST0000001',
     }
     renderPage(<CreateChequePage />)
-    expect(await screen.findByText('Create Party: New payee')).toBeVisible()
-    expect(screen.getByText('Create Account: New account')).toBeVisible()
+    expect(await screen.findByText('Create party: New payee')).toBeVisible()
+    expect(screen.getByText('Create account: New account')).toBeVisible()
     fireEvent.click(
-      screen.getByRole('checkbox', { name: 'Create Party: New payee' }),
+      screen.getByRole('checkbox', { name: 'Create party: New payee' }),
     )
     fireEvent.click(
-      screen.getByRole('checkbox', { name: 'Create Account: New account' }),
+      screen.getByRole('checkbox', { name: 'Create account: New account' }),
     )
     expect(
       screen.getByRole('button', { name: /Create Selected/i }),
     ).toBeDisabled()
     fireEvent.click(
-      screen.getByRole('checkbox', { name: 'Create Account: New account' }),
+      screen.getByRole('checkbox', { name: 'Create account: New account' }),
     )
     fireEvent.click(screen.getByTestId('ocr-bank-selector'))
     expect(screen.getByTestId('ocr-bank-selector')).toHaveTextContent('bank-id')

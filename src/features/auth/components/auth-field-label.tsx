@@ -1,6 +1,6 @@
 import type { ComponentProps, ReactNode } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Label } from '@/components/ui/label'
+import { FormLabel } from '@/components/ui/form-label'
 import { FieldError } from '@/components/ui/field-error'
 import { cn } from '@/lib/utils'
 
@@ -20,14 +20,14 @@ export function AuthFieldLabel({
   children: ReactNode
 }) {
   return (
-    <Label htmlFor={htmlFor} required={required} className={className}>
-      <HugeiconsIcon
-        icon={icon}
-        className="size-4 shrink-0 text-muted-foreground"
-        aria-hidden="true"
-      />
+    <FormLabel
+      htmlFor={htmlFor}
+      icon={icon}
+      is_required={required}
+      className={className}
+    >
       {children}
-    </Label>
+    </FormLabel>
   )
 }
 

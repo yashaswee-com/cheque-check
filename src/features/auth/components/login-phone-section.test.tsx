@@ -57,6 +57,10 @@ describe('LoginPhoneSection', () => {
     )
     expect(screen.getByTestId('login-phone-link-button')).toBeDisabled()
     expect(screen.getByLabelText(messages.PhoneAuth.linkTitle)).toHaveValue('')
+    const label = screen.getByText(messages.PhoneAuth.linkTitle)
+    expect(label).not.toHaveAttribute('data-required')
+    expect(label).not.toHaveClass('uppercase', 'tracking-wider')
+    expect(label.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
     expect(
       screen.queryByText(messages.PhoneAuth.linkDisabled),
     ).not.toBeInTheDocument()

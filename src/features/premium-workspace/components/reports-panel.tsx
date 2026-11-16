@@ -11,6 +11,8 @@ import type { WorkspaceContext, WorkspaceSnapshot } from '../types'
 import { ChequeTable } from './cheque-table'
 import { SelectField, TextField } from './controls'
 import type { RunAction } from './workspace'
+import { FormLabel } from '@/components/ui/form-label'
+import { Building03Icon } from '@hugeicons/core-free-icons'
 
 function Summary({
   snapshot,
@@ -134,10 +136,14 @@ export function ReportsPanel({
             {t('businessScope')}
           </legend>
           {businesses.map((b) => (
-            <label key={b.id} className="flex min-h-11 items-center gap-3">
+            <FormLabel
+              icon={Building03Icon}
+              key={b.id}
+              className="flex min-h-11 items-center gap-3"
+            >
               <input
                 type="checkbox"
-                className="size-5 accent-primary"
+                className="order-first size-5 accent-primary"
                 checked={scope.includes(b.id)}
                 onChange={() => {
                   setScope((current) =>
@@ -149,7 +155,7 @@ export function ReportsPanel({
                 }}
               />
               {b.name}
-            </label>
+            </FormLabel>
           ))}
         </fieldset>
       )}

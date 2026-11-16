@@ -19,6 +19,13 @@ import { PreferenceField } from '@/features/profile/components/preference-field'
 import { PrivacyPreference } from '@/features/security/components/privacy-preference'
 import { InfoPopover } from '@/components/ui/info-popover'
 import { CookiePreferences } from '@/features/analytics/components/cookie-preferences'
+import {
+  Calendar03Icon,
+  Clock01Icon,
+  Globe02Icon,
+  LanguageCircleIcon,
+  Money03Icon,
+} from '@hugeicons/core-free-icons'
 
 export default function PreferencesPage() {
   const t = useTranslations('Onboarding')
@@ -53,6 +60,7 @@ export default function PreferencesPage() {
       >
         <PreferenceField
           id="preferences-currency"
+          icon={Money03Icon}
           label={t('currency')}
           options={CURRENCY_OPTIONS}
           value={profile.currency}
@@ -60,6 +68,7 @@ export default function PreferencesPage() {
         />
         <PreferenceField
           id="preferences-language"
+          icon={LanguageCircleIcon}
           label={t('language')}
           options={LANGUAGE_OPTIONS}
           value={profile.language}
@@ -67,6 +76,7 @@ export default function PreferencesPage() {
         />
         <PreferenceField
           id="preferences-date-format"
+          icon={Calendar03Icon}
           label={t('dateFormat')}
           options={DATE_FORMAT_OPTIONS}
           value={profile.date_format}
@@ -74,6 +84,7 @@ export default function PreferencesPage() {
         />
         <PreferenceField
           id="preferences-time-format"
+          icon={Clock01Icon}
           label={t('timeFormat')}
           options={timeFormatOptions}
           value={profile.time_format}
@@ -81,6 +92,7 @@ export default function PreferencesPage() {
         />
         <PreferenceField
           id="preferences-time-zone"
+          icon={Globe02Icon}
           label={t('timeZone')}
           options={TIMEZONE_OPTIONS}
           value={profile.time_zone}

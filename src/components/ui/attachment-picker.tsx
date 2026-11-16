@@ -1,5 +1,7 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { Attachment01Icon } from '@hugeicons/core-free-icons'
 import { useEffect, useId, useRef } from 'react'
 import { Button } from './button'
 
@@ -27,9 +29,13 @@ export function AttachmentPicker({
   const hintId = useId()
   return (
     <div className="space-y-2">
-      <label htmlFor={hintId} className="text-sm font-medium">
+      <FormLabel
+        icon={Attachment01Icon}
+        htmlFor={hintId}
+        className="text-sm font-medium"
+      >
         {label}
-      </label>
+      </FormLabel>
       <input
         id={hintId}
         type="file"

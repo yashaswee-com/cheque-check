@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
+import { FormLabel } from '@/components/ui/form-label'
+import { Calendar03Icon } from '@hugeicons/core-free-icons'
 
 type TimelinePoint = {
   label: string
@@ -79,6 +81,7 @@ const faqItems = [
 ]
 
 export function ChequeBounceTool() {
+  const fieldId = useId()
   const [bounceDate, setBounceDate] = useState(defaultBounceDate)
   const [noticeDate, setNoticeDate] = useState('')
 
@@ -219,29 +222,39 @@ export function ChequeBounceTool() {
             className="rounded-[28px] border border-[#e0e0e0] bg-[#fafafc] p-5 shadow-[0_18px_44px_rgba(0,0,0,0.04)] sm:p-6"
           >
             <div className="space-y-5">
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#1d1d1f]">
+              <div>
+                <FormLabel
+                  icon={Calendar03Icon}
+                  htmlFor={`${fieldId}-bounce-date`}
+                  className="mb-2 text-sm font-semibold text-[#1d1d1f]"
+                >
                   Cheque bounce date
-                </span>
+                </FormLabel>
                 <input
+                  id={`${fieldId}-bounce-date`}
                   type="date"
                   value={bounceDate}
                   onChange={(event) => setBounceDate(event.target.value)}
                   className="h-12 w-full rounded-full border border-[#dfe3e7] bg-white px-4 text-base text-[#1d1d1f] outline-none transition focus:border-[#0066cc] focus:ring-2 focus:ring-[#0066cc]/20"
                 />
-              </label>
+              </div>
 
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#1d1d1f]">
+              <div>
+                <FormLabel
+                  icon={Calendar03Icon}
+                  htmlFor={`${fieldId}-notice-date`}
+                  className="mb-2 text-sm font-semibold text-[#1d1d1f]"
+                >
                   Notice sent date (optional)
-                </span>
+                </FormLabel>
                 <input
+                  id={`${fieldId}-notice-date`}
                   type="date"
                   value={noticeDate}
                   onChange={(event) => setNoticeDate(event.target.value)}
                   className="h-12 w-full rounded-full border border-[#dfe3e7] bg-white px-4 text-base text-[#1d1d1f] outline-none transition focus:border-[#0066cc] focus:ring-2 focus:ring-[#0066cc]/20"
                 />
-              </label>
+              </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <button

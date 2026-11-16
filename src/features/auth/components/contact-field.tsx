@@ -6,7 +6,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { CheckmarkBadge01Icon } from '@hugeicons/core-free-icons'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { FormLabel } from '@/components/ui/form-label'
 import { IconType } from '@/types'
 
 export function ContactField({
@@ -31,16 +31,16 @@ export function ContactField({
   const t = useTranslations('EmailLink')
   return (
     <section className="space-y-2" data-testid={testId}>
-      <Label
+      <FormLabel
         htmlFor={id}
-        className="ml-1 text-xs font-normal uppercase tracking-wider text-muted-foreground"
+        icon={icon}
+        className="ml-1 text-xs font-normal text-muted-foreground"
       >
         {label}
-      </Label>
+      </FormLabel>
       <div className="relative min-w-0">
         <Input
           id={id}
-          leftIcon={icon}
           enableMic={false}
           readOnly
           value={value}

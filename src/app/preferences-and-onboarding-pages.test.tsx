@@ -478,7 +478,10 @@ describe('onboarding page', () => {
     for (const id of ids) {
       const label = document.querySelector(`label[for="onboarding-${id}"]`)
       expect(label).toHaveAttribute('data-required', 'true')
-      expect(label).toHaveClass("after:content-['*']")
+      expect(
+        label?.querySelector('[data-slot="required-indicator"]'),
+      ).toHaveAttribute('aria-hidden', 'true')
+      expect(label).not.toHaveClass('uppercase', 'tracking-widest')
       expect(label?.parentElement).toHaveClass('min-w-0')
     }
     expect(screen.getByTestId('onboarding-preferences')).toHaveClass(

@@ -26,6 +26,20 @@ Phone authentication is disabled by default in the public schema and is configur
 
 ## Profile and account lifecycle
 
+Application form labels use the shared [FormLabel](../src/components/ui/form-label.tsx)
+component: pass an `icon`, sentence-case translated text as children, and
+`is_required` to show the decorative Hugeicons `SquareAsteriskIcon`. Keep casing in translation messages
+rather than transforming text so acronyms and locale-specific spelling survive.
+Associate labels with controls using `htmlFor` and set required semantics on the
+control itself. The profile name and email-link entry are required; read-only
+email and phone summaries are not. Phone-link labels reuse the same component
+through the existing auth label wrapper, without changing login/signup styling.
+Create/edit forms, onboarding, preferences, filters, security, feedback, contact,
+and public tools use the same label component while retaining their existing
+control layouts. Checkbox/radio labels retain their clickable wrappers and
+switch rows retain their descriptions and state feedback. Folder-tab field
+styling remains specific to the existing authentication forms.
+
 Profile writes remove protected identity/lifecycle fields before updating allowed preferences; the repository explicitly handles deactivation as a separate path ([profile repository](../src/features/profile/repositories/profile.repository.ts#L20-L50), [profile mutations](../src/features/profile/repositories/profile.repository.ts#L100-L138)). Deactivation updates lifecycle state before provider ban and global sign-out, so the database block is the first authorization control ([deactivation orchestration](../src/features/auth/server/deactivate-account.ts#L21-L49), [SQL lifecycle function](../supabase/migrations/20261021000000_lifecycle.sql#L396-L417)).
 
 ## Application PIN

@@ -1,5 +1,7 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { Globe02Icon } from '@hugeicons/core-free-icons'
 import * as React from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -38,7 +40,6 @@ import {
 } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
 import { FieldError } from '@/components/ui/field-error'
-import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toast'
 import { DeleteConfirmationDialog } from '@/components/ui/delete-dialog'
 import { bankNameKey, isValidBankName } from '../lib/bank-name'
@@ -335,9 +336,9 @@ export function BankSelector({
                 onDelete={async () => setLogo(null)}
               />
             </div>
-            <Label required htmlFor={nameId}>
+            <FormLabel icon={Landmark} is_required htmlFor={nameId}>
               {tb('name')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={Landmark}
               id={nameId}
@@ -356,7 +357,9 @@ export function BankSelector({
                 {nameError}
               </FieldError>
             )}
-            <Label htmlFor={abbreviationId}>{tb('abbreviation')}</Label>
+            <FormLabel icon={TextIcon} htmlFor={abbreviationId}>
+              {tb('abbreviation')}
+            </FormLabel>
             <Input
               leftIcon={TextIcon}
               id={abbreviationId}
@@ -396,7 +399,9 @@ export function BankSelector({
               ))}
             </FilterPillSection>
             <div className="space-y-2">
-              <Label required>{tb('country')}</Label>
+              <FormLabel icon={Globe02Icon} is_required>
+                {tb('country')}
+              </FormLabel>
               <Combobox
                 options={countries}
                 value={countryCode}

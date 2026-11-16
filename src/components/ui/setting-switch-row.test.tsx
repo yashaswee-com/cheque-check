@@ -11,18 +11,21 @@ describe('SettingSwitchRow', () => {
     render(
       <SettingSwitchRow
         id="reduce-motion"
-        label="Reduce Motion"
+        label="Reduce motion"
         description="Fewer animations"
         checked={false}
         onCheckedChange={onCheckedChange}
       />,
     )
-    const toggle = screen.getByRole('switch', { name: 'Reduce Motion' })
+    const toggle = screen.getByRole('switch', { name: 'Reduce motion' })
     expect(toggle).toHaveAccessibleDescription('Fewer animations')
-    expect(screen.getByText('Reduce Motion')).toHaveClass(
+    expect(screen.getByText('Reduce motion')).toHaveClass(
       'text-sm',
       'font-normal',
     )
+    expect(
+      screen.getByText('Reduce motion').querySelector('svg'),
+    ).toHaveAttribute('aria-hidden', 'true')
     expect(screen.getByText('Fewer animations')).toHaveClass(
       'text-xs',
       'text-muted-foreground',
@@ -36,19 +39,19 @@ describe('SettingSwitchRow', () => {
     const { rerender } = render(
       <SettingSwitchRow
         id="reduce-motion"
-        label="Reduce Motion"
+        label="Reduce motion"
         description="Fewer animations"
         consequence={consequence}
         checked={false}
       />,
     )
-    const toggle = screen.getByRole('switch', { name: 'Reduce Motion' })
+    const toggle = screen.getByRole('switch', { name: 'Reduce motion' })
     expect(screen.getByText('switchOff')).toHaveAttribute('aria-hidden', 'true')
     expect(toggle).toHaveAccessibleDescription('Fewer animations Full motion')
     rerender(
       <SettingSwitchRow
         id="reduce-motion"
-        label="Reduce Motion"
+        label="Reduce motion"
         description="Fewer animations"
         consequence={consequence}
         checked

@@ -1,5 +1,7 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { Settings02Icon } from '@hugeicons/core-free-icons'
 import type { ComponentProps, ReactNode } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { SwitchWithState } from '@/components/ui/switch-with-state'
@@ -35,13 +37,14 @@ export function SettingSwitchRow({
     <section className="space-y-1" data-slot="setting-switch-row">
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-1">
-          <label
+          <FormLabel
+            icon={Settings02Icon}
             htmlFor={id}
             data-slot="setting-switch-label"
             className="text-sm font-normal"
           >
             {label}
-          </label>
+          </FormLabel>
           {info}
         </div>
         <SwitchWithState

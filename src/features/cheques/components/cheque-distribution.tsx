@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
-import { HugeiconsIcon } from '@hugeicons/react'
+import { FormLabel } from '@/components/ui/form-label'
 import { Chart01Icon, ArrowUpDownIcon } from '@hugeicons/core-free-icons'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ChequeWithRelations } from '@/types'
@@ -40,6 +40,7 @@ export function ChequeDistribution({
   const t = useTranslations('ChartStats')
   const tc = useTranslations('Common')
   const display = useDisplayFormat()
+  const fieldId = useId()
   const [metric, setMetric] = useState<DistributionMetric>('count')
   const [direction, setDirection] = useState<DistributionDirection>('All')
   const distribution = summary
@@ -57,12 +58,16 @@ export function ChequeDistribution({
   return (
     <div className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
       <div className="flex flex-wrap gap-3">
-        <label className="flex flex-1 flex-col gap-1 text-xs font-medium">
-          <span className="flex items-center gap-1.5">
-            <HugeiconsIcon icon={Chart01Icon} className="size-3.5" />
+        <div className="flex flex-1 flex-col gap-1 text-xs font-medium">
+          <FormLabel
+            icon={Chart01Icon}
+            htmlFor={`${fieldId}-measure`}
+            className="text-xs"
+          >
             {t('measure')}
-          </span>
+          </FormLabel>
           <select
+            id={`${fieldId}-measure`}
             value={metric}
             onChange={(event) => {
               if (
@@ -76,13 +81,17 @@ export function ChequeDistribution({
             <option value="count">{t('count')}</option>
             <option value="amount">{t('amount')}</option>
           </select>
-        </label>
-        <label className="flex flex-1 flex-col gap-1 text-xs font-medium">
-          <span className="flex items-center gap-1.5">
-            <HugeiconsIcon icon={ArrowUpDownIcon} className="size-3.5" />
+        </div>
+        <div className="flex flex-1 flex-col gap-1 text-xs font-medium">
+          <FormLabel
+            icon={ArrowUpDownIcon}
+            htmlFor={`${fieldId}-direction`}
+            className="text-xs"
+          >
             {t('direction')}
-          </span>
+          </FormLabel>
           <select
+            id={`${fieldId}-direction`}
             value={direction}
             onChange={(event) => {
               const value = event.target.value
@@ -95,7 +104,7 @@ export function ChequeDistribution({
             <option value="Outward">{t('outward')}</option>
             <option value="Inward">{t('inward')}</option>
           </select>
-        </label>
+        </div>
       </div>
       <div className="relative h-[280px]" aria-busy={isLoading}>
         {isLoading ? (

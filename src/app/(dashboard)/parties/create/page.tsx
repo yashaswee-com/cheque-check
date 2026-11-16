@@ -1,11 +1,12 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { CallIcon, Tag01Icon } from '@hugeicons/core-free-icons'
 import { useCreateParty } from '@/features/parties/hooks/use-create-party'
 import { Button } from '@/components/ui/button'
 import { EditSaveBar } from '@/components/ui/edit-save-bar'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -341,13 +342,14 @@ export default function CreatePartyPage() {
         {step === 1 && (
           <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
-              <Label
-                required
+              <FormLabel
+                icon={User}
+                is_required
                 htmlFor="name"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('partyName')}
-              </Label>
+              </FormLabel>
               <div
                 className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"
                 data-testid="party-name-field"
@@ -383,13 +385,14 @@ export default function CreatePartyPage() {
             </div>
 
             <div className="space-y-2">
-              <Label
-                required
+              <FormLabel
+                icon={CallIcon}
+                is_required
                 htmlFor="contact"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('contactNumber')}
-              </Label>
+              </FormLabel>
               <Controller
                 control={control}
                 name="contact"
@@ -472,12 +475,13 @@ export default function CreatePartyPage() {
             />
 
             <div className="space-y-2">
-              <Label
+              <FormLabel
+                icon={Mail}
                 htmlFor="email"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {tCommon('email')}
-              </Label>
+              </FormLabel>
               <Input
                 leftIcon={Mail}
                 id="email"
@@ -492,12 +496,13 @@ export default function CreatePartyPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label
+              <FormLabel
+                icon={MapPin}
                 htmlFor="address"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {tCommon('address')}
-              </Label>
+              </FormLabel>
               <Input
                 leftIcon={MapPin}
                 id="address"
@@ -513,12 +518,13 @@ export default function CreatePartyPage() {
           <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <h2 className="font-semibold">{t('optionalDetails')}</h2>
             <div className="space-y-2">
-              <Label
+              <FormLabel
+                icon={Note}
                 htmlFor="notes"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {tCommon('notes')}
-              </Label>
+              </FormLabel>
               <Input
                 leftIcon={Note}
                 id="notes"
@@ -529,9 +535,12 @@ export default function CreatePartyPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+              <FormLabel
+                icon={Tag01Icon}
+                className="text-xs font-semibold text-muted-foreground ml-1"
+              >
                 {tCommon('tags')}
-              </Label>
+              </FormLabel>
               <TagSelector
                 businessId={activeBusiness?.id}
                 value={tagIds}

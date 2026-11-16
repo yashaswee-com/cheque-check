@@ -1,5 +1,6 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
 import { useState } from 'react'
 import {
   UserIcon as User,
@@ -27,7 +28,6 @@ import {
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslations } from 'next-intl'
 
@@ -120,12 +120,16 @@ export function DeleteConfirmationDialog({
           <div className="space-y-4 py-6">
             {reasons && reasons.length > 0 && (
               <div className="space-y-2 text-left">
-                <Label className="block text-[10px] font-normal uppercase tracking-widest text-muted-foreground">
+                <FormLabel
+                  icon={Note}
+                  className="text-[10px] font-normal text-muted-foreground"
+                >
                   {t('deleteReasonPrompt')}
-                </Label>
+                </FormLabel>
                 <div className="space-y-2">
                   {reasons.map((reason) => (
-                    <label
+                    <FormLabel
+                      icon={Note}
                       key={reason}
                       className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-muted/30 px-3 py-2 text-sm"
                     >
@@ -135,22 +139,23 @@ export function DeleteConfirmationDialog({
                         value={reason}
                         checked={selectedReason === reason}
                         onChange={() => setSelectedReason(reason)}
-                        className="h-4 w-4 accent-destructive"
+                        className="order-first h-4 w-4 accent-destructive"
                       />
                       <span>{reason}</span>
-                    </label>
+                    </FormLabel>
                   ))}
                 </div>
               </div>
             )}
 
             <div className="space-y-3 text-center">
-              <Label
+              <FormLabel
+                icon={TextIcon}
                 htmlFor="confirm_name"
-                className="text-[10px] font-normal uppercase tracking-widest text-muted-foreground block"
+                className="text-[10px] font-normal text-muted-foreground"
               >
                 {t('typeToConfirm', { name: confirmName })}
-              </Label>
+              </FormLabel>
               <Input
                 leftIcon={TextIcon}
                 id="confirm_name"

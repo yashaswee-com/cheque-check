@@ -68,6 +68,19 @@ describe('public contact form', () => {
       expect(
         screen.getByLabelText(catalog.PublicSite.contact.message),
       ).toBeVisible()
+      for (const text of [
+        catalog.PublicSite.contact.name,
+        catalog.PublicSite.contact.email,
+        catalog.PublicSite.contact.message,
+      ]) {
+        const label = screen.getByText(text, { selector: 'label' })
+        expect(label).toHaveAttribute('data-slot', 'form-label')
+        expect(label.querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(
+          2,
+        )
+        expect(label).toHaveAttribute('data-required', 'true')
+        expect(screen.getByLabelText(text)).toBeRequired()
+      }
     },
   )
 

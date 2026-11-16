@@ -1,12 +1,13 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { Notification01Icon } from '@hugeicons/core-free-icons'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useQueryClient } from '@tanstack/react-query'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { pushService, type PushState } from '../services/push.service'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { SwitchWithState } from '@/components/ui/switch-with-state'
 import { logger } from '@/lib/logger'
 import { queryKeys } from '@/lib/query-keys'
@@ -70,7 +71,9 @@ export function PushSettings({
       aria-label={settings('pushNotifications')}
     >
       <div className="min-w-0 space-y-1">
-        <Label>{settings('pushNotifications')}</Label>
+        <FormLabel icon={Notification01Icon}>
+          {settings('pushNotifications')}
+        </FormLabel>
         <p className="text-xs text-muted-foreground">{t('privacy')}</p>
         <p aria-live="polite" className="text-xs text-muted-foreground">
           {enabled ? settings('pushOn') : settings('pushOff')}

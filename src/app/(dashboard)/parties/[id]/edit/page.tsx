@@ -1,11 +1,12 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { CallIcon, Tag01Icon } from '@hugeicons/core-free-icons'
 import { useEffect, useRef, useState } from 'react'
 import { useEditParty } from '@/features/parties/hooks/use-edit-party'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useParams } from 'next/navigation'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -119,13 +120,14 @@ export default function EditPartyPage() {
       <form id="party-edit-form" onSubmit={handleSubmit} className="space-y-10">
         <FormSection title={t('basicDetails')} icon={User}>
           <div className="space-y-2">
-            <Label
-              required
+            <FormLabel
+              icon={User}
+              is_required
               htmlFor="name"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('partyName')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={User}
               id="name"
@@ -139,13 +141,14 @@ export default function EditPartyPage() {
           </div>
 
           <div className="space-y-2">
-            <Label
-              required
+            <FormLabel
+              icon={CallIcon}
+              is_required
               htmlFor="contact"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('contactNumber')}
-            </Label>
+            </FormLabel>
             <Controller
               control={control}
               name="contact"
@@ -214,12 +217,13 @@ export default function EditPartyPage() {
           />
 
           <div className="space-y-2">
-            <Label
+            <FormLabel
+              icon={Mail}
               htmlFor="email"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {tCommon('email')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={Mail}
               id="email"
@@ -233,12 +237,13 @@ export default function EditPartyPage() {
           </div>
 
           <div className="space-y-2">
-            <Label
+            <FormLabel
+              icon={MapPin}
               htmlFor="address"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {tCommon('address')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={MapPin}
               id="address"
@@ -251,12 +256,13 @@ export default function EditPartyPage() {
 
         <FormSection title={t('locationNotes')} icon={Note}>
           <div className="space-y-2">
-            <Label
+            <FormLabel
+              icon={Note}
               htmlFor="notes"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {tCommon('notes')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={Note}
               id="notes"
@@ -267,9 +273,12 @@ export default function EditPartyPage() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+            <FormLabel
+              icon={Tag01Icon}
+              className="text-xs font-semibold text-muted-foreground ml-1"
+            >
               {tCommon('tags')}
-            </Label>
+            </FormLabel>
             <TagSelector
               businessId={activeBusiness?.id}
               value={tagsDraft.tagIds}

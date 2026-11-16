@@ -1,5 +1,7 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { UserIcon, Mail01Icon, Comment01Icon } from '@hugeicons/core-free-icons'
 import { useTranslations } from 'next-intl'
 import { useContact } from '@/features/contact/hooks/use-contact'
 
@@ -40,9 +42,14 @@ export function ContactForm() {
       }}
     >
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="contact-name">
+        <FormLabel
+          icon={UserIcon}
+          className="text-sm font-medium"
+          htmlFor="contact-name"
+          is_required
+        >
           {t('contact.name')}
-        </label>
+        </FormLabel>
         <input
           id="contact-name"
           name="name"
@@ -55,9 +62,14 @@ export function ContactForm() {
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="contact-email">
+        <FormLabel
+          icon={Mail01Icon}
+          className="text-sm font-medium"
+          htmlFor="contact-email"
+          is_required
+        >
           {t('contact.email')}
-        </label>
+        </FormLabel>
         <input
           id="contact-email"
           name="email"
@@ -71,9 +83,14 @@ export function ContactForm() {
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="contact-message">
+        <FormLabel
+          icon={Comment01Icon}
+          className="text-sm font-medium"
+          htmlFor="contact-message"
+          is_required
+        >
           {t('contact.message')}
-        </label>
+        </FormLabel>
         <textarea
           id="contact-message"
           name="message"

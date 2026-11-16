@@ -1,5 +1,7 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { BankIcon, Money03Icon, Tag01Icon } from '@hugeicons/core-free-icons'
 import { useCreateAccount } from '@/features/accounts/hooks/use-create-account'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { Button } from '@/components/ui/button'
@@ -7,7 +9,6 @@ import { EditSaveBar } from '@/components/ui/edit-save-bar'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
-import { Label } from '@/components/ui/label'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -248,13 +249,14 @@ export default function CreateAccountPage() {
             </div>
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label
-                  required
+                <FormLabel
+                  icon={User}
+                  is_required
                   htmlFor="account_name"
-                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                  className="text-xs font-semibold text-muted-foreground ml-1"
                 >
                   {t('accountName')}
-                </Label>
+                </FormLabel>
                 <div className="relative">
                   <HugeiconsIcon
                     icon={User}
@@ -289,12 +291,13 @@ export default function CreateAccountPage() {
         {step === 2 && (
           <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
-              <Label
-                required
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              <FormLabel
+                icon={BankIcon}
+                is_required
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('selectBank')}
-              </Label>
+              </FormLabel>
               <BankSelector
                 value={watch('bank_id')}
                 onValueChange={(val) => setUserValue('bank_id', val)}
@@ -308,13 +311,14 @@ export default function CreateAccountPage() {
             </div>
 
             <div className="space-y-2">
-              <Label
-                required
+              <FormLabel
+                icon={Hash}
+                is_required
                 htmlFor="account_number"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('accountNumber')}
-              </Label>
+              </FormLabel>
               <div className="relative">
                 <HugeiconsIcon
                   icon={CreditCard}
@@ -336,13 +340,14 @@ export default function CreateAccountPage() {
             </div>
 
             <div className="space-y-2">
-              <Label
-                required
+              <FormLabel
+                icon={Money03Icon}
+                is_required
                 htmlFor="opening_balance"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('openingBalance')}
-              </Label>
+              </FormLabel>
               <CurrencyPrefixInput
                 currency={currency}
                 id="opening_balance"
@@ -371,12 +376,13 @@ export default function CreateAccountPage() {
         {step === 3 && (
           <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
-              <Label
+              <FormLabel
+                icon={BankIcon}
                 htmlFor="ifsc_code"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('ifscCode')}
-              </Label>
+              </FormLabel>
               <div className="relative">
                 <HugeiconsIcon
                   icon={Hash}
@@ -398,9 +404,12 @@ export default function CreateAccountPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+              <FormLabel
+                icon={Tag01Icon}
+                className="text-xs font-semibold text-muted-foreground ml-1"
+              >
                 {tc('tags')}
-              </Label>
+              </FormLabel>
               <TagSelector
                 businessId={activeBusiness?.id}
                 value={tagIds}

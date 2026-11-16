@@ -1,11 +1,12 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { BankIcon, Money03Icon, Tag01Icon } from '@hugeicons/core-free-icons'
 import { useEffect, useRef, useState } from 'react'
 import { useEditAccount } from '@/features/accounts/hooks/use-edit-account'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useParams } from 'next/navigation'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -130,13 +131,14 @@ export default function EditAccountPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label
-              required
+            <FormLabel
+              icon={User}
+              is_required
               htmlFor="account_name"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('accountName')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={User}
               id="account_name"
@@ -163,12 +165,13 @@ export default function EditAccountPage() {
 
         <FormSection title={t('bankDetails')} icon={CreditCard}>
           <div className="space-y-2">
-            <Label
-              required
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            <FormLabel
+              icon={BankIcon}
+              is_required
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('selectBank')}
-            </Label>
+            </FormLabel>
             <BankSelector
               value={watch('bank_id')}
               onValueChange={(val) =>
@@ -183,13 +186,14 @@ export default function EditAccountPage() {
             )}
           </div>
           <div className="space-y-2">
-            <Label
-              required
+            <FormLabel
+              icon={Hash}
+              is_required
               htmlFor="account_number"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('accountNumber')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={CreditCard}
               id="account_number"
@@ -205,13 +209,14 @@ export default function EditAccountPage() {
           </div>
 
           <div className="space-y-2">
-            <Label
-              required
+            <FormLabel
+              icon={Money03Icon}
+              is_required
               htmlFor="opening_balance"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('openingBalance')}
-            </Label>
+            </FormLabel>
             <CurrencyPrefixInput
               currency={currency}
               id="opening_balance"
@@ -241,12 +246,13 @@ export default function EditAccountPage() {
 
         <FormSection title={t('moreDetails')} icon={Hash}>
           <div className="space-y-2">
-            <Label
+            <FormLabel
+              icon={BankIcon}
               htmlFor="ifsc_code"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('ifscCode')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={Hash}
               id="ifsc_code"
@@ -262,9 +268,12 @@ export default function EditAccountPage() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+            <FormLabel
+              icon={Tag01Icon}
+              className="text-xs font-semibold text-muted-foreground ml-1"
+            >
               {tc('tags')}
-            </Label>
+            </FormLabel>
             <TagSelector
               businessId={activeBusiness?.id}
               value={tagsDraft.tagIds}

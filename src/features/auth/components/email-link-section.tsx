@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { FormLabel } from '@/components/ui/form-label'
 import { Mail01Icon, MailOpen01Icon } from '@hugeicons/core-free-icons'
 import { FieldError } from '@/components/ui/field-error'
 import { ContactField } from './contact-field'
@@ -70,11 +70,12 @@ export function EmailLinkSection({ primary = false }: { primary?: boolean }) {
             }}
             className="space-y-2"
           >
-            <Label htmlFor="link-email">{t('newEmail')}</Label>
+            <FormLabel htmlFor="link-email" icon={MailOpen01Icon} is_required>
+              {t('newEmail')}
+            </FormLabel>
             <Input
               id="link-email"
               type="email"
-              leftIcon={MailOpen01Icon}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required

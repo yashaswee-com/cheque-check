@@ -1,11 +1,12 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { Building03Icon, Tag01Icon } from '@hugeicons/core-free-icons'
 import { useEffect, useRef, useState } from 'react'
 import { useEditBusiness } from '@/features/businesses/hooks/use-edit-business'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useParams } from 'next/navigation'
 import {
   Mail01Icon as Mail,
@@ -126,13 +127,14 @@ export default function EditBusinessPage() {
           </div>
 
           <div className="space-y-2" data-testid="business-name-field">
-            <Label
-              required
+            <FormLabel
+              icon={Building03Icon}
+              is_required
               htmlFor="name"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('businessName')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={Store}
               id="name"
@@ -158,12 +160,13 @@ export default function EditBusinessPage() {
 
         <FormSection title={t('contactInfo')} icon={Phone}>
           <div className="space-y-2">
-            <Label
+            <FormLabel
+              icon={Mail}
               htmlFor="email"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('businessEmail')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={Mail}
               id="email"
@@ -178,12 +181,13 @@ export default function EditBusinessPage() {
           </div>
 
           <div className="space-y-2">
-            <Label
+            <FormLabel
+              icon={Phone}
               htmlFor="phone"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('businessPhone')}
-            </Label>
+            </FormLabel>
             <Controller
               control={control}
               name="phone"
@@ -206,12 +210,13 @@ export default function EditBusinessPage() {
 
         <FormSection title={t('location')} icon={MapPin}>
           <div className="space-y-2">
-            <Label
+            <FormLabel
+              icon={MapPin}
               htmlFor="address"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('businessAddress')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={MapPin}
               id="address"
@@ -222,9 +227,12 @@ export default function EditBusinessPage() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+            <FormLabel
+              icon={Tag01Icon}
+              className="text-xs font-semibold text-muted-foreground ml-1"
+            >
               {tc('tags')}
-            </Label>
+            </FormLabel>
             <TagSelector
               businessId={id}
               value={tagsDraft.tagIds}

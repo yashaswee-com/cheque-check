@@ -7,6 +7,12 @@ import Link from 'next/link'
 import type { useOcrExtraction } from '../hooks/use-ocr-extraction'
 import type { OcrField } from '../services/ocr-contract'
 import { isScanPending } from '@/validators/cheque-scan'
+import { FormLabel } from '@/components/ui/form-label'
+import {
+  Money03Icon,
+  HashtagIcon,
+  Calendar03Icon,
+} from '@hugeicons/core-free-icons'
 
 export function OcrReview({
   scan,
@@ -90,13 +96,20 @@ export function OcrReview({
           <div className="space-y-2">
             {(['amount', 'cheque_number', 'cheque_date'] as const).map(
               (field) => (
-                <label
+                <FormLabel
+                  icon={
+                    field === 'amount'
+                      ? Money03Icon
+                      : field === 'cheque_number'
+                        ? HashtagIcon
+                        : Calendar03Icon
+                  }
                   key={field}
                   className="flex items-start gap-3 rounded border p-3"
                 >
                   <input
                     type="checkbox"
-                    className="mt-1 size-4"
+                    className="order-first mt-1 size-4"
                     checked={selected.includes(field)}
                     disabled={job.details?.[field] === null || scan.applied}
                     onChange={(event) =>
@@ -122,7 +135,7 @@ export function OcrReview({
                       )}
                     </span>
                   </span>
-                </label>
+                </FormLabel>
               ),
             )}
           </div>

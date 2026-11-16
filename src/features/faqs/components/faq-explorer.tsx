@@ -1,5 +1,6 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
@@ -67,9 +68,9 @@ export function FaqExplorer() {
         <p className="text-sm text-muted-foreground">{t('description')}</p>
       </div>
 
-      <label className="sr-only" htmlFor="faq-search">
+      <FormLabel icon={Search01Icon} className="sr-only" htmlFor="faq-search">
         {t('searchLabel')}
-      </label>
+      </FormLabel>
       <div className="relative">
         <Input
           id="faq-search"

@@ -1,4 +1,5 @@
 'use client'
+import { FormLabel } from '@/components/ui/form-label'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -6,7 +7,6 @@ import { useReferrals } from '@/features/referrals/hooks/use-referrals'
 import { referralCodeSchema } from '@/validators/referral'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Link01Icon, HashtagIcon } from '@hugeicons/core-free-icons'
 import { logger } from '@/lib/logger'
 import {
@@ -84,9 +84,9 @@ export default function ReferralsPage() {
             <p>{t('qualify')}</p>
           )}
           <section className="space-y-2">
-            <Label htmlFor="referral-code" required>
+            <FormLabel icon={HashtagIcon} htmlFor="referral-code" is_required>
               {t('apply')}
-            </Label>
+            </FormLabel>
             <Input
               id="referral-code"
               leftIcon={HashtagIcon}

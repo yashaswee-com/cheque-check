@@ -1,5 +1,11 @@
 'use client'
 
+import { FormLabel, type FormLabelProps } from '@/components/ui/form-label'
+import {
+  Calendar03Icon,
+  FilterIcon,
+  TextFontIcon,
+} from '@hugeicons/core-free-icons'
 import {
   useId,
   type ReactNode,
@@ -15,16 +21,25 @@ export const controlClass =
 export function Field({
   label,
   children,
+  icon = TextFontIcon,
+  required,
 }: {
   label: string
   children: (id: string) => ReactNode
+  icon?: FormLabelProps['icon']
+  required?: boolean
 }) {
   const id = useId()
   return (
     <div className="grid min-w-0 gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium">
+      <FormLabel
+        icon={icon}
+        is_required={required}
+        htmlFor={id}
+        className="text-sm font-medium"
+      >
         {label}
-      </label>
+      </FormLabel>
       {children(id)}
     </div>
   )
@@ -37,7 +52,11 @@ export function TextField({
   onValidityChange?: (valid: boolean) => void
 }) {
   return (
-    <Field label={label}>
+    <Field
+      label={label}
+      required={props.required}
+      icon={props.type === 'date' ? Calendar03Icon : TextFontIcon}
+    >
       {(id) =>
         props.type === 'date' ? (
           <DateInput {...props} id={id} className={controlClass} />
@@ -54,7 +73,7 @@ export function SelectField({
   ...props
 }: SelectHTMLAttributes<HTMLSelectElement> & { label: string }) {
   return (
-    <Field label={label}>
+    <Field label={label} required={props.required} icon={FilterIcon}>
       {(id) => (
         <select {...props} id={id} className={controlClass}>
           {children}

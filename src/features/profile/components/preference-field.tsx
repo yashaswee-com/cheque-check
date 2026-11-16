@@ -1,14 +1,15 @@
 'use client'
 
+import { FormLabel, type FormLabelProps } from '@/components/ui/form-label'
 import * as React from 'react'
 import { useTranslations } from 'next-intl'
 import { Combobox } from '@/components/ui/combobox'
-import { Label } from '@/components/ui/label'
 import { FieldError } from '@/components/ui/field-error'
 
 interface PreferenceFieldProps {
   id: string
   label: string
+  icon: FormLabelProps['icon']
   options: { value: string; label: string }[]
   value: string | null | undefined
   onSave: (value: string) => Promise<unknown>
@@ -21,6 +22,7 @@ interface PreferenceFieldProps {
 export function PreferenceField({
   id,
   label,
+  icon,
   options,
   value,
   onSave,
@@ -51,13 +53,14 @@ export function PreferenceField({
 
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      <Label
+      <FormLabel
+        icon={icon}
         htmlFor={id}
-        required
-        className="ml-1 text-[11px] font-medium uppercase tracking-widest text-muted-foreground"
+        is_required
+        className="ml-1 text-[11px] font-medium text-muted-foreground"
       >
         {label}
-      </Label>
+      </FormLabel>
       <Combobox
         id={id}
         testId={id}

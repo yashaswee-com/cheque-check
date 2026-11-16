@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button'
 import { EditSaveBar } from '@/components/ui/edit-save-bar'
 import { EditableAvatar } from '@/components/ui/editable-avatar'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { FormLabel } from '@/components/ui/form-label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/components/ui/toast'
 import { useProfile } from '@/features/profile/hooks/use-profile'
@@ -112,15 +112,17 @@ export default function ProfilePage() {
       <div className="space-y-4">
         <form id="profile-edit-form" onSubmit={saveName} className="space-y-4">
           <div className="space-y-2">
-            <Label
+            <FormLabel
               htmlFor="profile-name"
-              className="ml-1 text-xs font-normal uppercase tracking-wider text-muted-foreground"
+              icon={User}
+              is_required
+              className="ml-1 text-xs font-normal text-muted-foreground"
             >
               {t('fullName')}
-            </Label>
+            </FormLabel>
             <Input
-              leftIcon={User}
               id="profile-name"
+              required
               value={name}
               maxLength={100}
               onChange={(event) => setDraftName(event.target.value)}

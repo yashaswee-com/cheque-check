@@ -23,6 +23,9 @@ import type {
 } from '../lib/statistics'
 import { analyticsTotals } from '../lib/analytics'
 import { useChequeAnalytics } from '../hooks/use-cheque-analytics'
+import { FormLabel } from '@/components/ui/form-label'
+import { ArrowUpDownIcon, Chart01Icon } from '@hugeicons/core-free-icons'
+import { useId } from 'react'
 
 export function ChequeAnalytics({
   businessId,
@@ -37,6 +40,7 @@ export function ChequeAnalytics({
   const stats = useTranslations('ChartStats')
   const common = useTranslations('Common')
   const shared = useTranslations('SharedUI')
+  const fieldId = useId()
   const { profile } = useProfile()
   const display = useDisplayFormat(profile)
   const includeInward = profile?.received_cheques_enabled !== false
@@ -76,9 +80,12 @@ export function ChequeAnalytics({
     <section className="space-y-5 rounded-lg border bg-card p-4">
       <h2 className="font-bold">{t('title')}</h2>
       <div className="flex flex-wrap gap-3">
-        <label className="flex flex-1 flex-col gap-1 text-sm">
-          {stats('measure')}
+        <div className="flex flex-1 flex-col gap-1 text-sm">
+          <FormLabel icon={Chart01Icon} htmlFor={`${fieldId}-measure`}>
+            {stats('measure')}
+          </FormLabel>
           <select
+            id={`${fieldId}-measure`}
             className="rounded-md border bg-background p-2"
             value={metric}
             onChange={(event) => {
@@ -92,10 +99,13 @@ export function ChequeAnalytics({
             <option value="count">{stats('count')}</option>
             <option value="amount">{stats('amount')}</option>
           </select>
-        </label>
-        <label className="flex flex-1 flex-col gap-1 text-sm">
-          {stats('direction')}
+        </div>
+        <div className="flex flex-1 flex-col gap-1 text-sm">
+          <FormLabel icon={ArrowUpDownIcon} htmlFor={`${fieldId}-direction`}>
+            {stats('direction')}
+          </FormLabel>
           <select
+            id={`${fieldId}-direction`}
             className="rounded-md border bg-background p-2"
             value={effectiveDirection}
             onChange={(event) => {
@@ -108,7 +118,7 @@ export function ChequeAnalytics({
             <option value="Outward">{stats('outward')}</option>
             {includeInward && <option value="Inward">{stats('inward')}</option>}
           </select>
-        </label>
+        </div>
       </div>
       {query.isFetching ? (
         <Skeleton className="h-64 w-full" />

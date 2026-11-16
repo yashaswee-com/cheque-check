@@ -1,4 +1,6 @@
 'use client'
+import { FormLabel } from '@/components/ui/form-label'
+import { LockIcon } from '@hugeicons/core-free-icons'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { usePinGate } from '../hooks/use-pin-security'
@@ -6,7 +8,6 @@ import { PinSettings } from './pin-settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LockPasswordIcon as Lock } from '@hugeicons/core-free-icons'
-import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
 import {
@@ -102,7 +103,9 @@ export function PinGate({ children }: { children: React.ReactNode }) {
                       void gate.verify(pin).then(() => setPin(''))
                     }}
                   >
-                    <Label htmlFor="unlock-pin">{t('enterPin')}</Label>
+                    <FormLabel icon={LockIcon} htmlFor="unlock-pin" is_required>
+                      {t('enterPin')}
+                    </FormLabel>
                     <Input
                       id="unlock-pin"
                       leftIcon={Lock}

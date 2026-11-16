@@ -1,4 +1,6 @@
 'use client'
+import { FormLabel } from '@/components/ui/form-label'
+import { LockIcon } from '@hugeicons/core-free-icons'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -22,7 +24,6 @@ import {
   Key01Icon as Key,
   LockPasswordIcon as Lock,
 } from '@hugeicons/core-free-icons'
-import { Label } from '@/components/ui/label'
 import { logger } from '@/lib/logger'
 import { InfoPopover } from '@/components/ui/info-popover'
 import { cn } from '@/lib/utils'
@@ -179,7 +180,9 @@ export function PinSettings({
           }}
           className="space-y-2"
         >
-          <Label htmlFor="pin-password">{t('password')}</Label>
+          <FormLabel icon={LockIcon} htmlFor="pin-password" is_required>
+            {t('password')}
+          </FormLabel>
           <Input
             id="pin-password"
             leftIcon={Lock}
@@ -256,7 +259,9 @@ export function PinSettings({
           <p role="status" className="text-sm text-muted-foreground">
             {t('codeSent')}
           </p>
-          <Label htmlFor="pin-auth-code">{t('authCode')}</Label>
+          <FormLabel icon={Key} htmlFor="pin-auth-code" is_required>
+            {t('authCode')}
+          </FormLabel>
           <Input
             id="pin-auth-code"
             leftIcon={Key}
@@ -296,7 +301,9 @@ export function PinSettings({
       }}
     >
       <div className="space-y-2">
-        <Label htmlFor="new-pin">{t('newPin')}</Label>
+        <FormLabel icon={Key} htmlFor="new-pin" is_required>
+          {t('newPin')}
+        </FormLabel>
         <Input
           id="new-pin"
           leftIcon={Key}
@@ -314,7 +321,9 @@ export function PinSettings({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="confirm-pin">{t('confirmPin')}</Label>
+        <FormLabel icon={Key} htmlFor="confirm-pin" is_required>
+          {t('confirmPin')}
+        </FormLabel>
         <Input
           id="confirm-pin"
           leftIcon={Key}

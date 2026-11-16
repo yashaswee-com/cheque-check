@@ -1,6 +1,7 @@
 'use client'
 
-import { Label } from '@/components/ui/label'
+import { FormLabel } from '@/components/ui/form-label'
+import { PaintBoardIcon } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 
 export const PARTY_THEME_COLORS = [
@@ -51,9 +52,12 @@ export function ThemeColorRow({
 }: ThemeColorRowProps) {
   return (
     <div className="space-y-2" data-testid={testId}>
-      <Label className="text-xs font-normal uppercase tracking-wider text-muted-foreground ml-1">
+      <FormLabel
+        icon={PaintBoardIcon}
+        className="text-xs font-normal text-muted-foreground ml-1"
+      >
         {label}
-      </Label>
+      </FormLabel>
       <div
         role="group"
         aria-label={label}

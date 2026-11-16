@@ -1,11 +1,11 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Search01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { canBulkTransition, filterCheques } from '../logic'
 import { premiumWorkspaceService } from '../service'
 import type {
@@ -73,7 +73,9 @@ export function FiltersPanel({
       </p>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div className="grid min-w-0 gap-1.5">
-          <Label htmlFor="filters-search">{t('search')}</Label>
+          <FormLabel icon={Search01Icon} htmlFor="filters-search">
+            {t('search')}
+          </FormLabel>
           <Input
             id="filters-search"
             leftIcon={Search01Icon}

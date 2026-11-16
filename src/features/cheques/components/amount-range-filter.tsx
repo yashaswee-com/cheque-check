@@ -1,10 +1,10 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Money03Icon } from '@hugeicons/core-free-icons'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { useChequeAmountBounds } from '@/features/cheques/hooks/use-cheque-list'
 import { FieldError } from '@/components/ui/field-error'
@@ -103,7 +103,9 @@ export function AmountRangeFilter({
       <div className="grid grid-cols-2 gap-3">
         {(['min_amount', 'max_amount'] as const).map((key) => (
           <div key={key} className="space-y-2">
-            <Label htmlFor={`filter-${key}`}>{t(`filter_${key}`)}</Label>
+            <FormLabel icon={Money03Icon} htmlFor={`filter-${key}`}>
+              {t(`filter_${key}`)}
+            </FormLabel>
             <Input
               id={`filter-${key}`}
               leftIcon={Money03Icon}

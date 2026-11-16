@@ -90,7 +90,20 @@ describe('verified email UI', () => {
   })
   it('invites a secondary email with a verification link', () => {
     mount()
-    expect(screen.getByLabelText(messages.EmailLink.newEmail)).toBeVisible()
+    expect(screen.getByLabelText(messages.EmailLink.newEmail)).toBeRequired()
+    const entryLabel = screen.getByText(messages.EmailLink.newEmail)
+    expect(entryLabel).toHaveAttribute('data-required', 'true')
+    expect(entryLabel.querySelector('svg')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    )
+    const summaryLabel = screen.getByText(messages.EmailLink.title)
+    expect(summaryLabel).not.toHaveAttribute('data-required')
+    expect(summaryLabel).not.toHaveClass('uppercase', 'tracking-wider')
+    expect(summaryLabel.querySelector('svg')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    )
     expect(screen.queryByTestId('profile-email-verified')).toBeNull()
   })
   it('shows claimed email rejection without a success message', async () => {

@@ -1,5 +1,7 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { Tag01Icon, PaintBoardIcon, ViewIcon } from '@hugeicons/core-free-icons'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -10,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { FormSection } from '@/components/ui/form-section'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { TagColorPicker } from './tag-color-picker'
 
 export interface TagFormValues {
@@ -70,13 +71,14 @@ export function TagForm({
     >
       <FormSection title={t('details')} icon={TagIcon}>
         <div className="space-y-2">
-          <Label
-            required
+          <FormLabel
+            icon={Tag01Icon}
+            is_required
             htmlFor="tag-name"
-            className="ml-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            className="ml-1 text-xs font-semibold text-muted-foreground"
           >
             {t('tagName')}
-          </Label>
+          </FormLabel>
           <Input
             leftIcon={TagIcon}
             id="tag-name"
@@ -90,12 +92,13 @@ export function TagForm({
         </div>
 
         <div className="space-y-3">
-          <Label
-            required
-            className="ml-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+          <FormLabel
+            icon={PaintBoardIcon}
+            is_required
+            className="ml-1 text-xs font-semibold text-muted-foreground"
           >
             {t('tagColor')}
-          </Label>
+          </FormLabel>
           <TagColorPicker
             value={color}
             onChange={setColor}
@@ -104,9 +107,12 @@ export function TagForm({
         </div>
 
         <div className="space-y-2">
-          <Label className="ml-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <FormLabel
+            icon={ViewIcon}
+            className="ml-1 text-xs font-semibold text-muted-foreground"
+          >
             {t('preview')}
-          </Label>
+          </FormLabel>
           <div className="flex h-12 items-center rounded-sm bg-canvas-parchment px-4 dark:bg-surface-tile-1">
             <span
               className="inline-flex h-7 max-w-full items-center truncate rounded-full px-3 text-sm font-semibold text-white"

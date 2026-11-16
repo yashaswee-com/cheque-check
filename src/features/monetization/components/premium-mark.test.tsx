@@ -8,7 +8,7 @@ vi.mock('../hooks/use-premium-access', () => ({
   usePremiumAccess: () => ({ hasLifetimePurchase: state.owned }),
 }))
 afterEach(cleanup)
-describe('Lifetime crown', () => {
+describe('Lifetime diamond', () => {
   it.each([false, true])(
     'uses muted styling only for a paid Lifetime owner: %s',
     (owned) => {
@@ -24,7 +24,7 @@ describe('Lifetime crown', () => {
       expect(mark).toHaveAttribute('aria-hidden', 'true')
     },
   )
-  it('renders a compact solid crown rather than an outline', () => {
+  it('renders a compact decorative diamond', () => {
     state.owned = false
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
@@ -32,9 +32,10 @@ describe('Lifetime crown', () => {
       </NextIntlClientProvider>,
     )
     const mark = screen.getByTitle(messages.Premium.marker)
-    const crown = mark.querySelector('[data-slot="premium-crown"]')!
-    expect(crown).toHaveAttribute('fill', 'currentColor')
-    expect(crown).toHaveClass('size-2.5')
+    const diamond = mark.querySelector('[data-slot="premium-diamond"]')!
+    expect(diamond.tagName.toLowerCase()).toBe('svg')
+    expect(diamond).toHaveAttribute('aria-hidden', 'true')
+    expect(diamond).toHaveClass('size-2.5')
     expect(mark).toHaveClass('p-0.5')
   })
 })

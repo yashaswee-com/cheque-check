@@ -1,11 +1,11 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
 import { useCreateBusiness } from '@/features/businesses/hooks/use-create-business'
 import { Button } from '@/components/ui/button'
 import { EditSaveBar } from '@/components/ui/edit-save-bar'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import {
   UserIcon as User,
@@ -169,13 +169,14 @@ export default function CreateBusinessPage() {
               </div>
 
               <div className="space-y-2" data-testid="business-name-field">
-                <Label
-                  required
+                <FormLabel
+                  icon={Building2}
+                  is_required
                   htmlFor="name"
-                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                  className="text-xs font-semibold text-muted-foreground ml-1"
                 >
                   {t('businessName')}
-                </Label>
+                </FormLabel>
                 <div className="relative">
                   <HugeiconsIcon
                     icon={Building2}
@@ -212,12 +213,13 @@ export default function CreateBusinessPage() {
         {step === 2 && (
           <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
-              <Label
+              <FormLabel
+                icon={Mail}
                 htmlFor="email"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('businessEmail')}
-              </Label>
+              </FormLabel>
               <div className="relative">
                 <HugeiconsIcon
                   icon={Mail}
@@ -240,12 +242,13 @@ export default function CreateBusinessPage() {
             </div>
 
             <div className="space-y-2">
-              <Label
+              <FormLabel
+                icon={Phone}
                 htmlFor="phone"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('businessPhone')}
-              </Label>
+              </FormLabel>
               <Controller
                 control={control}
                 name="phone"
@@ -272,12 +275,13 @@ export default function CreateBusinessPage() {
         {step === 3 && (
           <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
-              <Label
+              <FormLabel
+                icon={MapPin}
                 htmlFor="address"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('businessAddress')}
-              </Label>
+              </FormLabel>
               <div className="relative">
                 <HugeiconsIcon
                   icon={MapPin}

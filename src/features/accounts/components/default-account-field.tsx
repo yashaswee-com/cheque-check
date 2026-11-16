@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { useAccountOptions } from '../hooks/use-accounts'
+import { FormLabel } from '@/components/ui/form-label'
+import { CreditCardIcon } from '@hugeicons/core-free-icons'
 
 export function DefaultAccountField({
   businessId,
@@ -30,8 +32,12 @@ export function DefaultAccountField({
 
   return (
     <div className="space-y-2">
-      <label className="flex items-center gap-3 rounded-sm border border-primary/10 bg-primary/5 p-4">
+      <FormLabel
+        icon={CreditCardIcon}
+        className="flex items-center gap-3 rounded-sm border border-primary/10 bg-primary/5 p-4"
+      >
         <Checkbox
+          className="order-first"
           data-testid="account-default-checkbox"
           aria-describedby={descriptionId}
           checked={checked}
@@ -41,7 +47,7 @@ export function DefaultAccountField({
           onCheckedChange={(value) => onCheckedChange(value === true)}
         />
         <span className="text-sm font-semibold">{t('setAsDefault')}</span>
-      </label>
+      </FormLabel>
       <div id={descriptionId} className="px-1 text-xs text-muted-foreground">
         {query.isError ? (
           <div

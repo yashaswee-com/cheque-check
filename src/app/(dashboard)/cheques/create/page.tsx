@@ -1,5 +1,13 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import {
+  ArrowUpDownIcon,
+  Money03Icon,
+  HashtagIcon,
+  Tag01Icon,
+  CallIcon,
+} from '@hugeicons/core-free-icons'
 import { useCreateCheque } from '@/features/cheques/hooks/use-create-cheque'
 import { useParties } from '@/features/parties/hooks/use-parties'
 import { useAccounts } from '@/features/accounts/hooks/use-accounts'
@@ -13,7 +21,6 @@ import { Controller } from 'react-hook-form'
 import { DateInput } from '@/components/ui/date-input'
 import { DueDatePresets } from '@/features/cheques/components/due-date-presets'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
-import { Label } from '@/components/ui/label'
 import { useSearchParams } from 'next/navigation'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -221,17 +228,20 @@ export default function CreateChequePage() {
   })
   const duplicateConfirmation =
     hasNumberConflict && scan.job ? (
-      <label className="flex items-start gap-3 text-sm text-amber-700">
+      <FormLabel
+        icon={ReceiptText}
+        className="flex items-start gap-3 text-sm text-amber-700"
+      >
         <input
           type="checkbox"
-          className="mt-1 size-4"
+          className="order-first mt-1 size-4"
           checked={publication.confirmed}
           onChange={(event) => publication.setConfirmed(event.target.checked)}
         />
         <span>
           {tOcr('duplicateCheque')} {tOcr('duplicateOverride')}
         </span>
-      </label>
+      </FormLabel>
     ) : null
 
   const partyOptions =
@@ -265,9 +275,12 @@ export default function CreateChequePage() {
 
   const photoWidget = (
     <div className="space-y-2">
-      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+      <FormLabel
+        icon={Camera}
+        className="text-xs font-semibold text-muted-foreground ml-1"
+      >
         {t('photo')}
-      </Label>
+      </FormLabel>
       {profile?.ai_scan_enabled === false && (
         <p className="text-xs text-muted-foreground" role="status">
           {t('aiScanDisabledHelp')}
@@ -451,12 +464,13 @@ export default function CreateChequePage() {
             {cameFromScan && photoWidget}
 
             <div className="space-y-2">
-              <Label
-                required
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              <FormLabel
+                icon={ArrowUpDownIcon}
+                is_required
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('type')}
-              </Label>
+              </FormLabel>
               <PremiumTabs
                 featureByValue={{ Inward: 'inward-tracking' }}
                 value={watch('type')}
@@ -493,13 +507,14 @@ export default function CreateChequePage() {
             </div>
 
             <div className="space-y-2">
-              <Label
-                required
+              <FormLabel
+                icon={Money03Icon}
+                is_required
                 htmlFor="amount"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('amount')}
-              </Label>
+              </FormLabel>
               <CurrencyPrefixInput
                 currency={currency}
                 id="amount"
@@ -534,13 +549,14 @@ export default function CreateChequePage() {
             </div>
 
             <div className="space-y-2">
-              <Label
-                required
+              <FormLabel
+                icon={HashtagIcon}
+                is_required
                 htmlFor="cheque_number"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('chequeNumber')}
-              </Label>
+              </FormLabel>
               <Controller
                 control={form.control}
                 name="cheque_number"
@@ -570,12 +586,13 @@ export default function CreateChequePage() {
         {step === 2 && (
           <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
-              <Label
-                required
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              <FormLabel
+                icon={User}
+                is_required
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('party')}
-              </Label>
+              </FormLabel>
               <Combobox
                 options={partyOptions}
                 value={watch('party_id')}
@@ -594,12 +611,13 @@ export default function CreateChequePage() {
             </div>
 
             <div className="space-y-2">
-              <Label
-                required
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              <FormLabel
+                icon={CreditCard}
+                is_required
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('account')}
-              </Label>
+              </FormLabel>
               <Combobox
                 options={accountOptions}
                 value={watch('account_id')}
@@ -629,13 +647,14 @@ export default function CreateChequePage() {
         {step === 3 && (
           <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
-              <Label
-                required
+              <FormLabel
+                icon={Calendar}
+                is_required
                 htmlFor="cheque_date"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('chequeDate')}
-              </Label>
+              </FormLabel>
               <DateInput
                 leftIcon={Calendar}
                 id="cheque_date"
@@ -653,13 +672,14 @@ export default function CreateChequePage() {
             </div>
 
             <div className="space-y-2">
-              <Label
-                required
+              <FormLabel
+                icon={Calendar}
+                is_required
                 htmlFor="deposit_date"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('depositDate')}
-              </Label>
+              </FormLabel>
               <Controller
                 control={form.control}
                 name="deposit_date"
@@ -688,12 +708,13 @@ export default function CreateChequePage() {
             </div>
 
             <div className="space-y-2">
-              <Label
+              <FormLabel
+                icon={Note}
                 htmlFor="notes"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+                className="text-xs font-semibold text-muted-foreground ml-1"
               >
                 {t('notes')}
-              </Label>
+              </FormLabel>
               <Input
                 leftIcon={Note}
                 id="notes"
@@ -704,9 +725,12 @@ export default function CreateChequePage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+              <FormLabel
+                icon={Tag01Icon}
+                className="text-xs font-semibold text-muted-foreground ml-1"
+              >
                 {t('tags')}
-              </Label>
+              </FormLabel>
               <TagSelector
                 businessId={businessId}
                 value={tagIds}
@@ -838,16 +862,21 @@ export default function CreateChequePage() {
 
           <div className="space-y-6 py-4">
             {scan.duplicateWarning && (
-              <label className="flex items-start gap-2 text-sm" role="alert">
+              <FormLabel
+                icon={ReceiptText}
+                className="flex items-start gap-2 text-sm"
+                role="alert"
+              >
                 <input
                   type="checkbox"
+                  className="order-first"
                   checked={scan.allowDuplicate}
                   onChange={(event) =>
                     scan.setAllowDuplicate(event.target.checked)
                   }
                 />
                 {tOcr('duplicateConfirm')}
-              </label>
+              </FormLabel>
             )}
             {unmatchedEntities?.payee_name && (
               <div className="flex items-start gap-3 p-3 rounded-lg border bg-canvas-parchment/30">
@@ -861,25 +890,24 @@ export default function CreateChequePage() {
                 />
                 <div className="flex-1 grid gap-1.5 leading-none">
                   <div className="flex items-center gap-2">
-                    <HugeiconsIcon
+                    <FormLabel
                       icon={User}
-                      className="h-3 w-3 text-primary"
-                    />
-                    <label
                       htmlFor="create-party"
                       className="text-sm font-semibold"
                     >
                       {t('createPartyFromScan', {
                         name: unmatchedEntities.payee_name,
                       })}
-                    </label>
+                    </FormLabel>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {watch('type') === 'Inward'
                       ? tOcr('partyMatches')
                       : t('payeeExtracted')}
                   </p>
-                  <Label htmlFor="scan-party-contact">{tOcr('contact')}</Label>
+                  <FormLabel icon={CallIcon} htmlFor="scan-party-contact">
+                    {tOcr('contact')}
+                  </FormLabel>
                   <Input
                     id="scan-party-contact"
                     type="tel"
@@ -908,11 +936,8 @@ export default function CreateChequePage() {
                   />
                   <div className="flex-1 grid gap-1.5 leading-none">
                     <div className="flex items-center gap-2">
-                      <HugeiconsIcon
+                      <FormLabel
                         icon={CreditCard}
-                        className="h-3 w-3 text-primary"
-                      />
-                      <label
                         htmlFor="create-account"
                         className="text-sm font-semibold"
                       >
@@ -922,7 +947,7 @@ export default function CreateChequePage() {
                             unmatchedEntities.account_number ||
                             '',
                         })}
-                      </label>
+                      </FormLabel>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {t('accountExtracted')}
@@ -932,13 +957,13 @@ export default function CreateChequePage() {
 
                 {createOptions.account && (
                   <div className="space-y-2 ml-7">
-                    <Label
-                      required
-                      className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2"
+                    <FormLabel
+                      icon={Bank}
+                      is_required
+                      className="text-[10px] font-semibold text-muted-foreground flex items-center gap-2"
                     >
-                      <HugeiconsIcon icon={Bank} className="h-3 w-3" />
                       {tCommon('selectBank')}
-                    </Label>
+                    </FormLabel>
                     <BankSelector
                       value={unmatchedEntities.bank_id}
                       onValueChange={(val) =>

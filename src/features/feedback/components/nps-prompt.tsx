@@ -1,5 +1,7 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { Comment01Icon } from '@hugeicons/core-free-icons'
 import { useState, useSyncExternalStore } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
@@ -202,12 +204,13 @@ function NpsForm({
 
       {score !== null && (
         <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <label
+          <FormLabel
+            icon={Comment01Icon}
             htmlFor="nps-comment"
             className="text-xs font-semibold text-muted-foreground"
           >
             {t(`followUp.${npsCategory(score)}`)}
-          </label>
+          </FormLabel>
           <Textarea
             id="nps-comment"
             value={comment}

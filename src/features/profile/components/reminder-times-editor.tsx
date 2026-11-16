@@ -1,7 +1,8 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { Clock01Icon } from '@hugeicons/core-free-icons'
 import { useTranslations } from 'next-intl'
-import { Label } from '@/components/ui/label'
 import { Combobox } from '@/components/ui/combobox'
 import { InfoPopover } from '@/components/ui/info-popover'
 import {
@@ -32,9 +33,12 @@ export function ReminderTimesEditor({
   return (
     <div className="space-y-3" data-testid="reminder-times-editor">
       <div className="flex items-center gap-1">
-        <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground ml-1">
+        <FormLabel
+          icon={Clock01Icon}
+          className="text-[11px] font-medium text-muted-foreground ml-1"
+        >
           {ts('reminderTimes')}
-        </Label>
+        </FormLabel>
         <InfoPopover title={ts('reminderTimes')}>
           {ts('reminderTimesHelp')}
         </InfoPopover>
@@ -50,12 +54,13 @@ export function ReminderTimesEditor({
           }))
           return (
             <div key={`${index}-${time}`} className="space-y-1">
-              <Label
+              <FormLabel
+                icon={Clock01Icon}
                 htmlFor={`reminder-time-${index + 1}`}
                 className="text-[11px] text-muted-foreground ml-1"
               >
                 {ts('reminderTimeLabel', { number: index + 1 })}
-              </Label>
+              </FormLabel>
               <Combobox
                 id={`reminder-time-${index + 1}`}
                 options={options}

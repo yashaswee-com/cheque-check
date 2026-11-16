@@ -1,9 +1,14 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import {
+  Notification01Icon,
+  Calendar03Icon,
+  Clock01Icon,
+} from '@hugeicons/core-free-icons'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Combobox } from '@/components/ui/combobox'
-import { Label } from '@/components/ui/label'
 import { SwitchWithState } from '@/components/ui/switch-with-state'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { PremiumSwitch } from '@/features/monetization/components/premium-controls'
@@ -109,7 +114,7 @@ export default function NotificationsPage() {
               className="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
             >
               <div className="space-y-1">
-                <Label>{channel.label}</Label>
+                <FormLabel icon={Notification01Icon}>{channel.label}</FormLabel>
                 <p className="text-xs text-muted-foreground">
                   {channel.description}
                 </p>
@@ -154,9 +159,12 @@ export default function NotificationsPage() {
         data-testid="notifications-reminder-schedule"
       >
         <div className="space-y-2">
-          <Label className="text-[11px] uppercase tracking-widest text-muted-foreground">
+          <FormLabel
+            icon={Calendar03Icon}
+            className="text-[11px] text-muted-foreground"
+          >
             {t('advancedWarning')}
-          </Label>
+          </FormLabel>
           <Combobox
             options={warningOptions}
             value={String(profile.default_reminder_days || 3)}
@@ -172,9 +180,12 @@ export default function NotificationsPage() {
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-1">
-            <Label className="text-[11px] uppercase tracking-widest text-muted-foreground">
+            <FormLabel
+              icon={Clock01Icon}
+              className="text-[11px] text-muted-foreground"
+            >
               {to('dailyFrequency')}
-            </Label>
+            </FormLabel>
             <InfoPopover title={to('dailyFrequency')}>
               {to('dailyFrequencyHelp')}
             </InfoPopover>

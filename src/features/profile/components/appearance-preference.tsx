@@ -1,7 +1,8 @@
 'use client'
+import { FormLabel } from '@/components/ui/form-label'
+import { PaintBoardIcon } from '@hugeicons/core-free-icons'
 import { useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Label } from '@/components/ui/label'
 import { Combobox } from '@/components/ui/combobox'
 import { useProfile } from '../hooks/use-profile'
 import { appearanceSchema } from '@/validators/profile'
@@ -19,12 +20,13 @@ export function AppearancePreference() {
   return (
     <section className="min-w-0 space-y-2" aria-busy={busy}>
       <div className="flex items-center gap-1">
-        <Label
+        <FormLabel
+          icon={PaintBoardIcon}
           htmlFor={id}
-          className="ml-1 text-[11px] font-normal uppercase tracking-widest text-muted-foreground"
+          className="ml-1 text-[11px] font-normal text-muted-foreground"
         >
           {t('title')}
-        </Label>
+        </FormLabel>
         <InfoPopover title={t('title')}>{t('help')}</InfoPopover>
       </div>
       <Combobox

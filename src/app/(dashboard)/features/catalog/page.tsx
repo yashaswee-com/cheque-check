@@ -1,5 +1,7 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { Camera01Icon, CallIcon } from '@hugeicons/core-free-icons'
 import {
   PremiumLink,
   PremiumSwitch,
@@ -801,12 +803,13 @@ export default function FeaturesPage() {
                     {!isVoice && (
                       <div className="flex items-start justify-between gap-4 border-t p-5 @min-[640px]:p-6">
                         <div className="space-y-1">
-                          <label
+                          <FormLabel
+                            icon={Camera01Icon}
                             htmlFor="ai-scan-enabled"
                             className="text-sm font-semibold"
                           >
                             {t('aiScanMode')}
-                          </label>
+                          </FormLabel>
                           <p
                             id="ai-scan-help"
                             className="text-xs leading-relaxed text-muted-foreground"
@@ -842,12 +845,13 @@ export default function FeaturesPage() {
                       <div className="space-y-5 border-t p-5 @min-[640px]:p-6">
                         <div className="flex items-start justify-between gap-4">
                           <div className="space-y-1">
-                            <label
+                            <FormLabel
+                              icon={CallIcon}
                               htmlFor="voice-enabled"
                               className="text-sm font-semibold"
                             >
                               {t('enableService')}
-                            </label>
+                            </FormLabel>
                             <p className="text-xs leading-relaxed text-muted-foreground">
                               {profile.voice_call_enabled
                                 ? t('voiceEnabledHelp')
@@ -882,12 +886,13 @@ export default function FeaturesPage() {
                                 void saveProfile('phone', { phone })
                               }}
                             >
-                              <label
+                              <FormLabel
+                                icon={CallIcon}
                                 htmlFor="voice-phone"
                                 className="text-sm font-semibold"
                               >
                                 {t('yourPhoneNumber')}
-                              </label>
+                              </FormLabel>
                               <PhoneInput
                                 id="voice-phone"
                                 value={phone}

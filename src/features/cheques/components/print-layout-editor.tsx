@@ -29,6 +29,8 @@ import {
 import { savePrintLayout } from '@/features/premium-workspace/services/workspace.service'
 import { toast } from '@/components/ui/toast'
 import { HashtagIcon as Hash } from '@hugeicons/core-free-icons'
+import { FormLabel } from '@/components/ui/form-label'
+import { useId } from 'react'
 
 const fields: Array<keyof PrintLayout> = [
   'payeeX',
@@ -145,6 +147,7 @@ function PrintLayoutForm({
 }) {
   const t = useTranslations('Cheques')
   const tc = useTranslations('Common')
+  const fieldId = useId()
   const premium = usePremiumAction()
   const queryClient = useQueryClient()
   const [layout, setLayout] = useState(() => layoutInputs(initialLayout))
@@ -198,9 +201,17 @@ function PrintLayoutForm({
       <PremiumField feature="cheque-printing" label={t('configurePrint')}>
         <div className="grid grid-cols-2 gap-3">
           {fields.map((key) => (
-            <label key={key} className="space-y-1 text-xs font-semibold">
-              {t(`printFields.${key}`)} (mm)
+            <div key={key} className="space-y-1 text-xs font-semibold">
+              <FormLabel
+                icon={Hash}
+                htmlFor={`${fieldId}-${key}`}
+                className="text-xs"
+                is_required
+              >
+                {t(`printFields.${key}`)} (mm)
+              </FormLabel>
               <Input
+                id={`${fieldId}-${key}`}
                 leftIcon={Hash}
                 type="number"
                 min="0"
@@ -215,7 +226,7 @@ function PrintLayoutForm({
                 }
                 disabled={isSaving}
               />
-            </label>
+            </div>
           ))}
         </div>
       </PremiumField>

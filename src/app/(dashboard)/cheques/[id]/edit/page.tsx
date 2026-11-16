@@ -1,5 +1,13 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import {
+  ArrowUpDownIcon,
+  Money03Icon,
+  HashtagIcon,
+  CreditCardIcon,
+  Tag01Icon,
+} from '@hugeicons/core-free-icons'
 import { useEffect, useRef, useState } from 'react'
 import { usePremiumAction } from '@/features/monetization/components/premium-gate'
 import {
@@ -18,7 +26,6 @@ import { Controller } from 'react-hook-form'
 import { DateInput } from '@/components/ui/date-input'
 import { DueDatePresets } from '@/features/cheques/components/due-date-presets'
 import { CurrencyPrefixInput } from '@/components/ui/currency-prefix-input'
-import { Label } from '@/components/ui/label'
 import { useParams } from 'next/navigation'
 import {
   Calendar03Icon as Calendar,
@@ -191,12 +198,13 @@ export default function EditChequePage() {
       >
         <FormSection title={t('scanDetails')} icon={Camera}>
           <div className="space-y-2">
-            <Label
-              required
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            <FormLabel
+              icon={ArrowUpDownIcon}
+              is_required
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('type')}
-            </Label>
+            </FormLabel>
             <PremiumTabs
               featureByValue={{ Inward: 'inward-tracking' }}
               exemptValues={cheque?.type === 'Inward' ? ['Inward'] : []}
@@ -228,13 +236,14 @@ export default function EditChequePage() {
           </div>
 
           <div className="space-y-2">
-            <Label
-              required
+            <FormLabel
+              icon={Money03Icon}
+              is_required
               htmlFor="amount"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('amount')}
-            </Label>
+            </FormLabel>
             <CurrencyPrefixInput
               currency={currency}
               id="amount"
@@ -255,13 +264,14 @@ export default function EditChequePage() {
           </div>
 
           <div className="space-y-2">
-            <Label
-              required
+            <FormLabel
+              icon={HashtagIcon}
+              is_required
               htmlFor="cheque_number"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('chequeNumber')}
-            </Label>
+            </FormLabel>
             <Controller
               control={form.control}
               name="cheque_number"
@@ -295,9 +305,12 @@ export default function EditChequePage() {
           </div>
 
           <div className="space-y-2" data-testid="cheque-photo-field">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+            <FormLabel
+              icon={Camera}
+              className="text-xs font-semibold text-muted-foreground ml-1"
+            >
               {t('photo')}
-            </Label>
+            </FormLabel>
             <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 bg-canvas-parchment/30 min-h-[140px] transition-colors hover:bg-canvas-parchment/50 border-primary/10 relative overflow-hidden">
               {imageUrl ? (
                 <div className="relative w-full aspect-video rounded-sm overflow-hidden border">
@@ -363,12 +376,13 @@ export default function EditChequePage() {
 
         <FormSection title={t('entities')} icon={User}>
           <div className="space-y-2">
-            <Label
-              required
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            <FormLabel
+              icon={User}
+              is_required
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('party')}
-            </Label>
+            </FormLabel>
             <Combobox
               options={partyOptions}
               value={watch('party_id')}
@@ -382,12 +396,13 @@ export default function EditChequePage() {
           </div>
 
           <div className="space-y-2">
-            <Label
-              required
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+            <FormLabel
+              icon={CreditCardIcon}
+              is_required
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('account')}
-            </Label>
+            </FormLabel>
             <Combobox
               options={accountOptions}
               value={watch('account_id')}
@@ -404,13 +419,14 @@ export default function EditChequePage() {
 
         <FormSection title={t('datesReview')} icon={ReceiptText}>
           <div className="space-y-2">
-            <Label
-              required
+            <FormLabel
+              icon={Calendar}
+              is_required
               htmlFor="cheque_date"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('chequeDate')}
-            </Label>
+            </FormLabel>
             <DateInput
               leftIcon={Calendar}
               id="cheque_date"
@@ -426,13 +442,14 @@ export default function EditChequePage() {
           </div>
 
           <div className="space-y-2">
-            <Label
-              required
+            <FormLabel
+              icon={Calendar}
+              is_required
               htmlFor="deposit_date"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('depositDate')}
-            </Label>
+            </FormLabel>
             <Controller
               control={form.control}
               name="deposit_date"
@@ -459,12 +476,13 @@ export default function EditChequePage() {
           </div>
 
           <div className="space-y-2">
-            <Label
+            <FormLabel
+              icon={Note}
               htmlFor="notes"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
+              className="text-xs font-semibold text-muted-foreground ml-1"
             >
               {t('notes')}
-            </Label>
+            </FormLabel>
             <Input
               leftIcon={Note}
               id="notes"
@@ -475,9 +493,12 @@ export default function EditChequePage() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+            <FormLabel
+              icon={Tag01Icon}
+              className="text-xs font-semibold text-muted-foreground ml-1"
+            >
               {t('tags')}
-            </Label>
+            </FormLabel>
             <TagSelector
               businessId={businessId}
               value={tagsDraft.tagIds}

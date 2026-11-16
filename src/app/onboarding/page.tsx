@@ -1,5 +1,7 @@
 'use client'
 
+import { FormLabel } from '@/components/ui/form-label'
+import { File01Icon } from '@hugeicons/core-free-icons'
 import { useState } from 'react'
 import {
   Calendar03Icon as Calendar,
@@ -18,7 +20,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { businessService } from '@/features/businesses/services/business.service'
 import { useBusiness } from '@/features/businesses/hooks/use-business'
 import { useProfile } from '@/features/profile/hooks/use-profile'
@@ -388,13 +389,14 @@ export default function OnboardingPage() {
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label
+                      <FormLabel
+                        icon={Building2}
                         htmlFor="onboarding-business-name"
-                        required
-                        className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground ml-1"
+                        is_required
+                        className="text-[11px] font-medium text-muted-foreground ml-1"
                       >
                         {t('businessName')}
-                      </Label>
+                      </FormLabel>
                       <div className="relative group">
                         <Input
                           id="onboarding-business-name"
@@ -431,18 +433,14 @@ export default function OnboardingPage() {
                   >
                     {preferenceFields.map((field) => (
                       <div key={field.id} className="min-w-0 space-y-2">
-                        <Label
+                        <FormLabel
+                          icon={field.icon}
                           htmlFor={`onboarding-${field.id}`}
-                          required
-                          className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1"
+                          is_required
+                          className="text-[11px] font-normal text-muted-foreground ml-1"
                         >
-                          <HugeiconsIcon
-                            icon={field.icon}
-                            className="mr-1 inline size-4 align-text-bottom"
-                            aria-hidden="true"
-                          />
                           {field.label}
-                        </Label>
+                        </FormLabel>
                         <Combobox
                           id={`onboarding-${field.id}`}
                           testId={`onboarding-${field.id}`}
@@ -474,9 +472,12 @@ export default function OnboardingPage() {
                   <div className="space-y-3">
                     <div className="min-w-0 space-y-2">
                       <div className="flex items-center gap-1">
-                        <Label className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1">
+                        <FormLabel
+                          icon={Calendar}
+                          className="text-[11px] font-normal text-muted-foreground ml-1"
+                        >
                           {t('advancedWarning')}
-                        </Label>
+                        </FormLabel>
                         <InfoPopover title={t('advancedWarning')}>
                           {t('advancedWarningHelp')}
                         </InfoPopover>
@@ -494,9 +495,12 @@ export default function OnboardingPage() {
                     </div>
                     <div className="min-w-0 space-y-2">
                       <div className="flex items-center gap-1">
-                        <Label className="text-[11px] font-normal uppercase tracking-widest text-muted-foreground ml-1">
+                        <FormLabel
+                          icon={Clock}
+                          className="text-[11px] font-normal text-muted-foreground ml-1"
+                        >
                           {t('dailyFrequency')}
-                        </Label>
+                        </FormLabel>
                         <InfoPopover title={t('dailyFrequency')}>
                           {t('dailyFrequencyHelp')}
                         </InfoPopover>
@@ -562,9 +566,10 @@ export default function OnboardingPage() {
                         className="mt-1 size-4 shrink-0 accent-foreground"
                         data-testid="onboarding-accept-terms-checkbox"
                       />
-                      <Label
+                      <FormLabel
+                        icon={File01Icon}
                         htmlFor="onboarding-accept-terms"
-                        required
+                        is_required
                         className="text-sm font-normal leading-6"
                       >
                         {t('termsAgreementPrefix')}{' '}
@@ -581,7 +586,7 @@ export default function OnboardingPage() {
                         >
                           {t('privacyPolicy')}
                         </Link>
-                      </Label>
+                      </FormLabel>
                     </div>
                     {termsAttempted && !termsAccepted && (
                       <FieldError className="mt-2">

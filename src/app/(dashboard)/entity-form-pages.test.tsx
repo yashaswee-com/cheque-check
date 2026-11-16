@@ -473,6 +473,33 @@ it.each([
   expect(screen.queryByTestId('draft-save-button')).not.toBeInTheDocument()
 })
 
+it.each([
+  { Page: CreateBusinessPage, label: messages.Businesses.businessName },
+  { Page: EditBusinessPage, label: messages.Businesses.businessName },
+  { Page: CreateAccountPage, label: messages.Accounts.accountName },
+  { Page: EditAccountPage, label: messages.Accounts.accountName },
+  { Page: CreatePartyPage, label: messages.Parties.partyName },
+  { Page: EditPartyPage, label: messages.Parties.partyName },
+])(
+  'uses the shared label without folder-tab styling for $label',
+  ({ Page, label }) => {
+    const { container } = renderPage(<Page />)
+    const nameLabel = screen.getByText(label, { selector: 'label' })
+    expect(nameLabel).toHaveAttribute('data-slot', 'form-label')
+    expect(nameLabel).toHaveAttribute('data-required', 'true')
+    expect(nameLabel.querySelector('svg')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    )
+    expect(
+      nameLabel.querySelector('[data-slot="required-indicator"]'),
+    ).toHaveClass('text-destructive')
+    expect(nameLabel).not.toHaveClass('uppercase', 'tracking-wider')
+    expect(nameLabel).toHaveAttribute('for', screen.getByLabelText(label).id)
+    expect(container.querySelector('[data-slot="auth-field-tab"]')).toBeNull()
+  },
+)
+
 describe('business creation page', () => {
   it('orders the business logo, name, and theme color fields', () => {
     renderPage(<CreateBusinessPage />)

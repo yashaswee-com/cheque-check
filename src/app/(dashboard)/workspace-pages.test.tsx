@@ -903,6 +903,20 @@ describe('reports page', () => {
 })
 
 describe('profile page', () => {
+  it('uses an icon label in sentence case and marks the editable name required', () => {
+    renderPage(<ProfilePage />)
+
+    const name = screen.getByRole('textbox', {
+      name: messages.Settings.fullName,
+    })
+    const label = screen.getByText(messages.Settings.fullName)
+    expect(name).toBeRequired()
+    expect(label).toHaveAttribute('for', name.id)
+    expect(label).toHaveAttribute('data-required', 'true')
+    expect(label.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    expect(label).not.toHaveClass('uppercase', 'tracking-wider')
+  })
+
   it('shows the delete confirmation placeholder while its module is loading', () => {
     mocks.deferDynamicLoading = true
     renderPage(<ProfilePage />)
