@@ -1,4 +1,5 @@
 import { useTranslations } from 'next-intl'
+import Image from 'next/image'
 import Link from 'next/link'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Tick02Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
@@ -89,11 +90,17 @@ export function PlanComparison({
             </AppEntryLink>
           )}
         </article>
-        <article className="flex flex-col gap-5 rounded-[18px] border border-primary/30 bg-blue-50/60 p-6 sm:p-8">
+        <article className="relative flex flex-col gap-5 rounded-[18px] border border-primary/30 bg-blue-50/60 p-6 sm:p-8">
+          <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold tracking-wide text-white uppercase">
+            {t('recommended')}
+          </span>
           <PlanHeading className="flex items-center gap-2 font-heading text-2xl font-bold">
             {t('premium')}
             <PremiumMarkBadge />
           </PlanHeading>
+          <p className="-mt-3 text-sm font-medium text-foreground/80">
+            {t('premiumSummary')}
+          </p>
           {price ? (
             <div>
               <p className="text-4xl font-semibold">{price}</p>
@@ -107,8 +114,13 @@ export function PlanComparison({
               {loadFailed ? tp('loadingError') : t('premiumUnavailable')}
             </p>
           )}
-          <p className="text-sm text-muted-foreground">
-            {t(compact ? 'premiumSummary' : 'premiumDescription')}
+          {!compact && (
+            <p className="text-sm text-muted-foreground">
+              {t('premiumDescription')}
+            </p>
+          )}
+          <p className="w-fit rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-semibold text-primary">
+            {t('lifetimeValue')}
           </p>
           <ul className="space-y-2 text-sm">
             <li className="flex items-center gap-2">
@@ -125,6 +137,14 @@ export function PlanComparison({
                 {premium(`features.${feature}`)}
               </li>
             ))}
+            <li className="flex items-center gap-2">
+              {included}
+              {t('partySms')}
+            </li>
+            <li className="flex items-center gap-2">
+              {included}
+              {t('prioritySupport')}
+            </li>
             {!compact && <li>{t('creditsSeparate')}</li>}
           </ul>
           {!compact && product && (
@@ -135,6 +155,30 @@ export function PlanComparison({
               {tp('purchase')}
             </AppEntryLink>
           )}
+          <p className="flex items-start gap-2 border-t border-primary/15 pt-4 text-left text-xs leading-relaxed text-muted-foreground">
+            <HugeiconsIcon
+              icon={Tick02Icon}
+              size={16}
+              className="mt-px shrink-0 text-primary"
+              aria-hidden="true"
+            />
+            <span className="grid gap-1">
+              <span className="flex flex-wrap items-center gap-1.5 font-medium text-foreground/80">
+                {t.rich('paymentTrust', {
+                  logo: () => (
+                    <Image
+                      src="/assets/razorpay-logo.svg"
+                      alt="Razorpay"
+                      width={316}
+                      height={67}
+                      className="h-4 w-auto"
+                    />
+                  ),
+                })}
+              </span>
+              <span>{t('paymentVerified')}</span>
+            </span>
+          </p>
         </article>
       </div>
       {!compact && (
