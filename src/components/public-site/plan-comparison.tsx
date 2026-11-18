@@ -162,21 +162,18 @@ export function PlanComparison({
               className="mt-px shrink-0 text-primary"
               aria-hidden="true"
             />
-            <span className="grid gap-1">
-              <span className="flex flex-wrap items-center gap-1.5 font-medium text-foreground/80">
-                {t.rich('paymentTrust', {
-                  logo: () => (
-                    <Image
-                      src="/assets/razorpay-logo.svg"
-                      alt="Razorpay"
-                      width={316}
-                      height={67}
-                      className="h-4 w-auto"
-                    />
-                  ),
-                })}
-              </span>
-              <span>{t('paymentVerified')}</span>
+            <span className="flex flex-wrap items-center gap-1.5 font-medium text-foreground/80">
+              {t.rich('paymentTrust', {
+                logo: () => (
+                  <Image
+                    src="/assets/razorpay-logo.svg"
+                    alt="Razorpay"
+                    width={316}
+                    height={67}
+                    className="h-4 w-auto"
+                  />
+                ),
+              })}
             </span>
           </p>
         </article>
