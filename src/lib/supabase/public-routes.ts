@@ -4,6 +4,8 @@ const PUBLIC_PAGE_PATHS = new Set([
   '/pricing',
   '/privacy',
   '/contact',
+  '/cheque-bounce',
+  '/legal-notice',
   '/sentry-example-page',
 ])
 

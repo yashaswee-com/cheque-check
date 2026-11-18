@@ -8,6 +8,8 @@ describe('public route allowlist', () => {
     '/pricing',
     '/privacy',
     '/contact',
+    '/cheque-bounce',
+    '/legal-notice',
     '/sentry-example-page',
   ])('allows the public page %s', (path) =>
     expect(isPublicPagePath(path)).toBe(true),
