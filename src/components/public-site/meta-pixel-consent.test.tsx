@@ -7,6 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
+import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import messages from '../../../messages/en.json'
 import { MetaPixelConsent } from './meta-pixel-consent'
@@ -59,6 +60,15 @@ afterEach(() => {
 })
 
 describe('marketing consent', () => {
+  it('does not render the banner before browser preferences can be read', () => {
+    const markup = renderToString(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <MetaPixelConsent {...props} />
+      </NextIntlClientProvider>,
+    )
+    expect(markup).not.toContain('aria-label="Optional marketing cookies"')
+  })
+
   it('requires fresh consent for the expanded scope', async () => {
     localStorage.setItem('cheque-check:meta-marketing-consent:v1', 'accepted')
     renderConsent()

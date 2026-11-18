@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
@@ -49,8 +49,17 @@ type Props = {
   savePreferences: string
 }
 
+const subscribeToHydration = () => () => {}
+const getClientHydrationSnapshot = () => true
+const getServerHydrationSnapshot = () => false
+
 export function MetaPixelConsent(props: Props) {
   const consent = useMarketingConsent()
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot,
+  )
   const [editing, setEditing] = useState(false)
   const [storageError, setStorageError] = useState(false)
   const [marketingChoice, setMarketingChoice] = useState(false)
@@ -117,7 +126,7 @@ export function MetaPixelConsent(props: Props) {
 
   return (
     <>
-      {!hasSavedChoice && !editing && (
+      {hydrated && !hasSavedChoice && !editing && (
         <section
           aria-label={props.title}
           className="fixed inset-x-0 bottom-0 z-[120] border-t bg-card p-4 shadow-2xl sm:p-5"
