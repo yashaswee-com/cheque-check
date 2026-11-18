@@ -178,7 +178,7 @@ describe('public site pages', () => {
           catalog.PublicSite.landing.faq[`${key}Question`],
         )
         await userEvent.click(question)
-        expect(question.closest('details')).toHaveAttribute('open')
+        expect(question).toHaveAttribute('aria-expanded', 'true')
         expect(
           screen.getByText(catalog.PublicSite.landing.faq[`${key}Answer`]),
         ).toBeVisible()
@@ -825,6 +825,17 @@ describe('public site pages', () => {
     const video = document.querySelector('video')
     expect(video).toHaveAttribute('preload', 'none')
     expect(video).not.toHaveAttribute('src')
+    const faqButton = screen.getByRole('button', {
+      name: copy.faq.accountingQuestion,
+    })
+    const answer = screen.getByText(copy.faq.accountingAnswer).closest('[id]')
+    expect(faqButton).toHaveAttribute('aria-expanded', 'false')
+    expect(answer).toHaveAttribute('inert')
+    fireEvent.click(faqButton)
+    expect(faqButton).toHaveAttribute('aria-expanded', 'true')
+    expect(answer).not.toHaveAttribute('inert')
+    fireEvent.click(faqButton)
+    expect(answer).toHaveAttribute('inert')
     expect(video).toHaveAttribute('poster', '/assets/demo-poster.jpg')
     expect(video).not.toHaveAttribute('autoplay')
     expect(
@@ -837,10 +848,13 @@ describe('public site pages', () => {
     expect(
       screen.getByRole('region', { name: copy.title }).querySelector('ul'),
     ).toBeInTheDocument()
-    expect(document.querySelectorAll('details')).toHaveLength(11)
-    const question = screen.getByText(copy.faq.bounceQuestion)
+    const faq = screen.getByRole('region', { name: copy.faqTitle })
+    expect(within(faq).getAllByRole('button')).toHaveLength(11)
+    const question = within(faq).getByRole('button', {
+      name: copy.faq.bounceQuestion,
+    })
     await userEvent.click(question)
-    expect(question.closest('details')).toHaveAttribute('open')
+    expect(question).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByText(copy.faq.bounceAnswer)).toBeVisible()
   })
 

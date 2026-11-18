@@ -1125,39 +1125,57 @@ a.secondaryCta > svg {
   max-width: 680px;
   margin: auto;
 }
-.faq details {
+.faqItem {
   border-bottom: 1px solid var(--blue-line);
 }
-.faq details:first-child {
+.faqItem:first-child {
   border-top: 1px solid var(--blue-line);
 }
-.faq summary {
+.landing .faqItem h3 {
+  font: inherit;
+}
+.faqItem button {
   cursor: pointer;
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   padding: 20px 0;
   min-height: 64px;
-  list-style: none;
+  text-align: start;
   font-size: 17px;
   font-weight: 400;
 }
-.faq summary::-webkit-details-marker {
-  display: none;
-}
-.faq summary svg {
+.faqItem button svg {
   color: var(--primary);
-  font-size: 24px;
-  font-weight: 400;
   flex-shrink: 0;
+  transition: transform 220ms ease;
 }
-.faq details[open] summary svg {
+.faqItem button[aria-expanded='true'] svg {
   transform: rotate(180deg);
 }
-.faq details p {
+.faqAnswer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+.faqAnswer:not([inert]) {
+  grid-template-rows: 1fr;
+}
+.faqAnswer > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.faqAnswer p {
   padding-bottom: 24px;
   color: var(--muted-foreground);
+}
+@media (prefers-reduced-motion: reduce) {
+  .faqAnswer,
+  .faqItem button svg {
+    transition: none;
+  }
 }
 .faqContact {
   display: flex;

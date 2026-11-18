@@ -7,9 +7,8 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Analytics01Icon,
   ArrowRight01Icon,
-  ArrowDown01Icon,
-  Calculator01Icon,
   BankIcon,
+  Calculator01Icon,
   Call02Icon,
   DeliveryBox01Icon,
   Download01Icon,
@@ -28,6 +27,7 @@ import styles from '@/components/public-site/landing.module.css'
 import { IndustryMarquee } from '@/components/public-site/industry-marquee'
 import { PublicIcon } from '@/components/public-site/public-icon'
 import { PublicBrand } from '@/components/public-site/public-brand'
+import { FaqItem } from '@/components/public-site/faq-item'
 import { DemoMedia } from '@/components/public-site/demo-media'
 import { PillScroller } from '@/components/ui/pill-scroller'
 import { PlanComparison } from '@/components/public-site/plan-comparison'
@@ -482,17 +482,11 @@ export default async function LandingPage() {
               'limit',
             ] as const
           ).map((key) => (
-            <details key={key}>
-              <summary>
-                {t(`faq.${key}Question`)}
-                <HugeiconsIcon
-                  icon={ArrowDown01Icon}
-                  size={20}
-                  aria-hidden="true"
-                />
-              </summary>
-              <p>{t(`faq.${key}Answer`)}</p>
-            </details>
+            <FaqItem
+              key={key}
+              question={t(`faq.${key}Question`)}
+              answer={t(`faq.${key}Answer`)}
+            />
           ))}
         </div>
         <p className={styles.faqContact}>
