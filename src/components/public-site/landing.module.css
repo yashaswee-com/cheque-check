@@ -1593,6 +1593,12 @@ a.secondaryCta > svg {
     padding: 40px;
   }
   .featureCard[data-feature='reminders'] .featurePlaceholder,
+    grid-column: 2;
+  }
+  .featureCard[data-feature='reports'] .featurePlaceholder {
+    grid-column: 1;
+  }
+}
   .featureCard[data-feature='reports'] .featurePlaceholder {
     grid-column: 2;
     grid-row: 1 / -1;
@@ -1647,11 +1653,5 @@ a.secondaryCta > svg {
     justify-content: start;
     align-items: center;
     gap: 16px;
-  }
-}
-    grid-column: 2;
-  }
-  .featureCard[data-feature='reports'] .featurePlaceholder {
-    grid-column: 1;
   }
 }
