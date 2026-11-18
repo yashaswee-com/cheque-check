@@ -66,23 +66,21 @@ test.describe('public landing page', () => {
         page.getByRole('heading', { name: catalog.PublicSite.landing.title }),
       ).toBeVisible()
       await expect(
-        page.getByText(catalog.PublicSite.landing.browserAccess, {
-          exact: true,
-        }),
+        page
+          .getByText(catalog.PublicSite.landing.noBankConnection, {
+            exact: true,
+          })
+          .first(),
       ).toBeVisible()
-      await expect(
-        page.getByText(catalog.PublicSite.landing.noBankConnection, {
-          exact: true,
-        }),
-      ).toBeVisible()
-      for (const caption of Object.values(
-        catalog.PublicSite.landing.previewCaptions,
+      for (const [key, caption] of Object.entries(
+        catalog.PublicSite.landing.gallery,
       )) {
+        if (!key.endsWith('Caption')) continue
         await expect(
           page.locator('figcaption').filter({ hasText: caption }),
         ).toHaveCount(1)
       }
-      await expect(page.locator('main a[href="/signup"]')).toHaveCount(3)
+      await expect(page.locator('main a[href="/signup"]')).toHaveCount(4)
       await expect(
         page
           .getByRole('link', {

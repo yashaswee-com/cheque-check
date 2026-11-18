@@ -156,15 +156,19 @@ describe('public site pages', () => {
       const hero = screen.getByRole('region', {
         name: catalog.PublicSite.landing.title,
       })
-      expect(
-        within(hero).getByText(catalog.PublicSite.landing.browserAccess),
-      ).toBeVisible()
-      expect(
-        within(hero).getByText(catalog.PublicSite.landing.noBankConnection),
-      ).toBeVisible()
-      for (const caption of Object.values(
-        catalog.PublicSite.landing.previewCaptions,
-      )) {
+      const reassurance = within(hero).getByText(
+        catalog.PublicSite.landing.noBankConnection,
+      )
+      expect(reassurance).toBeVisible()
+      expect(reassurance.previousElementSibling).toHaveTextContent(
+        catalog.PublicSite.landing.trialNote,
+      )
+      const gallery = catalog.PublicSite.landing.gallery
+      const captions = Object.entries(gallery).filter(([key]) =>
+        key.endsWith('Caption'),
+      )
+      expect(captions.length).toBeGreaterThanOrEqual(10)
+      for (const [, caption] of captions) {
         expect(
           screen.getByText(caption, { selector: 'figcaption' }),
         ).toBeVisible()
@@ -217,7 +221,13 @@ describe('public site pages', () => {
       expect(
         screen.queryByText(catalog.PublicSite.landing.pricingNote),
       ).not.toBeInTheDocument()
-      for (const feature of ['cheques', 'accounts', 'parties'] as const) {
+      for (const feature of [
+        'reminders',
+        'cheques',
+        'accounts',
+        'parties',
+        'reports',
+      ] as const) {
         expect(
           screen.getByRole('img', {
             name: catalog.PublicSite.landing.imagePlaceholder.replace(
@@ -227,7 +237,47 @@ describe('public site pages', () => {
           }),
         ).toHaveAttribute('src', '/assets/feature-placeholder.svg')
       }
-      expect(within(hero).queryByRole('list')).not.toBeInTheDocument()
+      const highlights = within(hero).getByRole('list', {
+        name: catalog.PublicSite.landing.trustTitle,
+      })
+      expect(within(highlights).getAllByRole('listitem')).toHaveLength(4)
+      expect(
+        within(highlights).getByRole('img', {
+          name: catalog.PublicSite.landing.statIndiaFlag,
+        }),
+      ).toBeVisible()
+      for (const key of [
+        'Calls',
+        'FirstCheque',
+        'Languages',
+        'India',
+      ] as const) {
+        expect(
+          within(highlights).getByText(
+            catalog.PublicSite.landing[`stat${key}Label`],
+          ),
+        ).toBeVisible()
+      }
+      expect(
+        screen.getByRole('region', {
+          name: catalog.PublicSite.landing.securityTitle,
+        }),
+      ).toBeVisible()
+      expect(
+        screen.getByRole('region', {
+          name: catalog.PublicSite.landing.installTitle,
+        }),
+      ).toBeVisible()
+      expect(
+        screen.getByRole('link', {
+          name: catalog.PublicSite.landing.installCta,
+        }),
+      ).toHaveAttribute('href', '/signup')
+      expect(
+        screen.getByRole('link', {
+          name: catalog.PublicSite.landing.bounceToolCta,
+        }),
+      ).toHaveAttribute('href', '/cheque-bounce')
       for (const plan of [
         catalog.PublicSite.comparison.free,
         catalog.PublicSite.comparison.premium,
@@ -246,6 +296,37 @@ describe('public site pages', () => {
           })
           .querySelector('[data-slot="premium-mark"]'),
       ).toBeInTheDocument()
+      expect(
+        screen.getByText(catalog.PublicSite.comparison.recommended),
+      ).toBeVisible()
+      const premiumCard = screen
+        .getByRole('heading', {
+          name: catalog.PublicSite.comparison.premium,
+        })
+        .closest('article')!
+      expect(
+        within(premiumCard).getByText(catalog.PublicSite.comparison.partySms),
+      ).toBeVisible()
+      expect(
+        within(premiumCard).getByText(
+          catalog.PublicSite.comparison.prioritySupport,
+        ),
+      ).toBeVisible()
+      for (const problem of [
+        catalog.PublicSite.landing.problems.datesTitle,
+        catalog.PublicSite.landing.problems.accountsTitle,
+        catalog.PublicSite.landing.problems.recordsTitle,
+        catalog.PublicSite.landing.problems.bounceTitle,
+      ]) {
+        expect(
+          screen.getByRole('img', {
+            name: catalog.PublicSite.landing.imagePlaceholder.replace(
+              '{feature}',
+              problem,
+            ),
+          }),
+        ).toHaveAttribute('src', '/assets/feature-placeholder.svg')
+      }
       const chatLinks = screen.getAllByRole('link', {
         name: catalog.PublicSite.landing.secondaryCta,
       })
@@ -258,6 +339,18 @@ describe('public site pages', () => {
         )
         expect(chat.querySelector('[data-whatsapp-logo]')).toBeInTheDocument()
       }
+      const widget = screen.getByRole('link', {
+        name: catalog.PublicSite.landing.whatsAppWidgetLabel,
+      })
+      const widgetUrl = new URL(widget.getAttribute('href')!)
+      expect(widgetUrl.searchParams.get('text')).toBe(
+        catalog.PublicSite.landing.bookDemoMessage,
+      )
+      expect(widget.querySelector('[data-whatsapp-logo]')).toBeInTheDocument()
+      expect(screen.getByLabelText(catalog.Common.scrollToTop)).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      )
       expect(
         screen.queryByRole('link', {
           name: catalog.PublicSite.pricing.purchase,
@@ -702,9 +795,11 @@ describe('public site pages', () => {
       copy.screenshotsTitle,
       copy.problemTitle,
       copy.howTitle,
+      copy.securityTitle,
       copy.sectionTitle,
       copy.pricingTitle,
       copy.faqTitle,
+      copy.installTitle,
       copy.scenarioTitle,
       copy.ctaTitle,
     ])
@@ -713,7 +808,7 @@ describe('public site pages', () => {
     expect(screen.queryByText(copy.scenarioDisclosure)).not.toBeInTheDocument()
     expect(screen.queryByText(copy.scenarioLabel)).not.toBeInTheDocument()
     expect(screen.queryByText(copy.swipeHint)).not.toBeInTheDocument()
-    expect(screen.queryByText(copy.problemClose)).not.toBeInTheDocument()
+    expect(screen.getByText(copy.problemClose)).toBeVisible()
     for (const key of ['owner', 'accountant', 'distributor'] as const) {
       expect(screen.getByText(copy.scenarios[`${key}Business`])).toBeVisible()
     }
@@ -736,8 +831,8 @@ describe('public site pages', () => {
     expect(screen.queryByText(copy.partyPhotosNote)).not.toBeInTheDocument()
     expect(
       screen.getByRole('region', { name: copy.title }).querySelector('ul'),
-    ).not.toBeInTheDocument()
-    expect(document.querySelectorAll('details')).toHaveLength(8)
+    ).toBeInTheDocument()
+    expect(document.querySelectorAll('details')).toHaveLength(11)
     const question = screen.getByText(copy.faq.bounceQuestion)
     await userEvent.click(question)
     expect(question.closest('details')).toHaveAttribute('open')
@@ -757,14 +852,14 @@ describe('public site pages', () => {
     expect(gallery.querySelector('[class*="phoneNotch"]')).toBeNull()
     expect(scroller).toHaveAttribute('tabindex', '0')
     expect(scroller).toHaveAttribute('data-slot', 'pill-scroller')
-    expect(scroller.querySelectorAll('figure')).toHaveLength(5)
+    expect(scroller.querySelectorAll('figure')).toHaveLength(13)
     expect(scroller.querySelector('figure video')).toBeInTheDocument()
     expect(gallery.previousElementSibling).toHaveAttribute(
       'aria-labelledby',
       'landing-title',
     )
     expect(within(scroller).getAllByText(copy.screenshotPending)).toHaveLength(
-      4,
+      12,
     )
   })
 
