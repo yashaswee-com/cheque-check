@@ -2,7 +2,11 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark:where(:not(:has([data-public-site]))) *));
+
+html:has([data-public-site]) {
+  color-scheme: light !important;
+}
 
 html:has([data-public-site]),
 body:has([data-public-site]) {
@@ -255,7 +259,7 @@ html[data-reduce-motion] .premium-crown-shine::after {
   --invert-foreground: var(--color-zinc-50);
 }
 
-.dark {
+.dark:where(:not(:has([data-public-site]))) {
   --background: #000000;
   --foreground: #ffffff;
 

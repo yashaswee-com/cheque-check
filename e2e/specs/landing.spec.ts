@@ -48,6 +48,48 @@ test.describe('public landing page', () => {
     ).toBeVisible()
   })
 
+  test('returning from dark signup keeps the public site light', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await context.addCookies([
+      { name: 'NEXT_LOCALE', value: 'en', url: baseURL! },
+    ])
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await page.goto('/')
+    await page
+      .getByRole('link', {
+        name: english.PublicSite.landing.primaryCta,
+        exact: true,
+      })
+      .first()
+      .click()
+    await expect(page).toHaveURL('/signup')
+    await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark')
+    await expect(page.locator('#app-shell')).toHaveCSS(
+      'background-color',
+      'rgb(0, 0, 0)',
+    )
+
+    await page.goBack()
+    await expect(page).toHaveURL('/')
+    await expect(page.locator('html')).toHaveCSS('color-scheme', 'light')
+    await expect(page.locator('[data-public-site]')).toHaveCSS(
+      'background-color',
+      'rgb(255, 255, 255)',
+    )
+    await expect
+      .poll(() =>
+        page
+          .locator('html')
+          .evaluate((element) =>
+            getComputedStyle(element).getPropertyValue('--input').trim(),
+          ),
+      )
+      .toBe('#e0e0e0')
+  })
+
   for (const [locale, catalog] of [
     ['en', english],
     ['hi', hindi],
