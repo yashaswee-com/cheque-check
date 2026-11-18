@@ -11,6 +11,7 @@ import { PublicBrand } from '@/components/public-site/public-brand'
 import { PublicHeader } from '@/components/public-site/public-header'
 import { AppEntryLink } from '@/components/public-site/app-entry-link'
 import { CookieSettingsButton } from '@/components/public-site/cookie-settings-button'
+import { LaunchBanner } from '@/components/public-site/launch-banner'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -35,6 +36,12 @@ export default async function PublicSiteLayout({
       data-public-site
       className={`${styles.site} flex min-h-screen flex-col`}
     >
+      <LaunchBanner
+        message={t.rich('landing.announcement', {
+          b: (chunks) => <b>{chunks}</b>,
+        })}
+        closeLabel={t('landing.announcementClose')}
+      />
       <PublicHeader>
         <div className={styles.headerInner}>
           <Link href="/" className={styles.brand}>

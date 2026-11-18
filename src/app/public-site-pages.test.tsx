@@ -1,3 +1,4 @@
+import React from 'react'
 import {
   cleanup,
   fireEvent,
@@ -52,7 +53,7 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 function translator(namespace: string) {
-  return (key: string, values?: Record<string, string>) => {
+  const t = (key: string, values?: Record<string, string>) => {
     const result = namespace
       .split('.')
       .concat(key.split('.'))
@@ -69,6 +70,24 @@ function translator(namespace: string) {
       result,
     )
   }
+  return Object.assign(t, {
+    rich: (
+      key: string,
+      tags: Record<string, (chunks: React.ReactNode) => React.ReactNode>,
+    ) =>
+      t(key)
+        .split(/(<\w+>.*?<\/\w+>)/)
+        .map((part, index) => {
+          const match = part.match(/^<(\w+)>(.*)<\/\1>$/)
+          return match ? (
+            <React.Fragment key={index}>
+              {tags[match[1]](match[2])}
+            </React.Fragment>
+          ) : (
+            part
+          )
+        }),
+  })
 }
 
 function renderPage(children: React.ReactNode, locale = mocks.locale) {
