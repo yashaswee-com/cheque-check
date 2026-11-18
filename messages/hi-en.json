@@ -2247,7 +2247,7 @@
         "paymentDescription": "Aap Razorpay se pay karte hain. Payment check hone ke baad hi Premium shuru hota hai."
       },
       "securityDisclosure": "PIN screen ka ek extra lock hai. Yeh aapka data encrypt nahi karta. Apna phone aur password safe rakhein. Zyada jaankari ke liye privacy policy padhein.",
-      "announcement": "Pehle <b>100</b> naye users ko <b>3 mahine</b> ka <b>Premium</b>",
+      "announcement": "Pehle <b>100</b> naye users ko <b>3 mahine</b> ka <b>Premium free</b> milega.",
       "announcementClose": "Offer band karein",
       "sampleData": "Sample data",
       "previewGreeting": "Aaj ka hisaab, ek nazar mein.",
@@ -2414,7 +2414,6 @@
       "premiumUnavailable": "Lifetime Premium abhi purchase ke liye available nahi hai.",
       "lifetimeValue": "Ek payment · Monthly ya annual renewal nahi",
       "paymentTrust": "<logo></logo> se secure checkout",
-      "paymentVerified": "Payment verify hone ke baad hi Premium shuru hota hai.",
       "offer": "Launch offer: pehle 100 naye users ko 3 mahine ka Premium manually diya ja sakta hai. Existing users eligible nahi hain. AI-scan aur call credits included nahi hain. Signup se yeh offer automatic activate nahi hota; eligibility ke liye support se confirm karein.",
       "tableTitle": "Free aur Premium ka comparison",
       "feature": "Feature",
