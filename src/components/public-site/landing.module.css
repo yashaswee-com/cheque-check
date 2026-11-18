@@ -1251,34 +1251,13 @@ a.secondaryCta > svg {
   max-width: 100%;
 }
 .installPhone {
-  display: none;
-  width: 210px;
-  aspect-ratio: 9 / 17;
+  width: min(100%, 210px);
   margin: auto;
-  padding: 9px;
-  border: 2px solid #333333;
-  border-radius: 32px;
-  background: #1d1d1f;
-  box-shadow: 0 18px 48px rgb(0 0 0 / 12%);
 }
-.installPhone > div {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  border-radius: 23px;
-  background:
-    radial-gradient(circle at top right, var(--blue-soft), transparent 45%),
-    var(--background);
-  color: var(--primary);
-  text-align: center;
-}
-.installPhone span {
-  padding-inline: 20px;
-  font-size: 13px;
-  font-weight: 600;
+.installPhone img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 .scenarioSection .sectionHeading {
   padding-inline: 24px;
@@ -1551,9 +1530,6 @@ a.secondaryCta > svg {
   .installCopy ul {
     margin-inline: 0;
   }
-  .installPhone {
-    display: block;
-  }
   @media (min-width: 1100px) {
     .installSection {
       grid-template-columns: minmax(0, 1fr) 260px;
@@ -1593,12 +1569,6 @@ a.secondaryCta > svg {
     padding: 40px;
   }
   .featureCard[data-feature='reminders'] .featurePlaceholder,
-    grid-column: 2;
-  }
-  .featureCard[data-feature='reports'] .featurePlaceholder {
-    grid-column: 1;
-  }
-}
   .featureCard[data-feature='reports'] .featurePlaceholder {
     grid-column: 2;
     grid-row: 1 / -1;
@@ -1623,6 +1593,12 @@ a.secondaryCta > svg {
     grid-column: 2;
   }
   .featureCard[data-feature='reports'] > :last-child:not(figure) {
+    grid-column: 2;
+  }
+  .featureCard[data-feature='reports'] .featurePlaceholder {
+    grid-column: 1;
+  }
+}
 @media (min-width: 736px) {
   .bounceSection {
     padding: 96px 48px;

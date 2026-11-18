@@ -524,12 +524,14 @@ export default async function LandingPage() {
             {arrow}
           </AppEntryLink>
         </div>
-        <div className={styles.installPhone} aria-hidden="true">
-          <div>
-            <PublicBrand />
-            <span>{t('installPhoneLabel')}</span>
-          </div>
-        </div>
+        <figure className={styles.installPhone}>
+          <Image
+            src="/assets/install-phone-placeholder.svg"
+            width={240}
+            height={420}
+            alt=""
+          />
+        </figure>
       </section>
 
       <section
