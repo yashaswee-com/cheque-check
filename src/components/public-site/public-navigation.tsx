@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useRef, useState } from 'react'
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover'
 import { useTranslations } from 'next-intl'
@@ -25,6 +26,11 @@ export function PublicNavigation({
   const t = useTranslations('PublicSite')
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const pathname = usePathname()
+
+  if (pathname === '/') {
+    return <LocalePicker locale={locale} />
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

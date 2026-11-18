@@ -1,22 +1,45 @@
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Tick02Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
 import { PRODUCT_IDS } from '@/features/monetization/constants'
 import { PREMIUM_FEATURES } from '@/features/monetization/lib/premium-access'
 import type { PublicProduct } from '@/features/public-site/repositories/public-pricing.repository'
 import { AppEntryLink } from './app-entry-link'
+import { PremiumMarkBadge } from '@/features/monetization/components/premium-mark'
 
 export function PlanComparison({
   products,
   detailed = false,
   loadFailed = false,
+  compact = false,
 }: {
   products: PublicProduct[]
   detailed?: boolean
   loadFailed?: boolean
+  compact?: boolean
 }) {
   const t = useTranslations('PublicSite.comparison')
   const tp = useTranslations('PublicSite.pricing')
   const premium = useTranslations('Premium')
+  const included = (
+    <span
+      role="img"
+      aria-label={t('included')}
+      className="inline-flex text-green-700"
+    >
+      <HugeiconsIcon icon={Tick02Icon} size={22} aria-hidden="true" />
+    </span>
+  )
+  const notIncluded = (
+    <span
+      role="img"
+      aria-label={t('notIncluded')}
+      className="inline-flex text-red-600"
+    >
+      <HugeiconsIcon icon={Cancel01Icon} size={22} aria-hidden="true" />
+    </span>
+  )
   const product = products.find(({ id }) => id === PRODUCT_IDS.LIFETIME_PREMIUM)
   const features = PREMIUM_FEATURES.filter(
     (feature) => feature !== 'unlimited-cheques',
@@ -40,21 +63,36 @@ export function PlanComparison({
           <p className="text-sm text-muted-foreground">
             {t('freeDescription')}
           </p>
-          <ul className="space-y-3 text-sm">
-            <li>{t('freeLimit')}</li>
-            <li>{t('coreDescription')}</li>
-            <li>{t('creditsSeparate')}</li>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-center gap-2">
+              {included}
+              {t('freeLimit')}
+            </li>
+            <li className="flex items-center gap-2">
+              {included}
+              {t('core')}
+            </li>
+            {(['reports', 'bulk-import'] as const).map((feature) => (
+              <li key={feature} className="flex items-center gap-2">
+                {notIncluded}
+                {premium(`features.${feature}`)}
+              </li>
+            ))}
+            {!compact && <li>{t('creditsSeparate')}</li>}
           </ul>
-          <AppEntryLink
-            href="/signup"
-            className="mt-auto inline-flex min-h-11 items-center justify-center rounded-full border border-primary px-5 font-semibold text-primary"
-          >
-            {t('startFree')}
-          </AppEntryLink>
+          {!compact && (
+            <AppEntryLink
+              href="/signup"
+              className="mt-auto inline-flex min-h-11 items-center justify-center rounded-full border border-primary px-5 font-semibold text-primary"
+            >
+              {t('startFree')}
+            </AppEntryLink>
+          )}
         </article>
         <article className="flex flex-col gap-5 rounded-[18px] border border-primary/30 bg-blue-50/60 p-6 sm:p-8">
-          <PlanHeading className="font-heading text-2xl font-bold">
+          <PlanHeading className="flex items-center gap-2 font-heading text-2xl font-bold">
             {t('premium')}
+            <PremiumMarkBadge />
           </PlanHeading>
           {price ? (
             <div>
@@ -70,15 +108,26 @@ export function PlanComparison({
             </p>
           )}
           <p className="text-sm text-muted-foreground">
-            {t('premiumDescription')}
+            {t(compact ? 'premiumSummary' : 'premiumDescription')}
           </p>
-          <ul className="space-y-3 text-sm">
-            <li>{t('unlimited')}</li>
-            <li>{premium('features.reports')}</li>
-            <li>{premium('features.bulk-import')}</li>
-            <li>{t('creditsSeparate')}</li>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-center gap-2">
+              {included}
+              {t('unlimited')}
+            </li>
+            <li className="flex items-center gap-2">
+              {included}
+              {t('core')}
+            </li>
+            {(['reports', 'bulk-import'] as const).map((feature) => (
+              <li key={feature} className="flex items-center gap-2">
+                {included}
+                {premium(`features.${feature}`)}
+              </li>
+            ))}
+            {!compact && <li>{t('creditsSeparate')}</li>}
           </ul>
-          {product && (
+          {!compact && product && (
             <AppEntryLink
               href={`/features/catalog?purchase=${encodeURIComponent(product.id)}`}
               className="mt-auto inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 font-semibold text-white"
@@ -88,15 +137,17 @@ export function PlanComparison({
           )}
         </article>
       </div>
-      <aside className="rounded-xl border border-primary/15 bg-white p-4 text-sm leading-relaxed">
-        <p>{t('offer')}</p>
-        <Link
-          href="/contact"
-          className="mt-2 inline-flex min-h-11 items-center font-semibold text-primary underline underline-offset-4"
-        >
-          {premium('contactSupport')}
-        </Link>
-      </aside>
+      {!compact && (
+        <aside className="rounded-xl border border-primary/15 bg-white p-4 text-sm leading-relaxed">
+          <p>{t('offer')}</p>
+          <Link
+            href="/contact"
+            className="mt-2 inline-flex min-h-11 items-center font-semibold text-primary underline underline-offset-4"
+          >
+            {premium('contactSupport')}
+          </Link>
+        </aside>
+      )}
       {detailed && (
         <div
           className="overflow-x-auto rounded-[18px] border border-primary/15"
@@ -133,8 +184,8 @@ export function PlanComparison({
                 <th scope="row" className="p-4 text-left font-medium">
                   {t('core')}
                 </th>
-                <td className="p-4 text-center">{t('included')}</td>
-                <td className="p-4 text-center">{t('included')}</td>
+                <td className="p-4 text-center">{included}</td>
+                <td className="p-4 text-center">{included}</td>
               </tr>
               {features.map((feature) => (
                 <tr
@@ -147,8 +198,8 @@ export function PlanComparison({
                       {premium(`descriptions.${feature}`)}
                     </span>
                   </th>
-                  <td className="p-4 text-center">{t('notIncluded')}</td>
-                  <td className="p-4 text-center">{t('included')}</td>
+                  <td className="p-4 text-center">{notIncluded}</td>
+                  <td className="p-4 text-center">{included}</td>
                 </tr>
               ))}
               <tr className="border-t border-primary/10 bg-white">
@@ -162,9 +213,11 @@ export function PlanComparison({
           </table>
         </div>
       )}
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        {t('limitNote')}
-      </p>
+      {!compact && (
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          {t('limitNote')}
+        </p>
+      )}
     </div>
   )
 }

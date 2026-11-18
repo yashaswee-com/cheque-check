@@ -10,7 +10,6 @@ import {
   ArrowDown01Icon,
   BankIcon,
   Call02Icon,
-  CheckmarkCircle02Icon,
   DeliveryBox01Icon,
   Download01Icon,
   File02Icon,
@@ -30,6 +29,8 @@ import { PlanComparison } from '@/components/public-site/plan-comparison'
 import { publicPricingService } from '@/features/public-site/services/public-pricing.service'
 import type { PublicProduct } from '@/features/public-site/repositories/public-pricing.repository'
 import { logger } from '@/lib/logger'
+import { getWhatsAppSupportLink } from '@/lib/whatsapp'
+import { WhatsAppLogo } from '@/components/public-site/whatsapp-logo'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite.landing')
@@ -42,16 +43,23 @@ export async function generateMetadata(): Promise<Metadata> {
 const STEPS = [
   { key: 'stepRecord', icon: ScanIcon },
   { key: 'stepRemind', icon: Call02Icon },
-  { key: 'stepTrack', icon: Download01Icon },
+  { key: 'stepTrack', icon: BankIcon },
 ] as const
 
 const FEATURES = [
-  { key: 'cheques', icon: ScanIcon },
-  { key: 'reminders', icon: Call02Icon },
-  { key: 'accounts', icon: BankIcon },
-  { key: 'parties', icon: UserGroupIcon },
-  { key: 'reports', icon: Download01Icon },
+  'reminders',
+  'cheques',
+  'accounts',
+  'parties',
+  'reports',
 ] as const
+const FEATURE_ICONS = {
+  reminders: Call02Icon,
+  cheques: ScanIcon,
+  accounts: BankIcon,
+  parties: UserGroupIcon,
+  reports: Download01Icon,
+}
 
 const PROBLEMS = [
   { key: 'dates', icon: Call02Icon },
@@ -61,6 +69,7 @@ const PROBLEMS = [
 
 export default async function LandingPage() {
   const t = await getTranslations('PublicSite.landing')
+  const demoLink = getWhatsAppSupportLink(t('bookDemoMessage'))
   const supabase = await createClient()
   const {
     data: { user },
@@ -89,10 +98,9 @@ export default async function LandingPage() {
     <main className={styles.landing}>
       <section className={styles.hero} aria-labelledby="landing-title">
         <div className={styles.heroCopy}>
-          <p className={styles.earlyAccess}>{t('eyebrow')}</p>
+          <p className={styles.earlyAccess}>{t('heroAudience')}</p>
           <h1 id="landing-title" aria-label={t('title')}>
-            {t('titleLead')}
-            <br />
+            <span>{t('titleLead')}</span>
             <span className={styles.marked}>{t('titleHighlight')}</span>
           </h1>
           <p className={styles.heroDescription}>{t('description')}</p>
@@ -101,35 +109,61 @@ export default async function LandingPage() {
               {t('primaryCta')}
               {arrow}
             </AppEntryLink>
+            <a
+              href={demoLink}
+              target="_blank"
+              rel="noreferrer"
+              className={styles.secondaryCta}
+            >
+              <WhatsAppLogo />
+              {t('secondaryCta')}
+            </a>
           </div>
-          <ul className={styles.trust}>
-            {(['trustFree', 'trustReminders', 'trustAi'] as const).map(
+          <p className={styles.signupNote}>{t('trialNote')}</p>
+        </div>
+      </section>
+
+      <section
+        className={`${styles.section} ${styles.gallerySection}`}
+        aria-labelledby="screenshots-title"
+      >
+        <div className={styles.sectionHeading}>
+          <h2 id="screenshots-title">{t('screenshotsTitle')}</h2>
+          <p>{t('screenshotsDescription')}</p>
+        </div>
+        <div className={styles.scenarioScroller}>
+          <PillScroller
+            floatingControls
+            className={styles.phoneGallery}
+            role="region"
+            aria-label={t('screenshotsTitle')}
+            tabIndex={0}
+          >
+            <figure
+              id="product-demo"
+              aria-label={t('videoLabel')}
+              data-testid="landing-video"
+              className={styles.phoneSlide}
+            >
+              <div className={`${styles.phoneFrame} ${styles.phoneVideo}`}>
+                <DemoMedia kind="video" />
+              </div>
+              <figcaption>{t('videoTitle')}</figcaption>
+            </figure>
+            {(['cheques', 'reminders', 'accounts', 'parties'] as const).map(
               (key) => (
-                <li key={key}>
-                  <HugeiconsIcon
-                    icon={CheckmarkCircle02Icon}
-                    size={16}
-                    aria-hidden="true"
-                  />
-                  {t(key)}
-                </li>
+                <figure className={styles.phoneSlide} key={key}>
+                  <div className={styles.phoneFrame}>
+                    <div className={styles.phoneScreen}>
+                      <strong>{t(key)}</strong>
+                      <p>{t('screenshotPending')}</p>
+                    </div>
+                  </div>
+                  <figcaption>{t(key)}</figcaption>
+                </figure>
               ),
             )}
-          </ul>
-        </div>
-
-        <div className={styles.showcase}>
-          <figure
-            id="product-demo"
-            aria-label={t('videoLabel')}
-            data-testid="landing-video"
-            className={styles.videoFrame}
-          >
-            <DemoMedia kind="video" />
-            <figcaption className={styles.videoCaption}>
-              {t('videoFormat')}
-            </figcaption>
-          </figure>
+          </PillScroller>
         </div>
       </section>
 
@@ -143,7 +177,10 @@ export default async function LandingPage() {
         aria-labelledby="problem-title"
       >
         <div className={styles.sectionHeading}>
-          <p className={styles.eyebrow}>{t('problemEyebrow')}</p>
+          <p className={styles.eyebrow}>
+            <HugeiconsIcon icon={File02Icon} size={14} aria-hidden="true" />
+            {t('problemEyebrow')}
+          </p>
           <h2 id="problem-title">{t('problemTitle')}</h2>
           <p>{t('problemDescription')}</p>
         </div>
@@ -158,12 +195,14 @@ export default async function LandingPage() {
             </article>
           ))}
         </div>
-        <p className={styles.problemClose}>{t('problemClose')}</p>
       </section>
 
       <section className={styles.section} aria-labelledby="how-title">
         <div className={styles.sectionHeading}>
-          <p className={styles.eyebrow}>{t('howEyebrow')}</p>
+          <p className={styles.eyebrow}>
+            <HugeiconsIcon icon={ScanIcon} size={14} aria-hidden="true" />
+            {t('howEyebrow')}
+          </p>
           <h2 id="how-title">{t('howTitle')}</h2>
           <p>{t('howDescription')}</p>
         </div>
@@ -188,132 +227,69 @@ export default async function LandingPage() {
         aria-labelledby="features-title"
       >
         <div className={styles.sectionHeading}>
-          <p className={styles.eyebrow}>{t('featureEyebrow')}</p>
+          <p className={styles.eyebrow}>
+            <HugeiconsIcon icon={BankIcon} size={14} aria-hidden="true" />
+            {t('featureEyebrow')}
+          </p>
           <h2 id="features-title">{t('sectionTitle')}</h2>
           <p>{t('sectionDescription')}</p>
         </div>
         <div className={styles.bento}>
-          {FEATURES.map(({ key, icon }) => (
+          {FEATURES.map((key) => (
             <article
               key={key}
               className={styles.featureCard}
               data-feature={key}
             >
               <div className={styles.featureCopy}>
-                <span className={styles.featureIcon}>
-                  <PublicIcon icon={icon} size={28} />
-                </span>
-                <h3>{t(key)}</h3>
+                <h3>
+                  <PublicIcon icon={FEATURE_ICONS[key]} size={24} />
+                  {t(key)}
+                </h3>
                 <p>{t(`${key}Description`)}</p>
               </div>
-              <div className={styles.featureVisual}>
-                {key === 'cheques' && (
-                  <div className={styles.scanVisual}>
-                    <span className={styles.scanLabel}>
-                      <PublicIcon icon={ScanIcon} size={18} />
-                      {t('scanExampleTitle')}
-                    </span>
-                    <div
-                      className={styles.gifPlaceholder}
-                      role="img"
-                      aria-label={t('scanGifPending')}
-                    >
-                      <PublicIcon icon={ScanIcon} size={40} />
-                      <strong>{t('scanGifTitle')}</strong>
-                      <span>{t('scanGifPending')}</span>
-                    </div>
-                    <p>{t('scanExampleNote')}</p>
-                  </div>
-                )}
-                {key === 'reminders' && (
-                  <div className={styles.callVisual}>
-                    <span className={styles.callStatus}>
-                      {t('callExampleStatus')}
-                    </span>
-                    <span className={styles.callAvatar}>
-                      <PublicIcon icon={Call02Icon} size={32} />
-                    </span>
-                    <strong>{t('reminderExampleTitle')}</strong>
-                    <p>{t('reminderExampleDescription')}</p>
-                    <div className={styles.callWave} aria-hidden="true">
-                      {[12, 24, 16, 32, 20, 28, 12, 24, 16].map(
-                        (height, index) => (
-                          <span key={index} style={{ height }} />
-                        ),
-                      )}
-                    </div>
-                    <span className={styles.callNote}>
-                      {t('callExampleNote')}
-                    </span>
-                    <DemoMedia kind="audio" />
-                    <p className={styles.mediaAccessibility}>
-                      {t('audioTranscriptPending')}
-                    </p>
-                  </div>
-                )}
-                {key === 'accounts' && (
-                  <div className={styles.accountVisual}>
-                    <span>
-                      <span aria-hidden="true">SBI</span>
-                      {t('sampleBankA')}
-                    </span>
-                    <span>
-                      <span aria-hidden="true">HDFC</span>
-                      {t('sampleBankB')}
-                    </span>
-                  </div>
-                )}
-                {key === 'parties' && (
-                  <div className={styles.partyVisual}>
-                    <div className={styles.avatarGroup}>
-                      {[1, 2].map((index) => (
-                        <Image
-                          key={index}
-                          src={`/assets/party-portrait-${index}.webp`}
-                          width={128}
-                          height={128}
-                          alt=""
-                        />
-                      ))}
-                    </div>
-                    <p>{t('partyPhotosNote')}</p>
-                  </div>
-                )}
-                {key === 'reports' && (
-                  <div className={styles.downloadVisual}>
-                    <span className={styles.downloadIcon}>
-                      <PublicIcon icon={Download01Icon} size={28} />
-                    </span>
-                    <strong>{t('reportExampleTitle')}</strong>
-                    <p>{t('reportExampleNote')}</p>
-                    <div
-                      className={styles.downloadFormats}
-                      aria-label={t('reportFormats')}
-                    >
-                      <span>
-                        PDF{' '}
-                        <HugeiconsIcon
-                          icon={Download01Icon}
-                          size={16}
-                          aria-hidden="true"
-                        />
-                      </span>
-                      <span>
-                        Excel{' '}
-                        <HugeiconsIcon
-                          icon={Download01Icon}
-                          size={16}
-                          aria-hidden="true"
-                        />
-                      </span>
-                    </div>
-                    <p>{t('reportSamplePending')}</p>
-                  </div>
-                )}
-                <span className={styles.visualCaption}>
-                  {t('illustrationLabel')}
-                </span>
-              </div>
+              {(key === 'cheques' ||
+                key === 'accounts' ||
+                key === 'parties') && (
+                <figure className={styles.featurePlaceholder}>
+                  <Image
+                    src="/assets/feature-placeholder.svg"
+                    width={960}
+                    height={540}
+                    sizes="(max-width: 736px) 100vw, 900px"
+                    alt={t('imagePlaceholder', { feature: t(key) })}
+                  />
+                </figure>
+              )}
+              {key === 'reminders' && <DemoMedia kind="audio" />}
+              {key === 'reports' && (
+                <div className={styles.reportDownloads}>
+                  <a
+                    href="/assets/business-overview-sample-en.pdf"
+                    download="cheque-check-sample-report-en.pdf"
+                    className={styles.secondaryCta}
+                  >
+                    PDF
+                    <HugeiconsIcon
+                      icon={Download01Icon}
+                      size={18}
+                      aria-hidden="true"
+                    />
+                  </a>
+                  <button
+                    type="button"
+                    className={styles.secondaryCta}
+                    disabled
+                  >
+                    CSV
+                    <HugeiconsIcon
+                      icon={Download01Icon}
+                      size={18}
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+              )}
             </article>
           ))}
         </div>
@@ -329,26 +305,45 @@ export default async function LandingPage() {
         aria-labelledby="pricing-title"
       >
         <div className={styles.pricingInner}>
-          <p className={styles.eyebrow}>{t('pricingEyebrow')}</p>
+          <p className={styles.eyebrow}>
+            <HugeiconsIcon
+              icon={Analytics01Icon}
+              size={14}
+              aria-hidden="true"
+            />
+            {t('pricingEyebrow')}
+          </p>
           <h2 id="pricing-title">{t('pricingTitle')}</h2>
           <p>{t('pricingDescription')}</p>
         </div>
         <div className="mx-auto my-8 max-w-4xl">
-          <PlanComparison products={products} loadFailed={pricingFailed} />
+          <p className={styles.earlyAccess}>{t('eyebrow')}</p>
+          <PlanComparison
+            products={products}
+            loadFailed={pricingFailed}
+            compact
+          />
         </div>
         <div className={styles.pricingInner}>
-          <Link href="/pricing" className={styles.primaryCta}>
+          <AppEntryLink href="/signup" className={styles.primaryCta}>
+            {t('primaryCta')}
+            {arrow}
+          </AppEntryLink>
+          <p className={styles.signupNote}>{t('trialNote')}</p>
+          <Link href="/pricing" className={styles.textLink}>
             <HugeiconsIcon icon={BankIcon} size={20} aria-hidden="true" />
             {t('pricingCta')}
             {arrow}
           </Link>
-          <span className={styles.pricingNote}>{t('pricingNote')}</span>
         </div>
       </section>
 
       <section className={styles.section} aria-labelledby="faq-title">
         <div className={styles.sectionHeading}>
-          <p className={styles.eyebrow}>{t('faqEyebrow')}</p>
+          <p className={styles.eyebrow}>
+            <HugeiconsIcon icon={File02Icon} size={14} aria-hidden="true" />
+            {t('faqEyebrow')}
+          </p>
           <h2 id="faq-title">{t('faqTitle')}</h2>
         </div>
         <div className={styles.faq}>
@@ -376,7 +371,7 @@ export default async function LandingPage() {
           ))}
         </div>
         <p className={styles.faqContact}>
-          {t('faqContact')}{' '}
+          <span>{t('faqContact')}</span>
           <Link href="/contact" className={styles.textLink}>
             <HugeiconsIcon icon={File02Icon} size={20} aria-hidden="true" />
             {t('contactCta')}
@@ -390,17 +385,18 @@ export default async function LandingPage() {
         aria-labelledby="scenarios-title"
       >
         <div className={styles.sectionHeading}>
-          <p className={styles.eyebrow}>{t('scenarioEyebrow')}</p>
+          <p className={styles.eyebrow}>
+            <HugeiconsIcon icon={UserGroupIcon} size={14} aria-hidden="true" />
+            {t('scenarioEyebrow')}
+          </p>
           <h2 id="scenarios-title">{t('scenarioTitle')}</h2>
-          <p>{t('scenarioDisclosure')}</p>
         </div>
-        <p className={styles.swipeHint}>{t('swipeHint')}</p>
         <div className={styles.scenarioScroller}>
           <PillScroller
             floatingControls
             className={styles.scenarios}
             role="region"
-            aria-label={t('swipeHint')}
+            aria-label={t('scenarioTitle')}
             tabIndex={0}
           >
             {(['owner', 'accountant', 'distributor'] as const).map(
@@ -425,7 +421,7 @@ export default async function LandingPage() {
                     <span aria-hidden="true">0{index + 1}</span>
                     <div>
                       <strong>{t(`scenarios.${key}Role`)}</strong>
-                      <span>{t('scenarioLabel')}</span>
+                      <span>{t(`scenarios.${key}Business`)}</span>
                     </div>
                   </div>
                 </article>
@@ -444,15 +440,26 @@ export default async function LandingPage() {
         </p>
         <h2 id="final-title">{t('ctaTitle')}</h2>
         <p>{t('ctaDescription')}</p>
-        <AppEntryLink
-          href="/signup"
-          data-testid="landing-final-cta"
-          className={styles.primaryCta}
-        >
-          {t('primaryCta')}
-          {arrow}
-        </AppEntryLink>
-        <span className={styles.finalNote}>{t('heroNote')}</span>
+        <div className={`${styles.actions} ${styles.finalActions}`}>
+          <AppEntryLink
+            href="/signup"
+            data-testid="landing-final-cta"
+            className={styles.primaryCta}
+          >
+            {t('primaryCta')}
+            {arrow}
+          </AppEntryLink>
+          <a
+            href={demoLink}
+            target="_blank"
+            rel="noreferrer"
+            className={styles.secondaryCta}
+          >
+            <WhatsAppLogo />
+            {t('secondaryCta')}
+          </a>
+        </div>
+        <span className={styles.finalNote}>{t('trialNote')}</span>
       </section>
     </main>
   )

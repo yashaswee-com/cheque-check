@@ -5,10 +5,7 @@ import { Analytics01Icon, Login01Icon } from '@hugeicons/core-free-icons'
 import { PublicNavigation } from '@/components/public-site/public-navigation'
 import styles from '@/components/public-site/landing.module.css'
 import { PUBLIC_NAV_LINKS } from '@/components/public-site/navigation-links'
-import {
-  PUBLIC_NAV_GROUPS,
-  PUBLIC_NAV_GROUP_ICONS,
-} from '@/components/public-site/navigation-links'
+import { PUBLIC_NAV_GROUPS } from '@/components/public-site/navigation-links'
 import { PublicIcon } from '@/components/public-site/public-icon'
 import { PublicBrand } from '@/components/public-site/public-brand'
 import { PublicHeader } from '@/components/public-site/public-header'
@@ -74,7 +71,46 @@ export default async function PublicSiteLayout({
                 aria-labelledby={`footer-${group}`}
               >
                 <h2 id={`footer-${group}`}>
-                  <PublicIcon icon={PUBLIC_NAV_GROUP_ICONS[group]} size={18} />
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 18 18"
+                    aria-hidden="true"
+                    className={styles.footerSectionIcon}
+                  >
+                    <rect
+                      x="3"
+                      y="3"
+                      width="4"
+                      height="4"
+                      rx="1"
+                      fill="currentColor"
+                    />
+                    <rect
+                      x="11"
+                      y="3"
+                      width="4"
+                      height="4"
+                      rx="1"
+                      fill="currentColor"
+                    />
+                    <rect
+                      x="3"
+                      y="11"
+                      width="4"
+                      height="4"
+                      rx="1"
+                      fill="currentColor"
+                    />
+                    <rect
+                      x="11"
+                      y="11"
+                      width="4"
+                      height="4"
+                      rx="1"
+                      fill="currentColor"
+                    />
+                  </svg>
                   {t(`footer.${group}`)}
                 </h2>
                 <ul>

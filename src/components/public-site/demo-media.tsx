@@ -37,7 +37,7 @@ export function DemoMedia({ kind }: { kind: 'video' | 'audio' }) {
     ref: (element: HTMLMediaElement | null) => {
       mediaRef.current = element
     },
-    controls: started,
+    controls: isVideo && started,
     preload: 'none' as const,
     onPlay: () => setPlaying(true),
     onPause: () => setPlaying(false),

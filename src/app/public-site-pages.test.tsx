@@ -1,4 +1,10 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -16,6 +22,7 @@ import { PREMIUM_FEATURES } from '@/features/monetization/lib/premium-access'
 const catalogs = { en: english, hi: hindi, 'hi-en': hinglish }
 const mocks = vi.hoisted(() => ({
   locale: 'en' as 'en' | 'hi' | 'hi-en',
+  pathname: '/',
   getUser: vi.fn(),
   redirect: vi.fn(),
   getTranslations: vi.fn(),
@@ -31,7 +38,7 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({ auth: { getUser: mocks.getUser } }),
 }))
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
+  usePathname: () => mocks.pathname,
   redirect: (href: string) => {
     mocks.redirect(href)
     throw new Error(`NEXT_REDIRECT:${href}`)
@@ -74,6 +81,7 @@ function renderPage(children: React.ReactNode, locale = mocks.locale) {
 
 beforeEach(() => {
   mocks.locale = 'en'
+  mocks.pathname = '/'
   mocks.getUser.mockResolvedValue({ data: { user: null }, error: null })
   mocks.getTranslations.mockImplementation(async (namespace: string) =>
     translator(namespace),
@@ -111,7 +119,7 @@ describe('public site pages', () => {
       const ctas = screen.getAllByRole('link', {
         name: catalog.PublicSite.landing.primaryCta,
       })
-      expect(ctas).toHaveLength(2)
+      expect(ctas).toHaveLength(3)
       for (const cta of ctas) {
         expect(cta).toHaveAttribute('href', '/signup')
         expect(cta).toHaveAttribute('data-app-entry')
@@ -143,6 +151,76 @@ describe('public site pages', () => {
       ).toBeVisible()
       expect(screen.queryByRole('table')).not.toBeInTheDocument()
       expect(screen.getByText('₹300.00')).toBeVisible()
+      expect(
+        screen.getAllByText(catalog.PublicSite.landing.trialNote),
+      ).toHaveLength(3)
+      for (const cta of ctas) {
+        const note = cta.closest('div')?.className.includes('actions')
+          ? cta.parentElement?.nextElementSibling
+          : cta.nextElementSibling
+        expect(note).toHaveTextContent(catalog.PublicSite.landing.trialNote)
+      }
+      expect(
+        screen.queryByText(catalog.PublicSite.landing.starterSummary),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByText(catalog.PublicSite.comparison.creditsSeparate),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByText(catalog.PublicSite.comparison.offer),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByText(catalog.PublicSite.landing.pricingNote),
+      ).not.toBeInTheDocument()
+      for (const feature of ['cheques', 'accounts', 'parties'] as const) {
+        expect(
+          screen.getByRole('img', {
+            name: catalog.PublicSite.landing.imagePlaceholder.replace(
+              '{feature}',
+              catalog.PublicSite.landing[feature],
+            ),
+          }),
+        ).toHaveAttribute('src', '/assets/feature-placeholder.svg')
+      }
+      const hero = screen.getByRole('region', {
+        name: catalog.PublicSite.landing.title,
+      })
+      expect(within(hero).queryByRole('list')).not.toBeInTheDocument()
+      for (const plan of [
+        catalog.PublicSite.comparison.free,
+        catalog.PublicSite.comparison.premium,
+      ]) {
+        const card = screen
+          .getByRole('heading', { name: plan })
+          .closest('article')!
+        expect(within(card).getAllByRole('img').length).toBeGreaterThanOrEqual(
+          4,
+        )
+      }
+      expect(
+        screen
+          .getByRole('heading', {
+            name: catalog.PublicSite.comparison.premium,
+          })
+          .querySelector('[data-slot="premium-mark"]'),
+      ).toBeInTheDocument()
+      const chatLinks = screen.getAllByRole('link', {
+        name: catalog.PublicSite.landing.secondaryCta,
+      })
+      expect(chatLinks).toHaveLength(2)
+      for (const chat of chatLinks) {
+        const demo = new URL(chat.getAttribute('href')!)
+        expect(demo.origin).toBe('https://wa.me')
+        expect(demo.searchParams.get('text')).toBe(
+          catalog.PublicSite.landing.bookDemoMessage,
+        )
+        expect(chat.querySelector('[data-whatsapp-logo]')).toBeInTheDocument()
+      }
+      expect(
+        screen.queryByRole('link', {
+          name: catalog.PublicSite.pricing.purchase,
+        }),
+      ).not.toBeInTheDocument()
       expect(document.querySelector('main')?.textContent).not.toMatch(
         /CHEQUE-CHECK|ChequeCheck/,
       )
@@ -152,7 +230,12 @@ describe('public site pages', () => {
       })
       expect(within(finalSection).getByText('Cheque Check')).toBeVisible()
       expect(finalSection.querySelector('img')).toBeInTheDocument()
-      expect(finalSection.querySelectorAll('svg')).toHaveLength(1)
+      expect(finalSection.querySelectorAll('svg')).toHaveLength(2)
+      expect(
+        within(finalSection).getByRole('link', {
+          name: catalog.PublicSite.landing.secondaryCta,
+        }),
+      ).toBeVisible()
     },
   )
 
@@ -229,10 +312,14 @@ describe('public site pages', () => {
           ),
         })
         expect(
-          within(row).getByText(catalog.PublicSite.comparison.notIncluded),
+          within(row).getByRole('img', {
+            name: catalog.PublicSite.comparison.notIncluded,
+          }),
         ).toBeVisible()
         expect(
-          within(row).getByText(catalog.PublicSite.comparison.included),
+          within(row).getByRole('img', {
+            name: catalog.PublicSite.comparison.included,
+          }),
         ).toBeVisible()
       }
       expect(
@@ -339,6 +426,7 @@ describe('public site pages', () => {
   })
 
   it('keeps navigation and language selection in the three-dot menu', async () => {
+    mocks.pathname = '/features'
     const user = userEvent.setup()
     const layout = await PublicSiteLayout({ children: <p>Page content</p> })
     renderPage(layout)
@@ -403,6 +491,31 @@ describe('public site pages', () => {
     expect(trigger).toHaveFocus()
   })
 
+  it('keeps homepage navigation in the footer while retaining language and sign-in controls', async () => {
+    renderPage(await PublicSiteLayout({ children: <p>Page content</p> }))
+    const header = within(screen.getByRole('banner'))
+    expect(
+      header.queryByRole('button', {
+        name: english.PublicSite.nav.navigation,
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      header.getByRole('combobox', {
+        name: english.PublicSite.nav.language,
+      }),
+    ).toBeVisible()
+    expect(
+      header.getByRole('link', {
+        name: english.PublicSite.nav.signIn,
+      }),
+    ).toHaveAttribute('href', '/login')
+    expect(
+      within(screen.getByRole('contentinfo')).getByRole('link', {
+        name: english.PublicSite.nav.features,
+      }),
+    ).toHaveAttribute('href', '/features')
+  })
+
   it('pauses and resumes the industry marquee without repeating accessible content', async () => {
     renderPage(await LandingPage())
     const pause = screen.getByRole('button', {
@@ -427,7 +540,7 @@ describe('public site pages', () => {
     expect(pause).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('highlights AI scanning, phone calls and Premium report downloads with safe example visuals', async () => {
+  it('keeps feature cards focused on their description and the real audio control', async () => {
     renderPage(await LandingPage())
     const copy = english.PublicSite.landing
     const features = within(
@@ -437,9 +550,39 @@ describe('public site pages', () => {
       expect(features.getByRole('heading', { name: copy[key] })).toBeVisible()
       expect(features.getByText(copy[`${key}Description`])).toBeVisible()
     }
-    expect(screen.getByText(copy.callExampleNote)).toBeVisible()
-    expect(screen.getByText(copy.scanExampleNote)).toBeVisible()
-    expect(screen.getByText(copy.reportExampleNote)).toBeVisible()
+    const cards = screen
+      .getByRole('region', { name: copy.sectionTitle })
+      .querySelectorAll('article')
+    expect(cards).toHaveLength(5)
+    for (const card of cards) {
+      expect(within(card).getAllByRole('heading')).toHaveLength(1)
+      const isReports = card.getAttribute('data-feature') === 'reports'
+      expect(card.querySelectorAll('p')).toHaveLength(1)
+      const isReminder = card.getAttribute('data-feature') === 'reminders'
+      expect(within(card).queryAllByRole('button')).toHaveLength(
+        isReminder || isReports ? 1 : 0,
+      )
+      expect(card.querySelectorAll('svg')).toHaveLength(
+        isReminder ? 2 : isReports ? 3 : 1,
+      )
+    }
+    expect(features.getByRole('button', { name: copy.audioPlay })).toBeVisible()
+    expect(features.getByRole('button', { name: 'CSV' })).toBeDisabled()
+    const pdf = features.getByRole('link', { name: 'PDF' })
+    expect(pdf).toHaveAttribute(
+      'href',
+      '/assets/business-overview-sample-en.pdf',
+    )
+    expect(pdf).toHaveAttribute('download', 'cheque-check-sample-report-en.pdf')
+    expect(
+      features.queryByText(copy.sampleReportsPending),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.watchDemo)).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.videoFormat)).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.creditNote)).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.callExampleNote)).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.illustrationLabel)).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.reportFormats)).not.toBeInTheDocument()
     expect(
       within(screen.getByRole('region', { name: copy.howTitle })).getByRole(
         'heading',
@@ -476,6 +619,7 @@ describe('public site pages', () => {
     const copy = hinglish.PublicSite.landing
     const headings = screen.getAllByRole('heading', { level: 2 })
     expect(headings.map((heading) => heading.textContent)).toEqual([
+      copy.screenshotsTitle,
       copy.problemTitle,
       copy.howTitle,
       copy.sectionTitle,
@@ -486,8 +630,13 @@ describe('public site pages', () => {
     ])
     expect(screen.getByRole('button', { name: copy.videoPlay })).toBeVisible()
     expect(screen.queryByText(copy.sampleData)).not.toBeInTheDocument()
-    expect(screen.getByText(copy.scenarioDisclosure)).toBeVisible()
-    expect(screen.getAllByText(copy.scenarioLabel)).toHaveLength(3)
+    expect(screen.queryByText(copy.scenarioDisclosure)).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.scenarioLabel)).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.swipeHint)).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.problemClose)).not.toBeInTheDocument()
+    for (const key of ['owner', 'accountant', 'distributor'] as const) {
+      expect(screen.getByText(copy.scenarios[`${key}Business`])).toBeVisible()
+    }
     expect(screen.getByRole('link', { name: copy.pricingCta })).toHaveAttribute(
       'href',
       '/pricing',
@@ -498,19 +647,45 @@ describe('public site pages', () => {
     expect(video).not.toHaveAttribute('src')
     expect(video).toHaveAttribute('poster', '/assets/demo-poster.jpg')
     expect(video).not.toHaveAttribute('autoplay')
-    expect(screen.getByRole('img', { name: copy.scanGifPending })).toBeVisible()
-    expect(screen.getByText(copy.reportSamplePending)).toBeVisible()
-    const trust = screen
-      .getByRole('region', { name: copy.title })
-      .querySelector('ul')!
-    expect(within(trust).getAllByRole('listitem')).toHaveLength(3)
-    expect(trust.querySelectorAll('svg')).toHaveLength(3)
-    expect(within(trust).getByText(copy.trustAi)).toBeVisible()
+    expect(
+      screen.queryByRole('img', { name: copy.scanGifPending }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.reportSamplePending)).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.scanSummary)).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.partySummary)).not.toBeInTheDocument()
+    expect(screen.queryByText(copy.partyPhotosNote)).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('region', { name: copy.title }).querySelector('ul'),
+    ).not.toBeInTheDocument()
     expect(document.querySelectorAll('details')).toHaveLength(6)
     const question = screen.getByText(copy.faq.bounceQuestion)
     await userEvent.click(question)
     expect(question.closest('details')).toHaveAttribute('open')
     expect(screen.getByText(copy.faq.bounceAnswer)).toBeVisible()
+  })
+
+  it('renders phone-frame placeholders in the shared accessible horizontal scroller', async () => {
+    renderPage(await LandingPage())
+    const copy = english.PublicSite.landing
+    const gallery = screen
+      .getByRole('heading', { name: copy.screenshotsTitle })
+      .closest('section')!
+    const scroller = within(gallery).getByRole('region', {
+      name: copy.screenshotsTitle,
+    })
+    expect(within(gallery).getByText(copy.screenshotsDescription)).toBeVisible()
+    expect(gallery.querySelector('[class*="phoneNotch"]')).toBeNull()
+    expect(scroller).toHaveAttribute('tabindex', '0')
+    expect(scroller).toHaveAttribute('data-slot', 'pill-scroller')
+    expect(scroller.querySelectorAll('figure')).toHaveLength(5)
+    expect(scroller.querySelector('figure video')).toBeInTheDocument()
+    expect(gallery.previousElementSibling).toHaveAttribute(
+      'aria-labelledby',
+      'landing-title',
+    )
+    expect(within(scroller).getAllByText(copy.screenshotPending)).toHaveLength(
+      4,
+    )
   })
 
   it('only loads audio on play and surfaces playback failures with a retry', async () => {
@@ -537,8 +712,63 @@ describe('public site pages', () => {
       }),
     )
     expect(play).toHaveBeenCalledTimes(2)
+    expect(audio).not.toHaveAttribute('controls')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     play.mockRestore()
+  })
+
+  it('uses a single audio button for play, pause and replay', async () => {
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, 'play')
+      .mockResolvedValue(undefined)
+    const pause = vi
+      .spyOn(HTMLMediaElement.prototype, 'pause')
+      .mockImplementation(() => {})
+    const paused = vi
+      .spyOn(HTMLMediaElement.prototype, 'paused', 'get')
+      .mockReturnValue(true)
+    try {
+      renderPage(await LandingPage())
+      const audio = document.querySelector('audio')!
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: english.PublicSite.landing.audioPlay,
+        }),
+      )
+      fireEvent.play(audio)
+      paused.mockReturnValue(false)
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: english.PublicSite.landing.audioPause,
+        }),
+      )
+      expect(pause).toHaveBeenCalledOnce()
+      fireEvent.pause(audio)
+      expect(
+        screen.getByRole('button', {
+          name: english.PublicSite.landing.audioPlay,
+        }),
+      ).toBeVisible()
+      paused.mockReturnValue(true)
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: english.PublicSite.landing.audioPlay,
+        }),
+      )
+      fireEvent.play(audio)
+      fireEvent.ended(audio)
+      expect(
+        screen.getByRole('button', {
+          name: english.PublicSite.landing.audioPlay,
+        }),
+      ).toBeVisible()
+      expect(play).toHaveBeenCalledTimes(2)
+      expect(audio).not.toHaveAttribute('controls')
+    } finally {
+      play.mockRestore()
+      pause.mockRestore()
+      paused.mockRestore()
+    }
   })
 
   it('adds the status link to the public footer', async () => {

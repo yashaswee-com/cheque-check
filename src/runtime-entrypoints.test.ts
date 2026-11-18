@@ -65,6 +65,7 @@ describe('Next runtime entry points', () => {
       '/offline.html',
       '/offline.js',
       '/logo.png',
+      '/assets/business-overview-sample-en.pdf',
     ])
       expect(matcher.test(path)).toBe(false)
     for (const path of [
@@ -72,6 +73,8 @@ describe('Next runtime entry points', () => {
       '/api/ocr/cheque',
       '/settings',
       '/monitoring-preferences',
+      '/assets/private-report.pdf',
+      '/assets/business-overview-sample-en.pdf/extra',
     ])
       expect(matcher.test(path)).toBe(true)
   })

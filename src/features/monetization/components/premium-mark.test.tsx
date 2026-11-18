@@ -2,13 +2,24 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { NextIntlClientProvider } from 'next-intl'
 import messages from '../../../../messages/en.json'
-import { PremiumMark } from './premium-mark'
+import { PremiumMark, PremiumMarkBadge } from './premium-mark'
 const state = vi.hoisted(() => ({ owned: false }))
 vi.mock('../hooks/use-premium-access', () => ({
   usePremiumAccess: () => ({ hasLifetimePurchase: state.owned }),
 }))
 afterEach(cleanup)
 describe('Lifetime diamond', () => {
+  it('renders the public plan badge without entitlement queries', () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PremiumMarkBadge />
+      </NextIntlClientProvider>,
+    )
+    expect(screen.getByTitle(messages.Premium.marker)).toHaveAttribute(
+      'data-owned',
+      'false',
+    )
+  })
   it.each([false, true])(
     'uses muted styling only for a paid Lifetime owner: %s',
     (owned) => {
