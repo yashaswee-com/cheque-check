@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useId, useMemo, useState } from 'react'
 import { FormLabel } from '@/components/ui/form-label'
 import { Calendar03Icon } from '@hugeicons/core-free-icons'
@@ -125,9 +124,8 @@ export function ChequeBounceTool() {
 
   return (
     <main className="bg-white text-[#1d1d1f]">
-      <section className="relative overflow-hidden border-b border-[#e0e0e0] bg-[#f5f5f7]">
-        <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(0,102,204,0.10),_transparent_58%)]" />
-        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-20">
+      <section className="border-b border-[#e0e0e0] bg-(--blue-wash)">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-20">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#dfeafc] bg-white/80 px-3 py-1.5 text-[11px] font-semibold tracking-[0.12em] text-[#0066cc] uppercase shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
             Free tool
           </div>
@@ -146,12 +144,6 @@ export function ChequeBounceTool() {
               </p>
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/legal-notice?type=cheque-bounce"
-                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#0066cc] px-6 text-sm font-semibold text-white transition hover:opacity-90"
-                >
-                  Draft legal notice
-                </Link>
                 <a
                   href="#calculator"
                   className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8d8dc] bg-white px-6 text-sm font-semibold text-[#1d1d1f] transition hover:bg-[#fafafc]"
@@ -550,29 +542,6 @@ export function ChequeBounceTool() {
               </p>
             </article>
           ))}
-        </div>
-      </section>
-
-      <section className="border-t border-[#e0e0e0] bg-[#f5f5f7]">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="rounded-[28px] bg-[#ffffff] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.04)] sm:p-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0066cc]">
-                  Legal notice generator
-                </p>
-                <h2 className="mt-3 text-2xl font-semibold tracking-[-0.05em] text-[#1d1d1f] sm:text-3xl">
-                  Need a professional demand notice?
-                </h2>
-              </div>
-              <Link
-                href="/legal-notice?type=cheque-bounce"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#0066cc] px-6 text-sm font-semibold text-white transition hover:opacity-90"
-              >
-                Draft notice
-              </Link>
-            </div>
-          </div>
         </div>
       </section>
     </main>

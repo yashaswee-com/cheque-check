@@ -2279,7 +2279,6 @@
         "bounceDescription": "Track the failed payment, updated status and next action without losing the original cheque details."
       },
       "problemClose": "A forgotten date is expensive in time, follow-up and last-minute fund planning. Keep the details together before it becomes urgent.",
-      "bounceToolCta": "Try the cheque-bounce calculator",
       "howEyebrow": "JUST 3 SIMPLE STEPS",
       "howDescription": "Not complicated accounting software. A companion for your everyday cheque work.",
       "featureEyebrow": "SMALL DETAILS. MORE PEACE OF MIND.",
@@ -2348,6 +2347,21 @@
         "distributorNeed": "Get a clear picture of incoming and outgoing cheques.",
         "distributorBenefit": "Plan your next step with recorded cheque activity and summaries.",
         "distributorRole": "Distributor"
+      },
+      "bounce": {
+        "eyebrow": "FREE CHEQUE-BOUNCE CALCULATOR",
+        "title": "Cheque bounced? Know your next dates.",
+        "description": "Enter the bounce date. See when to send the notice, when payment is due and when to file a complaint.",
+        "noticeValue": "30 days",
+        "noticeLabel": "To send the demand notice",
+        "paymentValue": "15 days",
+        "paymentLabel": "For the party to pay",
+        "complaintValue": "30 days",
+        "complaintLabel": "To file the complaint",
+        "cta": "Open the free calculator",
+        "note": "Free to use. No sign-up needed.",
+        "disclaimer": "A general guide under Section 138. Not legal advice.",
+        "imageLabel": "Cheque-bounce calculator"
       }
     },
     "features": {
