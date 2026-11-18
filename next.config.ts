@@ -31,6 +31,9 @@ if (
 }
 
 const nextConfig: NextConfig = {
+  experimental: {
+    agentUpgrade: 'security',
+  },
   env: {
     ...(appRelease ? { NEXT_PUBLIC_APP_RELEASE: appRelease } : {}),
     NEXT_PUBLIC_DEPLOYMENT_KIND: deploymentKind,
