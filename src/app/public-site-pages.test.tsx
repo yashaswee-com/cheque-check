@@ -814,17 +814,17 @@ describe('public site pages', () => {
     expect(screen.queryByText(copy.scenarioLabel)).not.toBeInTheDocument()
     expect(screen.queryByText(copy.swipeHint)).not.toBeInTheDocument()
     expect(screen.getByText(copy.problemClose)).toBeVisible()
-    for (const key of ['owner', 'accountant', 'distributor'] as const) {
+    for (const key of [
+      'owner',
+      'accountant',
+      'distributor',
+      'contractor',
+      'property',
+      'retailer',
+      'manufacturer',
+    ] as const) {
       expect(screen.getByText(copy.scenarios[`${key}Business`])).toBeVisible()
     }
-    expect(screen.getByRole('link', { name: copy.pricingCta })).toHaveAttribute(
-      'href',
-      '/pricing',
-    )
-    expect(document.querySelector('#product-demo')).toBeInTheDocument()
-    const video = document.querySelector('video')
-    expect(video).toHaveAttribute('preload', 'none')
-    expect(video).not.toHaveAttribute('src')
     const faqButton = screen.getByRole('button', {
       name: copy.faq.accountingQuestion,
     })
@@ -836,6 +836,14 @@ describe('public site pages', () => {
     expect(answer).not.toHaveAttribute('inert')
     fireEvent.click(faqButton)
     expect(answer).toHaveAttribute('inert')
+    expect(screen.getByRole('link', { name: copy.pricingCta })).toHaveAttribute(
+      'href',
+      '/pricing',
+    )
+    expect(document.querySelector('#product-demo')).toBeInTheDocument()
+    const video = document.querySelector('video')
+    expect(video).toHaveAttribute('preload', 'none')
+    expect(video).not.toHaveAttribute('src')
     expect(video).toHaveAttribute('poster', '/assets/demo-poster.jpg')
     expect(video).not.toHaveAttribute('autoplay')
     expect(

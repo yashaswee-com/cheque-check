@@ -553,34 +553,32 @@ export default async function LandingPage() {
             aria-label={t('scenarioTitle')}
             tabIndex={0}
           >
-            {(['owner', 'accountant', 'distributor'] as const).map(
-              (key, index) => (
-                <article key={key} className={styles.scenarioCard}>
-                  <span className={styles.featureIcon}>
-                    <PublicIcon
-                      icon={
-                        index === 0
-                          ? Shirt01Icon
-                          : index === 1
-                            ? UserGroupIcon
-                            : DeliveryBox01Icon
-                      }
-                      size={26}
-                      aria-hidden="true"
-                    />
-                  </span>
-                  <h3>{t(`scenarios.${key}Need`)}</h3>
-                  <p>{t(`scenarios.${key}Benefit`)}</p>
-                  <div className={styles.scenarioPerson}>
-                    <span aria-hidden="true">0{index + 1}</span>
-                    <div>
-                      <strong>{t(`scenarios.${key}Role`)}</strong>
-                      <span>{t(`scenarios.${key}Business`)}</span>
-                    </div>
+            {(
+              [
+                ['owner', Shirt01Icon],
+                ['accountant', UserGroupIcon],
+                ['distributor', DeliveryBox01Icon],
+                ['contractor', File02Icon],
+                ['property', BankIcon],
+                ['retailer', ScanIcon],
+                ['manufacturer', Analytics01Icon],
+              ] as const
+            ).map(([key, icon], index) => (
+              <article key={key} className={styles.scenarioCard}>
+                <span className={styles.featureIcon}>
+                  <PublicIcon icon={icon} size={26} aria-hidden="true" />
+                </span>
+                <h3>{t(`scenarios.${key}Need`)}</h3>
+                <p>{t(`scenarios.${key}Benefit`)}</p>
+                <div className={styles.scenarioPerson}>
+                  <span aria-hidden="true">0{index + 1}</span>
+                  <div>
+                    <strong>{t(`scenarios.${key}Role`)}</strong>
+                    <span>{t(`scenarios.${key}Business`)}</span>
                   </div>
-                </article>
-              ),
-            )}
+                </div>
+              </article>
+            ))}
           </PillScroller>
         </div>
       </section>
