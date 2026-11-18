@@ -8,6 +8,7 @@ import {
   Analytics01Icon,
   ArrowRight01Icon,
   ArrowDown01Icon,
+  Calculator01Icon,
   BankIcon,
   Call02Icon,
   DeliveryBox01Icon,
@@ -59,6 +60,8 @@ const FEATURES = [
   'parties',
   'reports',
 ] as const
+const BOUNCE_STEPS = ['notice', 'payment', 'complaint'] as const
+
 const FEATURE_ICONS = {
   reminders: Call02Icon,
   cheques: ScanIcon,
@@ -244,10 +247,50 @@ export default async function LandingPage() {
         </div>
         <div className={styles.problemClose}>
           <p>{t('problemClose')}</p>
-          <Link href="/cheque-bounce" className={styles.secondaryCta}>
-            {t('bounceToolCta')}
-            {arrow}
-          </Link>
+        </div>
+      </section>
+
+      <section className={styles.bounceSection} aria-labelledby="bounce-title">
+        <div className={styles.bounceInner}>
+          <div className={styles.bounceCopy}>
+            <p className={styles.bounceEyebrow}>
+              <HugeiconsIcon
+                icon={Calculator01Icon}
+                size={14}
+                aria-hidden="true"
+              />
+              {t('bounce.eyebrow')}
+            </p>
+            <h2 id="bounce-title">{t('bounce.title')}</h2>
+            <p className={styles.bounceDescription}>
+              {t('bounce.description')}
+            </p>
+            <ol className={styles.bounceSteps}>
+              {BOUNCE_STEPS.map((key) => (
+                <li key={key}>
+                  <strong>{t(`bounce.${key}Value`)}</strong>
+                  <span>{t(`bounce.${key}Label`)}</span>
+                </li>
+              ))}
+            </ol>
+            <div className={styles.bounceActions}>
+              <Link href="/cheque-bounce" className={styles.bounceCta}>
+                {t('bounce.cta')}
+                {arrow}
+              </Link>
+              <p>{t('bounce.note')}</p>
+            </div>
+            <p className={styles.bounceDisclaimer}>{t('bounce.disclaimer')}</p>
+          </div>
+          <figure className={styles.bounceImage}>
+            <Image
+              src="/assets/feature-placeholder.svg"
+              width={960}
+              height={540}
+              sizes="(max-width: 960px) 100vw, 520px"
+              alt={t('imagePlaceholder', { feature: t('bounce.imageLabel') })}
+            />
+          </figure>
         </div>
       </section>
 

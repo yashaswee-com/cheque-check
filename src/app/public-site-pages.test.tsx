@@ -275,7 +275,7 @@ describe('public site pages', () => {
       ).toHaveAttribute('href', '/signup')
       expect(
         screen.getByRole('link', {
-          name: catalog.PublicSite.landing.bounceToolCta,
+          name: catalog.PublicSite.landing.bounce.cta,
         }),
       ).toHaveAttribute('href', '/cheque-bounce')
       for (const plan of [
@@ -582,6 +582,10 @@ describe('public site pages', () => {
     const page = await ChequeBouncePage()
     renderPage(page)
 
+    expect(screen.queryByText('Legal notice generator')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /Draft (legal )?notice/i }),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: /^Cheque Bounce$/i }),
     ).toBeVisible()
@@ -794,6 +798,7 @@ describe('public site pages', () => {
     expect(headings.map((heading) => heading.textContent)).toEqual([
       copy.screenshotsTitle,
       copy.problemTitle,
+      copy.bounce.title,
       copy.howTitle,
       copy.securityTitle,
       copy.sectionTitle,

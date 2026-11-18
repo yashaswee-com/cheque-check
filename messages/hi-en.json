@@ -2279,7 +2279,6 @@
         "bounceDescription": "Failed payment ki updated status aur next action ko original cheque details ke saath track rakhein."
       },
       "problemClose": "Cheque ki date bhoolne se time, follow-up aur last-minute funds planning mein dikkat hoti hai. Zaroori hone se pehle details saath rakhein.",
-      "bounceToolCta": "Cheque-bounce calculator try karein",
       "howEyebrow": "BAS 3 SEEDHE STEPS",
       "howDescription": "Bhaari accounting software nahi. Aapke roz ke cheque kaam ka saathi.",
       "featureEyebrow": "CHHOTI DETAILS. BADA SUKOON.",
@@ -2348,6 +2347,21 @@
         "distributorNeed": "Aane aur jaane wale cheques ka saaf hisaab mile.",
         "distributorBenefit": "Recorded cheque activity aur summaries se apna agla kadam plan karein.",
         "distributorRole": "Distributor"
+      },
+      "bounce": {
+        "eyebrow": "FREE CHEQUE-BOUNCE CALCULATOR",
+        "title": "Cheque bounce ho gaya? Agli dates jaaniye.",
+        "description": "Bounce date daaliye. Dekhiye notice kab bhejna hai, payment kab tak hona hai aur complaint kab file karni hai.",
+        "noticeValue": "30 din",
+        "noticeLabel": "Demand notice bhejne ke liye",
+        "paymentValue": "15 din",
+        "paymentLabel": "Party ke payment ke liye",
+        "complaintValue": "30 din",
+        "complaintLabel": "Complaint file karne ke liye",
+        "cta": "Free calculator kholiye",
+        "note": "Free. Sign-up ki zaroorat nahi.",
+        "disclaimer": "Section 138 ke under general jaankari. Yeh legal advice nahi hai.",
+        "imageLabel": "Cheque-bounce calculator"
       }
     },
     "features": {

@@ -752,6 +752,126 @@ a.secondaryCta > svg {
   line-height: 1.55;
   text-wrap: balance;
 }
+.bounceSection {
+  padding: 64px 24px;
+  scroll-margin-top: 100px;
+  background: var(--blue-soft);
+  color: var(--foreground);
+}
+.bounceInner {
+  max-width: 1080px;
+  margin: auto;
+  display: grid;
+  gap: 40px;
+  align-items: center;
+}
+.bounceCopy {
+  min-width: 0;
+  text-align: center;
+}
+.bounceEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 6px 12px;
+  border: 1px solid var(--blue-line);
+  border-radius: 9999px;
+  background: var(--background);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+.bounceDescription {
+  max-width: 480px;
+  margin: 16px auto 0;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+.bounceSteps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 32px 0 0;
+  padding: 20px 0;
+  border-block: 1px solid var(--blue-line);
+  list-style: none;
+}
+.bounceSteps li {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 8px;
+}
+.bounceSteps li + li {
+  border-inline-start: 1px solid var(--blue-line);
+}
+.bounceSteps strong {
+  color: var(--primary);
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.6px;
+  white-space: nowrap;
+}
+.bounceSteps span {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+.bounceActions {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 28px;
+}
+.bounceActions p {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.bounceCta {
+  display: inline-flex;
+  min-height: 48px;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 17px;
+  font-weight: 600;
+  transition: background-color 150ms ease;
+}
+.bounceCta:hover {
+  background: color-mix(in srgb, var(--primary) 90%, var(--foreground));
+}
+.bounceCta:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+.bounceDisclaimer {
+  margin-top: 16px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.bounceImage {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--blue-line);
+  border-radius: 22px;
+  background: var(--background);
+}
+.bounceImage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+}
 .steps {
   max-width: 980px;
   margin: auto;
@@ -1479,6 +1599,38 @@ a.secondaryCta > svg {
     grid-column: 2;
   }
   .featureCard[data-feature='reports'] > :last-child:not(figure) {
+@media (min-width: 736px) {
+  .bounceSection {
+    padding: 96px 48px;
+  }
+  .bounceSteps strong {
+    font-size: 30px;
+  }
+  .bounceSteps span {
+    font-size: 13px;
+  }
+}
+@media (min-width: 960px) {
+  .bounceInner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 64px;
+  }
+  .bounceCopy {
+    text-align: start;
+  }
+  .bounceDescription {
+    margin-inline: 0;
+  }
+  .bounceSteps li:first-child {
+    padding-inline-start: 0;
+  }
+  .bounceActions {
+    grid-auto-flow: column;
+    justify-content: start;
+    align-items: center;
+    gap: 16px;
+  }
+}
     grid-column: 2;
   }
   .featureCard[data-feature='reports'] .featurePlaceholder {
