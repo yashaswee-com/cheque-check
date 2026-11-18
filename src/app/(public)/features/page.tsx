@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
+import { AppEntryLink } from '@/components/public-site/app-entry-link'
+import Link from 'next/link'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite')
@@ -14,6 +16,8 @@ export default async function PublicFeaturesPage() {
     'parties',
     'reminders',
     'reports',
+    'search',
+    'tracking',
   ] as const
 
   return (
@@ -36,14 +40,31 @@ export default async function PublicFeaturesPage() {
               key={feature}
               className="min-h-32 rounded-xl border bg-card p-6 leading-relaxed"
             >
-              <span aria-hidden className="mr-3 font-semibold text-primary">
-                ✓
-              </span>
-              {t(`features.${feature}`)}
+              <h3 className="mb-2 text-lg font-semibold">
+                {t(`features.titles.${feature}`)}
+              </h3>
+              <p>{t(`features.${feature}`)}</p>
             </li>
           ))}
         </ul>
       </section>
+      <div className="flex flex-col items-start gap-3">
+        <AppEntryLink
+          href="/signup"
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-6 font-semibold text-white"
+        >
+          {t('landing.primaryCta')}
+        </AppEntryLink>
+        <p className="text-sm text-muted-foreground">
+          {t('landing.trialNote')}
+        </p>
+        <Link
+          href="/pricing"
+          className="inline-flex min-h-11 items-center text-primary underline underline-offset-4"
+        >
+          {t('landing.pricingCta')}
+        </Link>
+      </div>
     </main>
   )
 }

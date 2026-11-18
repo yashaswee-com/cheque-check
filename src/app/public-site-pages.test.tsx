@@ -134,6 +134,32 @@ describe('public site pages', () => {
           name: catalog.PublicSite.landing.videoLabel,
         }),
       ).toBeVisible()
+      const hero = screen.getByRole('region', {
+        name: catalog.PublicSite.landing.title,
+      })
+      expect(
+        within(hero).getByText(catalog.PublicSite.landing.browserAccess),
+      ).toBeVisible()
+      expect(
+        within(hero).getByText(catalog.PublicSite.landing.noBankConnection),
+      ).toBeVisible()
+      for (const caption of Object.values(
+        catalog.PublicSite.landing.previewCaptions,
+      )) {
+        expect(
+          screen.getByText(caption, { selector: 'figcaption' }),
+        ).toBeVisible()
+      }
+      for (const key of ['plans', 'limit'] as const) {
+        const question = screen.getByText(
+          catalog.PublicSite.landing.faq[`${key}Question`],
+        )
+        await userEvent.click(question)
+        expect(question.closest('details')).toHaveAttribute('open')
+        expect(
+          screen.getByText(catalog.PublicSite.landing.faq[`${key}Answer`]),
+        ).toBeVisible()
+      }
       expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(9)
       expect(
         screen.queryByText(catalog.PublicSite.landing.videoCaptionsPending),
@@ -182,9 +208,6 @@ describe('public site pages', () => {
           }),
         ).toHaveAttribute('src', '/assets/feature-placeholder.svg')
       }
-      const hero = screen.getByRole('region', {
-        name: catalog.PublicSite.landing.title,
-      })
       expect(within(hero).queryByRole('list')).not.toBeInTheDocument()
       for (const plan of [
         catalog.PublicSite.comparison.free,
@@ -248,15 +271,53 @@ describe('public site pages', () => {
     expect(mocks.redirect).toHaveBeenCalledWith('/dashboard')
   })
 
-  it('shows public features in Hindi while leaving the signed-in catalogue at its own route', async () => {
-    mocks.locale = 'hi'
-    const page = await PublicFeaturesPage()
-    renderPage(page, 'hi')
-    expect(
-      screen.getByRole('heading', { name: hindi.PublicSite.features.title }),
-    ).toBeVisible()
-    expect(screen.getByText(hindi.PublicSite.features.cheques)).toBeVisible()
-  })
+  it.each([
+    ['en', english],
+    ['hi', hindi],
+    ['hi-en', hinglish],
+  ] as const)(
+    'shows verified public features and signup in %s',
+    async (locale, catalog) => {
+      mocks.locale = locale
+      const page = await PublicFeaturesPage()
+      renderPage(page, locale)
+      expect(
+        screen.getByRole('heading', {
+          name: catalog.PublicSite.features.title,
+        }),
+      ).toBeVisible()
+      for (const title of Object.values(catalog.PublicSite.features.titles)) {
+        expect(
+          screen.getByRole('heading', { name: title, level: 3 }),
+        ).toBeVisible()
+      }
+      expect(
+        screen.getByText(catalog.PublicSite.features.cheques),
+      ).toBeVisible()
+      expect(
+        screen.getByText(catalog.PublicSite.features.tracking),
+      ).toBeVisible()
+      expect(screen.getByText(catalog.PublicSite.features.search)).toBeVisible()
+      expect(
+        screen.getByRole('link', {
+          name: catalog.PublicSite.landing.primaryCta,
+        }),
+      ).toHaveAttribute('data-app-entry')
+      expect(
+        screen.getByRole('link', {
+          name: catalog.PublicSite.landing.primaryCta,
+        }),
+      ).toHaveAttribute('href', '/signup')
+      expect(
+        screen.getByText(catalog.PublicSite.landing.trialNote),
+      ).toBeVisible()
+      expect(
+        screen.getByRole('link', {
+          name: catalog.PublicSite.landing.pricingCta,
+        }),
+      ).toHaveAttribute('href', '/pricing')
+    },
+  )
 
   it('shows prices from the active catalogue and links purchase through the authenticated catalogue', async () => {
     const page = await PublicPricingPage()
@@ -657,7 +718,7 @@ describe('public site pages', () => {
     expect(
       screen.getByRole('region', { name: copy.title }).querySelector('ul'),
     ).not.toBeInTheDocument()
-    expect(document.querySelectorAll('details')).toHaveLength(6)
+    expect(document.querySelectorAll('details')).toHaveLength(8)
     const question = screen.getByText(copy.faq.bounceQuestion)
     await userEvent.click(question)
     expect(question.closest('details')).toHaveAttribute('open')

@@ -65,6 +65,23 @@ test.describe('public landing page', () => {
       await expect(
         page.getByRole('heading', { name: catalog.PublicSite.landing.title }),
       ).toBeVisible()
+      await expect(
+        page.getByText(catalog.PublicSite.landing.browserAccess, {
+          exact: true,
+        }),
+      ).toBeVisible()
+      await expect(
+        page.getByText(catalog.PublicSite.landing.noBankConnection, {
+          exact: true,
+        }),
+      ).toBeVisible()
+      for (const caption of Object.values(
+        catalog.PublicSite.landing.previewCaptions,
+      )) {
+        await expect(
+          page.locator('figcaption').filter({ hasText: caption }),
+        ).toHaveCount(1)
+      }
       await expect(page.locator('main a[href="/signup"]')).toHaveCount(3)
       await expect(
         page

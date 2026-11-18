@@ -361,6 +361,15 @@
   font-size: 15px;
   font-style: italic;
 }
+.heroReassurance {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+  margin-top: 12px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
 .actions {
   display: flex;
   align-items: center;

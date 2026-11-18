@@ -120,6 +120,10 @@ export default async function LandingPage() {
             </a>
           </div>
           <p className={styles.signupNote}>{t('trialNote')}</p>
+          <div className={styles.heroReassurance}>
+            <span>{t('browserAccess')}</span>
+            <span>{t('noBankConnection')}</span>
+          </div>
         </div>
       </section>
 
@@ -159,7 +163,7 @@ export default async function LandingPage() {
                       <p>{t('screenshotPending')}</p>
                     </div>
                   </div>
-                  <figcaption>{t(key)}</figcaption>
+                  <figcaption>{t(`previewCaptions.${key}`)}</figcaption>
                 </figure>
               ),
             )}
@@ -355,6 +359,8 @@ export default async function LandingPage() {
               'scan',
               'bounce',
               'mobile',
+              'plans',
+              'limit',
             ] as const
           ).map((key) => (
             <details key={key}>
