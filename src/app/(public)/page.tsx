@@ -74,16 +74,41 @@ const GALLERY = [
   'dashboard',
   'scan',
   'cheques',
+  'newCheque',
   'search',
+  'sortFilter',
   'reminders',
   'notifications',
   'accounts',
+  'accountDetails',
   'parties',
   'businesses',
   'tags',
   'reports',
   'language',
+  'settings',
+  'preferences',
+  'appPinLock',
 ] as const
+
+const GALLERY_SCREENSHOTS: Partial<Record<(typeof GALLERY)[number], string>> = {
+  dashboard: '/assets/landing/ss/dashboard-view.jpeg',
+  cheques: '/assets/landing/ss/cheques-view.jpeg',
+  newCheque: '/assets/landing/ss/new-cheque-add-screen.jpeg',
+  search: '/assets/landing/ss/global-search-view.jpeg',
+  sortFilter: '/assets/landing/ss/sort-filter-view.jpeg',
+  reminders:
+    '/assets/landing/ss/configure-voice-reminder-timings-notifications.jpeg',
+  notifications: '/assets/landing/ss/notifications-manage.jpeg',
+  accounts: '/assets/landing/ss/accounts-view.jpeg',
+  accountDetails: '/assets/landing/ss/account-view.jpeg',
+  parties: '/assets/landing/ss/parties-view.jpeg',
+  businesses: '/assets/landing/ss/businessess-view.jpeg',
+  tags: '/assets/landing/ss/view-specific-tag.jpeg',
+  settings: '/assets/landing/ss/settings-view.jpeg',
+  preferences: '/assets/landing/ss/preferences-view.jpeg',
+  appPinLock: '/assets/landing/ss/app-pin-lock-view.jpeg',
+}
 
 const PROBLEMS = ['dates', 'accounts', 'records', 'bounce'] as const
 const SECURITY_POINTS = [
@@ -194,17 +219,33 @@ export default async function LandingPage() {
               </div>
               <figcaption>{t('videoTitle')}</figcaption>
             </figure>
-            {GALLERY.map((key) => (
-              <figure className={styles.phoneSlide} key={key}>
-                <div className={styles.phoneFrame}>
-                  <div className={styles.phoneScreen}>
-                    <strong>{t(`gallery.${key}Title`)}</strong>
-                    <p>{t('screenshotPending')}</p>
+            {GALLERY.map((key) => {
+              const screenshot = GALLERY_SCREENSHOTS[key]
+              const title = t(`gallery.${key}Title`)
+
+              return (
+                <figure className={styles.phoneSlide} key={key}>
+                  <div className={styles.phoneFrame}>
+                    {screenshot ? (
+                      <div className={styles.phoneScreenshot}>
+                        <Image
+                          src={screenshot}
+                          alt={title}
+                          fill
+                          sizes="(max-width: 361px) calc(72vw - 24px), 236px"
+                        />
+                      </div>
+                    ) : (
+                      <div className={styles.phoneScreen}>
+                        <strong>{title}</strong>
+                        <p>{t('screenshotPending')}</p>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <figcaption>{t(`gallery.${key}Caption`)}</figcaption>
-              </figure>
-            ))}
+                  <figcaption>{t(`gallery.${key}Caption`)}</figcaption>
+                </figure>
+              )
+            })}
           </PillScroller>
         </div>
       </section>

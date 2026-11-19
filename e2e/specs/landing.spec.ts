@@ -157,7 +157,8 @@ test.describe('public landing page', () => {
       const gallery = page.locator('[data-slot="pill-scroller"]').filter({
         has: page.locator('[class*="phoneFrame"]'),
       })
-      await expect(gallery.locator('figure')).toHaveCount(5)
+      await expect(gallery.locator('figure')).toHaveCount(19)
+      await expect(gallery.getByRole('img')).toHaveCount(15)
       await gallery.scrollIntoViewIfNeeded()
       const controls = gallery.locator('..')
       await controls

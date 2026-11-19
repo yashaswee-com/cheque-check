@@ -866,7 +866,7 @@ describe('public site pages', () => {
     expect(screen.getByText(copy.faq.bounceAnswer)).toBeVisible()
   })
 
-  it('renders phone-frame placeholders in the shared accessible horizontal scroller', async () => {
+  it('renders the matching screenshots and remaining placeholders in the phone gallery', async () => {
     renderPage(await LandingPage())
     const copy = english.PublicSite.landing
     const gallery = screen
@@ -879,15 +879,46 @@ describe('public site pages', () => {
     expect(gallery.querySelector('[class*="phoneNotch"]')).toBeNull()
     expect(scroller).toHaveAttribute('tabindex', '0')
     expect(scroller).toHaveAttribute('data-slot', 'pill-scroller')
-    expect(scroller.querySelectorAll('figure')).toHaveLength(13)
+    expect(scroller.querySelectorAll('figure')).toHaveLength(19)
     expect(scroller.querySelector('figure video')).toBeInTheDocument()
     expect(gallery.previousElementSibling).toHaveAttribute(
       'aria-labelledby',
       'landing-title',
     )
     expect(within(scroller).getAllByText(copy.screenshotPending)).toHaveLength(
-      12,
+      3,
     )
+    expect(within(scroller).getAllByRole('img')).toHaveLength(15)
+    for (const [key, file] of [
+      ['dashboard', 'dashboard-view'],
+      ['cheques', 'cheques-view'],
+      ['newCheque', 'new-cheque-add-screen'],
+      ['search', 'global-search-view'],
+      ['sortFilter', 'sort-filter-view'],
+      ['reminders', 'configure-voice-reminder-timings-notifications'],
+      ['notifications', 'notifications-manage'],
+      ['accounts', 'accounts-view'],
+      ['accountDetails', 'account-view'],
+      ['parties', 'parties-view'],
+      ['businesses', 'businessess-view'],
+      ['tags', 'view-specific-tag'],
+      ['settings', 'settings-view'],
+      ['preferences', 'preferences-view'],
+      ['appPinLock', 'app-pin-lock-view'],
+    ] as const) {
+      const screenshot = within(scroller).getByRole('img', {
+        name: copy.gallery[`${key}Title`],
+      })
+      expect(screenshot).toHaveAttribute(
+        'src',
+        expect.stringContaining(
+          encodeURIComponent(`/assets/landing/ss/${file}.jpeg`),
+        ),
+      )
+      expect(screenshot.closest('figure')).toHaveTextContent(
+        copy.gallery[`${key}Caption`],
+      )
+    }
   })
 
   it('only loads audio on play and surfaces playback failures with a retry', async () => {
