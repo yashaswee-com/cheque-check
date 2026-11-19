@@ -1004,6 +1004,16 @@ a.secondaryCta > svg {
   font-size: 14px;
   color: var(--muted-foreground);
 }
+.phoneScreenshot {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 25px;
+  background: var(--background);
+}
+.phoneScreenshot img {
+  object-fit: contain;
+}
 .phoneSlide figcaption {
   margin-top: 16px;
   font-size: 14px;
