@@ -2,7 +2,10 @@ import {
   Analytics01Icon,
   BankIcon,
   Calculator01Icon,
+  Facebook01Icon,
   File02Icon,
+  InstagramIcon,
+  HelpCircleIcon,
   SecurityLockIcon,
 } from '@hugeicons/core-free-icons'
 
@@ -27,12 +30,39 @@ export const PUBLIC_NAV_LINKS = [
     icon: Calculator01Icon,
     group: 'resources',
   },
+  {
+    href: 'https://chequecheck.gitbook.io/help',
+    labelKey: 'helpCenter',
+    icon: HelpCircleIcon,
+    group: 'resources',
+    external: true,
+  },
+  {
+    href: 'https://www.instagram.com/cheque.check/',
+    labelKey: 'instagram',
+    icon: InstagramIcon,
+    group: 'socials',
+    external: true,
+  },
+  {
+    href: 'https://www.facebook.com/profile.php?id=61596274983042',
+    labelKey: 'facebook',
+    icon: Facebook01Icon,
+    group: 'socials',
+    external: true,
+  },
 ] as const
 
-export const PUBLIC_NAV_GROUPS = ['product', 'resources', 'support'] as const
+export const PUBLIC_NAV_GROUPS = [
+  'product',
+  'resources',
+  'support',
+  'socials',
+] as const
 
 export const PUBLIC_NAV_GROUP_ICONS = {
   product: Analytics01Icon,
   resources: Calculator01Icon,
   support: SecurityLockIcon,
+  socials: InstagramIcon,
 } as const

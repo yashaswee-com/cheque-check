@@ -101,8 +101,9 @@ export default function SignupPage() {
 
   return (
     <AuthPageFrame
+      backHref="/"
       onBack={() => {
-        if (!phoneForm.current?.back()) router.push('/')
+        return phoneForm.current?.back() ?? false
       }}
     >
       <div className="space-y-6">

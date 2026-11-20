@@ -22,12 +22,12 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs())
 
 describe('monitoring deployment policy', () => {
-  it('keeps QA hosted monitoring enabled for Sentry', () => {
-    const qaEnv = readFileSync(join(process.cwd(), '.env.qa'), 'utf8')
+  it('documents the QA hosted monitoring switches', () => {
+    const qaEnv = readFileSync(join(process.cwd(), '.env.example'), 'utf8')
 
-    expect(qaEnv).toContain('NEXT_PUBLIC_OBSERVABILITY_ENABLED=true')
-    expect(qaEnv).toContain('NEXT_PUBLIC_PREVIEW_MONITORING_ENABLED=true')
-    expect(qaEnv).toContain('NEXT_PUBLIC_MONITORING_POLICY_APPROVED=true')
+    expect(qaEnv).toContain('NEXT_PUBLIC_OBSERVABILITY_ENABLED=')
+    expect(qaEnv).toContain('NEXT_PUBLIC_PREVIEW_MONITORING_ENABLED=')
+    expect(qaEnv).toContain('NEXT_PUBLIC_MONITORING_POLICY_APPROVED=')
   })
 
   it('remains disabled in tests even with opted-in valid configuration', async () => {

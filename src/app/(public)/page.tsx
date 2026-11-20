@@ -525,6 +525,7 @@ export default async function LandingPage() {
             <FaqItem
               key={key}
               question={t(`faq.${key}Question`)}
+              quickAnswer={t(`faq.${key}Quick`)}
               answer={t(`faq.${key}Answer`)}
             />
           ))}

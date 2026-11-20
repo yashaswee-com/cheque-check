@@ -9,6 +9,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
 import { Popover, PopoverTitle, PopoverTrigger } from '@/components/ui/popover'
 import { LocalePicker } from './locale-picker'
+import { AppearancePicker } from './appearance-picker'
 import {
   PUBLIC_NAV_GROUPS,
   PUBLIC_NAV_GROUP_ICONS,
@@ -29,7 +30,12 @@ export function PublicNavigation({
   const pathname = usePathname()
 
   if (pathname === '/') {
-    return <LocalePicker locale={locale} />
+    return (
+      <div className={styles.headerControls}>
+        <LocalePicker locale={locale} />
+        <AppearancePicker />
+      </div>
+    )
   }
 
   return (
@@ -84,28 +90,37 @@ export function PublicNavigation({
                     {t(`footer.${group}`)}
                   </h2>
                   {PUBLIC_NAV_LINKS.filter((link) => link.group === group).map(
-                    ({ href, labelKey, icon }) => (
-                      <Link
-                        key={href}
-                        href={href}
-                        onClick={() => setOpen(false)}
-                      >
-                        <PublicIcon icon={icon} size={20} />
-                        <span>{t(`nav.${labelKey}`)}</span>
-                        <HugeiconsIcon
-                          icon={ArrowRight01Icon}
-                          size={16}
-                          aria-hidden="true"
-                        />
-                      </Link>
-                    ),
+                    (link) => {
+                      const { href, labelKey, icon } = link
+                      const external = 'external' in link && link.external
+                      return (
+                        <Link
+                          key={href}
+                          href={href}
+                          onClick={() => setOpen(false)}
+                          target={external ? '_blank' : undefined}
+                          rel={external ? 'noreferrer' : undefined}
+                        >
+                          <PublicIcon icon={icon} size={20} />
+                          <span>{t(`nav.${labelKey}`)}</span>
+                          <HugeiconsIcon
+                            icon={ArrowRight01Icon}
+                            size={16}
+                            aria-hidden="true"
+                          />
+                        </Link>
+                      )
+                    },
                   )}
                 </section>
               ))}
             </nav>
             <div className={styles.menuLocale}>
               <span>{t('nav.language')}</span>
-              <LocalePicker locale={locale} />
+              <div className={styles.headerControls}>
+                <LocalePicker locale={locale} />
+                <AppearancePicker />
+              </div>
             </div>
           </PopoverPrimitive.Popup>
         </PopoverPrimitive.Positioner>
