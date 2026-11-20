@@ -1,0 +1,26 @@
+$schema: https://api.gitbook.com/gitbook-docs.yaml
+version: 1
+site:
+  title: Cheque Check Help Center
+  structure:
+    - type: section
+      key: section-help
+      title: Help
+      path: help
+      default: true
+      children:
+        - type: space
+          key: space-help-en
+          title: Help Center
+          path: en
+          default: true
+          content:
+            directory: ./en
+            language: en
+        - type: space
+          key: space-help-hi
+          title: सहायता केंद्र
+          path: hi
+          content:
+            directory: ./hi
+            language: hi
