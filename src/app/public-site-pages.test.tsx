@@ -221,21 +221,35 @@ describe('public site pages', () => {
       expect(
         screen.queryByText(catalog.PublicSite.landing.pricingNote),
       ).not.toBeInTheDocument()
-      for (const feature of [
-        'reminders',
-        'cheques',
-        'accounts',
-        'parties',
-        'reports',
+      for (const [feature, file] of [
+        ['reminders', 'receive-phone-call.png'],
+        ['cheques', 'scan-cheque.png'],
+        ['reports', 'reports.png'],
       ] as const) {
-        expect(
-          screen.getByRole('img', {
-            name: catalog.PublicSite.landing.imagePlaceholder.replace(
-              '{feature}',
-              catalog.PublicSite.landing[feature],
-            ),
+        const card = within(
+          screen.getByRole('region', {
+            name: catalog.PublicSite.landing.sectionTitle,
           }),
-        ).toHaveAttribute('src', '/assets/feature-placeholder.svg')
+        )
+          .getByRole('heading', { name: catalog.PublicSite.landing[feature] })
+          .closest('article')!
+        expect(card.querySelector('figure img')).toHaveAttribute(
+          'src',
+          expect.stringContaining(
+            encodeURIComponent(`/assets/landing/shots/${file}`),
+          ),
+        )
+        expect(card.querySelector('figure img')).toHaveAttribute('alt', '')
+      }
+      for (const feature of ['accounts', 'parties'] as const) {
+        const name = catalog.PublicSite.landing.imagePlaceholder.replace(
+          '{feature}',
+          catalog.PublicSite.landing[feature],
+        )
+        expect(screen.getByRole('img', { name })).toHaveAttribute(
+          'src',
+          '/assets/feature-placeholder.svg',
+        )
       }
       const highlights = within(hero).getByRole('list', {
         name: catalog.PublicSite.landing.trustTitle,
@@ -312,21 +326,36 @@ describe('public site pages', () => {
           catalog.PublicSite.comparison.prioritySupport,
         ),
       ).toBeVisible()
-      for (const problem of [
-        catalog.PublicSite.landing.problems.datesTitle,
-        catalog.PublicSite.landing.problems.accountsTitle,
-        catalog.PublicSite.landing.problems.recordsTitle,
-        catalog.PublicSite.landing.problems.bounceTitle,
-      ]) {
-        expect(
-          screen.getByRole('img', {
-            name: catalog.PublicSite.landing.imagePlaceholder.replace(
-              '{feature}',
-              problem,
-            ),
-          }),
-        ).toHaveAttribute('src', '/assets/feature-placeholder.svg')
+      for (const [key, file] of [
+        ['dates', 'rush.png'],
+        ['accounts', 'which-bank.png'],
+        ['records', 'diary-whatsapp.png'],
+        ['bounce', 'bounced-cheque.png'],
+      ] as const) {
+        const card = screen
+          .getByRole('heading', {
+            name: catalog.PublicSite.landing.problems[`${key}Title`],
+          })
+          .closest('article')!
+        expect(card.querySelector('figure img')).toHaveAttribute(
+          'src',
+          expect.stringContaining(
+            encodeURIComponent(`/assets/landing/shots/${file}`),
+          ),
+        )
+        expect(card.querySelector('figure img')).toHaveAttribute('alt', '')
       }
+      const bounceSection = screen.getByRole('region', {
+        name: catalog.PublicSite.landing.bounce.title,
+      })
+      expect(bounceSection.querySelector('figure img')).toHaveAttribute(
+        'src',
+        expect.stringContaining(
+          encodeURIComponent(
+            '/assets/landing/shots/cheque-bounce-day-calc.png',
+          ),
+        ),
+      )
       const chatLinks = screen.getAllByRole('link', {
         name: catalog.PublicSite.landing.secondaryCta,
       })
