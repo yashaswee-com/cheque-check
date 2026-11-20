@@ -223,10 +223,10 @@ describe('public site pages', () => {
         screen.queryByText(catalog.PublicSite.landing.pricingNote),
       ).not.toBeInTheDocument()
       for (const [feature, file] of [
-        ['reminders', 'receive-phone-call.png'],
-        ['cheques', 'scan-cheque.png'],
-        ['accountsParties', 'accounts-and-parties.png'],
-        ['reports', 'reports.png'],
+        ['reminders', 'receive-phone-call.webp'],
+        ['cheques', 'scan-cheque.webp'],
+        ['accountsParties', 'accounts-and-parties.webp'],
+        ['reports', 'reports.webp'],
       ] as const) {
         const card = within(
           screen.getByRole('region', {
@@ -322,10 +322,10 @@ describe('public site pages', () => {
         ),
       ).toBeVisible()
       for (const [key, file] of [
-        ['dates', 'missed-cheque-dates.png'],
-        ['accounts', 'cheque-bank-accounts.png'],
-        ['records', 'diary-whatsapp.png'],
-        ['bounce', 'bounced-cheque.png'],
+        ['dates', 'missed-cheque-dates.webp'],
+        ['accounts', 'cheque-bank-accounts.webp'],
+        ['records', 'diary-whatsapp.webp'],
+        ['bounce', 'bounced-cheque.webp'],
       ] as const) {
         const card = screen
           .getByRole('heading', {
@@ -347,7 +347,7 @@ describe('public site pages', () => {
         'src',
         expect.stringContaining(
           encodeURIComponent(
-            '/assets/landing/shots/cheque-bounce-day-calc.png',
+            '/assets/landing/shots/cheque-bounce-day-calc.webp',
           ),
         ),
       )
@@ -941,7 +941,7 @@ describe('public site pages', () => {
       expect(wrapper).toHaveAttribute('data-image-status', 'error')
       expect(error).toHaveBeenCalledWith(
         'Unable to load public site image:',
-        '/assets/landing/shots/accounts-and-parties.png',
+        '/assets/landing/shots/accounts-and-parties.webp',
       )
     } finally {
       error.mockRestore()
@@ -980,7 +980,7 @@ describe('public site pages', () => {
     }
   })
 
-  it('renders the matching screenshots and remaining placeholders in the phone gallery', async () => {
+  it('renders the demo and matching screenshots without empty phone frames', async () => {
     renderPage(await LandingPage())
     const copy = english.PublicSite.landing
     const gallery = screen
@@ -993,14 +993,11 @@ describe('public site pages', () => {
     expect(gallery.querySelector('[class*="phoneNotch"]')).toBeNull()
     expect(scroller).toHaveAttribute('tabindex', '0')
     expect(scroller).toHaveAttribute('data-slot', 'pill-scroller')
-    expect(scroller.querySelectorAll('figure')).toHaveLength(19)
+    expect(scroller.querySelectorAll('figure')).toHaveLength(16)
     expect(scroller.querySelector('figure video')).toBeInTheDocument()
     expect(gallery.previousElementSibling).toHaveAttribute(
       'aria-labelledby',
       'landing-title',
-    )
-    expect(within(scroller).getAllByText(copy.screenshotPending)).toHaveLength(
-      3,
     )
     expect(within(scroller).getAllByRole('img')).toHaveLength(15)
     for (const [key, file] of [

@@ -26,7 +26,7 @@ test.describe('public landing page', () => {
       releaseImage = resolve
     })
     await page.route('**/_next/image?**', async (route) => {
-      if (decodeURIComponent(route.request().url()).includes('/reports.png')) {
+      if (decodeURIComponent(route.request().url()).includes('/reports.webp')) {
         await imageReady
       }
       await route.continue()
@@ -243,7 +243,7 @@ test.describe('public landing page', () => {
     page.on('request', (request) => {
       if (
         decodeURIComponent(request.url()).includes(
-          '/assets/landing/shots/reports.png',
+          '/assets/landing/shots/reports.webp',
         )
       ) {
         reportRequests.push(request.url())
@@ -409,7 +409,7 @@ test.describe('public landing page', () => {
       const gallery = page.locator('[data-slot="pill-scroller"]').filter({
         has: page.locator('[class*="phoneFrame"]'),
       })
-      await expect(gallery.locator('figure')).toHaveCount(19)
+      await expect(gallery.locator('figure')).toHaveCount(16)
       await expect(gallery.getByRole('img')).toHaveCount(15)
       await gallery.scrollIntoViewIfNeeded()
       const controls = gallery.locator('..')
