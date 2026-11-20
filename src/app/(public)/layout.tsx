@@ -12,6 +12,8 @@ import { PublicHeader } from '@/components/public-site/public-header'
 import { AppEntryLink } from '@/components/public-site/app-entry-link'
 import { CookieSettingsButton } from '@/components/public-site/cookie-settings-button'
 import { LaunchBanner } from '@/components/public-site/launch-banner'
+import { JsonLd } from '@/components/json-ld'
+import { SITE_NAME, SITE_URL } from '@/lib/seo'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -30,12 +32,35 @@ export default async function PublicSiteLayout({
     getLocale(),
     getTranslations('PublicSite'),
   ])
+  const organizationData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${SITE_URL}/#organization`,
+        name: SITE_NAME,
+        url: SITE_URL,
+        logo: `${SITE_URL}/android-chrome-512x512.png`,
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${SITE_URL}/#website`,
+        name: SITE_NAME,
+        url: SITE_URL,
+        inLanguage: locale,
+        publisher: {
+          '@id': `${SITE_URL}/#organization`,
+        },
+      },
+    ],
+  }
 
   return (
     <div
       data-public-site
       className={`${styles.site} flex min-h-screen flex-col`}
     >
+      <JsonLd data={organizationData} />
       <LaunchBanner
         message={t.rich('landing.announcement', {
           b: (chunks) => <b>{chunks}</b>,

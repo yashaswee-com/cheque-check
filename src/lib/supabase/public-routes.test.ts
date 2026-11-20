@@ -40,4 +40,12 @@ describe('public route allowlist', () => {
     expect(isPublicStaticPath('/.well-known/security.txt/')).toBe(true)
     expect(isPublicStaticPath('/.well-known/other.txt')).toBe(false)
   })
+
+  it('allows crawler metadata routes without exposing other root text files', () => {
+    expect(isPublicStaticPath('/robots.txt')).toBe(true)
+    expect(isPublicStaticPath('/sitemap.xml')).toBe(true)
+    expect(isPublicStaticPath('/opengraph-image')).toBe(true)
+    expect(isPublicStaticPath('/twitter-image')).toBe(true)
+    expect(isPublicStaticPath('/private.txt')).toBe(false)
+  })
 })

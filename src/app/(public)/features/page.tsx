@@ -2,10 +2,15 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { AppEntryLink } from '@/components/public-site/app-entry-link'
 import Link from 'next/link'
+import { SITE_NAME, publicPageMetadata } from '@/lib/seo'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite')
-  return { title: `${t('features.title')} | Cheque Check` }
+  return publicPageMetadata({
+    path: '/features',
+    title: `${t('features.title')} | ${SITE_NAME}`,
+    description: t('features.description'),
+  })
 }
 
 export default async function PublicFeaturesPage() {
