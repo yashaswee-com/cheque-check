@@ -4,6 +4,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -174,9 +175,9 @@ describe('public site pages', () => {
         ).toBeVisible()
       }
       for (const key of ['plans', 'limit'] as const) {
-        const question = screen.getByText(
-          catalog.PublicSite.landing.faq[`${key}Question`],
-        )
+        const question = screen.getByRole('button', {
+          name: catalog.PublicSite.landing.faq[`${key}Question`],
+        })
         await userEvent.click(question)
         expect(question).toHaveAttribute('aria-expanded', 'true')
         expect(
@@ -224,6 +225,7 @@ describe('public site pages', () => {
       for (const [feature, file] of [
         ['reminders', 'receive-phone-call.png'],
         ['cheques', 'scan-cheque.png'],
+        ['accountsParties', 'accounts-and-parties.png'],
         ['reports', 'reports.png'],
       ] as const) {
         const card = within(
@@ -241,16 +243,9 @@ describe('public site pages', () => {
         )
         expect(card.querySelector('figure img')).toHaveAttribute('alt', '')
       }
-      for (const feature of ['accounts', 'parties'] as const) {
-        const name = catalog.PublicSite.landing.imagePlaceholder.replace(
-          '{feature}',
-          catalog.PublicSite.landing[feature],
-        )
-        expect(screen.getByRole('img', { name })).toHaveAttribute(
-          'src',
-          '/assets/feature-placeholder.svg',
-        )
-      }
+      expect(
+        screen.getByText(catalog.PublicSite.landing.accountsPartiesDescription),
+      ).toBeVisible()
       const highlights = within(hero).getByRole('list', {
         name: catalog.PublicSite.landing.trustTitle,
       })
@@ -327,8 +322,8 @@ describe('public site pages', () => {
         ),
       ).toBeVisible()
       for (const [key, file] of [
-        ['dates', 'rush.png'],
-        ['accounts', 'which-bank.png'],
+        ['dates', 'missed-cheque-dates.png'],
+        ['accounts', 'cheque-bank-accounts.png'],
         ['records', 'diary-whatsapp.png'],
         ['bounce', 'bounced-cheque.png'],
       ] as const) {
@@ -752,14 +747,19 @@ describe('public site pages', () => {
     const features = within(
       screen.getByRole('region', { name: copy.sectionTitle }),
     )
-    for (const key of ['cheques', 'reminders', 'reports'] as const) {
+    for (const key of [
+      'cheques',
+      'reminders',
+      'accountsParties',
+      'reports',
+    ] as const) {
       expect(features.getByRole('heading', { name: copy[key] })).toBeVisible()
       expect(features.getByText(copy[`${key}Description`])).toBeVisible()
     }
     const cards = screen
       .getByRole('region', { name: copy.sectionTitle })
       .querySelectorAll('article')
-    expect(cards).toHaveLength(5)
+    expect(cards).toHaveLength(4)
     for (const card of cards) {
       expect(within(card).getAllByRole('heading')).toHaveLength(1)
       const isReports = card.getAttribute('data-feature') === 'reports'
@@ -878,7 +878,9 @@ describe('public site pages', () => {
     expect(poster).toHaveAttribute('loading', 'lazy')
     expect(poster).toHaveAttribute(
       'src',
-      expect.stringContaining(encodeURIComponent('/assets/demo-poster.jpg')),
+      expect.stringContaining(
+        encodeURIComponent('/assets/cheque-check-demo-poster.jpg'),
+      ),
     )
     expect(video).not.toHaveAttribute('autoplay')
     expect(
@@ -921,6 +923,31 @@ describe('public site pages', () => {
     }
   })
 
+  it('stops the image shimmer on load or error', async () => {
+    renderPage(await LandingPage())
+    const image = document.querySelector<HTMLImageElement>(
+      '[data-feature="accountsParties"] img',
+    )!
+    const wrapper = image.parentElement!
+    expect(wrapper).toHaveAttribute('data-image-status', 'loading')
+    fireEvent.load(image)
+    await waitFor(() =>
+      expect(wrapper).toHaveAttribute('data-image-status', 'loaded'),
+    )
+
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      fireEvent.error(image)
+      expect(wrapper).toHaveAttribute('data-image-status', 'error')
+      expect(error).toHaveBeenCalledWith(
+        'Unable to load public site image:',
+        '/assets/landing/shots/accounts-and-parties.png',
+      )
+    } finally {
+      error.mockRestore()
+    }
+  })
+
   it('loads the video on play and restores its poster when playback fails', async () => {
     const play = vi
       .spyOn(HTMLMediaElement.prototype, 'play')
@@ -936,7 +963,7 @@ describe('public site pages', () => {
           name: english.PublicSite.landing.videoPlay,
         }),
       )
-      expect(video).toHaveAttribute('src', '/assets/ad.mp4')
+      expect(video).toHaveAttribute('src', '/assets/cheque-check-demo.mp4')
       expect(within(demo).getByRole('alert')).toBeVisible()
       expect(demo.querySelector('img')).toHaveAttribute('loading', 'lazy')
       await userEvent.click(
@@ -987,7 +1014,7 @@ describe('public site pages', () => {
       ['accounts', 'accounts-view'],
       ['accountDetails', 'account-view'],
       ['parties', 'parties-view'],
-      ['businesses', 'businessess-view'],
+      ['businesses', 'businesses-view'],
       ['tags', 'view-specific-tag'],
       ['settings', 'settings-view'],
       ['preferences', 'preferences-view'],

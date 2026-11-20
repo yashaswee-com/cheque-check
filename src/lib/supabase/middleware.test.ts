@@ -17,7 +17,7 @@ beforeEach(() => {
 })
 
 describe('public middleware access', () => {
-  it.each(['/assets/ad.mp4', '/assets/voice-reminder.mp3'])(
+  it.each(['/assets/cheque-check-demo.mp4', '/assets/voice-reminder.mp3'])(
     'serves the public demo %s without an auth redirect',
     (url) => {
       expect(unstable_doesMiddlewareMatch({ config, url })).toBe(false)
@@ -26,7 +26,7 @@ describe('public middleware access', () => {
 
   it.each([
     '/assets/private.mp4',
-    '/assets/ad.mp4/details',
+    '/assets/cheque-check-demo.mp4/details',
     '/api/reports/export.mp4',
     '/dashboard',
   ])('keeps the proxy active for %s', (url) => {

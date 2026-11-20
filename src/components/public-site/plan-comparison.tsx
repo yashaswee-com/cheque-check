@@ -1,5 +1,4 @@
 import { useTranslations } from 'next-intl'
-import Image from 'next/image'
 import Link from 'next/link'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Tick02Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
@@ -7,6 +6,7 @@ import { PRODUCT_IDS } from '@/features/monetization/constants'
 import { PREMIUM_FEATURES } from '@/features/monetization/lib/premium-access'
 import type { PublicProduct } from '@/features/public-site/repositories/public-pricing.repository'
 import { AppEntryLink } from './app-entry-link'
+import { LoadingImage } from './loading-image'
 import { PremiumMarkBadge } from '@/features/monetization/components/premium-mark'
 
 export function PlanComparison({
@@ -165,13 +165,14 @@ export function PlanComparison({
             <span className="flex flex-wrap items-center gap-1.5 font-medium text-foreground/80">
               {t.rich('paymentTrust', {
                 logo: () => (
-                  <Image
+                  <LoadingImage
                     src="/assets/razorpay-logo.svg"
                     alt="Razorpay"
                     width={316}
                     height={67}
                     loading="lazy"
                     className="h-4 w-auto"
+                    wrapperClassName="h-4 w-[75.5px]"
                   />
                 ),
               })}

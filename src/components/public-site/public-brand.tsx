@@ -1,9 +1,15 @@
-import Image from 'next/image'
+import { LoadingImage } from './loading-image'
 
 export function PublicBrand() {
   return (
     <>
-      <Image src="/android-chrome-192x192.png" width={32} height={32} alt="" />
+      <LoadingImage
+        src="/android-chrome-192x192.png"
+        width={32}
+        height={32}
+        alt=""
+        wrapperClassName="public-brand-image"
+      />
       <span>Cheque Check</span>
     </>
   )

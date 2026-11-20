@@ -113,9 +113,11 @@
   background: rgb(255 255 255 / 60%);
 }
 
-.brand > img {
+.brand > :global(.public-brand-image) {
   flex-shrink: 0;
   border-radius: 8px;
+  width: 32px;
+  height: 32px;
 }
 .menuTrigger {
   display: grid;
@@ -1161,10 +1163,17 @@ a.secondaryCta > svg {
   font-size: 17px;
   font-weight: 400;
 }
+.site .faqItem button:active {
+  transform: none;
+}
+.faqItem button span {
+  min-width: 0;
+}
 .faqItem button svg {
   color: var(--primary);
   flex-shrink: 0;
-  transition: transform 220ms ease;
+  transform-origin: center;
+  transition: transform 260ms ease;
 }
 .faqItem button[aria-expanded='true'] svg {
   transform: rotate(180deg);
@@ -1172,7 +1181,7 @@ a.secondaryCta > svg {
 .faqAnswer {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 220ms ease;
+  transition: grid-template-rows 260ms ease;
 }
 .faqAnswer:not([inert]) {
   grid-template-rows: 1fr;
@@ -1561,7 +1570,7 @@ a.secondaryCta > svg {
 @media (min-width: 1024px) {
   .bento {
     max-width: 1120px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .featureCard {
     display: flex;
