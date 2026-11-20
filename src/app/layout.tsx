@@ -16,6 +16,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { QaIndicator } from '@/components/qa-indicator'
 import { MarketingProvider } from '@/features/analytics/marketing-provider'
+import { SITE_NAME, SITE_URL } from '@/lib/seo'
 
 const bodyFont = IBM_Plex_Sans({
   subsets: ['latin'],
@@ -42,8 +43,32 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('Settings')
 
   return {
-    title: 'ChequeCheck',
+    metadataBase: new URL(SITE_URL),
+    title: SITE_NAME,
     description: t('appDescription'),
+    applicationName: SITE_NAME,
+    authors: [{ name: SITE_NAME, url: SITE_URL }],
+    creator: SITE_NAME,
+    publisher: SITE_NAME,
+    category: 'business',
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+    openGraph: {
+      type: 'website',
+      locale: 'en_IN',
+      url: '/',
+      siteName: SITE_NAME,
+      title: SITE_NAME,
+      description: t('appDescription'),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: SITE_NAME,
+      description: t('appDescription'),
+    },
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',

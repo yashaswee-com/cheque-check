@@ -11,7 +11,13 @@ const PUBLIC_PAGE_PATHS = new Set([
 
 const PUBLIC_API_PATHS = new Set(['/api/contact', '/api/analytics/events'])
 
-const PUBLIC_STATIC_PATHS = new Set(['/.well-known/security.txt'])
+const PUBLIC_STATIC_PATHS = new Set([
+  '/.well-known/security.txt',
+  '/opengraph-image',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/twitter-image',
+])
 
 function normalizedPath(pathname: string) {
   return pathname.replace(/\/+$/, '') || '/'

@@ -2,10 +2,15 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { ContactForm } from '@/features/contact/components/contact-form'
 import { getWhatsAppSupportLink } from '@/lib/whatsapp'
+import { SITE_NAME, publicPageMetadata } from '@/lib/seo'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite')
-  return { title: `${t('contact.title')} | Cheque Check` }
+  return publicPageMetadata({
+    path: '/contact',
+    title: `${t('contact.title')} | ${SITE_NAME}`,
+    description: t('contact.description'),
+  })
 }
 
 export default async function PublicContactPage() {

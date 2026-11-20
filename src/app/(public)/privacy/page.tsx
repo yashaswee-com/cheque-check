@@ -1,9 +1,15 @@
 import type { Metadata } from 'next'
 import { getLocale, getTranslations } from 'next-intl/server'
+import { SITE_NAME, publicPageMetadata } from '@/lib/seo'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite')
-  return { title: `${t('privacy.title')} | Cheque Check` }
+  return publicPageMetadata({
+    path: '/privacy',
+    title: `${t('privacy.title')} | ${SITE_NAME}`,
+    description:
+      'Learn how Cheque Check handles account information, cheque records, privacy controls, analytics consent and data security.',
+  })
 }
 
 export default async function PublicPrivacyPage() {

@@ -6,10 +6,15 @@ import { publicPricingService } from '@/features/public-site/services/public-pri
 import type { PublicProduct } from '@/features/public-site/repositories/public-pricing.repository'
 import { PlanComparison } from '@/components/public-site/plan-comparison'
 import { PRODUCT_IDS } from '@/features/monetization/constants'
+import { SITE_NAME, publicPageMetadata } from '@/lib/seo'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite')
-  return { title: `${t('pricing.title')} | Cheque Check` }
+  return publicPageMetadata({
+    path: '/pricing',
+    title: `${t('pricing.title')} | ${SITE_NAME}`,
+    description: t('pricing.description'),
+  })
 }
 
 function price(product: PublicProduct) {

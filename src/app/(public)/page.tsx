@@ -38,13 +38,17 @@ import { getWhatsAppSupportLink } from '@/lib/whatsapp'
 import { WhatsAppLogo } from '@/components/public-site/whatsapp-logo'
 import { IndiaFlag } from '@/components/public-site/india-flag'
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top-button'
+import { JsonLd } from '@/components/json-ld'
+import { SITE_NAME, SITE_URL, publicPageMetadata } from '@/lib/seo'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite.landing')
-  return {
-    title: `${t('title')} | Cheque Check`,
-    description: t('description'),
-  }
+  return publicPageMetadata({
+    path: '/',
+    title: `${t('title')} | ${SITE_NAME}`,
+    description:
+      'Record issued and received cheques, organize bank accounts and parties, and get phone-call reminders for cheque dates.',
+  })
 }
 
 const STEPS = [
@@ -148,8 +152,52 @@ export default async function LandingPage() {
     logger.error('Landing pricing catalogue could not be loaded', error)
   }
 
+  const faqKeys = [
+    'accounting',
+    'bank',
+    'reminders',
+    'scan',
+    'bounce',
+    'mobile',
+    'different',
+    'privacy',
+    'payment',
+    'plans',
+    'limit',
+  ] as const
+  const softwareData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'SoftwareApplication',
+        '@id': `${SITE_URL}/#app`,
+        name: SITE_NAME,
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        description:
+          'Cheque management software with cheque records, reminders, bank-account organization and reporting.',
+        url: SITE_URL,
+        inLanguage: ['en-IN', 'hi-IN'],
+        isAccessibleForFree: true,
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${SITE_URL}/#faq`,
+        mainEntity: faqKeys.map((key) => ({
+          '@type': 'Question',
+          name: t(`faq.${key}Question`),
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: t(`faq.${key}Answer`),
+          },
+        })),
+      },
+    ],
+  }
+
   return (
     <main className={styles.landing}>
+      <JsonLd data={softwareData} />
       <section className={styles.hero} aria-labelledby="landing-title">
         <div className={styles.heroCopy}>
           <p className={styles.earlyAccess}>{t('heroAudience')}</p>
@@ -507,21 +555,7 @@ export default async function LandingPage() {
           <h2 id="faq-title">{t('faqTitle')}</h2>
         </div>
         <div className={styles.faq}>
-          {(
-            [
-              'accounting',
-              'bank',
-              'reminders',
-              'scan',
-              'bounce',
-              'mobile',
-              'different',
-              'privacy',
-              'payment',
-              'plans',
-              'limit',
-            ] as const
-          ).map((key) => (
+          {faqKeys.map((key) => (
             <FaqItem
               key={key}
               question={t(`faq.${key}Question`)}
