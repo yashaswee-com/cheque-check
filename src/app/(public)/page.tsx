@@ -70,6 +70,12 @@ const FEATURE_ICONS = {
   reports: Download01Icon,
 }
 
+const FEATURE_IMAGES: Partial<Record<(typeof FEATURES)[number], string>> = {
+  reminders: '/assets/landing/shots/receive-phone-call.png',
+  cheques: '/assets/landing/shots/scan-cheque.png',
+  reports: '/assets/landing/shots/reports.png',
+}
+
 const GALLERY = [
   'dashboard',
   'scan',
@@ -111,6 +117,12 @@ const GALLERY_SCREENSHOTS: Partial<Record<(typeof GALLERY)[number], string>> = {
 }
 
 const PROBLEMS = ['dates', 'accounts', 'records', 'bounce'] as const
+const PROBLEM_IMAGES: Partial<Record<(typeof PROBLEMS)[number], string>> = {
+  dates: '/assets/landing/shots/rush.png',
+  accounts: '/assets/landing/shots/which-bank.png',
+  records: '/assets/landing/shots/diary-whatsapp.png',
+  bounce: '/assets/landing/shots/bounced-cheque.png',
+}
 const SECURITY_POINTS = [
   { key: 'pin', icon: LockPasswordIcon },
   { key: 'access', icon: Shield01Icon },
@@ -272,13 +284,17 @@ export default async function LandingPage() {
             <article key={key} className={styles.problemCard}>
               <figure className={styles.problemImage}>
                 <Image
-                  src="/assets/feature-placeholder.svg"
-                  width={960}
-                  height={540}
+                  src={PROBLEM_IMAGES[key] ?? '/assets/feature-placeholder.svg'}
+                  width={1344}
+                  height={756}
                   sizes="(max-width: 736px) 100vw, 320px"
-                  alt={t('imagePlaceholder', {
-                    feature: t(`problems.${key}Title`),
-                  })}
+                  alt={
+                    PROBLEM_IMAGES[key]
+                      ? ''
+                      : t('imagePlaceholder', {
+                          feature: t(`problems.${key}Title`),
+                        })
+                  }
                 />
               </figure>
               <h3>{t(`problems.${key}Title`)}</h3>
@@ -325,11 +341,11 @@ export default async function LandingPage() {
           </div>
           <figure className={styles.bounceImage}>
             <Image
-              src="/assets/feature-placeholder.svg"
-              width={960}
-              height={540}
+              src="/assets/landing/shots/cheque-bounce-day-calc.png"
+              width={1344}
+              height={756}
               sizes="(max-width: 960px) 100vw, 520px"
-              alt={t('imagePlaceholder', { feature: t('bounce.imageLabel') })}
+              alt=""
             />
           </figure>
         </div>
@@ -414,11 +430,15 @@ export default async function LandingPage() {
               </div>
               <figure className={styles.featurePlaceholder}>
                 <Image
-                  src="/assets/feature-placeholder.svg"
-                  width={960}
-                  height={540}
+                  src={FEATURE_IMAGES[key] ?? '/assets/feature-placeholder.svg'}
+                  width={1344}
+                  height={756}
                   sizes="(max-width: 736px) 100vw, 900px"
-                  alt={t('imagePlaceholder', { feature: t(key) })}
+                  alt={
+                    FEATURE_IMAGES[key]
+                      ? ''
+                      : t('imagePlaceholder', { feature: t(key) })
+                  }
                 />
               </figure>
               {key === 'reminders' && <DemoMedia kind="audio" />}
