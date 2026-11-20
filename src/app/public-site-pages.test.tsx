@@ -873,7 +873,13 @@ describe('public site pages', () => {
     const video = document.querySelector('video')
     expect(video).toHaveAttribute('preload', 'none')
     expect(video).not.toHaveAttribute('src')
-    expect(video).toHaveAttribute('poster', '/assets/demo-poster.jpg')
+    expect(video).not.toHaveAttribute('poster')
+    const poster = document.querySelector('#product-demo img')
+    expect(poster).toHaveAttribute('loading', 'lazy')
+    expect(poster).toHaveAttribute(
+      'src',
+      expect.stringContaining(encodeURIComponent('/assets/demo-poster.jpg')),
+    )
     expect(video).not.toHaveAttribute('autoplay')
     expect(
       screen.queryByRole('img', { name: copy.scanGifPending }),
@@ -893,6 +899,58 @@ describe('public site pages', () => {
     await userEvent.click(question)
     expect(question).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByText(copy.faq.bounceAnswer)).toBeVisible()
+  })
+
+  it('uses lazy loading for below-the-fold landing images', async () => {
+    renderPage(await LandingPage())
+    for (const id of [
+      'screenshots-title',
+      'problem-title',
+      'bounce-title',
+      'features-title',
+      'pricing-title',
+      'install-title',
+    ]) {
+      const section = document.querySelector(`section[aria-labelledby="${id}"]`)
+      expect(section).not.toBeNull()
+      const images = section!.querySelectorAll('img')
+      expect(images.length).toBeGreaterThan(0)
+      for (const image of images) {
+        expect(image).toHaveAttribute('loading', 'lazy')
+      }
+    }
+  })
+
+  it('loads the video on play and restores its poster when playback fails', async () => {
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, 'play')
+      .mockRejectedValueOnce(new Error('Playback unavailable'))
+      .mockResolvedValue(undefined)
+    try {
+      renderPage(await LandingPage())
+      const demo = document.querySelector<HTMLElement>('#product-demo')!
+      const video = demo.querySelector('video')!
+      expect(video).not.toHaveAttribute('src')
+      await userEvent.click(
+        within(demo).getByRole('button', {
+          name: english.PublicSite.landing.videoPlay,
+        }),
+      )
+      expect(video).toHaveAttribute('src', '/assets/ad.mp4')
+      expect(within(demo).getByRole('alert')).toBeVisible()
+      expect(demo.querySelector('img')).toHaveAttribute('loading', 'lazy')
+      await userEvent.click(
+        within(demo).getByRole('button', {
+          name: english.PublicSite.landing.videoPlay,
+        }),
+      )
+      expect(play).toHaveBeenCalledTimes(2)
+      expect(demo.querySelector('img')).toBeNull()
+      expect(within(demo).queryByRole('alert')).not.toBeInTheDocument()
+      expect(video).toHaveAttribute('controls')
+    } finally {
+      play.mockRestore()
+    }
   })
 
   it('renders the matching screenshots and remaining placeholders in the phone gallery', async () => {

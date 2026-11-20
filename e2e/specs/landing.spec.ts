@@ -13,6 +13,41 @@ const protectedPaths = [
 test.describe('public landing page', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
+  test('loads the reports image when its section approaches the viewport', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await page.setViewportSize({ width: 393, height: 600 })
+    await context.addCookies([
+      { name: 'NEXT_LOCALE', value: 'en', url: baseURL! },
+    ])
+    const reportRequests: string[] = []
+    page.on('request', (request) => {
+      if (
+        decodeURIComponent(request.url()).includes(
+          '/assets/landing/shots/reports.png',
+        )
+      ) {
+        reportRequests.push(request.url())
+      }
+    })
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    const image = page.locator('[data-feature="reports"] img')
+    await expect(image).toHaveAttribute('loading', 'lazy')
+    expect(reportRequests).toHaveLength(0)
+    await image.scrollIntoViewIfNeeded()
+    await expect
+      .poll(() =>
+        image.evaluate(
+          (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
+        ),
+      )
+      .toBe(true)
+    expect(reportRequests.length).toBeGreaterThan(0)
+  })
+
   test('a visitor reaches login and signup from the landing page', async ({
     page,
     context,
