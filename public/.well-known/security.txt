@@ -1,0 +1,4 @@
+Contact: https://chequecheck.in/contact
+Expires: 2027-11-20T23:59:59.000Z
+Preferred-Languages: en, hi
+Canonical: https://chequecheck.in/.well-known/security.txt

@@ -2,12 +2,18 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { publicEnv } from '@/lib/env/client'
 import type { Database } from '@/types/database.types'
-import { isPublicApiPath, isPublicPagePath } from './public-routes'
+import {
+  isPublicApiPath,
+  isPublicPagePath,
+  isPublicStaticPath,
+} from './public-routes'
 
 export async function updateSession(request: NextRequest) {
   const isPublicPage = isPublicPagePath(request.nextUrl.pathname)
   const isPublicRequest =
-    isPublicPage || isPublicApiPath(request.nextUrl.pathname)
+    isPublicPage ||
+    isPublicApiPath(request.nextUrl.pathname) ||
+    isPublicStaticPath(request.nextUrl.pathname)
   const requestHeaders = new Headers(request.headers)
   if (isPublicPage) requestHeaders.set('x-public-site', 'true')
   else requestHeaders.delete('x-public-site')

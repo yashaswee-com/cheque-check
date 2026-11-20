@@ -9,6 +9,14 @@ This page records security boundaries and repository-level deployment risks visi
 - Verify the webhook gateway setting, contact proxy header behavior, public route allowlist, and VAPID build config in each deployment ([deployment risks](infrastructure-and-deployment.md#deployment-verification), [contact route](../src/app/api/contact/route.ts#L47-L64), [public route policy](../src/lib/supabase/public-routes.ts#L1-L17)).
 - Do not describe the application PIN or privacy cover as encryption or screenshot prevention ([PIN gate](../src/features/security/components/pin-gate.tsx#L17-L55), [privacy cover](../src/features/security/components/privacy-shield.tsx#L10-L86)).
 
+The app sends a one-year HSTS policy and publishes [security.txt](../public/.well-known/security.txt); verify both on deployed hostnames and keep the disclosure file's expiry current. At Cloudflare, set the minimum TLS version to TLS 1.2 or higher and require MFA for account members. Enable AI Labyrinth only if its crawler behavior is desired.
+
+## Domain transport and vulnerability reporting
+
+The Next.js response configuration sends `Strict-Transport-Security: max-age=31536000` on application responses, without `includeSubDomains` or `preload`. The static disclosure file is served at `/.well-known/security.txt` and directs reports to the public contact form. Confirm the HSTS header and the security.txt body on each production and QA hostname after deployment; the deployed Cloudflare edge may override or add response headers.
+
+The application cannot set Cloudflare's minimum TLS version, AI Labyrinth, or Cloudflare-account MFA. Configure those controls in Cloudflare separately. Do not add `includeSubDomains` or preload until every affected subdomain has been confirmed HTTPS-ready and the broader HSTS commitment is intended.
+
 ## Access boundaries
 
 Supabase Auth supplies the user session. User-facing repositories use session-scoped clients, while a separate server-only admin client uses service-role access ([server client](../src/lib/supabase/server.ts#L6-L24), [admin client](../src/lib/supabase/admin.ts#L1-L12)). Database migrations enforce active-owner/business checks and restrictive row policies; application pages alone are not the authorization control ([lifecycle policies](../supabase/migrations/20261021000000_lifecycle.sql#L36-L149)).
