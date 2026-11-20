@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
@@ -27,6 +26,7 @@ import styles from '@/components/public-site/landing.module.css'
 import { IndustryMarquee } from '@/components/public-site/industry-marquee'
 import { PublicIcon } from '@/components/public-site/public-icon'
 import { PublicBrand } from '@/components/public-site/public-brand'
+import { LoadingImage } from '@/components/public-site/loading-image'
 import { FaqItem } from '@/components/public-site/faq-item'
 import { DemoMedia } from '@/components/public-site/demo-media'
 import { PillScroller } from '@/components/ui/pill-scroller'
@@ -53,26 +53,20 @@ const STEPS = [
   { key: 'stepTrack', icon: BankIcon },
 ] as const
 
-const FEATURES = [
-  'reminders',
-  'cheques',
-  'accounts',
-  'parties',
-  'reports',
-] as const
+const FEATURES = ['reminders', 'cheques', 'accountsParties', 'reports'] as const
 const BOUNCE_STEPS = ['notice', 'payment', 'complaint'] as const
 
 const FEATURE_ICONS = {
   reminders: Call02Icon,
   cheques: ScanIcon,
-  accounts: BankIcon,
-  parties: UserGroupIcon,
+  accountsParties: UserGroupIcon,
   reports: Download01Icon,
 }
 
-const FEATURE_IMAGES: Partial<Record<(typeof FEATURES)[number], string>> = {
+const FEATURE_IMAGES: Record<(typeof FEATURES)[number], string> = {
   reminders: '/assets/landing/shots/receive-phone-call.png',
   cheques: '/assets/landing/shots/scan-cheque.png',
+  accountsParties: '/assets/landing/shots/accounts-and-parties.png',
   reports: '/assets/landing/shots/reports.png',
 }
 
@@ -109,7 +103,7 @@ const GALLERY_SCREENSHOTS: Partial<Record<(typeof GALLERY)[number], string>> = {
   accounts: '/assets/landing/ss/accounts-view.jpeg',
   accountDetails: '/assets/landing/ss/account-view.jpeg',
   parties: '/assets/landing/ss/parties-view.jpeg',
-  businesses: '/assets/landing/ss/businessess-view.jpeg',
+  businesses: '/assets/landing/ss/businesses-view.jpeg',
   tags: '/assets/landing/ss/view-specific-tag.jpeg',
   settings: '/assets/landing/ss/settings-view.jpeg',
   preferences: '/assets/landing/ss/preferences-view.jpeg',
@@ -118,8 +112,8 @@ const GALLERY_SCREENSHOTS: Partial<Record<(typeof GALLERY)[number], string>> = {
 
 const PROBLEMS = ['dates', 'accounts', 'records', 'bounce'] as const
 const PROBLEM_IMAGES: Partial<Record<(typeof PROBLEMS)[number], string>> = {
-  dates: '/assets/landing/shots/rush.png',
-  accounts: '/assets/landing/shots/which-bank.png',
+  dates: '/assets/landing/shots/missed-cheque-dates.png',
+  accounts: '/assets/landing/shots/cheque-bank-accounts.png',
   records: '/assets/landing/shots/diary-whatsapp.png',
   bounce: '/assets/landing/shots/bounced-cheque.png',
 }
@@ -240,7 +234,7 @@ export default async function LandingPage() {
                   <div className={styles.phoneFrame}>
                     {screenshot ? (
                       <div className={styles.phoneScreenshot}>
-                        <Image
+                        <LoadingImage
                           src={screenshot}
                           alt={title}
                           fill
@@ -284,7 +278,7 @@ export default async function LandingPage() {
           {PROBLEMS.map((key) => (
             <article key={key} className={styles.problemCard}>
               <figure className={styles.problemImage}>
-                <Image
+                <LoadingImage
                   src={PROBLEM_IMAGES[key] ?? '/assets/feature-placeholder.svg'}
                   width={1344}
                   height={756}
@@ -342,7 +336,7 @@ export default async function LandingPage() {
             <p className={styles.bounceDisclaimer}>{t('bounce.disclaimer')}</p>
           </div>
           <figure className={styles.bounceImage}>
-            <Image
+            <LoadingImage
               src="/assets/landing/shots/cheque-bounce-day-calc.png"
               width={1344}
               height={756}
@@ -432,17 +426,13 @@ export default async function LandingPage() {
                 <p>{t(`${key}Description`)}</p>
               </div>
               <figure className={styles.featurePlaceholder}>
-                <Image
-                  src={FEATURE_IMAGES[key] ?? '/assets/feature-placeholder.svg'}
+                <LoadingImage
+                  src={FEATURE_IMAGES[key]}
                   width={1344}
                   height={756}
                   sizes="(max-width: 736px) 100vw, 900px"
                   loading="lazy"
-                  alt={
-                    FEATURE_IMAGES[key]
-                      ? ''
-                      : t('imagePlaceholder', { feature: t(key) })
-                  }
+                  alt=""
                 />
               </figure>
               {key === 'reminders' && <DemoMedia kind="audio" />}
@@ -590,7 +580,7 @@ export default async function LandingPage() {
           </AppEntryLink>
         </div>
         <figure className={styles.installPhone}>
-          <Image
+          <LoadingImage
             src="/assets/install-phone-placeholder.svg"
             width={240}
             height={420}

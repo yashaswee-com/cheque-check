@@ -1,11 +1,11 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { PauseIcon, PlayIcon } from '@hugeicons/core-free-icons'
 import styles from './landing.module.css'
+import { LoadingImage } from './loading-image'
 
 export function DemoMedia({ kind }: { kind: 'video' | 'audio' }) {
   const t = useTranslations('PublicSite.landing')
@@ -24,7 +24,9 @@ export function DemoMedia({ kind }: { kind: 'video' | 'audio' }) {
     }
     setFailed(false)
     if (!started || media.error) {
-      media.src = isVideo ? '/assets/ad.mp4' : '/assets/voice-reminder.mp3'
+      media.src = isVideo
+        ? '/assets/cheque-check-demo.mp4'
+        : '/assets/voice-reminder.mp3'
       setStarted(true)
     }
     try {
@@ -55,8 +57,8 @@ export function DemoMedia({ kind }: { kind: 'video' | 'audio' }) {
             {t('mediaUnsupported')}
           </video>
           {(!started || failed) && (
-            <Image
-              src="/assets/demo-poster.jpg"
+            <LoadingImage
+              src="/assets/cheque-check-demo-poster.jpg"
               alt=""
               fill
               sizes="(max-width: 361px) calc(72vw - 24px), 236px"

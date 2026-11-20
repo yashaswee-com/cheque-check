@@ -13,6 +13,223 @@ const protectedPaths = [
 test.describe('public landing page', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
+  test('shows a shimmer while a lazy image loads and stops on completion', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await context.addCookies([
+      { name: 'NEXT_LOCALE', value: 'en', url: baseURL! },
+    ])
+    let releaseImage!: () => void
+    const imageReady = new Promise<void>((resolve) => {
+      releaseImage = resolve
+    })
+    await page.route('**/_next/image?**', async (route) => {
+      if (decodeURIComponent(route.request().url()).includes('/reports.png')) {
+        await imageReady
+      }
+      await route.continue()
+    })
+    try {
+      await page.goto('/')
+      const image = page.locator('[data-feature="reports"] img')
+      const wrapper = image.locator('..')
+      await expect(image).toHaveAttribute('loading', 'lazy')
+      await image.scrollIntoViewIfNeeded()
+      await expect(wrapper).toHaveAttribute('data-image-status', 'loading')
+      await expect(wrapper).not.toHaveCSS('animation-name', 'none')
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await expect(wrapper).toHaveCSS('animation-name', 'none')
+      releaseImage()
+      await expect(wrapper).toHaveAttribute('data-image-status', 'loaded')
+      await expect
+        .poll(() =>
+          image.evaluate(
+            (element: HTMLImageElement) =>
+              element.complete && element.naturalWidth > 0,
+          ),
+        )
+        .toBe(true)
+      await expect(wrapper).toHaveCSS('animation-name', 'none')
+    } finally {
+      releaseImage()
+    }
+  })
+
+  test('combined accounts and parties card fits the feature layout', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await context.addCookies([
+      { name: 'NEXT_LOCALE', value: 'en', url: baseURL! },
+    ])
+    await page.goto('/')
+    const features = page.locator('section[aria-labelledby="features-title"]')
+    const scan = features.locator('[data-feature="cheques"]')
+    const combined = features.locator('[data-feature="accountsParties"]')
+    const image = combined.locator('img')
+    await expect(features.locator('article')).toHaveCount(4)
+    await expect(combined.getByRole('heading')).toHaveText(
+      english.PublicSite.landing.accountsParties,
+    )
+    for (const width of [320, 768, 1280]) {
+      await page.setViewportSize({ width, height: 800 })
+      await image.scrollIntoViewIfNeeded()
+      await expect
+        .poll(() =>
+          image.evaluate(
+            (element: HTMLImageElement) =>
+              element.complete && element.naturalWidth > 0,
+          ),
+        )
+        .toBe(true)
+      const scanBox = await scan.boundingBox()
+      const combinedBox = await combined.boundingBox()
+      const imageBox = await image.boundingBox()
+      expect(scanBox).not.toBeNull()
+      expect(combinedBox).not.toBeNull()
+      expect(imageBox).not.toBeNull()
+      expect(imageBox!.width).toBeLessThanOrEqual(combinedBox!.width)
+      expect(combinedBox!.x + combinedBox!.width).toBeLessThanOrEqual(width)
+      if (width >= 1024) {
+        expect(Math.abs(scanBox!.y - combinedBox!.y)).toBeLessThan(1)
+        expect(combinedBox!.x).toBeGreaterThan(scanBox!.x + scanBox!.width)
+      } else {
+        expect(combinedBox!.y).toBeGreaterThanOrEqual(
+          scanBox!.y + scanBox!.height,
+        )
+      }
+    }
+  })
+
+  test('FAQ expands smoothly without moving its trigger or chevron', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await context.addCookies([
+      { name: 'NEXT_LOCALE', value: 'en', url: baseURL! },
+    ])
+    await page.goto('/')
+    await page.evaluate(() => document.fonts.ready)
+    const rejectCookies = page.getByRole('button', {
+      name: english.PublicSite.cookieConsent.reject,
+      exact: true,
+    })
+    await rejectCookies.click()
+
+    const question = page.getByRole('button', {
+      name: english.PublicSite.landing.faq.accountingQuestion,
+    })
+    for (const width of [320, 1280]) {
+      await page.setViewportSize({ width, height: 800 })
+      await question.evaluate((button) =>
+        button.scrollIntoView({ block: 'center' }),
+      )
+      await question.click()
+      await expect(question).toHaveAttribute('aria-expanded', 'true')
+      await page.waitForTimeout(300)
+      await question.evaluate((button) =>
+        button.scrollIntoView({ block: 'center' }),
+      )
+      const box = await question.boundingBox()
+      expect(box).not.toBeNull()
+      await page.mouse.move(box!.x + 10, box!.y + box!.height / 2)
+      await page.mouse.down()
+      await expect(question).toHaveCSS('transform', 'none')
+      await page.mouse.up()
+      await expect(question).toHaveAttribute('aria-expanded', 'false')
+      await page.waitForTimeout(300)
+
+      const animations = await question.evaluate(async (button) => {
+        if (!(button instanceof HTMLButtonElement)) {
+          throw new Error('FAQ trigger must be a button')
+        }
+        const answer = document.getElementById(
+          button.getAttribute('aria-controls')!,
+        )!
+        const icon = button.querySelector('svg')!
+        const capture = async () => {
+          const frames: {
+            height: number
+            top: number
+            x: number
+            y: number
+          }[] = []
+          const sample = () => {
+            const buttonRect = button.getBoundingClientRect()
+            const iconRect = icon.getBoundingClientRect()
+            frames.push({
+              height: answer.getBoundingClientRect().height,
+              top: buttonRect.top,
+              x: iconRect.x + iconRect.width / 2,
+              y: iconRect.y + iconRect.height / 2,
+            })
+          }
+          sample()
+          button.click()
+          const start = performance.now()
+          await new Promise<void>((resolve) => {
+            const frame = () => {
+              sample()
+              if (performance.now() - start < 350) requestAnimationFrame(frame)
+              else resolve()
+            }
+            requestAnimationFrame(frame)
+          })
+          return frames
+        }
+        return [await capture(), await capture()]
+      })
+      const openHeight = animations[0].at(-1)!.height
+      expect(openHeight).toBeGreaterThan(0)
+      for (const [direction, samples] of animations.entries()) {
+        expect(
+          samples.some(({ height }) => height > 0 && height < openHeight - 1),
+        ).toBe(true)
+        for (let index = 1; index < samples.length; index++) {
+          const delta = samples[index].height - samples[index - 1].height
+          expect(direction === 0 ? delta : -delta).toBeGreaterThanOrEqual(-0.5)
+          expect(Math.abs(samples[index].top - samples[0].top)).toBeLessThan(1)
+          expect(Math.abs(samples[index].x - samples[0].x)).toBeLessThan(1)
+          expect(Math.abs(samples[index].y - samples[0].y)).toBeLessThan(1)
+        }
+      }
+      await expect(question).toHaveAttribute('aria-expanded', 'false')
+      expect(animations[1].at(-1)!.height).toBe(0)
+      await question.click()
+      await page.waitForTimeout(70)
+      await question.click()
+      await expect(question).toHaveAttribute('aria-expanded', 'false')
+      await expect
+        .poll(() =>
+          question.evaluate((button) => {
+            const answer = document.getElementById(
+              button.getAttribute('aria-controls')!,
+            )!
+            return answer.getBoundingClientRect().height
+          }),
+        )
+        .toBe(0)
+    }
+
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await expect(question.locator('svg')).toHaveCSS('transition-duration', '0s')
+    const answer = page.locator(
+      `[id="${await question.getAttribute('aria-controls')}"]`,
+    )
+    await expect(answer).toHaveCSS('transition-duration', '0s')
+    await question.focus()
+    await page.keyboard.press('Enter')
+    await expect(question).toHaveAttribute('aria-expanded', 'true')
+    await expect(answer).not.toHaveAttribute('inert')
+    await page.keyboard.press('Space')
+    await expect(question).toHaveAttribute('aria-expanded', 'false')
+    await expect(answer).toHaveAttribute('inert')
+  })
+
   test('loads the reports image when its section approaches the viewport', async ({
     page,
     context,

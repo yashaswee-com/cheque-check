@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
+import english from '../messages/en.json'
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
@@ -358,13 +359,22 @@ test('public navigation keeps its light blue palette under a saved dark theme', 
 
 test('public landing loads media only on interaction and plays the supplied recordings', async ({
   page,
+  context,
+  baseURL,
 }) => {
   const mediaRequests: string[] = []
   page.on('request', (request) => {
-    if (/\/assets\/(ad\.mp4|voice-reminder\.mp3)/.test(request.url()))
+    if (
+      /\/assets\/(cheque-check-demo\.mp4|voice-reminder\.mp3)/.test(
+        request.url(),
+      )
+    )
       mediaRequests.push(request.url())
   })
   await page.setViewportSize({ width: 390, height: 844 })
+  await context.addCookies([
+    { name: 'NEXT_LOCALE', value: 'en', url: baseURL! },
+  ])
   await page.goto('/')
   await page.getByRole('button', { name: 'Reject', exact: true }).click()
   const video = page.locator('#product-demo video')
@@ -372,24 +382,32 @@ test('public landing loads media only on interaction and plays the supplied reco
   await expect(video).not.toHaveAttribute('src')
   await expect(audio).not.toHaveAttribute('src')
   expect(mediaRequests).toEqual([])
-  await page.getByRole('button', { name: 'App demo chalaayein' }).click()
-  await expect(video).toHaveAttribute('src', '/assets/ad.mp4')
+  await page
+    .getByRole('button', { name: english.PublicSite.landing.videoPlay })
+    .click()
+  await expect(video).toHaveAttribute('src', '/assets/cheque-check-demo.mp4')
   await expect(video).toHaveAttribute('controls', '')
   await expect
     .poll(() => video.evaluate((el: HTMLVideoElement) => el.currentTime))
     .toBeGreaterThan(0)
   await video.evaluate((el: HTMLVideoElement) => el.pause())
-  await page.getByRole('button', { name: 'Reminder recording sunein' }).click()
+  await page
+    .getByRole('button', { name: english.PublicSite.landing.audioPlay })
+    .click()
   await expect(audio).toHaveAttribute('src', '/assets/voice-reminder.mp3')
   await expect
     .poll(() => audio.evaluate((el: HTMLAudioElement) => el.currentTime))
     .toBeGreaterThan(0)
-  await page.getByRole('button', { name: 'Reminder recording rokein' }).click()
+  await page
+    .getByRole('button', { name: english.PublicSite.landing.audioPause })
+    .click()
   await expect
     .poll(() => audio.evaluate((el: HTMLAudioElement) => el.paused))
     .toBe(true)
   await expect(page.locator('main').getByRole('alert')).toHaveCount(0)
-  expect(mediaRequests.some((url) => url.endsWith('ad.mp4'))).toBe(true)
+  expect(
+    mediaRequests.some((url) => url.endsWith('cheque-check-demo.mp4')),
+  ).toBe(true)
   expect(mediaRequests.some((url) => url.endsWith('voice-reminder.mp3'))).toBe(
     true,
   )

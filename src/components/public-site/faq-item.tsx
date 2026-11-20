@@ -24,7 +24,7 @@ export function FaqItem({
           aria-controls={answerId}
           onClick={() => setExpanded((open) => !open)}
         >
-          {question}
+          <span>{question}</span>
           <HugeiconsIcon icon={ArrowDown01Icon} size={20} aria-hidden="true" />
         </button>
       </h3>

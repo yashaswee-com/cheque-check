@@ -17,6 +17,6 @@ export const config = {
      * - public landing demo media and the supplied sample report
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!monitoring(?:/|$)|_next/static|_next/image|favicon.ico|sw\\.js|offline\\.(?:html|js)$|assets/(?:ad\\.mp4|voice-reminder\\.mp3|business-overview-sample-en\\.pdf)$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webmanifest)$).*)',
+    '/((?!monitoring(?:/|$)|_next/static|_next/image|favicon.ico|sw\\.js|offline\\.(?:html|js)$|assets/(?:cheque-check-demo\\.mp4|voice-reminder\\.mp3|business-overview-sample-en\\.pdf)$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webmanifest)$).*)',
   ],
 }
