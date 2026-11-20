@@ -995,21 +995,6 @@ a.secondaryCta > svg {
 .phoneSlide {
   scroll-margin-top: 100px;
 }
-.phoneScreen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  height: 100%;
-  padding: 32px 16px;
-  border-radius: 25px;
-  background: var(--blue-wash);
-}
-.phoneScreen p {
-  font-size: 14px;
-  color: var(--muted-foreground);
-}
 .phoneScreenshot {
   position: relative;
   height: 100%;

@@ -64,15 +64,14 @@ const FEATURE_ICONS = {
 }
 
 const FEATURE_IMAGES: Record<(typeof FEATURES)[number], string> = {
-  reminders: '/assets/landing/shots/receive-phone-call.png',
-  cheques: '/assets/landing/shots/scan-cheque.png',
-  accountsParties: '/assets/landing/shots/accounts-and-parties.png',
-  reports: '/assets/landing/shots/reports.png',
+  reminders: '/assets/landing/shots/receive-phone-call.webp',
+  cheques: '/assets/landing/shots/scan-cheque.webp',
+  accountsParties: '/assets/landing/shots/accounts-and-parties.webp',
+  reports: '/assets/landing/shots/reports.webp',
 }
 
 const GALLERY = [
   'dashboard',
-  'scan',
   'cheques',
   'newCheque',
   'search',
@@ -84,14 +83,12 @@ const GALLERY = [
   'parties',
   'businesses',
   'tags',
-  'reports',
-  'language',
   'settings',
   'preferences',
   'appPinLock',
 ] as const
 
-const GALLERY_SCREENSHOTS: Partial<Record<(typeof GALLERY)[number], string>> = {
+const GALLERY_SCREENSHOTS: Record<(typeof GALLERY)[number], string> = {
   dashboard: '/assets/landing/ss/dashboard-view.jpeg',
   cheques: '/assets/landing/ss/cheques-view.jpeg',
   newCheque: '/assets/landing/ss/new-cheque-add-screen.jpeg',
@@ -112,10 +109,10 @@ const GALLERY_SCREENSHOTS: Partial<Record<(typeof GALLERY)[number], string>> = {
 
 const PROBLEMS = ['dates', 'accounts', 'records', 'bounce'] as const
 const PROBLEM_IMAGES: Partial<Record<(typeof PROBLEMS)[number], string>> = {
-  dates: '/assets/landing/shots/missed-cheque-dates.png',
-  accounts: '/assets/landing/shots/cheque-bank-accounts.png',
-  records: '/assets/landing/shots/diary-whatsapp.png',
-  bounce: '/assets/landing/shots/bounced-cheque.png',
+  dates: '/assets/landing/shots/missed-cheque-dates.webp',
+  accounts: '/assets/landing/shots/cheque-bank-accounts.webp',
+  records: '/assets/landing/shots/diary-whatsapp.webp',
+  bounce: '/assets/landing/shots/bounced-cheque.webp',
 }
 const SECURITY_POINTS = [
   { key: 'pin', icon: LockPasswordIcon },
@@ -225,34 +222,22 @@ export default async function LandingPage() {
               </div>
               <figcaption>{t('videoTitle')}</figcaption>
             </figure>
-            {GALLERY.map((key) => {
-              const screenshot = GALLERY_SCREENSHOTS[key]
-              const title = t(`gallery.${key}Title`)
-
-              return (
-                <figure className={styles.phoneSlide} key={key}>
-                  <div className={styles.phoneFrame}>
-                    {screenshot ? (
-                      <div className={styles.phoneScreenshot}>
-                        <LoadingImage
-                          src={screenshot}
-                          alt={title}
-                          fill
-                          sizes="(max-width: 361px) calc(72vw - 24px), 236px"
-                          loading="lazy"
-                        />
-                      </div>
-                    ) : (
-                      <div className={styles.phoneScreen}>
-                        <strong>{title}</strong>
-                        <p>{t('screenshotPending')}</p>
-                      </div>
-                    )}
+            {GALLERY.map((key) => (
+              <figure className={styles.phoneSlide} key={key}>
+                <div className={styles.phoneFrame}>
+                  <div className={styles.phoneScreenshot}>
+                    <LoadingImage
+                      src={GALLERY_SCREENSHOTS[key]}
+                      alt={t(`gallery.${key}Title`)}
+                      fill
+                      sizes="(max-width: 361px) calc(72vw - 24px), 236px"
+                      loading="lazy"
+                    />
                   </div>
-                  <figcaption>{t(`gallery.${key}Caption`)}</figcaption>
-                </figure>
-              )
-            })}
+                </div>
+                <figcaption>{t(`gallery.${key}Caption`)}</figcaption>
+              </figure>
+            ))}
           </PillScroller>
         </div>
       </section>
@@ -337,7 +322,7 @@ export default async function LandingPage() {
           </div>
           <figure className={styles.bounceImage}>
             <LoadingImage
-              src="/assets/landing/shots/cheque-bounce-day-calc.png"
+              src="/assets/landing/shots/cheque-bounce-day-calc.webp"
               width={1344}
               height={756}
               sizes="(max-width: 960px) 100vw, 520px"
