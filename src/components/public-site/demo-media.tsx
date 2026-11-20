@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { PauseIcon, PlayIcon } from '@hugeicons/core-free-icons'
@@ -49,15 +50,21 @@ export function DemoMedia({ kind }: { kind: 'video' | 'audio' }) {
   return (
     <div className={isVideo ? styles.videoPlayer : styles.audioPlayer}>
       {isVideo ? (
-        <video
-          {...mediaProps}
-          width={720}
-          height={1280}
-          playsInline
-          poster="/assets/demo-poster.jpg"
-        >
-          {t('mediaUnsupported')}
-        </video>
+        <>
+          <video {...mediaProps} width={720} height={1280} playsInline>
+            {t('mediaUnsupported')}
+          </video>
+          {(!started || failed) && (
+            <Image
+              src="/assets/demo-poster.jpg"
+              alt=""
+              fill
+              sizes="(max-width: 361px) calc(72vw - 24px), 236px"
+              loading="lazy"
+              className={styles.videoPoster}
+            />
+          )}
+        </>
       ) : (
         <audio {...mediaProps}>{t('mediaUnsupported')}</audio>
       )}

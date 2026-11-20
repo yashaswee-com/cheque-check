@@ -170,6 +170,7 @@ export function PlanComparison({
                     alt="Razorpay"
                     width={316}
                     height={67}
+                    loading="lazy"
                     className="h-4 w-auto"
                   />
                 ),

@@ -484,6 +484,10 @@ a.secondaryCta > svg {
   height: 100%;
   object-fit: contain;
 }
+.videoPoster {
+  object-fit: cover;
+  pointer-events: none;
+}
 .mediaPlay {
   display: inline-flex;
   align-items: center;

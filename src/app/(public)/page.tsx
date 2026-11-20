@@ -245,6 +245,7 @@ export default async function LandingPage() {
                           alt={title}
                           fill
                           sizes="(max-width: 361px) calc(72vw - 24px), 236px"
+                          loading="lazy"
                         />
                       </div>
                     ) : (
@@ -288,6 +289,7 @@ export default async function LandingPage() {
                   width={1344}
                   height={756}
                   sizes="(max-width: 736px) 100vw, 320px"
+                  loading="lazy"
                   alt={
                     PROBLEM_IMAGES[key]
                       ? ''
@@ -345,6 +347,7 @@ export default async function LandingPage() {
               width={1344}
               height={756}
               sizes="(max-width: 960px) 100vw, 520px"
+              loading="lazy"
               alt=""
             />
           </figure>
@@ -434,6 +437,7 @@ export default async function LandingPage() {
                   width={1344}
                   height={756}
                   sizes="(max-width: 736px) 100vw, 900px"
+                  loading="lazy"
                   alt={
                     FEATURE_IMAGES[key]
                       ? ''
@@ -590,6 +594,7 @@ export default async function LandingPage() {
             src="/assets/install-phone-placeholder.svg"
             width={240}
             height={420}
+            loading="lazy"
             alt=""
           />
         </figure>
