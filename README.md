@@ -2,6 +2,8 @@
 
 Cheque Check is a Next.js and Supabase application for managing business cheque records, accounts, parties, reports, payments, and notifications ([package dependencies](package.json#L49-L92), [feature routes](<src/app/(dashboard)/dashboard/page.tsx#L1>)). This repository snapshot describes checked-in code; it does not certify production deployment, provider readiness, security scan status, or user adoption ([documentation evidence rules](constitution.md#L16-L41)).
 
+[Code of Conduct](CODE_OF_CONDUCT.md) · [License](LICENSE.md) · [Security Policy](SECURITY.md)
+
 ## Start here
 
 - [Architecture](docs/architecture.md): project layout, data flow, and implementation boundaries.

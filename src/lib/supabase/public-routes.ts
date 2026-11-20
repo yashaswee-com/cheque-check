@@ -11,6 +11,8 @@ const PUBLIC_PAGE_PATHS = new Set([
 
 const PUBLIC_API_PATHS = new Set(['/api/contact', '/api/analytics/events'])
 
+const PUBLIC_STATIC_PATHS = new Set(['/.well-known/security.txt'])
+
 function normalizedPath(pathname: string) {
   return pathname.replace(/\/+$/, '') || '/'
 }
@@ -21,4 +23,8 @@ export function isPublicPagePath(pathname: string) {
 
 export function isPublicApiPath(pathname: string) {
   return PUBLIC_API_PATHS.has(normalizedPath(pathname))
+}
+
+export function isPublicStaticPath(pathname: string) {
+  return PUBLIC_STATIC_PATHS.has(normalizedPath(pathname))
 }
