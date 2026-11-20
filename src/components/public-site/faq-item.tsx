@@ -7,9 +7,11 @@ import styles from './landing.module.css'
 
 export function FaqItem({
   question,
+  quickAnswer,
   answer,
 }: {
   question: string
+  quickAnswer: string
   answer: string
 }) {
   const [expanded, setExpanded] = useState(false)
@@ -20,11 +22,15 @@ export function FaqItem({
       <h3>
         <button
           type="button"
+          aria-label={question}
           aria-expanded={expanded}
           aria-controls={answerId}
           onClick={() => setExpanded((open) => !open)}
         >
-          <span>{question}</span>
+          <span className={styles.faqQuestion}>{question}</span>
+          <span className={styles.faqQuickAnswer} aria-hidden="true">
+            {quickAnswer}
+          </span>
           <HugeiconsIcon icon={ArrowDown01Icon} size={20} aria-hidden="true" />
         </button>
       </h3>

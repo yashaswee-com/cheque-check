@@ -17,7 +17,7 @@ import { useEntityTagMap } from '@/features/tags/hooks/use-entity-tags'
 import { ChequeCard } from '@/components/cheque-card'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useProfile } from '@/features/profile/hooks/use-profile'
 import { useDisplayFormat } from '@/features/profile/hooks/use-display-format'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -27,6 +27,25 @@ import { useTranslations } from 'next-intl'
 import { DraftsSummaryCard } from '@/features/drafts'
 import { cn } from '@/lib/utils'
 import { PillScroller } from '@/components/ui/pill-scroller'
+import dynamic from 'next/dynamic'
+import type { DateRange } from 'react-day-picker'
+import { StatsDateFilter } from '@/features/cheques/components/stats-date-filter'
+import {
+  resolveDateRange,
+  type DateRangePreset,
+} from '@/features/cheques/lib/date-range'
+import { useChequeSummary } from '@/features/cheques/hooks/use-dashboard-cheques'
+
+const ChequeStatsChart = dynamic(
+  () =>
+    import('@/features/cheques/components/cheque-distribution').then(
+      (mod) => mod.ChequeDistribution,
+    ),
+  {
+    loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+    ssr: false,
+  },
+)
 
 export default function HomePage() {
   const tDashboard = useTranslations('Dashboard')
@@ -39,6 +58,10 @@ export default function HomePage() {
   const { profile } = useProfile()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [statsPreset, setStatsPreset] = useState<DateRangePreset>('last30Days')
+  const [customRange, setCustomRange] = useState<DateRange>()
+  const statsRange = resolveDateRange(statsPreset, new Date(), customRange)
+  const statsSummary = useChequeSummary(activeBusiness?.id, statsRange)
 
   const {
     todayCheques,
@@ -261,6 +284,23 @@ export default function HomePage() {
           </div>
 
           <DraftsSummaryCard />
+
+          <div className="space-y-4">
+            <StatsDateFilter
+              preset={statsPreset}
+              onPresetChange={setStatsPreset}
+              customRange={customRange}
+              onCustomRangeChange={setCustomRange}
+            />
+            <ChequeStatsChart
+              summary={statsSummary.data}
+              currency={currency}
+              isLoading={statsSummary.isFetching}
+              error={
+                statsSummary.isError ? tCommon('loadDataError') : undefined
+              }
+            />
+          </div>
 
           {/* Today's Cheques */}
           <div className="space-y-3">

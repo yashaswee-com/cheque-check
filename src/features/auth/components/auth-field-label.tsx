@@ -2,7 +2,6 @@ import type { ComponentProps, ReactNode } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { FormLabel } from '@/components/ui/form-label'
 import { FieldError } from '@/components/ui/field-error'
-import { cn } from '@/lib/utils'
 
 type Icon = ComponentProps<typeof HugeiconsIcon>['icon']
 
@@ -33,12 +32,8 @@ export function AuthFieldLabel({
 
 /** Class names for an input placed inside an `AuthField` box. */
 export const AUTH_FIELD_INPUT_CLASS =
-  'h-11 rounded-none border-none bg-transparent px-3 shadow-none focus-visible:ring-0 dark:bg-transparent'
+  'h-11 rounded-md border-input bg-background px-3 shadow-none'
 
-/**
- * Case-file style field: the label sits in a folder tab whose right edge
- * slants down into an outlined box that holds the control.
- */
 export function AuthField({
   htmlFor,
   icon,
@@ -59,41 +54,19 @@ export function AuthField({
   children: ReactNode
 }) {
   return (
-    <div className="group/field space-y-1">
-      <div className="flex items-end justify-between gap-2">
-        <div
-          data-slot="auth-field-tab"
-          className={cn(
-            'relative z-10 -mb-px inline-block max-w-[85%] rounded-tl-md pl-px pt-px transition-colors [clip-path:polygon(0_0,calc(100%-14px)_0,100%_100%,0_100%)]',
-            error
-              ? 'bg-destructive/60'
-              : 'bg-primary/25 group-focus-within/field:bg-primary/70',
-          )}
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <AuthFieldLabel
+          htmlFor={htmlFor}
+          icon={icon}
+          required={required}
+          className="text-xs font-normal"
         >
-          <div className="flex h-7 items-center rounded-tl-[5px] bg-white pl-2.5 pr-6 [clip-path:polygon(0_0,calc(100%-15px)_0,calc(100%-1.5px)_100%,0_100%)] dark:bg-surface-tile-1">
-            <AuthFieldLabel
-              htmlFor={htmlFor}
-              icon={icon}
-              required={required}
-              className="text-xs font-normal"
-            >
-              {label}
-            </AuthFieldLabel>
-          </div>
-        </div>
+          {label}
+        </AuthFieldLabel>
         {action ? <div className="pb-1.5">{action}</div> : null}
       </div>
-      <div
-        data-slot="auth-field-box"
-        className={cn(
-          'rounded-b-md rounded-tr-md border bg-white shadow-sm transition-colors dark:bg-surface-tile-1',
-          error
-            ? 'border-destructive/60'
-            : 'border-primary/25 group-focus-within/field:border-primary/70',
-        )}
-      >
-        {children}
-      </div>
+      <div data-slot="auth-field-box">{children}</div>
       <FieldError id={errorId}>{error}</FieldError>
     </div>
   )

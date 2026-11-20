@@ -499,7 +499,7 @@ describe('durable delivery and daily reports', () => {
     expect(
       (
         await db.query(
-          "SELECT * FROM event_analytics_daily_totals WHERE event_name='signup_success' AND day=(now()-interval '100 days')::date",
+          "SELECT * FROM event_analytics_daily_totals WHERE event_name='signup_success' AND day=((now() AT TIME ZONE 'Asia/Kolkata')::date-interval '100 days')::date",
         )
       ).rows.length,
     ).toBeGreaterThan(0)

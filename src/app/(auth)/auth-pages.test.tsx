@@ -151,8 +151,12 @@ describe.each([
   })
   it('returns to the public homepage using the back button', () => {
     renderPage(<Component />)
-    fireEvent.click(screen.getByRole('button', { name: messages.Common.back }))
-    expect(mocks.push).toHaveBeenCalledWith('/')
+    expect(
+      screen.getByRole('link', { name: messages.Common.back }),
+    ).toHaveAttribute('href', '/')
+    expect(
+      screen.getByRole('link', { name: messages.Common.back }),
+    ).toHaveAttribute('data-app-entry')
   })
   it('requires email/password and reveals the password without submitting', () => {
     const { container } = renderPage(<Component />)
@@ -181,6 +185,7 @@ describe.each([
       const input = screen.getByLabelText(text)
       expect(input.parentElement?.querySelector('svg')).not.toBeInTheDocument()
     }
+    expect(document.querySelector('[data-slot="auth-field-tab"]')).toBeNull()
   })
   it('submits entered credentials and navigates only after authentication succeeds', async () => {
     renderPage(<Component />)
@@ -447,8 +452,9 @@ describe('login return path', () => {
 describe('forgot password page', () => {
   it('returns to login using the top back button', () => {
     renderPage(<ForgotPasswordPage />)
-    fireEvent.click(screen.getByRole('button', { name: messages.Common.back }))
-    expect(mocks.push).toHaveBeenCalledWith('/login')
+    expect(
+      screen.getByRole('link', { name: messages.Common.back }),
+    ).toHaveAttribute('href', '/login')
   })
   it('requires a CAPTCHA token for recovery and consumes it after a thrown failure', async () => {
     mocks.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = 'public-site-key'

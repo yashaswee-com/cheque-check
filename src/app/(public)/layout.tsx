@@ -47,7 +47,7 @@ export default async function PublicSiteLayout({
           <Link href="/" className={styles.brand}>
             <PublicBrand />
           </Link>
-          <div className="flex min-w-0 items-center gap-2">
+          <div className={styles.headerActions}>
             <AppEntryLink
               href="/login"
               className={styles.signIn}
@@ -122,14 +122,22 @@ export default async function PublicSiteLayout({
                 </h2>
                 <ul>
                   {PUBLIC_NAV_LINKS.filter((link) => link.group === group).map(
-                    ({ href, labelKey, icon }) => (
-                      <li key={href}>
-                        <Link href={href}>
-                          <PublicIcon icon={icon} size={18} />
-                          <span>{t(`nav.${labelKey}`)}</span>
-                        </Link>
-                      </li>
-                    ),
+                    (link) => {
+                      const { href, labelKey, icon } = link
+                      const external = 'external' in link && link.external
+                      return (
+                        <li key={href}>
+                          <Link
+                            href={href}
+                            target={external ? '_blank' : undefined}
+                            rel={external ? 'noreferrer' : undefined}
+                          >
+                            <PublicIcon icon={icon} size={18} />
+                            <span>{t(`nav.${labelKey}`)}</span>
+                          </Link>
+                        </li>
+                      )
+                    },
                   )}
                   {group === 'support' && (
                     <li>

@@ -229,9 +229,13 @@ describe('application shell routes', () => {
         'type' in child &&
         child.type === NextIntlClientProvider,
     ) as ReactElement<{ children: ReactNode }>
-    const publicContent = publicShell.props.children as ReactElement<{
-      children: ReactNode
-    }>
+    const publicContent = Children.toArray(publicShell.props.children).find(
+      (child) =>
+        typeof child === 'object' &&
+        child !== null &&
+        'type' in child &&
+        child.type === 'div',
+    ) as ReactElement<{ children: ReactNode }>
     expect(publicContent.type).toBe('div')
     const content = Children.toArray(publicContent.props.children)
     expect(content).toHaveLength(1)

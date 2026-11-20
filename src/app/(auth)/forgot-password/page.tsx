@@ -31,7 +31,6 @@ import { toast } from '@/components/ui/toast'
 import { getAuthErrorMessageKey } from '@/features/auth/auth-error-message'
 import { useEmailAuthCaptcha } from '@/features/auth/components/use-email-auth-captcha'
 import { AuthPageFrame } from '@/features/auth/components/auth-page-frame'
-import { useRouter } from 'next/navigation'
 
 export default function ForgotPasswordPage() {
   const t = useTranslations('Auth')
@@ -39,8 +38,6 @@ export default function ForgotPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
   const captcha = useEmailAuthCaptcha('email_reset')
-  const router = useRouter()
-
   const reportError = (error: unknown) => {
     toast.add({
       title: t('errorTitle'),
@@ -73,7 +70,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <AuthPageFrame onBack={() => router.push('/login')}>
+    <AuthPageFrame backHref="/login">
       <div className="space-y-6">
         <div className="flex flex-col items-center text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white shadow-sm overflow-hidden">

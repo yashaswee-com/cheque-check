@@ -115,6 +115,9 @@ beforeEach(() => {
       transaction_type: 'lifetime',
     },
   ])
+  document.documentElement.classList.remove('dark')
+  delete document.documentElement.dataset.appearance
+  localStorage.clear()
 })
 
 afterEach(() => {
@@ -646,7 +649,7 @@ describe('public site pages', () => {
         name: english.PublicSite.nav.features,
       }),
     ).toHaveAttribute('href', '/features')
-    expect(within(nav).getAllByRole('link')).toHaveLength(5)
+    expect(within(nav).getAllByRole('link')).toHaveLength(8)
     for (const link of within(nav).getAllByRole('link')) {
       expect(link.querySelectorAll('svg')).toHaveLength(2)
     }
@@ -661,7 +664,12 @@ describe('public site pages', () => {
     expect(signIn).toHaveAttribute('href', '/login')
     expect(signIn).toHaveAttribute('data-app-entry')
     expect(signIn.querySelector('svg')).toBeInTheDocument()
-    for (const group of ['product', 'resources', 'support'] as const) {
+    for (const group of [
+      'product',
+      'resources',
+      'support',
+      'socials',
+    ] as const) {
       expect(
         within(nav)
           .getByRole('heading', {
@@ -705,6 +713,13 @@ describe('public site pages', () => {
         name: english.PublicSite.nav.language,
       }),
     ).toBeVisible()
+    const appearance = header.getByRole('combobox', {
+      name: english.Appearance.title,
+    })
+    fireEvent.change(appearance, { target: { value: 'dark' } })
+    expect(appearance).toHaveValue('dark')
+    expect(document.documentElement).toHaveClass('dark')
+    expect(localStorage.getItem('chequecheck-appearance')).toBe('dark')
     expect(
       header.getByRole('link', {
         name: english.PublicSite.nav.signIn,
@@ -715,6 +730,24 @@ describe('public site pages', () => {
         name: english.PublicSite.nav.features,
       }),
     ).toHaveAttribute('href', '/features')
+    expect(
+      within(screen.getByRole('contentinfo')).getByRole('link', {
+        name: english.PublicSite.nav.helpCenter,
+      }),
+    ).toHaveAttribute('href', 'https://chequecheck.gitbook.io/help')
+    expect(
+      within(screen.getByRole('contentinfo')).getByRole('link', {
+        name: english.PublicSite.nav.instagram,
+      }),
+    ).toHaveAttribute('href', 'https://www.instagram.com/cheque.check/')
+    expect(
+      within(screen.getByRole('contentinfo')).getByRole('link', {
+        name: english.PublicSite.nav.facebook,
+      }),
+    ).toHaveAttribute(
+      'href',
+      'https://www.facebook.com/profile.php?id=61596274983042',
+    )
   })
 
   it('pauses and resumes the industry marquee without repeating accessible content', async () => {

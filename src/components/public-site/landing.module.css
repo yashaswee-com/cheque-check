@@ -24,6 +24,25 @@
   letter-spacing: -0.2px;
 }
 
+:global(html.dark) .site,
+:global(html.dark) .menu {
+  --background: #101114;
+  --foreground: #f5f5f7;
+  --primary: #75baff;
+  --primary-foreground: #101114;
+  --card: #17191d;
+  --card-foreground: #f5f5f7;
+  --popover: #17191d;
+  --popover-foreground: #f5f5f7;
+  --muted: #1d2025;
+  --muted-foreground: #c9cbd0;
+  --border: #30343a;
+  --ring: #75baff;
+  --blue-line: color-mix(in srgb, var(--primary) 25%, var(--background));
+  --blue-wash: color-mix(in srgb, var(--primary) 7%, var(--background));
+  color-scheme: dark;
+}
+
 .site :is(a, button, summary, select, [tabindex]):focus-visible,
 .menu :is(a, button, select):focus-visible {
   outline: 2px solid var(--ring);
@@ -51,6 +70,13 @@
     inset 0 1px 0 rgb(255 255 255 / 80%);
 }
 
+:global(html.dark) .header {
+  background: rgb(16 17 20 / 82%);
+  box-shadow:
+    0 4px 16px rgb(0 0 0 / 28%),
+    inset 0 1px 0 rgb(255 255 255 / 8%);
+}
+
 .toneIcon {
   position: relative;
   display: inline-grid;
@@ -74,6 +100,18 @@
   gap: 8px;
 }
 
+.headerActions,
+.headerControls {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerControls {
+  gap: 8px;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -90,9 +128,16 @@
 .menuTop .brand {
   color: #000000;
 }
+:global(html.dark) .header .brand,
+:global(html.dark) .menuTop .brand {
+  color: var(--foreground);
+}
 .header .brand {
   font-size: 14px;
   gap: 6px;
+}
+.header .brand > span {
+  display: none;
 }
 .signIn {
   display: inline-flex;
@@ -205,6 +250,45 @@
 .localeSelect option {
   background: var(--background);
   color: var(--foreground);
+}
+.appearancePicker {
+  position: relative;
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--blue-line);
+  border-radius: 8px;
+  padding-left: 9px;
+  color: var(--primary);
+  background: var(--background);
+}
+.appearancePicker > svg {
+  display: none;
+}
+.appearancePicker select {
+  max-width: 92px;
+  min-height: 34px;
+  appearance: none;
+  border: 0;
+  padding: 4px 24px 4px 2px;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.appearancePicker::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
 }
 .localeChevron {
   pointer-events: none;
@@ -1151,8 +1235,19 @@ a.secondaryCta > svg {
 .site .faqItem button:active {
   transform: none;
 }
-.faqItem button span {
+.faqQuestion {
   min-width: 0;
+  flex: 1;
+}
+.faqQuickAnswer {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--blue-soft);
+  padding: 3px 9px;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 .faqItem button svg {
   color: var(--primary);
@@ -1378,6 +1473,12 @@ a.secondaryCta > svg {
   .headerInner {
     padding-inline: 16px;
   }
+  .header .brand > span {
+    display: inline;
+  }
+  .appearancePicker > svg {
+    display: block;
+  }
 }
 @media (min-width: 736px) {
   .signIn span:last-child {
@@ -1401,7 +1502,7 @@ a.secondaryCta > svg {
     padding: 64px 32px 24px;
   }
   .footerGroups {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .header {
     top: calc(20px + var(--environment-indicator-height, 0px));
