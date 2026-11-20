@@ -56,6 +56,18 @@ describe('public middleware access', () => {
       response.headers.get('x-middleware-request-x-public-site'),
     ).toBeNull()
   })
+
+  it('allows the security disclosure file without applying the public page shell', async () => {
+    const response = await updateSession(
+      new NextRequest('https://chequecheck.test/.well-known/security.txt'),
+    )
+    expect(response.status).toBe(200)
+    expect(response.headers.get('location')).toBeNull()
+    expect(
+      response.headers.get('x-middleware-request-x-public-site'),
+    ).toBeNull()
+  })
+
   it('lets the OCR handler return its authenticated JSON contract without a page redirect', async () => {
     const response = await updateSession(
       new NextRequest('https://chequecheck.test/api/ocr/cheque', {

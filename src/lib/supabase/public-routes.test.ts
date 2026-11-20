@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { isPublicApiPath, isPublicPagePath } from './public-routes'
+import {
+  isPublicApiPath,
+  isPublicPagePath,
+  isPublicStaticPath,
+} from './public-routes'
 
 describe('public route allowlist', () => {
   it.each([
@@ -29,5 +33,11 @@ describe('public route allowlist', () => {
     expect(isPublicApiPath('/api/analytics/events/private')).toBe(false)
     expect(isPublicApiPath('/api/payments/create-order')).toBe(false)
     expect(isPublicApiPath('/api/sentry-example-api')).toBe(false)
+  })
+
+  it('allows the disclosure file but not other well-known paths', () => {
+    expect(isPublicStaticPath('/.well-known/security.txt')).toBe(true)
+    expect(isPublicStaticPath('/.well-known/security.txt/')).toBe(true)
+    expect(isPublicStaticPath('/.well-known/other.txt')).toBe(false)
   })
 })
