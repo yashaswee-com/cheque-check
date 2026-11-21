@@ -1,0 +1,18 @@
+# Table of contents
+
+* [Help Center](README.md)
+* [Manage bank accounts](accounts.md)
+* [Manage your business](businesses.md)
+* [Manage cheques](cheques.md)
+* [Use the dashboard](dashboard.md)
+* [Install the app and handle connection problems](installation-and-offline.md)
+* [Reminders and notifications](notifications.md)
+* [Manage parties](parties.md)
+* [Understand Premium and purchases](premium.md)
+* [Use the cheque bounce and legal notice pages](public-tools.md)
+* [Reminders](reminders.md)
+* [Review reports and exports](reports.md)
+* [Scan cheques and use drafts](scanning-and-drafts.md)
+* [Security, profile, and settings](settings.md)
+* [Feedback, roadmap, and support](support-and-feedback.md)
+* [Use tags and labels](tags.md)
