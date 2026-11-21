@@ -52,11 +52,12 @@ export function agenticResourceManifest() {
   const updatedAt = `${new Date().toISOString().slice(0, 10)}T00:00:00Z`
   return {
     '@context': 'https://agenticresourcediscovery.org/context/v1',
+    specVersion: '0.91',
     entries: [
       {
         identifier: 'urn:air:chequecheck.in:skill:cheque-workflow',
         displayName: 'Cheque workflow guidance skill',
-        type: 'application/agent-skills+md',
+        type: 'text/markdown; profile="urn:air:agent-skills"',
         url: `${SITE_URL}/agent-skills/cheque-workflow.md`,
         capabilities: ['ArticleSearch', 'ChequeWorkflowGuidance'],
         description:
@@ -72,7 +73,7 @@ export function agenticResourceManifest() {
       {
         identifier: 'urn:air:chequecheck.in:skill:cheque-bounce-timeline',
         displayName: 'Cheque bounce timeline guidance skill',
-        type: 'application/agent-skills+md',
+        type: 'text/markdown; profile="urn:air:agent-skills"',
         url: `${SITE_URL}/agent-skills/cheque-bounce-timeline.md`,
         capabilities: ['ChequeBounceTimeline', 'Section138Education'],
         description:
