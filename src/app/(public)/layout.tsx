@@ -1,4 +1,5 @@
 import type { Viewport } from 'next'
+import 'lenis/dist/lenis.css'
 import Link from 'next/link'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Analytics01Icon, Login01Icon } from '@hugeicons/core-free-icons'
@@ -15,6 +16,7 @@ import { LaunchBanner } from '@/components/public-site/launch-banner'
 import { JsonLd } from '@/components/json-ld'
 import { SITE_NAME, SITE_URL } from '@/lib/seo'
 import { localizedPublicHref } from '@/components/public-site/navigation-links'
+import { PublicSmoothScroll } from '@/components/public-site/public-smooth-scroll'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -61,6 +63,7 @@ export default async function PublicSiteLayout({
       data-public-site
       className={`${styles.site} flex min-h-screen flex-col`}
     >
+      <PublicSmoothScroll />
       <JsonLd data={organizationData} />
       <LaunchBanner
         message={t.rich('landing.announcement', {

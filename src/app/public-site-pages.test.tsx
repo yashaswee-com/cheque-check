@@ -50,6 +50,9 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/features/public-site/services/public-pricing.service', () => ({
   publicPricingService: { listProducts: mocks.listProducts },
 }))
+vi.mock('@/components/public-site/public-smooth-scroll', () => ({
+  PublicSmoothScroll: () => null,
+}))
 vi.mock('@/lib/logger', () => ({
   logger: { error: mocks.logError },
 }))
@@ -224,6 +227,12 @@ describe('public site pages', () => {
       expect(premiumPlanCard.children[2]).toHaveTextContent(
         catalog.PublicSite.comparison.premiumSummary,
       )
+      for (const card of [freeCard, premiumPlanCard]) {
+        expect(card.className).not.toContain('bg-white')
+        expect(card.className).not.toContain('bg-blue-50')
+      }
+      expect(freeCard).toHaveClass('bg-card')
+      expect(premiumPlanCard).toHaveClass('dark:bg-primary/10')
       expect(
         screen.getByText(catalog.PublicSite.landing.bounce.note).parentElement,
       ).toContainElement(
