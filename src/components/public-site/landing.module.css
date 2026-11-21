@@ -333,6 +333,9 @@
   color: #000000;
   flex-shrink: 0;
 }
+:global(html.dark) .footerSectionIcon {
+  color: #ffffff;
+}
 .footerGroup ul {
   display: grid;
   gap: 4px;

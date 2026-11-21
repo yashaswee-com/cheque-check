@@ -22,7 +22,6 @@ export function FaqItem({
       <h3>
         <button
           type="button"
-          aria-label={`${question} ${quickAnswer}`}
           aria-expanded={expanded}
           aria-controls={answerId}
           onClick={() => setExpanded((open) => !open)}
