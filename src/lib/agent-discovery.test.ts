@@ -13,11 +13,12 @@ describe('agent discovery resources', () => {
 
   it('publishes only schema-compliant public ARD entries', () => {
     const manifest = agenticResourceManifest()
+    expect(manifest.specVersion).toBe('0.91')
     expect(manifest.entries).toHaveLength(2)
     for (const entry of manifest.entries) {
       expect(entry.identifier).toMatch(/^urn:air:chequecheck\.in:/u)
       expect(entry.displayName).toBeTruthy()
-      expect(entry.type).toMatch(/^[\w.+-]+\/[\w.+-]+$/u)
+      expect(entry.type).toBe('text/markdown; profile="urn:air:agent-skills"')
       expect(entry.url.startsWith(`${SITE_URL}/`)).toBe(true)
       expect(entry).not.toHaveProperty('data')
       expect(entry.representativeQueries.length).toBeGreaterThanOrEqual(2)
