@@ -1,46 +1,41 @@
 # अपना बिज़नेस मैनेज करें
 
-आपका बिज़नेस Cheque Check में मुख्य जगह है जहाँ आपके चेक के सभी रिकॉर्ड रहते हैं। यहाँ पार्टियाँ, बैंक खाते, चेक, रिमाइंडर और रिपोर्ट सब एक साथ रहते हैं।
+एक बिज़नेस Cheque Check का अलग workspace होता है। उसके accounts, parties, cheques, drafts, tags, reports और notification context दूसरे बिज़नेस से अलग रहते हैं।
 
-## बिज़नेस कैसे बनाएं
+## बिज़नेस बनाएँ
 
-1. ऐप खोलें और बिज़नेस सेक्शन में जाएँ
-2. नया बिज़नेस जोड़ें का विकल्प चुनें
-3. बिज़नेस का नाम लिखें
-4. ज़रूरत हो तो संपर्क जानकारी भरें
-5. सेव करें
+1. Dashboard, navigation या Settings से **Businesses** खोलें।
+2. **Add New Business** चुनें।
+3. बिज़नेस नाम भरें।
+4. Optional email, phone, address, logo और color जोड़ें।
+5. सेव करें और फिर accounts तथा parties जोड़ें।
+
+साफ़ legal या trading नाम रखें। अलग company या स्वतंत्र branch के रिकॉर्ड अलग रखने हों तो अलग बिज़नेस बनाएँ।
 
 ## बिज़नेस बदलें
 
-1. बिज़नेस स्विचर या मेनू खोलें
-2. जिस बिज़नेस पर काम करना है, चुनें
-3. काम शुरू करें
+App shell में business switcher खोलें और काम वाला बिज़नेस चुनें। Dashboard और business-scoped records उस workspace में बदल जाते हैं।
 
-## बिज़नेस की जानकारी अपडेट करें
+Free active-cheque allowance सभी बिज़नेस पर मिलाकर लागू होती है।
 
-1. बिज़नेस सेटिंग्स खोलें
-2. edit या update चुनें
-3. नाम, पता, संपर्क, logo या अन्य जानकारी बदलें
-4. सेव करें
+## बिज़नेस details edit करें
 
-## इसके महत्व
+बिज़नेस खोलें, **Edit** चुनें, profile details या logo बदलें और सेव करें। बिज़नेस का नाम reports और records में इस्तेमाल होता है।
 
-सही बिज़नेस जानकारी से आप:
+## कई बिज़नेस की समीक्षा
 
-- रिकॉर्ड पहचानने में आसानी पाते हैं
-- अलग-अलग बिज़नेस के बीच भ्रम कम होता है
-- रिपोर्ट सही बनती हैं
-- सही लोगों सेfollow-up कर सकते हैं
+Default रूप से list और dashboard selected business दिखाते हैं। Premium consolidated overview आपके owned businesses के totals जोड़ सकता है। Amounts आपकी display currency में दिखते हैं; exchange conversion नहीं होता।
 
-## बिज़नेस बंद या हटाने से पहले
+## बिज़नेस delete करें
 
-- देखें कि पुराने रिकॉर्ड अभी भी ज़रूरी हैं या नहीं
-- देखें कि उस बिज़नेस से जुड़े सक्रिय चेक हैं या नहीं
-- अगर डेटा अभी भी काम आता है, तो हटाने से बचें
+Business delete करने से उसके accounts, parties, cheques, drafts और report context प्रभावित होते हैं। पहले records जाँचें और ज़रूरी डेटा export करें।
+
+Deletion के बाद self-service restore flow नहीं है। टैक्स, legal, accounting या customer काम के लिए रिकॉर्ड चाहिए तो बिज़नेस delete न करें।
 
 ## अच्छी आदतें
 
-- साफ नाम लें
-- संपर्क जानकारी अपडेट रखें
-- अलग-अलग बिज़नेस को अलग रखें
-- डुप्लीकेट बिज़नेस न बनाएं
+- हर अलग entity के लिए एक साफ़ profile रखें।
+- थोड़े अलग spelling से duplicate बिज़नेस न बनाएँ।
+- Contact और branding details अपडेट रखें।
+- Cheque या account बनाते समय active business जाँचें।
+- Consolidated totals देखें, पर याद रखें कि records business-scoped रहते हैं।

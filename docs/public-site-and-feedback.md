@@ -39,7 +39,11 @@ The scan, accounts and parties cards reserve rounded 16:9 image areas using a lo
 
 The compact landing comparison omits repeated separate-credit bullets, the long launch-offer/support block and the catalogue footnote. Its Premium summary is shortened as well. The full pricing page retains its detailed credit and offer explanations. No plan, quota, pricing or eligibility behavior is changed.
 
+The landing page places a localized 30-day money-back guarantee section immediately after pricing. It explains that Free remains available without a purchase, covers the first Lifetime Premium purchase for 30 days, and directs refund requests to support with the order or payment ID. The section and matching FAQ exclude separate AI scan and voice-call packs or credits. The in-app Refund Policy uses the same scope and processing copy in English, Hindi, and Hinglish.
+
 The hero allowance tags and the separate pricing starter-credit summary are omitted. The secondary CTA is localized “Chat on WhatsApp” with the WhatsApp icon and the existing demo-request message. Both plan cards show compact main-feature lists with accessible green ticks/red crosses; Lifetime Premium reuses the shared diamond badge without querying private account entitlements. Report buttons are centered, the FAQ contact prompt/link share a centered flex row, and the sample-call button has equal padding on all four sides.
+
+A localized Facebook promotion section appears below the business scenarios and before the final signup CTA. It includes a pill label with the Facebook icon, a short update/tips description, and a secondary CTA that opens the same Facebook page URL used by the footer.
 
 The hero description explicitly calls out phone-call reminders. Each of the three signup CTAs has localized “Free Trial, No Payment Required” reassurance beneath it instead of credit-card copy. The scenario swipe hint and problem-section closing line are centered on mobile and desktop. Scenario cards retain their example labels, but the separate non-testimonial disclaimer sentence is omitted. Footer section headings use matching black bullet icons. Report sample controls show only PDF/CSV and a download icon; they remain disabled pending the owner's files. The audio button says “Play sample call recording” (localized) and is centered in an evenly padded container.
 

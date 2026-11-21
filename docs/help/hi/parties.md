@@ -1,55 +1,45 @@
 # पार्टियाँ मैनेज करें
 
-एक पार्टी वह व्यक्ति या संगठन होता है जिसके साथ आप काम करते हैं। यह सप्लायर, ग्राहक, विक्रेता, कंपनी, या व्यक्ति हो सकता है।
+Party वह व्यक्ति या organization है जो cheque से जुड़ा है। Issued cheque में party recipient होती है; Received cheque में party payer होती है।
 
-जब आप चेक रिकॉर्ड करते हैं, तो आप उसे पार्टी से जोड़ते हैं ताकि पता चले कि पैसा किसके लिए है या किससे मिलना है।
+## Party जोड़ें
 
-## पार्टी कैसे बनाएं
+1. **Parties → Add Party** खोलें।
+2. नाम भरें।
+3. ज़रूरत के अनुसार type, contact, email, address, notes, photo, color, icon या tags जोड़ें।
+4. Similar-name warning देखें।
+5. सेव करें।
 
-1. Parties सेक्शन में जाएँ
-2. Add new party चुनें
-3. पार्टी का नाम लिखें
-4. ज़रूरत हो तो संपर्क जानकारी भरें
-5. सेव करें
+Optional details बाद में भरी जा सकती हैं। सही व्यक्ति/company पहचानने और party SMS तैयार करने जितनी contact जानकारी रखें।
 
-## पार्टी कैसे बदले
+## Phone contacts से import
 
-1. Parties सूची खोलें
-2. पार्टी चुनें
-3. विवरण खुलें
-4. जानकारी बदलें
-5. सेव करें
+Contact import Premium feature है और supported mobile browser पर काम करता है। Save से पहले review ज़रूरी है। Manual entry हमेशा उपलब्ध है।
 
-## पार्टी पर टैग कैसे लगाएँ
+## Party edit करें
 
-टैग आपको पार्टियों को अलग-अलग समूह में रखने में मदद करते हैं।
+Party खोलें, **Edit Party** चुनें, जानकारी सही करें और सेव करें। Contact बदले तो update करें ताकि prepared message सही destination पर जाए।
 
-1. पार्टी के विवरण में जाएँ
-2. Tags या Labels चुनें
-3. सही टैग चुनें
-4. सेव करें
+## Tags और organization
 
-## पार्टी कैसे ढूँढें
+Supplier, customer, urgent या follow-up जैसे shared business tags उपयोग करें। Similar labels बार-बार बनाने के बजाय नाम consistent रखें।
 
-1. Parties सेक्शन खोलें
-2. search box में नाम या संपर्क लिखें
-3. मिलते परिणाम देखें
+## Search, filter और review
 
-## पार्टी हटाएं या archive करें
+Party list को name, type या tag जैसे supported fields से search, sort और filter किया जा सकता है। Party खोलकर linked cheques देखें।
 
-सिर्फ तभी जब रिकॉर्ड का अब उपयोग नहीं है।
+Premium party statements date-based statement बनाकर PDF या Excel में export कर सकते हैं।
 
-1. पार्टी के विवरण में जाएँ
-2. delete या archive चुनें
-3. confirmation दें
+## Party delete करें
+
+Party तभी delete करें जब record ज़रूरी न हो। Published या draft cheques reference करें तो deletion रुकता है।
+
+नाम गलत या contact बदला हो तो edit करें। Deleted party self-service restore से वापस नहीं आती।
 
 ## अच्छी आदतें
 
-- साफ नाम लिखें
-- duplicate पार्टी न बनाएं
-- संपर्क जानकारी अपडेट रखें
-- टैग का सही उपयोग करें
-
-## संक्षेप
-
-पार्टी का अर्थ है वह “जो” आपके पेमेंट के पीछे है। सही पार्टी रिकॉर्ड रखना आपके सारे चेक को समझने में मदद करता है।
+- पूरा legal/trading name रखें।
+- Similar party warning review करें।
+- Contact details updated रखें।
+- Tags grouping के लिए उपयोग करें, private notes के लिए नहीं।
+- Party notes में passwords या account credentials न रखें।

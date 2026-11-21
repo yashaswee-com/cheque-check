@@ -1,128 +1,91 @@
 # Help Center
 
-Welcome to Cheque Check. This is the simple, friendly place to learn how the app helps you manage cheques, parties, accounts, reminders, and business money records without confusion.
+Welcome to Cheque Check. These guides explain the app using the features that are currently available, including cheque tracking, AI-assisted scanning, reminders, reports, Premium tools, and account settings.
 
 ## Start with the basics
 
-If you are new, begin with these steps:
-
-1. Create your business
-2. Add your bank accounts
-3. Add the people and companies you deal with
-4. Record your cheques
-5. Set reminders and follow-ups
-6. Review the dashboard and reports
+1. Create a business.
+2. Add the bank account or accounts you use for cheques.
+3. Add the parties you pay or receive cheques from.
+4. Record an issued cheque, or enable inward tracking if you also receive cheques.
+5. Save unfinished forms as drafts and return to them later.
+6. Keep cheque status, expected deposit dates, tags, and reminder settings current.
+7. Use the dashboard for daily follow-up and Reports for a fuller business review.
 
 ## Popular questions
 
-### How do I create my first business?
+### How do I record my first cheque?
 
-Go to your business section and add your company or branch. This becomes the place where your records live.
+Open **Cheques**, choose **New Cheque**, and complete the form. Check the business, party, account, six-digit cheque number, amount, cheque date, and expected deposit date before saving.
 
-### How do I add a party?
+### Can I use a photo instead of typing everything?
 
-Open Parties and add the supplier, customer, or company you are working with. Every cheque can then be linked to the right record.
+Yes, if you have available AI scan credits and AI Scan Mode is on. Upload one clear cheque-front photo, accept the privacy disclosure, and review every extracted field. Manual entry remains available.
 
-### How do I record a cheque?
+See [Scan cheques and use drafts](scanning-and-drafts.md).
 
-Open Cheques, choose the party and bank account, add the cheque details, and save it. That keeps your records organised and easy to track.
+### What is the Free limit?
 
-### How do I set reminders?
-
-From a cheque or your reminder settings, choose the schedule and reminder timing. This helps you avoid missed payments and forgotten follow-ups.
+Free supports up to 50 active, published cheques across all of your businesses. Drafts and deleted cheques do not count. At the limit, existing records remain available, but you need a free slot or Premium before creating another active cheque.
 
 ### What is Premium?
 
-Premium unlocks advanced tools such as deeper reporting, bulk actions, import workflows, reusable templates, print layouts, and more powerful business tools.
+Premium - Lifetime removes the active-cheque limit and unlocks time-saving tools such as inward tracking, reports, bulk import, bulk status changes, reusable cheque templates, saved views, party statements, cheque printing, and multi-business reporting.
 
-### How do I use the dashboard?
+AI scan credits and voice-call credits are sold separately from Premium. See [Understand Premium and purchases](premium.md).
 
-The dashboard is your daily overview. It helps you see what needs attention first and keeps the important work in front of you.
+### How do reminders work?
 
-## Quick links
+Reminder scheduling uses the cheque date and your notification settings. You can choose a lead time, reminder frequency, and reminder times. Voice calls also require a saved phone number, enabled service, an active access period, and available call credits.
+
+### Can I use the app offline?
+
+Cheque Check can show a generic retry page when an installed service worker cannot load a page. It does not cache cheque data or save offline edits. Reconnect and retry before continuing important work.
+
+## Guides
+
+### Everyday cheque work
 
 - [Manage your business](businesses.md)
 - [Manage parties](parties.md)
-- [Manage cheques](cheques.md)
 - [Manage bank accounts](accounts.md)
-- [Use the dashboard](dashboard.md)
-- [Set reminders and notifications](notifications.md)
-- [Use tags and labels](tags.md)
-- [Review reports and exports](reports.md)
-- [Understand Premium](premium.md)
-- [Profile, security, and settings](settings.md)
-
-## What Cheque Check helps you do
-
-Cheque Check is designed to help businesses with everyday money work:
-
-- keep all cheque records in one place
-- track who the payment belongs to
-- know what is paid, pending, or due
-- follow up on important deadlines
-- keep accounts and parties organised
-- review summaries without digging through everything manually
-
-## The full workflow
-
-Here is the usual end-to-end flow in the app:
-
-1. Create your business or choose the business you want to work in
-2. Add your bank accounts and business details
-3. Add suppliers, customers, and parties you deal with
-4. Record issued and received cheques
-5. Keep tagging and filtering useful for sorting work
-6. Update cheque statuses as they move through the cycle
-7. Set reminders and alerts for follow-ups
-8. Use the dashboard to review what needs attention
-9. Generate reports and exports when needed
-10. Upgrade to Premium for more advanced tools and automation
-
-## Business value
-
-This app is built to save time and reduce mistakes. It helps you:
-
-- avoid lost or forgotten cheques
-- reduce manual paperwork
-- follow up faster on payment work
-- understand the health of your payment pipeline
-- make better business decisions with cleaner records
-
-## Best practices
-
-- Keep party names simple and consistent
-- Check cheque details before saving
-- Update statuses as soon as something changes
-- Use tags for fast sorting
-- Review reminders often
-- Use reports and exports for business reviews
-
-## Popular topic categories
-
-### Business operations
-
-- [Manage your business](businesses.md)
-- [Manage bank accounts](accounts.md)
-- [Manage parties](parties.md)
-
-### Daily cheque work
-
 - [Manage cheques](cheques.md)
-- [Use the dashboard](dashboard.md)
+- [Scan cheques and use drafts](scanning-and-drafts.md)
 - [Use tags and labels](tags.md)
+- [Use the dashboard](dashboard.md)
 
-### Follow-ups and reminders
+### Follow-ups and reporting
 
-- [Set reminders and notifications](notifications.md)
+- [Reminders and notifications](notifications.md)
 - [Review reports and exports](reports.md)
-- [Understand Premium](premium.md)
+- [Use the cheque bounce and legal notice pages](public-tools.md)
 
-### Account and personal settings
+### Plans, account, and support
 
-- [Security and settings](settings.md)
+- [Understand Premium and purchases](premium.md)
+- [Security, profile, and settings](settings.md)
+- [Install the app and work around connection problems](installation-and-offline.md)
+- [Feedback, roadmap, and support](support-and-feedback.md)
+
+## The usual workflow
+
+1. Select the correct business.
+2. Create or select its party and bank account.
+3. Enter the cheque manually or review an AI scan.
+4. Save a draft if the details are incomplete.
+5. Publish the cheque after checking the confirmation screen.
+6. Update it to **Cleared** or **Bounced** when the outcome is known.
+7. Review reminders, the inbox, and the dashboard.
+8. Export a report when you need a complete business summary.
+
+## Important boundaries
+
+- Cheque Check records the status you enter. It does not verify bank clearance or movement of funds.
+- AI extraction can be wrong; review names, dates, numbers, and amounts before publishing.
+- Reports are based on recorded cheque data, not bank balances or cash-flow forecasts.
+- Push, SMS, WhatsApp, and voice delivery depend on device permission, account settings, credits, and service availability.
+- Never put passwords, verification codes, account credentials, or unnecessary sensitive financial details in feedback or support messages.
 
 ## Need more help?
 
-This section is written for everyday business users. It keeps the language simple and practical, so you can learn without needing technical knowledge.
-
-> Screenshots and more visuals can be added later as the help center grows.
+Use **Settings → Help & Support** to search the in-app FAQs, send feedback, view the roadmap, email support, or contact support on WhatsApp.

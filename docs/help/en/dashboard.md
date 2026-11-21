@@ -1,59 +1,49 @@
 # Use the dashboard
 
-The dashboard is your home screen. It gives you a quick view of what needs attention today without digging through every record.
+The dashboard is your current-business overview. It combines pending totals, upcoming work, a chart, quick actions, drafts, and today's cheque records.
 
-Think of it as your business snapshot.
+## What it shows
 
-## What you can see on the dashboard
+- **Pending net:** recorded receivables minus recorded payables for pending cheques.
+- **Receivable** and **Payable** pending totals.
+- Counts for cheques due today, upcoming in the next seven days, and overdue.
+- A status/amount chart for the selected statistics range.
+- Today's cheque cards with direct status actions.
+- Pending drafts.
+- Shortcuts for scanning, Reports, tags, and businesses.
 
-Common things you may find include:
+These figures use recorded cheque data. They are not verified bank balances, settlement dates, or cash-flow forecasts.
 
-- total cheque activity
-- cheques due soon
-- paid or cleared cheques
-- pending follow-ups
-- status summaries
-- reminders coming up
+## Change the statistics range
 
-## How to read the dashboard
+Use the date filter above the chart to choose a preset or custom range. This range controls the dashboard statistics; it does not automatically change the cheque list or a report export.
 
-1. Open the dashboard.
-2. Check the main totals first.
-3. Look for items marked as urgent or soon due.
-4. Click into a section if you want more detail.
+## Use quick actions
 
-This helps you focus on the work that matters most now.
+- **Scan Cheque** opens the image picker and sends the selected image into a new cheque draft.
+- **Reports** opens the Premium report area.
+- **Tags** opens shared business tags.
+- **Businesses** opens the business list and switcher.
 
-## How to use the dashboard for daily work
+Quick actions and report access show a Premium marker when required.
 
-A simple daily routine could be:
+## Daily routine
 
-1. Check the dashboard in the morning
-2. Review anything marked urgent
-3. Update cheque statuses
-4. Follow up on reminders
-5. Confirm what is paid and what still needs action
+1. Confirm the active business.
+2. Review pending net, today's count, upcoming count, and overdue count.
+3. Open today's cheques and update only status changes you can verify.
+4. Finish pending drafts.
+5. Review bounced or overdue records that need follow-up.
+6. Open the cheque list or report for a wider view.
 
-## How to find important records fast
+## Bounced cheques
 
-If you need a specific cheque or party, use the dashboard shortcuts or filters. This is much faster than searching through every record manually.
+Bounced amounts are kept separate from pending totals. Review the original record, confirm any replacement or recovery separately, and update the recorded status rather than adding an unclear duplicate.
 
-## Why the dashboard matters
+## If the dashboard is empty or incomplete
 
-The dashboard saves time because it:
-
-- shows priority items first
-- reduces manual searching
-- helps you track deadlines
-- makes cash flow easier to understand
-
-## Best practices
-
-- Check the dashboard regularly
-- Do not ignore old pending items
-- Update the status as soon as something changes
-- Use filters to inspect a small set of records when needed
-
-## Quick summary
-
-The dashboard is your reminder and control centre. It helps you see what needs your attention before problems grow.
+- Create a business if none is selected.
+- Add accounts, parties, and cheques if the business is new.
+- Check the active business before assuming records are missing.
+- Reconnect and retry if the page cannot load.
+- Drafts are shown separately and do not enter active cheque totals.

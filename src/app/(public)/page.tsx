@@ -11,6 +11,7 @@ import {
   Call02Icon,
   DeliveryBox01Icon,
   Download01Icon,
+  Facebook01Icon,
   File02Icon,
   LockPasswordIcon,
   Payment01Icon,
@@ -40,6 +41,7 @@ import { IndiaFlag } from '@/components/public-site/india-flag'
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top-button'
 import { JsonLd } from '@/components/json-ld'
 import { SITE_NAME, SITE_URL, publicPageMetadata } from '@/lib/seo'
+import { PUBLIC_FACEBOOK_URL } from '@/components/public-site/navigation-links'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite.landing')
@@ -162,6 +164,7 @@ export default async function LandingPage() {
     'different',
     'privacy',
     'payment',
+    'refund',
     'plans',
     'limit',
   ] as const
@@ -546,6 +549,57 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      <section
+        className={`${styles.section} ${styles.guaranteeSection}`}
+        aria-labelledby="guarantee-title"
+      >
+        <div className={styles.guaranteeCard}>
+          <div className={styles.guaranteeBadge} aria-hidden="true">
+            <strong>30</strong>
+            <span>{t('guaranteeDays')}</span>
+          </div>
+          <div className={styles.guaranteeCopy}>
+            <p className={styles.eyebrow}>{t('guaranteeEyebrow')}</p>
+            <h2 id="guarantee-title">{t('guaranteeTitle')}</h2>
+            <p>{t('guaranteeDescription')}</p>
+            <ul className={styles.guaranteePoints}>
+              <li>
+                <HugeiconsIcon
+                  icon={Shield01Icon}
+                  size={18}
+                  aria-hidden="true"
+                />
+                <span>{t('guaranteeCoverage')}</span>
+              </li>
+              <li>
+                <HugeiconsIcon
+                  icon={Payment01Icon}
+                  size={18}
+                  aria-hidden="true"
+                />
+                <span>{t('guaranteeRefund')}</span>
+              </li>
+              <li>
+                <HugeiconsIcon icon={File02Icon} size={18} aria-hidden="true" />
+                <span>{t('guaranteeRequest')}</span>
+              </li>
+            </ul>
+            <div className={styles.guaranteeActions}>
+              <Link href="/pricing" className={styles.primaryCta}>
+                {t('guaranteeCta')}
+                {arrow}
+              </Link>
+              <Link href="/contact" className={styles.guaranteeLink}>
+                {t('guaranteeContact')}
+              </Link>
+            </div>
+            <p className={styles.guaranteeFinePrint}>
+              {t('guaranteeFinePrint')}
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className={styles.section} aria-labelledby="faq-title">
         <div className={styles.sectionHeading}>
           <p className={styles.eyebrow}>
@@ -657,6 +711,29 @@ export default async function LandingPage() {
             ))}
           </PillScroller>
         </div>
+      </section>
+
+      <section
+        className={`${styles.section} ${styles.facebookSection}`}
+        aria-labelledby="facebook-title"
+      >
+        <div className={styles.sectionHeading}>
+          <p className={styles.eyebrow}>
+            <HugeiconsIcon icon={Facebook01Icon} size={14} aria-hidden="true" />
+            {t('facebookEyebrow')}
+          </p>
+          <h2 id="facebook-title">{t('facebookTitle')}</h2>
+          <p>{t('facebookDescription')}</p>
+        </div>
+        <a
+          href={PUBLIC_FACEBOOK_URL}
+          target="_blank"
+          rel="noreferrer"
+          className={styles.secondaryCta}
+        >
+          <HugeiconsIcon icon={Facebook01Icon} size={19} aria-hidden="true" />
+          {t('facebookCta')}
+        </a>
       </section>
 
       <section

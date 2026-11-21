@@ -1,57 +1,80 @@
 # Security, profile, and settings
 
-Good settings make the app easier to use and safer to work with. This part of the app helps you control how your account works, how reminders are sent, and how your organisation is managed.
+Settings controls your profile, display preferences, notification channels, security, purchases, business tools, support, and legal pages.
 
-## How to update your profile
+## Update your profile
 
-1. Open your profile or account settings.
-2. Update your personal details.
-3. Save the changes.
+Open **Settings → profile card** or **Profile**. Review your name, contact, avatar, and linked sign-in methods, then save.
 
-## How to manage app preferences
+Phone sign-in or linking is available only where phone authentication is configured. A one-time code and any required security check are used; never share the code.
 
-Look for preferences such as:
+## Preferences
 
-- notification settings
-- reminder timing
-- language preference
-- display options
+Open **Settings → Preferences** to configure:
 
-Update these based on what feels most useful to you.
+- appearance;
+- language: English, Hindi, or Hinglish;
+- display currency;
+- date and time format;
+- time zone;
+- reduced motion;
+- monitoring consent;
+- privacy mode/preferences;
+- cookie consent.
 
-Every switch shows **On** or **Off** next to it, and the line underneath tells you what that setting does right now — for example, "Motion is reduced — animations and transitions are minimised across the app.".
+These preferences affect the app's display and reminder/report formatting. Your language and formatting choice does not translate a name or financial value added by you.
 
-## How to change cookie settings
+Every switch shows **On** or **Off** and a consequence line explaining its current effect.
 
-Open **Settings → Preferences → Cookie settings** to see whether you accepted or rejected marketing cookies, and choose **Manage cookie settings** to change your choice. On public pages, use the **Cookie settings** link in the footer.
+## Notifications
 
-## How to protect your account
+Open **Settings → Notifications** to configure voice, SMS, WhatsApp, party SMS, push, warning lead time, daily frequency, and reminder times. See [Reminders and notifications](notifications.md).
 
-Use the following habits:
+## Application PIN
 
-- keep your password secure
-- do not share your login details
-- sign out on shared or public devices
-- review your access settings regularly
+Open **Settings → Security** to create, change, or remove the six-digit app PIN and automatic lock timing.
 
-## How to manage business settings
+The PIN is an extra online UI lock. It is not a bank PIN, a replacement for your sign-in, encryption, or an offline security boundary. Keep your signed-in device and account credentials protected.
 
-Business settings often control:
+## AI Scan Mode and purchases
 
-- company profile
-- reminder preferences
-- account defaults
-- app preferences for each business
+Open **Features** to manage:
 
-Review them as your business grows or changes.
+- Premium;
+- inward cheque tracking;
+- AI Scan Mode;
+- AI scan and voice-call usage;
+- your voice-reminder number and enablement;
+- product purchases, activation, and transaction history.
 
-## Best practices
+Available, unexpired AI scan access is required to turn AI Scan Mode on. Disabling scanning does not prevent manual cheque entry or draft saving.
 
-- Keep contact details up to date
-- Review business settings every few months
-- Make sure reminders match your workflow
-- Keep account security in mind at all times
+## Install the app
 
-## Quick summary
+The Settings page can show **Install ChequeCheck**. Browser installation is separate from notification permission. See [Install the app and work around connection problems](installation-and-offline.md).
 
-Settings are the control center. They help you personalise the app and keep your work safe, organised, and easy to manage.
+## Cookie settings
+
+Open **Settings → Preferences → Cookie settings** to accept, reject, or reopen the choice for optional marketing cookies. On public pages, use **Cookie settings** in the footer.
+
+Rejecting or withdrawing consent prevents optional marketing loading after the consent state is applied. Query strings and fragments do not go into PageView tracking, but do not put private data into a public URL.
+
+## Business and data tools
+
+From Settings you can open:
+
+- Businesses;
+- Reports;
+- Tags;
+- Transactions;
+- Features and referrals.
+
+Deleted records are not restored through a self-service screen. Review record dependencies and export required information before deleting a business, party, or account.
+
+## Support and account protection
+
+- Keep passwords and verification codes private.
+- Sign out on shared or public devices.
+- Do not put sensitive account numbers, passwords, or payment-card details in feedback.
+- Review the in-app Privacy Policy, Terms, and Refund Policy before purchases or account changes.
+- Use **Help & Support** for FAQs, feedback, WhatsApp, and email support.

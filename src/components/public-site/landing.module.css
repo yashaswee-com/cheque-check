@@ -1206,6 +1206,103 @@ a.secondaryCta > svg {
   font-size: 12px;
   color: var(--muted-foreground);
 }
+.guaranteeSection {
+  background: var(--blue-wash);
+}
+.guaranteeCard {
+  max-width: 980px;
+  margin: auto;
+  display: grid;
+  justify-items: center;
+  gap: 32px;
+  padding: 32px 20px;
+  border: 1px solid var(--blue-line);
+  border-radius: 24px;
+  background: var(--background);
+}
+.guaranteeBadge {
+  display: grid;
+  place-content: center;
+  width: 112px;
+  height: 112px;
+  flex-shrink: 0;
+  border: 1px solid var(--blue-line);
+  border-radius: 50%;
+  background: var(--blue-soft);
+  color: var(--primary);
+  text-align: center;
+}
+.guaranteeBadge strong {
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  font-size: 46px;
+  line-height: 0.95;
+  letter-spacing: -2px;
+}
+.guaranteeBadge span {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.guaranteeCopy {
+  min-width: 0;
+  text-align: center;
+}
+.guaranteeCopy > p:not(.eyebrow):not(.guaranteeFinePrint) {
+  max-width: 680px;
+  margin: 16px auto 0;
+  color: var(--muted-foreground);
+}
+.guaranteePoints {
+  max-width: 720px;
+  margin: 28px auto 0;
+  display: grid;
+  gap: 12px;
+  text-align: start;
+}
+.guaranteePoints li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--blue-line);
+  border-radius: 14px;
+  background: var(--blue-wash);
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.guaranteePoints svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--primary);
+}
+.guaranteeActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 28px;
+}
+.guaranteeLink {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--primary);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.guaranteeFinePrint {
+  max-width: 720px;
+  margin: 20px auto 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.6;
+}
 .faq {
   max-width: 680px;
   margin: auto;
@@ -1446,6 +1543,15 @@ a.secondaryCta > svg {
   max-width: 680px;
   margin: auto;
 }
+.facebookSection {
+  text-align: center;
+}
+.facebookSection .sectionHeading {
+  margin-bottom: 24px;
+}
+.facebookSection > a {
+  margin-inline: auto;
+}
 .finalSection > p:not(.eyebrow) {
   margin: 20px auto 24px;
   color: var(--muted-foreground);
@@ -1631,6 +1737,29 @@ a.secondaryCta > svg {
   .installSection {
     grid-template-columns: minmax(0, 1fr) 220px;
     gap: 48px;
+  }
+  .guaranteeCard {
+    grid-template-columns: 128px minmax(0, 1fr);
+    justify-items: start;
+    gap: 40px;
+    padding: 48px;
+  }
+  .guaranteeBadge {
+    width: 128px;
+    height: 128px;
+  }
+  .guaranteeCopy {
+    text-align: start;
+  }
+  .guaranteeCopy > p:not(.eyebrow):not(.guaranteeFinePrint),
+  .guaranteePoints {
+    margin-inline: 0;
+  }
+  .guaranteeActions {
+    justify-content: flex-start;
+  }
+  .guaranteeFinePrint {
+    margin-inline: 0;
   }
   .installCopy {
     text-align: start;

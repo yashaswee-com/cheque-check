@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 import english from '../../messages/en.json'
 import hindi from '../../messages/hi.json'
 import hinglish from '../../messages/hi-en.json'
+import { PUBLIC_FACEBOOK_URL } from '../../src/components/public-site/navigation-links'
 
 const protectedPaths = [
   '/dashboard',
@@ -375,6 +376,14 @@ test.describe('public landing page', () => {
         ).toHaveCount(1)
       }
       await expect(page.locator('main a[href="/signup"]')).toHaveCount(4)
+      const facebook = page.getByRole('region', {
+        name: catalog.PublicSite.landing.facebookTitle,
+      })
+      const facebookCta = facebook.getByRole('link', {
+        name: catalog.PublicSite.landing.facebookCta,
+      })
+      await expect(facebookCta).toHaveAttribute('href', PUBLIC_FACEBOOK_URL)
+      await expect(facebookCta).toHaveAttribute('target', '_blank')
       await expect(
         page
           .getByRole('link', {

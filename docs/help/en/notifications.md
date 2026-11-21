@@ -1,46 +1,64 @@
 # Reminders and notifications
 
-Notifications keep your work from slipping through the cracks. They help you remember important cheque dates, follow-ups, and pending actions.
+Notifications include the in-app inbox, scheduled reminder work, and optional browser or communication channels. Opening **Notifications** does not edit your cheque status and does not itself mark every item as read.
 
-## What notifications can do
+## Choose reminder timing
 
-Depending on your setup, notifications may include:
+Open **Settings → Notifications** and review:
 
-- reminder alerts for due cheques
-- SMS reminders
-- voice call reminders
-- push-style notifications
-- follow-up communication to parties
+- the advance-warning period: 1, 3, or 7 days before the configured date;
+- how many reminders per day to schedule;
+- the reminder times in your selected time zone;
+- each channel's On/Off state and current consequence.
 
-## How to set a reminder
+Changes apply to scheduled reminder work going forward. They do not prove that a provider or your device can deliver every message.
 
-1. Open the cheque or task you want to track.
-2. Choose the reminder or notification option.
-3. Set the date and time.
-4. Save it.
+## Inbox
 
-## How reminders help your business
+The inbox contains cheque reminders and report-export updates for your businesses. You can:
 
-Reminders reduce missed deadlines and help you:
+- view the active business or all businesses;
+- search by event type or business name;
+- sort newest or oldest;
+- filter unread items;
+- mark the visible business scope as read;
+- refresh and retry if loading fails.
 
-- stay on top of payment follow-ups
-- avoid delayed collections
-- keep customers and vendors informed
-- reduce manual stress and memory load
+Lock-screen or device notifications do not expose cheque details.
 
-## Best practices
+## Voice reminders
 
-- set reminders early enough to act
-- keep urgent items visible
-- review reminders before the business day starts
-- update payment status after contact or follow-up
+Voice reminders are daily scheduled calls about eligible issued cheques. They require:
 
-## Good reminder habits
+- a valid phone number saved on the Features page;
+- Voice Reminders turned on;
+- an active access period and available call credits;
+- a configured delivery provider.
 
-- plan reminders for all important cheque dates
-- keep the communication method simple and reliable
-- do not ignore overdue reminders for too long
+The Features page includes a **Send test call** action. A test call uses one available call credit. Delivery depends on the carrier and service configuration, so a queued call is not the same as a completed call.
 
-## Quick summary
+## Push on this device
 
-Notifications are like a helpful business assistant. They keep important work in front of you so nothing important gets missed.
+Push permission is requested only when you choose to enable it.
+
+1. Open **Settings → Notifications**.
+2. Review the device push status.
+3. Choose **Enable on this device**.
+4. Approve the browser permission.
+
+Push can be unavailable if the browser, HTTPS setup, or installed iOS app requirements are not met. One account supports at most 10 registered devices.
+
+## Other communication channels
+
+- **Party SMS** is a Premium option that offers to prepare a message for your phone's SMS app when a cheque is created or its status changes. Normal carrier charges may apply.
+- **SMS reminders** and **WhatsApp reminders** appear as preferences, but delivery depends on deployment configuration.
+- **Voice Reminders**, AI scanning, and Premium purchases use different entitlements and credits.
+
+## Troubleshooting
+
+- Confirm the active channel is on and read the consequence line below it.
+- Check the reminder days, daily frequency, time zone, and saved times.
+- Check voice credits and the saved phone number.
+- Check browser permission for push.
+- Reconnect and refresh the inbox.
+- Do not rely on a notification alone; review important cheque records directly.

@@ -32,19 +32,23 @@ Documentation filenames use descriptive lowercase kebab-case:
 
 These guides are written for day-to-day users of the application, not developers. They focus on simple language, practical steps, and business-friendly explanations.
 
-| Guide                                                       | What it covers                                                                |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| [Help Center home](help/en/README.md)                       | A Cal.com-style landing page and the best place to begin.                     |
-| [Manage your business](help/en/businesses.md)               | Creating, switching, and updating businesses.                                 |
-| [Manage parties](help/en/parties.md)                        | Adding, editing, tagging, and organising people and businesses you deal with. |
-| [Manage cheques](help/en/cheques.md)                        | Creating, tracking, searching, and updating cheque records.                   |
-| [Manage bank accounts](help/en/accounts.md)                 | Adding and maintaining bank account records.                                  |
-| [Use the dashboard](help/en/dashboard.md)                   | Reading the key overview and prioritising work efficiently.                   |
-| [Set reminders and notifications](help/en/notifications.md) | Setting deadlines and follow-up reminders to stay on track.                   |
-| [Use tags and labels](help/en/tags.md)                      | Grouping records so they are easy to find and manage.                         |
-| [Review reports and exports](help/en/reports.md)            | Summaries, filters, and business reporting tools.                             |
-| [Understand Premium](help/en/premium.md)                    | Paid features, upgrades, and what Premium unlocks.                            |
-| [Security and settings](help/en/settings.md)                | Profile preferences, safety habits, and business settings.                    |
+| Guide                                                           | What it covers                                                                   |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [Help Center home](help/en/README.md)                           | Current setup flow, plan limits, workflows, and guide navigation.                |
+| [Manage your business](help/en/businesses.md)                   | Creating, switching, consolidating, and deleting businesses.                     |
+| [Manage parties](help/en/parties.md)                            | Adding, editing, tagging, filtering, and organising payment parties.             |
+| [Manage cheques](help/en/cheques.md)                            | Manual entry, statuses, duplicate checks, filters, and Premium actions.          |
+| [Scan cheques and use drafts](help/en/scanning-and-drafts.md)   | AI extraction, review, credits, draft autosave, recovery, and manual fallback.   |
+| [Manage bank accounts](help/en/accounts.md)                     | Bank catalog, custom banks, account details, defaults, and deletion rules.       |
+| [Use the dashboard](help/en/dashboard.md)                       | Pending totals, urgency counts, statistics, quick actions, and today's work.     |
+| [Reminders and notifications](help/en/notifications.md)         | Inbox, voice, push, party SMS, timing, device setup, and troubleshooting.        |
+| [Use tags and labels](help/en/tags.md)                          | Shared color tags for cheques, accounts, parties, and businesses.                |
+| [Review reports and exports](help/en/reports.md)                | Premium analytics, background exports, PDF details, privacy, and metric rules.   |
+| [Understand Premium](help/en/premium.md)                        | Free limits, Lifetime Premium, separate credits, transactions, and referrals.    |
+| [Security and settings](help/en/settings.md)                    | Profile, preferences, PIN, privacy, cookies, AI mode, installation, and tools.   |
+| [Install and work offline](help/en/installation-and-offline.md) | PWA installation, push prerequisites, offline boundaries, and recovery.          |
+| [Cheque bounce and legal tools](help/en/public-tools.md)        | Public timeline calculator, cheque status updates, and legal-notice limitations. |
+| [Feedback and support](help/en/support-and-feedback.md)         | In-app FAQs, safe feedback attachments, roadmap, email, and WhatsApp support.    |
 
 ## Historical design records
 
