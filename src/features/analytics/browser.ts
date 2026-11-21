@@ -24,6 +24,7 @@ import {
   type MarketingRequest,
 } from '@/validators/marketing-analytics'
 import { logger } from '@/lib/logger'
+import { ServiceUnavailableError } from '@/lib/errors'
 
 type MetaPixelFunction = ((...args: unknown[]) => void) & {
   callMethod?: (...args: unknown[]) => void
@@ -42,6 +43,7 @@ declare global {
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || '1782530103005623'
 let serial: Promise<unknown> = Promise.resolve()
+let passiveSyncBlocked = false
 
 function initializePixel() {
   if (!window.fbq) {
@@ -188,6 +190,7 @@ export function syncMarketing(
   } = {},
 ) {
   if (!marketingEnabled()) return Promise.resolve(true)
+  if (options.passive && passiveSyncBlocked) return Promise.resolve(false)
   // Serialize consent updates and event claims within a tab.
   const run = async () => {
     const accepted = options.acceptedOverride ?? readMarketingConsent()
@@ -196,23 +199,33 @@ export function syncMarketing(
     if (options.passive && !hasChoice) return
     const context = accepted ? browserContext(options.passive ?? false) : {}
     if (!context) return
-    const response = await fetch('/api/analytics/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      keepalive: true,
-      body: JSON.stringify({
-        action,
-        accepted,
-        hasChoice,
-        explicitChoice: options.explicitChoice ?? false,
-        feature: options.feature,
-        route: marketingRoute(location.pathname),
-        ...context,
-      }),
-    })
+    let response: Response
+    try {
+      response = await fetch('/api/analytics/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        keepalive: true,
+        body: JSON.stringify({
+          action,
+          accepted,
+          hasChoice,
+          explicitChoice: options.explicitChoice ?? false,
+          feature: options.feature,
+          route: marketingRoute(location.pathname),
+          ...context,
+        }),
+      })
+    } catch (error) {
+      throw new ServiceUnavailableError(
+        'Marketing analytics request unavailable',
+        error,
+      )
+    }
     if (!response.ok)
-      throw new Error(`Marketing analytics request failed (${response.status})`)
+      throw new ServiceUnavailableError(
+        `Marketing analytics request failed with status ${response.status}`,
+      )
     const result = responseSchema.parse(await response.json())
     if (accepted && !result.accepted) {
       localStorage.setItem(CONSENT_KEY, 'rejected')
@@ -229,8 +242,12 @@ export function syncMarketing(
   }
   const next = serial.then(locked, locked)
   const settled = next.then(
-    () => true,
+    () => {
+      passiveSyncBlocked = false
+      return true
+    },
     (error: unknown) => {
+      passiveSyncBlocked = true
       logger.error('Marketing analytics synchronization failed', error)
       return false
     },

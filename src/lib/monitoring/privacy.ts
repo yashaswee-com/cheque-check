@@ -80,6 +80,7 @@ export function isExpectedError(error: unknown): boolean {
     'ValidationError',
     'ConflictError',
     'NotFoundError',
+    'ServiceUnavailableError',
     'AbortError',
   ].includes(error.name)
 }

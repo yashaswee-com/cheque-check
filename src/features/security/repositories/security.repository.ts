@@ -9,22 +9,41 @@ import {
 } from '../validators/security'
 import { SecurityError, type SecurityAction } from '../types'
 import { logger } from '@/lib/logger'
+import { ServiceUnavailableError } from '@/lib/errors'
 async function request<T>(
   schema: { parse: (data: unknown) => T },
   action?: SecurityAction,
 ): Promise<T> {
   try {
-    const response = await fetch('/api/security/pin', {
-      method: action ? 'POST' : 'GET',
-      cache: 'no-store',
-      ...(action
-        ? {
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(action),
-          }
-        : {}),
-    })
-    const data: unknown = await response.json()
+    let response: Response
+    try {
+      response = await fetch('/api/security/pin', {
+        method: action ? 'POST' : 'GET',
+        cache: 'no-store',
+        ...(action
+          ? {
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(action),
+            }
+          : {}),
+      })
+    } catch (error) {
+      throw new ServiceUnavailableError(
+        'App security request unavailable',
+        error,
+      )
+    }
+    let data: unknown
+    try {
+      data = await response.json()
+    } catch (error) {
+      if (!response.ok)
+        throw new ServiceUnavailableError(
+          `App security request failed with status ${response.status}`,
+          error,
+        )
+      throw error
+    }
     if (!response.ok) {
       const error = errorResponseSchema.parse(data)
       throw new SecurityError(error.error)
