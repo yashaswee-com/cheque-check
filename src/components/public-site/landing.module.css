@@ -1543,6 +1543,15 @@ a.secondaryCta > svg {
   max-width: 680px;
   margin: auto;
 }
+.facebookSection {
+  text-align: center;
+}
+.facebookSection .sectionHeading {
+  margin-bottom: 24px;
+}
+.facebookSection > a {
+  margin-inline: auto;
+}
 .finalSection > p:not(.eyebrow) {
   margin: 20px auto 24px;
   color: var(--muted-foreground);

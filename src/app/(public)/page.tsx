@@ -11,6 +11,7 @@ import {
   Call02Icon,
   DeliveryBox01Icon,
   Download01Icon,
+  Facebook01Icon,
   File02Icon,
   LockPasswordIcon,
   Payment01Icon,
@@ -40,6 +41,7 @@ import { IndiaFlag } from '@/components/public-site/india-flag'
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top-button'
 import { JsonLd } from '@/components/json-ld'
 import { SITE_NAME, SITE_URL, publicPageMetadata } from '@/lib/seo'
+import { PUBLIC_FACEBOOK_URL } from '@/components/public-site/navigation-links'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('PublicSite.landing')
@@ -709,6 +711,29 @@ export default async function LandingPage() {
             ))}
           </PillScroller>
         </div>
+      </section>
+
+      <section
+        className={`${styles.section} ${styles.facebookSection}`}
+        aria-labelledby="facebook-title"
+      >
+        <div className={styles.sectionHeading}>
+          <p className={styles.eyebrow}>
+            <HugeiconsIcon icon={Facebook01Icon} size={14} aria-hidden="true" />
+            {t('facebookEyebrow')}
+          </p>
+          <h2 id="facebook-title">{t('facebookTitle')}</h2>
+          <p>{t('facebookDescription')}</p>
+        </div>
+        <a
+          href={PUBLIC_FACEBOOK_URL}
+          target="_blank"
+          rel="noreferrer"
+          className={styles.secondaryCta}
+        >
+          <HugeiconsIcon icon={Facebook01Icon} size={19} aria-hidden="true" />
+          {t('facebookCta')}
+        </a>
       </section>
 
       <section

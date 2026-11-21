@@ -9,6 +9,9 @@ import {
   SecurityLockIcon,
 } from '@hugeicons/core-free-icons'
 
+export const PUBLIC_FACEBOOK_URL =
+  'https://www.facebook.com/profile.php?id=61596274983042'
+
 export const PUBLIC_NAV_LINKS = [
   {
     href: '/features',
@@ -45,7 +48,7 @@ export const PUBLIC_NAV_LINKS = [
     external: true,
   },
   {
-    href: 'https://www.facebook.com/profile.php?id=61596274983042',
+    href: PUBLIC_FACEBOOK_URL,
     labelKey: 'facebook',
     icon: Facebook01Icon,
     group: 'socials',

@@ -20,6 +20,7 @@ import PublicPrivacyPage from './(public)/privacy/page'
 import PublicSiteLayout from './(public)/layout'
 import ChequeBouncePage from './(public)/cheque-bounce/page'
 import { PREMIUM_FEATURES } from '@/features/monetization/lib/premium-access'
+import { PUBLIC_FACEBOOK_URL } from '@/components/public-site/navigation-links'
 
 const catalogs = { en: english, hi: hindi, 'hi-en': hinglish }
 const mocks = vi.hoisted(() => ({
@@ -421,6 +422,15 @@ describe('public site pages', () => {
           name: catalog.PublicSite.landing.secondaryCta,
         }),
       ).toBeVisible()
+      const facebook = screen.getByRole('region', {
+        name: catalog.PublicSite.landing.facebookTitle,
+      })
+      const follow = within(facebook).getByRole('link', {
+        name: catalog.PublicSite.landing.facebookCta,
+      })
+      expect(follow).toHaveAttribute('href', PUBLIC_FACEBOOK_URL)
+      expect(follow).toHaveAttribute('target', '_blank')
+      expect(follow).toHaveAttribute('rel', 'noreferrer')
     },
   )
 
