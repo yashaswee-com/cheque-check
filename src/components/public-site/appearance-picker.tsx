@@ -1,7 +1,5 @@
 'use client'
 
-import { PaintBoardIcon } from '@hugeicons/core-free-icons'
-import { HugeiconsIcon } from '@hugeicons/react'
 import { useSyncExternalStore } from 'react'
 import { useTranslations } from 'next-intl'
 import {
@@ -46,7 +44,6 @@ export function AppearancePicker() {
 
   return (
     <div className={styles.appearancePicker}>
-      <HugeiconsIcon icon={PaintBoardIcon} size={17} aria-hidden="true" />
       <select
         aria-label={t('title')}
         value={appearance}

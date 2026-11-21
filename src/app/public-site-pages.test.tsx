@@ -203,6 +203,32 @@ describe('public site pages', () => {
           name: catalog.PublicSite.comparison.premium,
         }),
       ).toBeVisible()
+      const freeCard = screen
+        .getByRole('heading', {
+          name: catalog.PublicSite.comparison.free,
+        })
+        .closest('article')!
+      const premiumPlanCard = screen
+        .getByRole('heading', {
+          name: catalog.PublicSite.comparison.premium,
+        })
+        .closest('article')!
+      expect(
+        within(freeCard).getByText(
+          catalog.PublicSite.comparison.freeDescription,
+        ),
+      ).toHaveClass('font-normal')
+      expect(freeCard.children[1]).toHaveTextContent(
+        catalog.PublicSite.comparison.freeDescription,
+      )
+      expect(premiumPlanCard.children[2]).toHaveTextContent(
+        catalog.PublicSite.comparison.premiumSummary,
+      )
+      expect(
+        screen.getByText(catalog.PublicSite.landing.bounce.note).parentElement,
+      ).toContainElement(
+        screen.getByText(catalog.PublicSite.landing.bounce.disclaimer),
+      )
       const guarantee = screen.getByRole('region', {
         name: catalog.PublicSite.landing.guaranteeTitle,
       })
@@ -431,6 +457,7 @@ describe('public site pages', () => {
       expect(follow).toHaveAttribute('href', PUBLIC_FACEBOOK_URL)
       expect(follow).toHaveAttribute('target', '_blank')
       expect(follow).toHaveAttribute('rel', 'noreferrer')
+      expect(follow.querySelector('[data-facebook-logo]')).toBeInTheDocument()
     },
   )
 
@@ -754,6 +781,7 @@ describe('public site pages', () => {
     const appearance = header.getByRole('combobox', {
       name: english.Appearance.title,
     })
+    expect(appearance.parentElement?.querySelector('svg')).toBeNull()
     fireEvent.change(appearance, { target: { value: 'dark' } })
     expect(appearance).toHaveValue('dark')
     expect(document.documentElement).toHaveClass('dark')

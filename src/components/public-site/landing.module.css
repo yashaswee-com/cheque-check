@@ -137,7 +137,7 @@
   gap: 6px;
 }
 .header .brand > span {
-  display: none;
+  display: inline;
 }
 .signIn {
   display: inline-flex;
@@ -259,19 +259,18 @@
   gap: 4px;
   border: 1px solid var(--blue-line);
   border-radius: 8px;
-  padding-left: 9px;
   color: var(--primary);
   background: var(--background);
-}
-.appearancePicker > svg {
-  display: none;
+  flex-shrink: 0;
 }
 .appearancePicker select {
+  display: block;
+  width: 100%;
   max-width: 92px;
-  min-height: 34px;
+  min-height: 36px;
   appearance: none;
   border: 0;
-  padding: 4px 24px 4px 2px;
+  padding: 4px 24px 4px 10px;
   background: transparent;
   color: var(--primary);
   font: inherit;
@@ -922,6 +921,14 @@ a.secondaryCta > svg {
   color: var(--muted-foreground);
   font-size: 13px;
 }
+.bounceNotes {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+.bounceNotes p:last-child {
+  font-size: 12px;
+}
 .bounceCta {
   display: inline-flex;
   min-height: 48px;
@@ -943,11 +950,6 @@ a.secondaryCta > svg {
 .bounceCta:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 3px;
-}
-.bounceDisclaimer {
-  margin-top: 16px;
-  color: var(--muted-foreground);
-  font-size: 12px;
 }
 .bounceImage {
   min-width: 0;
@@ -1155,6 +1157,35 @@ a.secondaryCta > svg {
   text-wrap: pretty;
 }
 @media (max-width: 359px) {
+  .header .brand {
+    gap: 4px;
+    font-size: 11px;
+  }
+  .header .brand > :global(.public-brand-image) {
+    width: 24px;
+    height: 24px;
+  }
+  .headerActions,
+  .headerControls {
+    gap: 6px;
+  }
+  .localeSelect,
+  .appearancePicker select {
+    font-size: 12px;
+  }
+  .localeSelect {
+    padding: 4px 22px 4px 8px;
+  }
+  .appearancePicker select {
+    padding-inline: 8px 20px;
+  }
+  .localeChevron {
+    right: 6px;
+    width: 12px;
+  }
+  .appearancePicker::after {
+    right: 8px;
+  }
   .audioPlayer .mediaPlay {
     font-size: 12px;
     gap: 6px;
@@ -1162,6 +1193,22 @@ a.secondaryCta > svg {
   }
   .actions .secondaryCta {
     padding-inline: 16px;
+  }
+}
+@media (max-width: 479px) {
+  .headerInner {
+    padding-inline: 8px;
+  }
+  .header .brand {
+    gap: 5px;
+    font-size: 13px;
+  }
+  .header .brand > :global(.public-brand-image) {
+    width: 28px;
+    height: 28px;
+  }
+  .header .signIn {
+    display: none;
   }
 }
 .reportDownloads {
@@ -1578,12 +1625,6 @@ a.secondaryCta > svg {
   }
   .headerInner {
     padding-inline: 16px;
-  }
-  .header .brand > span {
-    display: inline;
-  }
-  .appearancePicker > svg {
-    display: block;
   }
 }
 @media (min-width: 736px) {

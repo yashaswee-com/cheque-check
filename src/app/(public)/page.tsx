@@ -37,6 +37,7 @@ import type { PublicProduct } from '@/features/public-site/repositories/public-p
 import { logger } from '@/lib/logger'
 import { getWhatsAppSupportLink } from '@/lib/whatsapp'
 import { WhatsAppLogo } from '@/components/public-site/whatsapp-logo'
+import { FacebookLogo } from '@/components/public-site/facebook-logo'
 import { IndiaFlag } from '@/components/public-site/india-flag'
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top-button'
 import { JsonLd } from '@/components/json-ld'
@@ -367,9 +368,11 @@ export default async function LandingPage() {
                 {t('bounce.cta')}
                 {arrow}
               </Link>
-              <p>{t('bounce.note')}</p>
+              <div className={styles.bounceNotes}>
+                <p>{t('bounce.note')}</p>
+                <p>{t('bounce.disclaimer')}</p>
+              </div>
             </div>
-            <p className={styles.bounceDisclaimer}>{t('bounce.disclaimer')}</p>
           </div>
           <figure className={styles.bounceImage}>
             <LoadingImage
@@ -731,7 +734,7 @@ export default async function LandingPage() {
           rel="noreferrer"
           className={styles.secondaryCta}
         >
-          <HugeiconsIcon icon={Facebook01Icon} size={19} aria-hidden="true" />
+          <FacebookLogo />
           {t('facebookCta')}
         </a>
       </section>

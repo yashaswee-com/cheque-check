@@ -60,10 +60,10 @@ export function PlanComparison({
           <PlanHeading className="font-heading text-2xl font-bold">
             {t('free')}
           </PlanHeading>
-          <p className="text-4xl font-semibold">₹0</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="-mt-3 text-sm font-normal text-muted-foreground">
             {t('freeDescription')}
           </p>
+          <p className="text-4xl font-semibold">₹0</p>
           <ul className="space-y-2 text-sm">
             <li className="flex items-center gap-2">
               {included}
