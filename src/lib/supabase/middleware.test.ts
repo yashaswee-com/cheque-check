@@ -83,6 +83,27 @@ describe('public middleware access', () => {
     ).toBeNull()
   })
 
+  it.each([
+    '/llms.txt',
+    '/.well-known/ard.json',
+    '/.well-known/ai-catalog.json',
+    '/ai-catalog.json',
+    '/agent-skills/cheque-workflow.md',
+    '/agent-skills/cheque-bounce-timeline.md',
+  ])(
+    'allows agent discovery resource %s without a login redirect',
+    async (path) => {
+      const response = await updateSession(
+        new NextRequest(`https://chequecheck.test${path}`),
+      )
+      expect(response.status).toBe(200)
+      expect(response.headers.get('location')).toBeNull()
+      expect(
+        response.headers.get('x-middleware-request-x-public-site'),
+      ).toBeNull()
+    },
+  )
+
   it('lets the OCR handler return its authenticated JSON contract without a page redirect', async () => {
     const response = await updateSession(
       new NextRequest('https://chequecheck.test/api/ocr/cheque', {

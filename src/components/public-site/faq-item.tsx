@@ -22,15 +22,13 @@ export function FaqItem({
       <h3>
         <button
           type="button"
-          aria-label={question}
+          aria-label={`${question} ${quickAnswer}`}
           aria-expanded={expanded}
           aria-controls={answerId}
           onClick={() => setExpanded((open) => !open)}
         >
           <span className={styles.faqQuestion}>{question}</span>
-          <span className={styles.faqQuickAnswer} aria-hidden="true">
-            {quickAnswer}
-          </span>
+          <span className={styles.faqQuickAnswer}>{quickAnswer}</span>
           <HugeiconsIcon icon={ArrowDown01Icon} size={20} aria-hidden="true" />
         </button>
       </h3>

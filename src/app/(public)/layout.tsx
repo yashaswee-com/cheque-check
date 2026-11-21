@@ -70,7 +70,11 @@ export default async function PublicSiteLayout({
       />
       <PublicHeader>
         <div className={styles.headerInner}>
-          <Link href="/" className={styles.brand}>
+          <Link
+            href="/"
+            className={styles.brand}
+            aria-label="Cheque Check home"
+          >
             <PublicBrand />
           </Link>
           <div className={styles.headerActions}>
@@ -91,7 +95,11 @@ export default async function PublicSiteLayout({
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <div className={styles.footerIntro}>
-            <Link href="/" className={styles.brand}>
+            <Link
+              href="/"
+              className={styles.brand}
+              aria-label="Cheque Check home"
+            >
               <PublicBrand />
             </Link>
             <p>{t('footer.tagline')}</p>

@@ -58,6 +58,11 @@ describe('public route allowlist', () => {
   })
 
   it('allows crawler metadata routes without exposing other root text files', () => {
+    expect(isPublicStaticPath('/llms.txt')).toBe(true)
+    expect(isPublicStaticPath('/.well-known/ard.json')).toBe(true)
+    expect(isPublicStaticPath('/.well-known/ai-catalog.json')).toBe(true)
+    expect(isPublicStaticPath('/ai-catalog.json')).toBe(true)
+    expect(isPublicStaticPath('/agent-skills/cheque-workflow.md')).toBe(true)
     expect(isPublicStaticPath('/robots.txt')).toBe(true)
     expect(isPublicStaticPath('/sitemap.xml')).toBe(true)
     expect(isPublicStaticPath('/opengraph-image')).toBe(true)
