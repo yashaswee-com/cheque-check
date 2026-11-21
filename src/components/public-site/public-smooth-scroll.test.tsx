@@ -31,7 +31,7 @@ afterEach(() => {
   state.destroy.mockClear()
 })
 
-it('mounts subtle wheel smoothing and cleans up on unmount', () => {
+it('mounts subtle wheel and touch smoothing and cleans up on unmount', () => {
   const view = render(<PublicSmoothScroll />)
 
   expect(state.construct).toHaveBeenCalledWith(
@@ -39,7 +39,10 @@ it('mounts subtle wheel smoothing and cleans up on unmount', () => {
       autoRaf: true,
       lerp: 0.16,
       smoothWheel: true,
-      syncTouch: false,
+      syncTouch: true,
+      syncTouchLerp: 0.1,
+      touchInertiaExponent: 1.4,
+      touchMultiplier: 0.95,
       wheelMultiplier: 0.9,
       prevent: expect.any(Function),
     }),

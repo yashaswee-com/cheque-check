@@ -14,7 +14,10 @@ export function PublicSmoothScroll() {
       autoRaf: true,
       lerp: 0.16,
       smoothWheel: true,
-      syncTouch: false,
+      syncTouch: true,
+      syncTouchLerp: 0.1,
+      touchInertiaExponent: 1.4,
+      touchMultiplier: 0.95,
       wheelMultiplier: 0.9,
       prevent: (node) =>
         Boolean(
