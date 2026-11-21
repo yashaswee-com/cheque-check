@@ -4,6 +4,7 @@ import { publicEnv } from '@/lib/env/client'
 import type { Database } from '@/types/database.types'
 import {
   isPublicApiPath,
+  publicArticleLocale,
   isPublicPagePath,
   isPublicStaticPath,
 } from './public-routes'
@@ -17,6 +18,10 @@ export async function updateSession(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   if (isPublicPage) requestHeaders.set('x-public-site', 'true')
   else requestHeaders.delete('x-public-site')
+  const articleLocale = publicArticleLocale(request.nextUrl.pathname)
+  if (articleLocale)
+    requestHeaders.set('x-public-article-locale', articleLocale)
+  else requestHeaders.delete('x-public-article-locale')
 
   let supabaseResponse = NextResponse.next({
     request: { headers: requestHeaders },

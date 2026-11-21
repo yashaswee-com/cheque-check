@@ -26,10 +26,21 @@ export function browserLocale(header: string | null): 'en' | 'hi' | 'hi-en' {
 }
 
 export default getRequestConfig(async () => {
+  const requestHeaders = await headers()
+  const articleLocale = localeSchema.safeParse(
+    requestHeaders.get('x-public-article-locale'),
+  )
+  if (articleLocale.success) {
+    const locale = articleLocale.data
+    return {
+      locale,
+      messages: (await import(`../../messages/${locale}.json`)).default,
+    }
+  }
   const cookieStore = await cookies()
   const requestedLocale = cookieStore.get('NEXT_LOCALE')?.value
   if (!requestedLocale) {
-    const locale = browserLocale((await headers()).get('accept-language'))
+    const locale = browserLocale(requestHeaders.get('accept-language'))
     return {
       locale,
       messages: (await import(`../../messages/${locale}.json`)).default,

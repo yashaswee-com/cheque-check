@@ -25,6 +25,22 @@ describe('public route allowlist', () => {
     expect(isPublicPagePath('/settings/privacy-policy')).toBe(false)
   })
 
+  it.each([
+    '/en/articles',
+    '/hi/articles/',
+    '/hi-en/articles/issued-vs-received-cheques',
+  ])('allows the localized article route %s', (path) => {
+    expect(isPublicPagePath(path)).toBe(true)
+  })
+
+  it.each([
+    '/fr/articles',
+    '/en/articles/private/details',
+    '/en/articles/unsafe_slug',
+  ])('keeps unsupported article route %s private', (path) => {
+    expect(isPublicPagePath(path)).toBe(false)
+  })
+
   it('allows contact and analytics ingestion, but not nested or private endpoints', () => {
     expect(isPublicApiPath('/api/contact')).toBe(true)
     expect(isPublicApiPath('/api/contact/')).toBe(true)

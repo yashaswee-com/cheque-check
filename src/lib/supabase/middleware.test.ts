@@ -45,6 +45,21 @@ describe('public middleware access', () => {
     },
   )
 
+  it('exposes localized article routes through the public shell', async () => {
+    const response = await updateSession(
+      new NextRequest(
+        'https://chequecheck.test/en/articles/issued-vs-received-cheques',
+      ),
+    )
+    expect(response.status).toBe(200)
+    expect(response.headers.get('x-middleware-request-x-public-site')).toBe(
+      'true',
+    )
+    expect(
+      response.headers.get('x-middleware-request-x-public-article-locale'),
+    ).toBe('en')
+  })
+
   it('allows the contact endpoint but does not apply the public page shell', async () => {
     const response = await updateSession(
       new NextRequest('https://chequecheck.test/api/contact', {
