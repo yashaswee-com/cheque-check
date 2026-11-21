@@ -60,7 +60,12 @@ Plans, subscriptions और top-ups के लिए **Features** खोले�
 
 **Created**, **Authorized** या pending checkout को active access न मानें। **Captured** payment मिलने का संकेत है; verified fulfillment refresh में हो सकता है।
 
+<<<<<<< HEAD
 पहली Lifetime Premium खरीद पर 30-दिन की money-back guarantee है। Premium सही न लगे तो 30 दिन के अंदर अपने account email से support को order या payment ID भेजें। Approved request में Lifetime Premium की purchase amount वापस होती है; AI scan और voice-call subscriptions, renewals, credits और top-ups अलग हैं तथा शामिल नहीं हैं।
+
+=======
+
+> > > > > > > 318a512 (docs(help): refresh guides for current features)
 
 ## Referrals और credits
 
