@@ -1,42 +1,80 @@
-# Premium समझें
+# Premium और खरीद समझें
 
-Premium एक उन्नत लेयर है जो उन व्यवसायों के लिए है जो सामान्य काम से आगे बढ़ना चाहते हैं।
+Cheque Check में तीन अलग access प्रकार हैं:
 
-यह रिपोर्टिंग, bulk work, reusable templates, print layouts, और advanced workflows को unlock करता है।
+1. **Core cheque tracking:** standard app और Free allowance।
+2. **Premium - Lifetime:** एक बार की खरीद से Premium tools।
+3. **AI scan और Voice Reminder access:** अलग 30-day services, quotas और optional top-ups।
 
-## Premium क्यों उपयोगी है
+Payment label या browser success screen अकेले access चालू नहीं करता। Verified fulfillment के बाद access मिलता है।
 
-आपको Premium चाहिए अगर:
+## Free सीमा
 
-- आपके पास बहुत अधिक चेक हैं
-- आपको रिपोर्ट्स और डेटा review की ज़रूरत है
-- आप bulk updates करना चाहते हैं
-- आप बार-बार reminders या messages भेजते हैं
-- आप print और export के काम को बेहतर बनाना चाहते हैं
+Free में आपके सभी बिज़नेस मिलाकर **50 active published cheques** हैं।
 
-## Premium क्या देता है
+- Drafts नहीं गिने जाते।
+- Deleted cheques नहीं गिने जाते।
+- सीमा पर पुराने record delete नहीं होते।
+- पुराने records देखे और update किए जा सकते हैं।
+- नया active cheque बनाने, publish या restore करने के लिए empty slot या Premium चाहिए।
 
-- advanced reporting
-- exports और summaries
-- bulk actions
-- party statements
-- custom layouts
-- saved filters and views
-- smart message templates
+## Premium - Lifetime
 
-## Free और Premium में अंतर
+Premium में:
 
-Free में आप अभी भी:
+- unlimited active cheques;
+- received/inward cheque tracking;
+- reports और exports;
+- cheque/party bulk import;
+- reusable cheque templates;
+- duplicate cheque to draft;
+- bulk status changes;
+- saved filter views;
+- party statements;
+- cheque printing और saved layouts;
+- owned businesses की consolidated reporting;
+- custom party message templates;
+- Premium phone-contact import और party SMS preparation।
 
-- बिज़नेस बना सकते हैं
-- पार्टियाँ जोड़ सकते हैं
-- खाते जोड़ सकते हैं
-- चेक दर्ज कर सकते हैं
-- रिमाइंडर सेट कर सकते हैं
-- डैशबोर्ड देख सकते हैं
+Current features और prices के लिए Features page देखें। Prices active product catalog से आते हैं।
 
-Premium इन पर अतिरिक्त शक्तियाँ जोड़ता है, खासकर बड़े काम के लिए।
+## AI scans
 
-## संक्षेप
+AI scanning optional और Premium से अलग है। AI Scan Mode, available unexpired scan credits और configured service चाहिए।
 
-Premium आपके काम को जल्दी और साफ़ करने के लिए है। यह बढ़ते बिज़नेस के लिए एक स्मार्ट upgrade है।
+AI mode off करने पर image upload, draft और manual entry उपलब्ध रहते हैं, पर नया AI extraction नहीं होता। On करने के लिए available access चाहिए।
+
+## Voice reminders
+
+Voice access, phone setup, daily eligibility और call credits भी Premium से अलग हैं। Features page पर:
+
+- reminder phone number save;
+- daily calls enable/pause;
+- test call;
+- remaining calls;
+- 30-day access या eligible top-up खरीद सकते हैं।
+
+## Purchases और transactions
+
+Plans, subscriptions और top-ups के लिए **Features** खोलें। **Settings → Transactions** में order, payment, status और refund history देख सकते हैं।
+
+**Created**, **Authorized** या pending checkout को active access न मानें। **Captured** payment मिलने का संकेत है; verified fulfillment refresh में हो सकता है।
+
+## Referrals और credits
+
+Paid Lifetime owner referral link share कर सकता है। Referred user first Lifetime checkout से पहले code apply कर discount पा सकता है। Verified payment के बाद eligible referrer को documented reward wallet credit में मिलता है।
+
+Wallet credit:
+
+- eligible top-ups पर अपने-आप लगता है;
+- cash या transferable नहीं है;
+- refund reversal से बदल सकता है;
+- matching required subscription की जगह नहीं लेता।
+
+## Access/credits न दिखें
+
+1. Features page पर status refresh करें।
+2. Transaction current account का है जाँचें।
+3. Transaction और entitlement status देखें।
+4. Product/access data फिर load करें।
+5. Order/payment ID के साथ support से संपर्क करें; card details या password न भेजें।

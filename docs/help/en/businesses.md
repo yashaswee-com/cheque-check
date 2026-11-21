@@ -1,79 +1,41 @@
 # Manage your business
 
-A business in Cheque Check is your working account for day-to-day cheque activity. This is where you keep your records, contacts, bank accounts, and cheque history.
+A business is a separate Cheque Check workspace. Its accounts, parties, cheques, drafts, tags, reports, and notification context are kept separate from your other businesses.
 
-If you run more than one company, you can manage each one separately inside the app.
+## Create a business
 
-## How to create a business
+1. Open **Businesses** from the dashboard, navigation, or Settings.
+2. Choose **Add New Business**.
+3. Enter the business name.
+4. Add optional email, phone, address, logo, and business color.
+5. Save, then continue to add accounts and parties.
 
-Follow these steps:
+Use a recognisable legal or trading name. Create separate businesses when records must be kept separate, such as for different companies or independently managed branches.
 
-1. Open the app and go to your workspace or dashboard.
-2. Look for the option to create or add a business.
-3. Enter your business name.
-4. Add contact or brand details if asked.
-5. Save the business.
+## Switch businesses
 
-### Good practice
+Use the business switcher in the app shell, then choose the business you want to work in. The dashboard and business-scoped records change to that workspace.
 
-- Use your legal business name so records stay easy to understand
-- Keep one business for one company or branch
-- If you have multiple branches, create separate businesses if needed
+Your Free active-cheque allowance is still shared across all of your businesses.
 
-## How to switch between businesses
+## Edit business details
 
-If you manage more than one company:
+Open the business, choose **Edit**, update its profile details or logo, and save. Keep details current because the business name and settings are used in records and reports.
 
-1. Open the business selector or menu.
-2. Choose the business you want to work in.
-3. Confirm the switch.
+## Review and combine businesses
 
-Once changed, the dashboard, cheque records, parties, and accounts will update to that business.
+The business list and dashboard show the selected business by default. Premium's consolidated overview can combine cheque totals from owned businesses. Amounts use your display currency; Cheque Check does not perform exchange conversion.
 
-## How to update business details
+## Delete a business
 
-1. Open the business settings or edit page.
-2. Change the business name, logo, address, or contact details.
-3. Save your changes.
+Deleting a business affects the records inside that workspace, including its accounts, parties, cheques, drafts, and report context. Review those records first and export anything you are required to keep.
 
-### Why this matters
+Deletion is not followed by a self-service restore flow. If records may be needed for tax, legal, accounting, or customer work, do not delete the business.
 
-Clear business information helps when you:
+## Good habits
 
-- review reports
-- send reminders
-- identify records quickly
-- keep your team on the same page
-
-## How to close or remove a business
-
-Only do this when you are sure you no longer need the records for that business.
-
-1. Open the business settings page.
-2. Look for the option to delete, archive, or close the business.
-3. Follow the confirmation steps.
-
-### Important
-
-- Always double-check before deleting anything.
-- If the data is still needed for tax, legal, or billing work, keep it active instead of deleting it.
-
-## Quick tips
-
-- Keep your business profile neat and current
-- Use a clear name, not a nickname that others may not recognise
-- Review settings when your business grows or changes direction
-
-## Common questions
-
-### Can I manage more than one business?
-
-Yes. The app is designed to help businesses that need separate records for different entities.
-
-### What happens if I switch businesses?
-
-You simply move to another working space. Your records stay organised under the correct business.
-
-### Should I delete a business or stop using it?
-
-If you still need the records, do not delete it. If it is truly no longer active, deleting is the final step.
+- Keep one clear profile for each independently managed entity.
+- Avoid duplicate businesses created with slightly different spellings.
+- Update contact details and branding when they change.
+- Check the active business before creating a cheque or account.
+- Review Premium consolidated summaries, but remember that records remain business-scoped.

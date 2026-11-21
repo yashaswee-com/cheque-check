@@ -1,49 +1,41 @@
 # Use tags and labels
 
-Tags are simple labels that help you group similar records together. They are a quick way to organise your work without creating too much complexity.
+Tags are shared labels for the current business. They can be attached to cheques, parties, accounts, and the business so related records are easier to find.
 
-## How to add a tag
+## Create or edit a tag
 
-1. Open the record you want to tag.
-2. Look for the Tags or Labels option.
-3. Choose an existing tag or create a new one.
-4. Save the record.
+1. Open **Tags** from the dashboard or Settings.
+2. Choose the option to create a tag.
+3. Give it a short, useful name and select a color.
+4. Save.
 
-## Common tag ideas
+Open an existing tag to rename it or change its color. Delete a tag only when it is no longer useful.
+
+## Add tags to a record
+
+Open the create/edit form or record details, choose one or more tags, and save. If a tag save fails, retry from the record instead of assuming it was saved.
+
+Cheque, party, and account drafts can retain selected tags for later completion.
+
+## Filter with tags
+
+Use **Sort & Filter** on the relevant list and choose a tag. You can combine tag filtering with search, status, party, account, bank, date, and amount filters where the list supports them.
+
+The list shows how many records match. If nothing matches, use **Clear search & filters** before trying again.
+
+## Good tag ideas
 
 - Urgent
+- Follow-up
 - Supplier
 - Customer
-- Priority
-- Follow-up
-- Repeat client
 - Monthly review
+- Priority
 
-## Why tags matter
+## Good habits
 
-Tags help you:
-
-- find records quickly
-- separate urgent work from routine work
-- review similar parties or cheques together
-- simplify large lists
-
-## How to filter by tags
-
-1. Go to the list you want to review.
-2. Use the filter or tag option.
-3. Select the tag you want.
-4. Review the matching records.
-
-This is useful when you want to focus on one category only.
-
-## Best practices
-
-- Keep tags simple and clear
-- Do not create too many similar labels
-- Use tags consistently across your records
-- Review your tags from time to time and remove what is no longer useful
-
-## Quick summary
-
-Tags are like sticky notes for your records. They help you spot important things faster and keep your work tidy.
+- Keep names short and unique.
+- Reuse a tag instead of creating spelling variants.
+- Use tags for grouping, not for cheque numbers, amounts, or bank credentials.
+- Review old tags when the business workflow changes.
+- Remember that deleting a tag detaches the label; it does not delete the tagged record.

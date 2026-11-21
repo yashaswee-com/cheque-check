@@ -1,38 +1,80 @@
 # सुरक्षा, प्रोफ़ाइल और सेटिंग्स
 
-सेटिंग्स आपके काम को आसान और सुरक्षित बनाती है। यहाँ आप अपनी प्रोफ़ाइल, रिमाइंडर, भाषा और बिज़नेस सेटिंग्स 관리 कर सकते हैं।
+Settings से profile, display preferences, notification channels, security, purchases, business tools, support और legal pages नियंत्रित होते हैं।
 
-## प्रोफ़ाइल कैसे अपडेट करें
+## Profile update करें
 
-1. Profile या Account settings खोलें
-2. जानकारी बदलें
-3. सेव करें
+**Settings के profile card** या **Profile** को खोलें। Name, contact, avatar और linked sign-in methods review करके save करें।
 
-## पसंदीदा सेटिंग्स
+Phone sign-in/linking केवल configured deployment में है। One-time code और ज़रूरी security check उपयोग होते हैं; code किसी को न दें।
 
-- रिमाइंडर समय
-- भाषा
-- नोटिफिकेशन
-- डिस्प्ले विकल्प
+## Preferences
 
-हर स्विच के पास **On** या **Off** लिखा होता है, और नीचे बताया जाता है कि अभी उस सेटिंग का क्या असर है — जैसे "मोशन कम है"।
+**Settings → Preferences** में:
 
-## कुकी सेटिंग्स कैसे बदलें
+- appearance;
+- English, Hindi या Hinglish language;
+- display currency;
+- date और time format;
+- time zone;
+- reduced motion;
+- monitoring consent;
+- privacy preferences;
+- cookie consent।
 
-**Settings → Preferences → कुकी सेटिंग्स** खोलें। वहाँ दिखता है कि आपने मार्केटिंग कुकी स्वीकार की हैं या नहीं, और **कुकी सेटिंग्स प्रबंधित करें** से आप अपना चुनाव बदल सकते हैं। पब्लिक पेजों पर फ़ुटर में **Cookie settings** लिंक का उपयोग करें।
+ये choices display, reminders और report formatting बदलती हैं। आपका language choice किसी user-entered name या amount को translate नहीं करता।
 
-## सुरक्षा की आदतें
+हर switch में **On/Off** और current effect की consequence line होती है।
 
-- पासवर्ड सुरक्षित रखें
-- अपने login विवरण किसी के साथ साझा न करें
-- सार्वजनिक या साझा डिवाइस पर sign out करें
+## Notifications
 
-## अच्छी आदतें
+**Settings → Notifications** से voice, SMS, WhatsApp, party SMS, push, warning lead time, daily frequency और reminder times चुनें। देखें: [रिमाइंडर और नोटिफिकेशन](notifications.md)
 
-- जानकारी समय-समय पर अपडेट करें
-- बिज़नेस सेटिंग्स नियमित रूप से देखें
-- रिमाइंडर प्रफरेंसेस सही रखें
+## Application PIN
 
-## संक्षेप
+**Settings → Security** में six-digit app PIN और automatic lock timing बनाएँ, बदलें या हटाएँ।
 
-सेटिंग्स आपके काम का नियंत्रण केंद्र हैं। वे आपके अनुभव को आसान, सुरक्षित और व्यवस्थित बनाते हैं।
+PIN extra online UI lock है। यह bank PIN, sign-in replacement, encryption या offline security नहीं है। Device और account credentials सुरक्षित रखें।
+
+## AI Scan Mode और purchases
+
+**Features** में:
+
+- Premium;
+- inward cheque tracking;
+- AI Scan Mode;
+- AI/voice usage;
+- voice-reminder phone number और enablement;
+- purchases, activation और transaction history।
+
+AI Scan Mode चालू करने के लिए available, unexpired scan access चाहिए। Off करने पर manual cheque entry और draft saving बंद नहीं होते।
+
+## App install करें
+
+Profile के नीचे Settings में **Install ChequeCheck** card आ सकता है। Browser install और notification permission अलग हैं। देखें: [ऐप इंस्टॉल और कनेक्शन समस्या](installation-and-offline.md)
+
+## Cookie settings
+
+**Settings → Preferences → Cookie settings** से optional marketing cookies accept/reject/reopen करें। Public pages पर footer में **Cookie settings** खोलें।
+
+Consent state लागू होने के बाद reject/withdraw optional marketing loading रोकता है। Public URL में private data न डालें।
+
+## Business और data tools
+
+Settings से:
+
+- Businesses;
+- Reports;
+- Tags;
+- Transactions;
+- Features और referrals।
+
+Deleted records self-service restore नहीं होते। Business, party या account delete करने से पहले dependencies और required exports जाँचें।
+
+## सुरक्षा और support
+
+- Password और verification codes निजी रखें।
+- Shared/public device पर sign out करें।
+- Feedback में sensitive account numbers, passwords या payment-card details न भेजें।
+- Purchase/account change से पहले Privacy Policy, Terms और Refund Policy पढ़ें।
+- FAQ, feedback, WhatsApp और email के लिए **Help & Support** खोलें।

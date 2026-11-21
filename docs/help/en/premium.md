@@ -1,68 +1,80 @@
-# Understand Premium
+# Understand Premium and purchases
 
-Premium is the upgrade option for businesses that need more than the basic cheque tracker.
+Cheque Check separates three kinds of access:
 
-It unlocks extra tools for reporting, bulk work, reusable templates, and deeper business workflows. It is useful when you handle more cheques, more parties, or more follow-ups than a simple free setup can comfortably manage.
+1. **Core cheque tracking:** the standard app, including the Free cheque allowance.
+2. **Premium - Lifetime:** a one-time purchase that unlocks the Premium tool set.
+3. **AI scan and Voice Reminder access:** separate 30-day services with usage quotas and optional top-ups.
 
-## What Premium gives you
+A payment label or browser success screen does not by itself activate access. Access becomes available after verified payment fulfillment.
 
-Premium can unlock tools such as:
+## Free limit
 
-- advanced reporting and deeper summaries
-- exports for business review
-- bulk status updates and bulk actions
-- custom layouts for printing and presentation
-- reusable cheque templates
-- saved views and saved filters
-- party statements and consolidated reporting
-- custom message templates and smarter communication tools
-- premium workspace tools for more advanced business workflows
+Free supports up to **50 active, published cheques across all of your businesses**.
 
-## When Premium is helpful
+- Drafts do not count.
+- Deleted cheques do not count.
+- Existing records are not deleted at the limit.
+- Existing records can still be viewed and updated.
+- Creating, publishing, or restoring an active cheque requires an available slot or Premium.
 
-You may want Premium if:
+## Premium - Lifetime
 
-- your business tracks many cheques at once
-- you need better reporting for review or audit work
-- you want to save time with bulk updates
-- you send reminders or messages often
-- you want cleaner export and print options
-- you need a more polished workflow for regular operations
+Premium includes:
 
-## Free vs Premium
+- unlimited active cheques;
+- received/inward cheque tracking;
+- reports and exports;
+- cheque and party bulk import;
+- reusable cheque templates;
+- duplicate cheque to draft;
+- bulk status changes;
+- saved filter views;
+- party statements;
+- cheque printing and saved account layouts;
+- consolidated reporting across owned businesses;
+- custom party message templates;
+- Premium phone-contact import and party SMS preparation.
 
-The basic app still lets you:
+Use the Features page to compare current catalog features and prices. The app reads prices from the active product catalog rather than treating an older displayed price as permanent.
 
-- create businesses
-- add parties
-- add bank accounts
-- record cheques
-- manage statuses
-- set reminders
-- use tags and filters
-- view the dashboard
+## AI scans
 
-Premium adds extra power on top of that, especially when your work grows or becomes more complex.
+AI scanning is optional and separate from Premium. It requires AI Scan Mode, available unexpired scan credits, and a configured service.
 
-## How to know if you have Premium
+Turning AI Scan Mode off keeps image upload and drafts available, but you enter details manually. Review every result because extraction can be wrong. Re-enabling the mode requires available access.
 
-If Premium is active, the app will show premium features or upgrade prompts in the relevant places. If you do not have access, some advanced tools may be locked behind an upgrade step.
+## Voice reminders
 
-## Best way to use Premium
+Voice reminder access, phone setup, daily call eligibility, and call credits are also separate from Premium. Use the Features page to:
 
-Use Premium where it brings time savings and clarity:
+- save the reminder phone number;
+- enable or pause daily calls;
+- send a test call;
+- review remaining calls;
+- buy 30-day access or an eligible top-up.
 
-- report review
-- bulk updates
-- printing and layout work
-- message templates
-- repeated cheque patterns
-- deeper business summaries
+## Purchases and transactions
 
-## Important note
+Open **Features** to buy plans, subscriptions, or top-ups, and to track purchases and activation. **Settings → Transactions** shows order, payment, status, and refund history.
 
-Premium does not remove normal features. It adds more advanced tools while keeping the core cheque work available for regular users.
+Do not assume **Created**, **Authorized**, or a pending checkout means access is active. **Captured** means payment was received; verified fulfillment may still be refreshing.
 
-## Quick summary
+## Referrals and credits
 
-Think of Premium as the “business growth” layer. It helps a growing business move faster, work more cleanly, and handle more complexity without confusion.
+A paid Lifetime owner can share a referral link. A referred user can apply the code before the first Lifetime checkout for the current referral discount. After verified payment, the eligible referrer receives the documented reward as wallet credit.
+
+Wallet credit:
+
+- applies automatically to eligible top-ups;
+- does not become cash or transfer;
+- can be affected by refund reversals;
+- cannot replace a required matching subscription.
+
+## If access or credits do not appear
+
+1. Refresh status on the Features page.
+2. Confirm that the transaction belongs to the current account.
+3. Check the transaction status and entitlement shown.
+4. Retry loading product or access data.
+5. Contact support with the order or payment ID, but not card details or passwords.

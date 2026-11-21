@@ -1,82 +1,49 @@
 # Manage bank accounts
 
-Bank accounts in Cheque Check are the places where your cheques are issued, received, or tracked.
+An account belongs to one business and tells Cheque Check which bank account is used on a cheque. The app stores account details; it does not connect to the bank or read your bank balance.
 
-This helps you keep your records neat and understand which account a payment belongs to.
+## Add an account
 
-## How to add a bank account
+1. Open **Accounts** and choose **Add Account**.
+2. Enter the account holder name.
+3. Choose a bank from the Indian bank directory, or create a private custom bank if needed.
+4. Enter the account number and 11-character IFSC code.
+5. Add an optional opening balance, notes, color, image, and tags.
+6. Choose whether this should be the default account.
+7. Save the account.
 
-1. Open the Accounts section.
-2. Choose the option to add a new account.
-3. Enter the account name and bank details.
-4. Save the account.
+IFSC validation checks the code format. It does not verify that an account, branch, or balance exists.
 
-### Useful account names
+## Create an account while recording a cheque
 
-- Main business account
-- Operating account
-- Sales account
-- Savings account
+If you are recording a cheque and the account is missing, choose **Add new account**. After saving, return to the cheque and select the new account. AI scanning can also suggest account details, but you must review them before saving.
 
-## How to edit a bank account
+## Default account
 
-1. Open the Accounts list.
-2. Find the account you want to change.
-3. Select edit.
-4. Update the details.
-5. Save the changes.
+Each business can have one default account. New cheques select that account automatically, but you can change the selection before saving.
 
-This is useful if:
+To change the default:
 
-- the account name changed
-- the bank details were updated
-- the account is no longer active
+1. Edit the account.
+2. Turn on **Use as default account for new cheques**.
+3. Save.
 
-## How to choose a default account
+Saving a new default replaces the previous default for that business.
 
-If your business uses one account most of the time:
+## Edit or organise an account
 
-1. Open the account settings.
-2. Mark it as the default account.
-3. Save the selection.
+Open an account to update its details, image, notes, tags, or default setting. Use the account list to search and filter by bank.
 
-A default account helps speed up cheque creation and keeps records simpler.
+## Delete an account
 
-## How to remove or deactivate an account
+Open the account and use **Delete Account** only if it is no longer needed. Cheque Check blocks deletion while published or draft cheques still reference the account.
 
-Only do this if the account is no longer in use.
+If you still need the cheque history, keep the account and update it instead of deleting it. Deleted records are not restored through a self-service restore screen.
 
-1. Open the account details.
-2. Choose the remove or deactivate option.
-3. Confirm your action.
+## Good habits
 
-### Important
-
-If the account still has active cheque activity, it is better to keep it visible and update it instead of deleting it.
-
-## Why accounts matter
-
-Accounts make your records easier to trust because they show:
-
-- which bank the payment belongs to
-- where cash is moving
-- which account needs follow-up
-- how your business is organised
-
-## Best practices
-
-- Keep account names clear and specific
-- Avoid duplicate accounts
-- Mark inactive accounts properly
-- Keep your default account updated
-
-## Common mistakes to avoid
-
-- Creating duplicate bank entries
-- Adding a cheque to the wrong account
-- Deleting an active account too soon
-- Forgetting to update account details after a bank change
-
-## Quick summary
-
-Bank accounts tell you where the money is. They keep your records organised and make it easier to understand each cheque in context.
+- Use clear account names so similarly named accounts are easy to distinguish.
+- Confirm the full account number and IFSC before saving.
+- Keep the default account aligned with the account you use most often.
+- Use tags for grouping accounts, not as a replacement for accurate bank details.
+- Never enter online-banking passwords or card PINs in notes.

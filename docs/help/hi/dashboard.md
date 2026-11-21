@@ -1,37 +1,49 @@
 # डैशबोर्ड उपयोग करें
 
-डैशबोर्ड आपके ऐप का मुख्य पेज है। यहाँ आप तुरंत देख सकते हैं कि आज किस चीज़ पर ध्यान देना है।
+Dashboard current business का overview है। यहाँ pending totals, upcoming work, chart, quick actions, drafts और आज के cheque records मिलते हैं।
 
-## यह क्या दिखाता है
+## क्या दिखता है
 
-- कुल चेक गतिविधि
-- जल्द खत्म होने वाले चेक
-- भुगतान या क्लियर हुए चेक
-- लंबित काम
-- रिपोर्ट का सारांश
-- रिमाइंडर की जानकारी
+- **Pending net:** pending receivables minus pending payables।
+- Pending **Receivable** और **Payable** totals।
+- Today, next 7 days और overdue counts।
+- चुनी statistics range का status/amount chart।
+- आज के cheques और direct status actions।
+- Pending drafts।
+- Scan, Reports, Tags और Businesses के shortcuts।
 
-## डैशबोर्ड का उपयोग कैसे करें
+ये recorded cheque data हैं, verified bank balance या cash-flow forecast नहीं।
 
-1. डैशबोर्ड खोलें
-2. मुख्य आंकड़े देखें
-3. सबसे ज़रूरी चीज़ों पर ध्यान दें
-4. ज़रूरत हो तो विस्तृत जानकारी खोलें
+## Statistics range बदलें
 
-## दैनिक उपयोग
+Chart के ऊपर date filter से preset या custom range चुनें। यह range dashboard statistics नियंत्रित करती है; यह cheque list या report export की सीमा नहीं बदलती।
 
-1. सुबह डैशबोर्ड देखें
-2. जरूरी काम पहचानें
-3. चेक की स्थिति अपडेट करें
-4. रिमाइंडर का जवाब दें
+## Quick actions
 
-## अच्छी आदतें
+- **Scan Cheque:** photo चुनकर नए cheque draft में भेजता है।
+- **Reports:** Premium report area खोलता है।
+- **Tags:** shared business tags खोलता है।
+- **Businesses:** business list और switcher खोलता है।
 
-- नियमित रूप से डैशबोर्ड देखें
-- लंबित काम को नजरअंदाज़ न करें
-- स्थिति अपडेट रखें
-- फ़िल्टर का उपयोग करके छोटे समूह देखें
+Premium access ज़रूरी होने पर marker दिखता है।
 
-## संक्षेप
+## रोज़ का तरीका
 
-डैशबोर्ड आपके काम का “मुख्य नियंत्रण कक्ष” है। यह आपको सर्वोच्च प्राथमिकता वाले काम दिखाता है।
+1. Active business जाँचें।
+2. Pending net, today, upcoming और overdue count देखें।
+3. आज के cheques खोलें और verified outcome ही update करें।
+4. Pending drafts पूरे करें।
+5. Bounced या overdue records का follow-up देखें।
+6. Wide review के लिए Cheques या Reports खोलें।
+
+## Bounced cheques
+
+Bounced amounts pending totals से अलग रहते हैं। Original record review करें, replacement/recovery अलग confirm करें, और unclear duplicate बनाने के बजाय status update करें।
+
+## Dashboard खाली या अधूरा हो
+
+- कोई business selected न हो तो बनाएँ।
+- नया business हो तो account, party और cheque जोड़ें।
+- Missing record से पहले active business जाँचें।
+- Page load न हो तो reconnect और retry करें।
+- Drafts अलग दिखते हैं और active cheque totals में नहीं आते।

@@ -1,34 +1,41 @@
 # टैग और लेबल उपयोग करें
 
-टैग सरल लेबल हैं जो आपको रिकॉर्ड को सही समूह में रखने में मदद करते हैं।
+Tags current business के shared labels हैं। Cheque, party, account और business पर लगाकर related records आसानी से ढूँढ़ सकते हैं।
 
-## टैग कैसे लगाएँ
+## Tag बनाएँ या edit करें
 
-1. रिकॉर्ड खोलें
-2. Tags या Labels चुनें
-3. टैग चुनें या नया बनाएं
-4. सेव करें
+1. Dashboard या Settings से **Tags** खोलें।
+2. नया tag चुनें।
+3. छोटा उपयोगी नाम और color चुनें।
+4. सेव करें।
 
-## उपयोगी टैग के उदाहरण
+Existing tag को खोलकर नाम/color बदलें। Unused tag ही delete करें।
+
+## Record पर tag लगाएँ
+
+Create/edit form या record details खोलें, एक या अधिक tags चुनें और save करें। Tag save fail हो तो retry करें; saved मानकर आगे न बढ़ें।
+
+Cheque, party और account drafts चुने हुए tags बाद में पूरा करने के लिए रख सकते हैं।
+
+## Tags से filter करें
+
+Relevant list में **Sort & Filter** खोलें और tag चुनें। जहाँ supported हो, search, status, party, account, bank, date और amount filters के साथ जोड़ें।
+
+List matching record count दिखाती है। कुछ न मिले तो **Clear search & filters** करके दोबारा चुनें।
+
+## उपयोगी tags
 
 - Urgent
+- Follow-up
 - Supplier
 - Customer
+- Monthly review
 - Priority
-- Follow-up
-
-## टैग का उपयोग क्यों जरूरी है
-
-- रिकॉर्ड जल्दी ढूँढ़ें
-- अलग-अलग काम अलग दिखें
-- बड़े डेटा को आसान तरीके से देखें
 
 ## अच्छी आदतें
 
-- सरल टैग चुनें
-- बहुत अधिक टैग न बनाएं
-- नियमित रूप से टैग समीक्षा करें
-
-## संक्षेप
-
-टैग आपकी रिकॉर्डिंग की छोटी-छोटी नोट्स जैसी चीज़ है। ये काम को सरल और साफ बनाते हैं।
+- छोटे और unique names रखें।
+- Similar spelling variants के बजाय existing tag उपयोग करें।
+- Cheque number, amount या bank credential के लिए tag न बनाएँ।
+- Workflow बदले तो पुराने tags review करें।
+- Tag delete करने से label हटता है, tagged record नहीं।

@@ -1,107 +1,45 @@
-# Manage Parties
+# Manage parties
 
-A party is the person or organisation you deal with. This could be a supplier, customer, client, landlord, vendor, or company.
+A party is the person or organisation connected to a cheque. For an issued cheque, the party is the recipient. For a received cheque, the party is the payer.
 
-Parties are important because cheques are usually connected to the person or business receiving or paying the money.
+## Add a party
 
-## How to create a party
-
-1. Go to the Parties section.
-2. Select the option to add a new party.
-3. Enter the party name.
-4. Add other details if needed, such as phone number, email, or address.
+1. Open **Parties** and choose **Add Party**.
+2. Enter the party name.
+3. Add type, contact number, email, address, notes, photo, color, icon, or tags when useful.
+4. Review any similar-name warning.
 5. Save the party.
 
-### Good examples
+Optional fields can be completed later. Keep enough contact information to identify the correct person or company and, if desired, prepare a party SMS.
 
-- Supplier name for a product bill
-- Customer name for a sale
-- Vendor or trader name for payment records
+## Import from phone contacts
 
-### Tips
+Contact import is a Premium feature and works only on supported mobile browsers. It still requires review before saving. Manual entry is always available.
 
-- Use the full legal or business name when possible
-- Keep names consistent so you do not create duplicates
-- Add contact details if you plan to send reminders
+## Edit a party
 
-## How to modify an existing party
+Open a party, choose **Edit Party**, correct the information, and save. Update contact details when they change so reminders and prepared messages use the right destination.
 
-1. Open the Parties list.
-2. Find the party you want to edit.
-3. Open the party details.
-4. Update the name, contact details, or notes.
-5. Save the update.
+## Tags and organisation
 
-### When to edit a party
+Use shared business tags for categories such as supplier, customer, urgent, or follow-up. Keep tag names consistent rather than creating many similar labels.
 
-- The party changed their name
-- Their phone or email changed
-- You need to correct a spelling mistake
-- You want to keep records more accurate
+## Search, filter, and review
 
-## How to tag a party
+Party lists can be searched, sorted, and filtered by available fields such as name, type, or tag. Open a party to review its linked cheque records.
 
-Tags help you sort and group parties quickly.
+Premium party statements let you prepare a date-based statement and export it as PDF or Excel.
 
-1. Open the party details.
-2. Look for the tags or labels option.
-3. Choose one or more tags.
-4. Save your changes.
+## Delete a party
 
-### Common tag examples
+Delete only when the party record is no longer needed. Deletion is blocked while published or draft cheques still reference the party.
 
-- Priority
-- Supplier
-- Customer
-- Urgent
-- Repeat client
+If the name is wrong or the contact changed, edit the party instead. Deleted parties are not restored through a self-service screen.
 
-### Why tags help
+## Good habits
 
-Tags make it easier to:
-
-- find parties fast
-- group similar records
-- filter your work by category
-- focus on important follow-ups
-
-## How to search for a party
-
-1. Go to the Parties section.
-2. Use the search box.
-3. Type part of the name or contact detail.
-4. Review the results.
-
-This saves time when your party list grows.
-
-## How to delete or archive a party
-
-Delete or archive only when you are sure the record is no longer needed.
-
-1. Open the party details.
-2. Choose the delete, archive, or inactive option.
-3. Confirm the action.
-
-### Important
-
-- Be careful before deleting a party connected to old cheques.
-- If the party is still used in active records, consider keeping the entry and updating it instead.
-
-## Best practices
-
-- Keep names clean and unique
-- Avoid duplicate party entries
-- Use tags for simple sorting
-- Update contact details regularly
-- Review old party records from time to time
-
-## Common mistakes to avoid
-
-- Creating the same party twice
-- Saving incomplete names
-- Forgetting to update a changed phone number
-- Removing a party that still has active cheques
-
-## Need a quick summary?
-
-A party is simply the “who” behind a payment. If you record a cheque, the party tells you who paid or who received the money.
+- Prefer the full legal or trading name.
+- Review duplicate suggestions before creating a similar party.
+- Keep contact details current.
+- Use tags for useful grouping, not for private notes.
+- Never save passwords or account credentials in party notes.
