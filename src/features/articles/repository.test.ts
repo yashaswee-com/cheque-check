@@ -40,8 +40,13 @@ describe('Markdown article repository', () => {
         },
       ]),
     )
-    await expect(getArticle('hi', 'issued-vs-received-cheques')).resolves.toBe(
-      null,
+    await expect(
+      getArticle('hi', 'issued-vs-received-cheques'),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        locale: 'hi',
+        translationKey: 'issued-vs-received-cheques',
+      }),
     )
   })
 
@@ -51,6 +56,7 @@ describe('Markdown article repository', () => {
     )
     expect(articleLanguageAlternates(translations)).toEqual({
       'en-IN': '/en/articles/issued-vs-received-cheques',
+      'hi-IN': '/hi/articles/issued-vs-received-cheques',
       'x-default': '/en/articles/issued-vs-received-cheques',
     })
   })
