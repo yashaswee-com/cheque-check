@@ -60,12 +60,9 @@ Open **Features** to buy plans, subscriptions, or top-ups, and to track purchase
 
 Do not assume **Created**, **Authorized**, or a pending checkout means access is active. **Captured** means payment was received; verified fulfillment may still be refreshing.
 
-<<<<<<< HEAD
 Your first Lifetime Premium purchase is covered by a 30-day money-back guarantee. If Premium is not right for you, contact support from your account email within 30 days and include the order or payment ID. Approved requests refund the Lifetime Premium purchase amount; AI scan and voice-call subscriptions, renewals, credits, and top-ups are separate and not included.
 
 ## Referrals and credits
-
-=======
 
 ## Referrals and credits
 
