@@ -158,5 +158,8 @@ describe('browser marketing attribution and sessions', () => {
   it('reports request failures rather than pretending consent was saved', async () => {
     send.mockResolvedValue(new Response(null, { status: 503 }))
     expect(await syncMarketing()).toBe(false)
+    send.mockClear()
+    expect(await syncMarketing('sync', { passive: true })).toBe(false)
+    expect(send).not.toHaveBeenCalled()
   })
 })

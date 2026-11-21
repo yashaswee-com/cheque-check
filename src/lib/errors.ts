@@ -34,6 +34,12 @@ export class DatabaseError extends AppError {
   }
 }
 
+export class ServiceUnavailableError extends AppError {
+  constructor(message: string, cause?: unknown) {
+    super(message, 'SERVICE_UNAVAILABLE', cause)
+  }
+}
+
 /** A free-plan cap enforced by the database (SQLSTATE 53400). */
 export class PlanLimitError extends AppError {
   constructor(message: string, cause?: unknown) {

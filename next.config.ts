@@ -4,11 +4,9 @@ import { withSentryConfig } from '@sentry/nextjs/config'
 import createNextIntlPlugin from 'next-intl/plugin'
 
 const withNextIntl = createNextIntlPlugin()
-const appRelease =
-  process.env.NEXT_PUBLIC_APP_RELEASE ||
-  (process.env.VERCEL_GIT_COMMIT_SHA
-    ? `cheque-check@${process.env.VERCEL_GIT_COMMIT_SHA}`
-    : undefined)
+const appRelease = process.env.VERCEL_GIT_COMMIT_SHA
+  ? `cheque-check@${process.env.VERCEL_GIT_COMMIT_SHA}`
+  : process.env.NEXT_PUBLIC_APP_RELEASE || undefined
 const deploymentKind =
   process.env.VERCEL_ENV === 'preview'
     ? 'preview'

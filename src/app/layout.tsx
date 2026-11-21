@@ -96,6 +96,9 @@ export default async function RootLayout({
   const messages = await getMessages()
   const t = await getTranslations('Common')
   const isQa = process.env.NEXT_PUBLIC_APP_ENV === 'qa'
+  const useVercelTelemetry =
+    process.env.NEXT_PUBLIC_APP_ENV === 'production' &&
+    process.env.NEXT_PUBLIC_DEPLOYMENT_KIND === 'production'
 
   return (
     <html
@@ -191,8 +194,12 @@ export default async function RootLayout({
             strategy="lazyOnload"
           />
         )}
-        <Analytics />
-        <SpeedInsights />
+        {useVercelTelemetry && (
+          <>
+            <Analytics />
+            <SpeedInsights />
+          </>
+        )}
       </body>
     </html>
   )

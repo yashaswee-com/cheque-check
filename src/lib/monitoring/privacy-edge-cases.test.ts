@@ -66,6 +66,11 @@ describe('telemetry privacy edge cases', () => {
     expect(
       isExpectedError(Object.assign(new Error(), { name: 'AbortError' })),
     ).toBe(true)
+    expect(
+      isExpectedError(
+        Object.assign(new Error(), { name: 'ServiceUnavailableError' }),
+      ),
+    ).toBe(true)
   })
 
   it('preserves only safe breadcrumb context', () => {
