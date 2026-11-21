@@ -24,7 +24,20 @@ function normalizedPath(pathname: string) {
 }
 
 export function isPublicPagePath(pathname: string) {
-  return PUBLIC_PAGE_PATHS.has(normalizedPath(pathname))
+  const normalized = normalizedPath(pathname)
+  return (
+    PUBLIC_PAGE_PATHS.has(normalized) ||
+    /^\/(?:en|hi|hi-en)\/articles(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?$/.test(
+      normalized,
+    )
+  )
+}
+
+export function publicArticleLocale(pathname: string) {
+  const match = normalizedPath(pathname).match(
+    /^\/(en|hi|hi-en)\/articles(?:\/|$)/,
+  )
+  return match?.[1] as 'en' | 'hi' | 'hi-en' | undefined
 }
 
 export function isPublicApiPath(pathname: string) {

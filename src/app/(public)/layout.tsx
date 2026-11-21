@@ -14,6 +14,7 @@ import { CookieSettingsButton } from '@/components/public-site/cookie-settings-b
 import { LaunchBanner } from '@/components/public-site/launch-banner'
 import { JsonLd } from '@/components/json-ld'
 import { SITE_NAME, SITE_URL } from '@/lib/seo'
+import { localizedPublicHref } from '@/components/public-site/navigation-links'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -153,7 +154,7 @@ export default async function PublicSiteLayout({
                       return (
                         <li key={href}>
                           <Link
-                            href={href}
+                            href={localizedPublicHref(href, locale)}
                             target={external ? '_blank' : undefined}
                             rel={external ? 'noreferrer' : undefined}
                           >

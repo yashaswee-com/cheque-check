@@ -682,7 +682,12 @@ describe('public site pages', () => {
         name: english.PublicSite.nav.features,
       }),
     ).toHaveAttribute('href', '/features')
-    expect(within(nav).getAllByRole('link')).toHaveLength(8)
+    expect(within(nav).getAllByRole('link')).toHaveLength(9)
+    expect(
+      within(nav).getByRole('link', {
+        name: english.PublicSite.nav.articles,
+      }),
+    ).toHaveAttribute('href', '/en/articles')
     for (const link of within(nav).getAllByRole('link')) {
       expect(link.querySelectorAll('svg')).toHaveLength(2)
     }

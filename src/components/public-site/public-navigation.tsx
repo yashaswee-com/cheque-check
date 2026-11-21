@@ -14,6 +14,7 @@ import {
   PUBLIC_NAV_GROUPS,
   PUBLIC_NAV_GROUP_ICONS,
   PUBLIC_NAV_LINKS,
+  localizedPublicHref,
 } from './navigation-links'
 import { PublicBrand } from './public-brand'
 import { PublicIcon } from './public-icon'
@@ -96,7 +97,7 @@ export function PublicNavigation({
                       return (
                         <Link
                           key={href}
-                          href={href}
+                          href={localizedPublicHref(href, locale)}
                           onClick={() => setOpen(false)}
                           target={external ? '_blank' : undefined}
                           rel={external ? 'noreferrer' : undefined}

@@ -57,11 +57,24 @@ describe('request locale contract', () => {
 
   it('keeps an explicit cookie over the browser preference', async () => {
     mocks.get.mockReturnValue({ value: 'hi-en' })
-    mocks.header.mockReturnValue('en')
+    mocks.header.mockImplementation((name: string) =>
+      name === 'accept-language' ? 'en' : null,
+    )
     const config = await requestConfig({
       requestLocale: Promise.resolve(undefined),
     })
     expect(config.locale).toBe('hi-en')
+  })
+
+  it('uses the locale of a public article route', async () => {
+    mocks.header.mockImplementation((name: string) =>
+      name === 'x-public-article-locale' ? 'en' : 'hi',
+    )
+    mocks.get.mockReturnValue({ value: 'hi' })
+    const config = await requestConfig({
+      requestLocale: Promise.resolve(undefined),
+    })
+    expect(config.locale).toBe('en')
   })
   it('logs and uses Hinglish for an unsupported cookie', async () => {
     mocks.get.mockReturnValue({ value: '../../unknown' })

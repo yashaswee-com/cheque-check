@@ -34,6 +34,12 @@ export const PUBLIC_NAV_LINKS = [
     group: 'resources',
   },
   {
+    href: '/articles',
+    labelKey: 'articles',
+    icon: File02Icon,
+    group: 'resources',
+  },
+  {
     href: 'https://chequecheck.gitbook.io/help',
     labelKey: 'helpCenter',
     icon: HelpCircleIcon,
@@ -55,6 +61,10 @@ export const PUBLIC_NAV_LINKS = [
     external: true,
   },
 ] as const
+
+export function localizedPublicHref(href: string, locale: string) {
+  return href === '/articles' ? `/${locale}/articles` : href
+}
 
 export const PUBLIC_NAV_GROUPS = [
   'product',
