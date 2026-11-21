@@ -72,12 +72,18 @@ async function buildIndex() {
   })
   const articles = await Promise.all(files.map(readArticle))
   const identities = new Set<string>()
+  const translations = new Set<string>()
   for (const article of articles) {
     const identity = `${article.locale}:${article.slug}`
     if (identities.has(identity)) {
       throw new Error(`Duplicate article identity: ${identity}`)
     }
     identities.add(identity)
+    const translation = `${article.locale}:${article.translationKey}`
+    if (translations.has(translation)) {
+      throw new Error(`Duplicate article translation: ${translation}`)
+    }
+    translations.add(translation)
   }
   return articles.sort(
     (a, b) =>
@@ -136,4 +142,12 @@ export async function getArticleSummary(
 
 export async function listAllPublishedArticles(): Promise<ArticleSummary[]> {
   return listArticles()
+}
+
+export async function listArticleTranslations(
+  translationKey: string,
+): Promise<ArticleSummary[]> {
+  return (await listArticles()).filter(
+    (article) => article.translationKey === translationKey,
+  )
 }

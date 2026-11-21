@@ -29,6 +29,32 @@ export type Article = ArticleSummary & {
   html: string
 }
 
+export const ARTICLE_HREFLANG: Record<ArticleLocale, string> = {
+  en: 'en-IN',
+  hi: 'hi-IN',
+  'hi-en': 'hi-Latn-IN',
+}
+
 export function isArticleLocale(value: string): value is ArticleLocale {
   return ARTICLE_LOCALES.includes(value as ArticleLocale)
+}
+
+export function articleIndexLanguages() {
+  return Object.fromEntries(
+    ARTICLE_LOCALES.map((locale) => [
+      ARTICLE_HREFLANG[locale],
+      `/${locale}/articles`,
+    ]),
+  )
+}
+
+export function articleLanguageAlternates(
+  articles: ArticleSummary[],
+): Record<string, string> {
+  const languages = Object.fromEntries(
+    articles.map((article) => [ARTICLE_HREFLANG[article.locale], article.href]),
+  )
+  const english = articles.find((article) => article.locale === 'en')
+  if (english) languages['x-default'] = english.href
+  return languages
 }

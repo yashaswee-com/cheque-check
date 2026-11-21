@@ -3,6 +3,7 @@ import { ArticleIndex } from '@/features/articles/components/article-index'
 import { listArticles } from '@/features/articles/repository'
 import {
   ARTICLE_LOCALES,
+  articleIndexLanguages,
   isArticleLocale,
   type ArticleLocale,
 } from '@/features/articles/types'
@@ -49,11 +50,18 @@ export async function generateMetadata({
   const { locale } = await params
   if (!isArticleLocale(locale)) notFound()
   const copy = COPY[locale]
-  return publicPageMetadata({
+  const metadata = publicPageMetadata({
     path: `/${locale}/articles`,
     title: `${copy.title} | ${SITE_NAME}`,
     description: copy.description,
   })
+  return {
+    ...metadata,
+    alternates: {
+      canonical: `/${locale}/articles`,
+      languages: articleIndexLanguages(),
+    },
+  }
 }
 
 export default async function ArticlesPage({

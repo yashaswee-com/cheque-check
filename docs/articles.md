@@ -42,6 +42,10 @@ content returns 404 instead of duplicating another language.
 Use the same `translationKey` for equivalent translated articles. Slugs may
 change between languages when that produces a clearer URL.
 
+Published translations are linked automatically with `hreflang` values
+`en-IN`, `hi-IN`, and `hi-Latn-IN`. The English translation is also exposed as
+`x-default`. Missing or draft translations are omitted.
+
 ## Index and sitemap
 
 The server builds an article index from frontmatter. Article-list search uses
