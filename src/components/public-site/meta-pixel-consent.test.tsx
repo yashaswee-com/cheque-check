@@ -60,13 +60,13 @@ afterEach(() => {
 })
 
 describe('marketing consent', () => {
-  it('does not render the banner before browser preferences can be read', () => {
+  it('renders the banner in the initial HTML without waiting for hydration', () => {
     const markup = renderToString(
       <NextIntlClientProvider locale="en" messages={messages}>
         <MetaPixelConsent {...props} />
       </NextIntlClientProvider>,
     )
-    expect(markup).not.toContain('aria-label="Optional marketing cookies"')
+    expect(markup).toContain('aria-label="Optional marketing cookies"')
   })
 
   it('requires fresh consent for the expanded scope', async () => {
@@ -93,7 +93,7 @@ describe('marketing consent', () => {
     expect(screen.queryByRole('button', { name: 'Cookie settings' })).toBeNull()
     act(() => openCookieSettings())
     expect(
-      screen.getByRole('dialog', { name: 'Cookie settings' }),
+      await screen.findByRole('dialog', { name: 'Cookie settings' }),
     ).toBeVisible()
   })
   it('saves the selected marketing preference from the settings panel', async () => {

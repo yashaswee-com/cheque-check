@@ -12,6 +12,7 @@ export const ATTRIBUTION_KEY = 'cheque-check:marketing-attribution:v1'
 export const SESSION_KEY = 'cheque-check:marketing-session:v1'
 export const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000
 export const SESSION_IDLE_MS = 30 * 60 * 1000
+export const MARKETING_CONSENT_BOOTSTRAP = `(function(){try{var choice=localStorage.getItem('${CONSENT_KEY}');if(choice==='accepted'||choice==='rejected'){document.documentElement.dataset.marketingConsent=choice}}catch{}})();`
 let sessionOptOut = false
 export function setSessionMarketingOptOut(value: boolean) {
   sessionOptOut = value

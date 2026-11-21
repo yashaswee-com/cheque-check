@@ -2105,7 +2105,7 @@
     },
     "cookieConsent": {
       "title": "Optional marketing cookies",
-      "description": "Cheque Check par optional marketing analytics allow karein? Selected visits, signup, onboarding, cheque-count milestones, free-limit blocks aur purchases record karke ads measure karne ke liye Meta Pixel/Conversions API se share hote hain. Meta ko hashed account/contact IDs, browser/IP info, ad IDs aur purchase product/value mil sakta hai. Cheque contents, bank/party details, images ya form entries share nahi hote. Cookie settings mein kabhi bhi reject ya withdraw karein. Retention aur data rights ke liye privacy policy dekhein.",
+      "description": "Meta ke saath selected visits aur product milestones measure karne ke liye optional analytics allow karein. Cheque, bank, party, image ya form data share nahi hota. Cookie settings mein apni choice kabhi bhi badal sakte hain.",
       "accept": "Accept",
       "reject": "Reject",
       "manage": "Cookie settings",
@@ -2119,7 +2119,7 @@
       "marketingDescription": "Meta ke saath selected visits aur product milestones share karke Cheque Check ads ko measure karne ki permission dein.",
       "showDetails": "Details dekhein",
       "hideDetails": "Details chhupayein",
-      "marketingDetails": "On karne par selected visits, signup, onboarding aur purchase milestones Meta Pixel aur Conversions API ke saath share ho sakte hain. Cheque contents, bank ya party details, images aur form entries share nahi hote. Aap apni choice kabhi bhi badal sakte hain.",
+      "marketingDetails": "On karne par selected visits, signup, onboarding, cheque-count milestones, free-limit blocks aur purchases Meta Pixel aur Conversions API ke saath share ho sakte hain. Meta ko hashed account/contact IDs, browser/IP info, ad IDs aur purchase product/value mil sakta hai. Cheque contents, bank ya party details, images aur form entries share nahi hote. Aap apni choice kabhi bhi badal sakte hain.",
       "aboutLabel": "Jaankari",
       "aboutTitle": "Cookies aur aapki choice ke baare mein",
       "aboutDescription": "Zaroori storage service ke core features ke liye hai. Optional marketing analytics tab tak off rehti hai jab tak aap ise yahan on na karein. Optional reject karne se marketing measurement band hota hai. Footer se is panel ko dobara kholkar choice badal sakte hain.",

@@ -91,7 +91,7 @@ export function PlanComparison({
           )}
         </article>
         <article className="relative flex flex-col gap-5 rounded-[18px] border border-primary/30 bg-primary/5 p-6 sm:p-8 dark:bg-primary/10">
-          <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold tracking-wide text-white uppercase">
+          <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold tracking-wide text-primary-foreground uppercase">
             {t('recommended')}
           </span>
           <PlanHeading className="flex items-center gap-2 font-heading text-2xl font-bold">

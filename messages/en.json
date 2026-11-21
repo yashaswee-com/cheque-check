@@ -2105,7 +2105,7 @@
     },
     "cookieConsent": {
       "title": "Optional marketing cookies",
-      "description": "Allow optional marketing analytics across Cheque Check? We record selected visits, signup, onboarding, cheque-count milestones, free-limit blocks, and purchases, and share them with Meta Pixel and Conversions API to measure ads. Meta may receive hashed account/contact identifiers, browser/IP information, ad identifiers, and purchase product/value. We never share cheque contents, bank/party details, images, or form entries. You can reject or withdraw anytime in Cookie settings. See our privacy policy for retention and data rights.",
+      "description": "Allow optional analytics to measure selected visits and product milestones with Meta. We never share cheque, bank, party, image, or form data. Change your choice anytime in Cookie settings.",
       "accept": "Accept",
       "reject": "Reject",
       "manage": "Cookie settings",
@@ -2119,7 +2119,7 @@
       "marketingDescription": "Allow selected visits and product milestones to be used to measure Cheque Check advertising with Meta.",
       "showDetails": "Show details",
       "hideDetails": "Hide details",
-      "marketingDetails": "When enabled, selected visits, signup, onboarding, and purchase milestones may be shared with Meta Pixel and Conversions API. Cheque contents, bank or party details, images, and form entries are not shared. Your choice can be changed at any time.",
+      "marketingDetails": "When enabled, selected visits, signup, onboarding, cheque-count milestones, free-limit blocks, and purchases may be shared with Meta Pixel and Conversions API. Meta may receive hashed account/contact identifiers, browser and IP information, ad identifiers, and purchase product/value. Cheque contents, bank or party details, images, and form entries are not shared. Your choice can be changed at any time.",
       "aboutLabel": "About",
       "aboutTitle": "About cookies and your choice",
       "aboutDescription": "Essential storage supports core service functionality. Optional marketing analytics remain off unless you enable them here. Choosing Reject optional disables marketing measurement; you can return to this panel from the footer to change your choice.",

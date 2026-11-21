@@ -17,6 +17,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { QaIndicator } from '@/components/qa-indicator'
 import { MarketingProvider } from '@/features/analytics/marketing-provider'
 import { SITE_NAME, SITE_URL } from '@/lib/seo'
+import { MARKETING_CONSENT_BOOTSTRAP } from '@/features/analytics/contracts'
 
 const bodyFont = IBM_Plex_Sans({
   subsets: ['latin'],
@@ -112,6 +113,10 @@ export default async function RootLayout({
         <script
           id="appearance-bootstrap"
           dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOTSTRAP }}
+        />
+        <script
+          id="marketing-consent-bootstrap"
+          dangerouslySetInnerHTML={{ __html: MARKETING_CONSENT_BOOTSTRAP }}
         />
       </head>
       <body

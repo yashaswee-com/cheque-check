@@ -3,7 +3,6 @@
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { authService } from '@/features/auth/services/auth.service'
 import { MetaPixelConsent } from '@/components/public-site/meta-pixel-consent'
 import {
   CONSENT_KEY,
@@ -37,17 +36,15 @@ function EnabledMarketingProvider() {
             choice === 'accepted' ||
             choice === 'rejected' ||
             pathname === '/onboarding'
-          )
+          ) {
             void syncMarketing()
+          }
         }
       } catch (error) {
         logger.error('Marketing preferences unavailable', error)
       }
     }
     sync()
-    const auth = authService.onAuthStateChange(() => {
-      setTimeout(sync, 0)
-    })
     const storage = (event: StorageEvent) => {
       if (event.key === CONSENT_KEY || event.key === null) sync()
     }
@@ -73,7 +70,6 @@ function EnabledMarketingProvider() {
     window.addEventListener('pointerdown', activity, { passive: true })
     window.addEventListener('keydown', activity)
     return () => {
-      auth.data.subscription.unsubscribe()
       clearInterval(interval)
       window.removeEventListener('pointerdown', activity)
       window.removeEventListener('keydown', activity)

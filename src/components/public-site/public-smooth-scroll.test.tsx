@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { PublicSmoothScroll } from './public-smooth-scroll'
 
@@ -31,21 +31,25 @@ afterEach(() => {
   state.destroy.mockClear()
 })
 
-it('mounts subtle wheel and touch smoothing and cleans up on unmount', () => {
+it('mounts subtle wheel and touch smoothing and cleans up on unmount', async () => {
   const view = render(<PublicSmoothScroll />)
 
-  expect(state.construct).toHaveBeenCalledWith(
-    expect.objectContaining({
-      autoRaf: true,
-      lerp: 0.16,
-      smoothWheel: true,
-      syncTouch: true,
-      syncTouchLerp: 0.1,
-      touchInertiaExponent: 1.4,
-      touchMultiplier: 0.95,
-      wheelMultiplier: 0.9,
-      prevent: expect.any(Function),
-    }),
+  expect(state.construct).not.toHaveBeenCalled()
+  fireEvent.wheel(window)
+  await waitFor(() =>
+    expect(state.construct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        autoRaf: true,
+        lerp: 0.16,
+        smoothWheel: true,
+        syncTouch: true,
+        syncTouchLerp: 0.1,
+        touchInertiaExponent: 1.4,
+        touchMultiplier: 0.95,
+        wheelMultiplier: 0.9,
+        prevent: expect.any(Function),
+      }),
+    ),
   )
 
   view.unmount()
@@ -58,8 +62,10 @@ it('does not mount smoothing when reduced motion is enabled', () => {
   expect(state.construct).not.toHaveBeenCalled()
 })
 
-it('leaves controls and nested public scrollers unsmoothed', () => {
+it('leaves controls and nested public scrollers unsmoothed', async () => {
   render(<PublicSmoothScroll />)
+  fireEvent.wheel(window)
+  await waitFor(() => expect(state.construct).toHaveBeenCalledOnce())
   const options = state.construct.mock.calls[0][0] as {
     prevent: (node: HTMLElement) => boolean
   }

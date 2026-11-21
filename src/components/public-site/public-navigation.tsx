@@ -2,12 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useRef, useState } from 'react'
-import { Popover as PopoverPrimitive } from '@base-ui/react/popover'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
-import { Popover, PopoverTitle, PopoverTrigger } from '@/components/ui/popover'
 import { LocalePicker } from './locale-picker'
 import { AppearancePicker } from './appearance-picker'
 import {
@@ -25,10 +23,36 @@ export function PublicNavigation({
 }: {
   locale: 'en' | 'hi' | 'hi-en'
 }) {
+  const pathname = usePathname()
   const t = useTranslations('PublicSite')
   const [open, setOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
-  const pathname = usePathname()
+
+  useEffect(() => {
+    if (!open) return
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node
+      if (
+        !menuRef.current?.contains(target) &&
+        !triggerRef.current?.contains(target)
+      ) {
+        setOpen(false)
+      }
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false)
+        triggerRef.current?.focus()
+      }
+    }
+    window.addEventListener('pointerdown', closeOnOutsideClick)
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      window.removeEventListener('pointerdown', closeOnOutsideClick)
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [open])
 
   if (pathname === '/') {
     return (
@@ -40,41 +64,41 @@ export function PublicNavigation({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
+    <>
+      <button
         ref={triggerRef}
+        type="button"
         className={styles.menuTrigger}
         aria-label={t('nav.navigation')}
+        aria-expanded={open}
+        aria-controls="public-navigation-menu"
+        onClick={() => setOpen((value) => !value)}
       >
         <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="5" cy="12" r="2" fill="currentColor" />
           <circle cx="12" cy="12" r="2" fill="currentColor" />
           <circle cx="19" cy="12" r="2" fill="currentColor" />
         </svg>
-      </PopoverTrigger>
-      <PopoverPrimitive.Portal>
-        <PopoverPrimitive.Positioner
-          anchor={() => triggerRef.current?.closest('header') ?? null}
-          align="end"
-          side="bottom"
-          sideOffset={({ anchor }) => -anchor.height}
-          positionMethod="fixed"
-          className={styles.menuPositioner}
+      </button>
+      {open && (
+        <div
+          ref={menuRef}
+          id="public-navigation-menu"
+          className={`${styles.menuPositioner} fixed top-3 left-1/2 -translate-x-1/2`}
         >
-          <PopoverPrimitive.Popup className={styles.menu}>
-            <PopoverTitle className="sr-only">
-              {t('nav.navigation')}
-            </PopoverTitle>
+          <div className={styles.menu}>
             <div className={styles.menuTop}>
               <span className={styles.brand}>
                 <PublicBrand />
               </span>
-              <PopoverPrimitive.Close
+              <button
+                type="button"
                 className={styles.menuTrigger}
                 aria-label={t('nav.close')}
+                onClick={() => setOpen(false)}
               >
                 <span aria-hidden="true">×</span>
-              </PopoverPrimitive.Close>
+              </button>
             </div>
             <nav aria-label={t('nav.navigation')} data-testid="public-nav">
               {PUBLIC_NAV_GROUPS.map((group) => (
@@ -123,9 +147,9 @@ export function PublicNavigation({
                 <AppearancePicker />
               </div>
             </div>
-          </PopoverPrimitive.Popup>
-        </PopoverPrimitive.Positioner>
-      </PopoverPrimitive.Portal>
-    </Popover>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

@@ -4,7 +4,6 @@ import * as React from 'react'
 import { useTranslations } from 'next-intl'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons'
-import { AnimatePresence, motion } from 'framer-motion'
 import { useReducedMotionPreference } from '@/hooks/use-reduced-motion'
 
 import { cn } from '@/lib/utils'
@@ -66,35 +65,19 @@ function PillScroller({
   }
   return (
     <div className="relative flex min-w-0 items-center">
-      <AnimatePresence initial={false}>
-        {overflow.left && (
-          <motion.button
-            key="left"
-            initial={{
-              opacity: 0,
-              x: reduced ? 0 : -6,
-              width: floatingControls ? 32 : 0,
-            }}
-            animate={{ opacity: 1, x: 0, width: 32 }}
-            exit={{
-              opacity: 0,
-              x: reduced ? 0 : -6,
-              width: floatingControls ? 32 : 0,
-            }}
-            transition={{ duration: reduced ? 0 : 0.2, ease: 'easeInOut' }}
-            type="button"
-            aria-label={t('scrollLeft')}
-            onClick={() => scroll(-1)}
-            className={cn(
-              'flex h-8 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-background shadow-sm',
-              floatingControls &&
-                'absolute left-0 top-1/2 z-10 -translate-y-1/2',
-            )}
-          >
-            <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" />
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {overflow.left && (
+        <button
+          type="button"
+          aria-label={t('scrollLeft')}
+          onClick={() => scroll(-1)}
+          className={cn(
+            'flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-background shadow-sm transition-opacity motion-reduce:transition-none',
+            floatingControls && 'absolute left-0 top-1/2 z-10 -translate-y-1/2',
+          )}
+        >
+          <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" />
+        </button>
+      )}
       <div
         role="group"
         data-slot="pill-scroller"
@@ -115,35 +98,20 @@ function PillScroller({
       >
         {children}
       </div>
-      <AnimatePresence initial={false}>
-        {overflow.right && (
-          <motion.button
-            key="right"
-            initial={{
-              opacity: 0,
-              x: reduced ? 0 : 6,
-              width: floatingControls ? 32 : 0,
-            }}
-            animate={{ opacity: 1, x: 0, width: 32 }}
-            exit={{
-              opacity: 0,
-              x: reduced ? 0 : 6,
-              width: floatingControls ? 32 : 0,
-            }}
-            transition={{ duration: reduced ? 0 : 0.2, ease: 'easeInOut' }}
-            type="button"
-            aria-label={t('scrollRight')}
-            onClick={() => scroll(1)}
-            className={cn(
-              'flex h-8 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-background shadow-sm',
-              floatingControls &&
-                'absolute right-0 top-1/2 z-10 -translate-y-1/2',
-            )}
-          >
-            <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {overflow.right && (
+        <button
+          type="button"
+          aria-label={t('scrollRight')}
+          onClick={() => scroll(1)}
+          className={cn(
+            'flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-background shadow-sm transition-opacity motion-reduce:transition-none',
+            floatingControls &&
+              'absolute right-0 top-1/2 z-10 -translate-y-1/2',
+          )}
+        >
+          <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
+        </button>
+      )}
     </div>
   )
 }
