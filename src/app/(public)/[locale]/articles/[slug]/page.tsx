@@ -5,8 +5,12 @@ import {
   getArticle,
   getArticleSummary,
   listAllPublishedArticles,
+  listArticleTranslations,
 } from '@/features/articles/repository'
-import { isArticleLocale } from '@/features/articles/types'
+import {
+  articleLanguageAlternates,
+  isArticleLocale,
+} from '@/features/articles/types'
 import { JsonLd } from '@/components/json-ld'
 import styles from '@/components/public-site/article.module.css'
 import { SITE_NAME, SITE_URL, publicPageMetadata } from '@/lib/seo'
@@ -30,12 +34,17 @@ export async function generateMetadata({
   const article = await getArticleSummary(locale, slug)
   if (!article) notFound()
   const path = `/${locale}/articles/${slug}`
+  const translations = await listArticleTranslations(article.translationKey)
   return {
     ...publicPageMetadata({
       path,
       title: `${article.title} | ${SITE_NAME}`,
       description: article.description,
     }),
+    alternates: {
+      canonical: path,
+      languages: articleLanguageAlternates(translations),
+    },
     authors: [{ name: article.author }],
     openGraph: {
       type: 'article',

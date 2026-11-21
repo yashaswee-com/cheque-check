@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { getArticle, listArticles } from './repository'
+import { getArticle, listArticleTranslations, listArticles } from './repository'
+import { articleLanguageAlternates } from './types'
 
 describe('Markdown article repository', () => {
   it('publishes a searchable English article summary', async () => {
@@ -28,5 +29,15 @@ describe('Markdown article repository', () => {
     await expect(getArticle('hi', 'issued-vs-received-cheques')).resolves.toBe(
       null,
     )
+  })
+
+  it('builds hreflang alternates only for published translations', async () => {
+    const translations = await listArticleTranslations(
+      'issued-vs-received-cheques',
+    )
+    expect(articleLanguageAlternates(translations)).toEqual({
+      'en-IN': '/en/articles/issued-vs-received-cheques',
+      'x-default': '/en/articles/issued-vs-received-cheques',
+    })
   })
 })
