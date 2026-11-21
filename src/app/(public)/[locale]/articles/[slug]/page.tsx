@@ -16,6 +16,11 @@ import styles from '@/components/public-site/article.module.css'
 import { SITE_NAME, SITE_URL, publicPageMetadata } from '@/lib/seo'
 
 type Params = Promise<{ locale: string; slug: string }>
+const TOC_LABELS = {
+  en: 'On this page',
+  hi: 'इस पेज पर',
+  'hi-en': 'Is page par',
+} as const
 
 export async function generateStaticParams() {
   const articles = await listAllPublishedArticles()
@@ -130,18 +135,46 @@ export default async function ArticlePage({ params }: { params: Params }) {
             <span>{article.readingMinutes} min read</span>
           </div>
         </header>
-        <div
-          className={styles.articleBody}
-          dangerouslySetInnerHTML={{ __html: article.html }}
-        />
-        <aside className={styles.articleAside}>
-          <h2>Keep cheque work in one place</h2>
-          <p>
-            Record issued and received cheques, organize bank accounts, and plan
-            reminders for your business.
-          </p>
-          <Link href="/signup">Start free</Link>
-        </aside>
+        <div className={styles.articleLayout}>
+          <div className={styles.articleMain}>
+            <div
+              className={styles.articleBody}
+              dangerouslySetInnerHTML={{ __html: article.html }}
+            />
+            <aside className={styles.articleAside}>
+              <h2>Keep cheque work in one place</h2>
+              <p>
+                Record issued and received cheques, organize bank accounts, and
+                plan reminders for your business.
+              </p>
+              <Link href="/signup">Start free</Link>
+            </aside>
+          </div>
+          {article.headings.length > 0 && (
+            <aside
+              className={styles.articleToc}
+              aria-label={TOC_LABELS[locale]}
+            >
+              <h2>{TOC_LABELS[locale]}</h2>
+              <nav aria-label={TOC_LABELS[locale]}>
+                <ol>
+                  {article.headings.map((heading) => (
+                    <li
+                      key={heading.id}
+                      className={
+                        heading.level === 3
+                          ? styles.articleTocNested
+                          : undefined
+                      }
+                    >
+                      <a href={`#${heading.id}`}>{heading.text}</a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            </aside>
+          )}
+        </div>
       </article>
     </main>
   )

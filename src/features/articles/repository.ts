@@ -10,7 +10,12 @@ import rehypeSanitize from 'rehype-sanitize'
 import rehypeSlug from 'rehype-slug'
 import rehypeStringify from 'rehype-stringify'
 import { articleFrontmatterSchema } from './validators/article'
-import type { Article, ArticleLocale, ArticleSummary } from './types'
+import type {
+  Article,
+  ArticleHeading,
+  ArticleLocale,
+  ArticleSummary,
+} from './types'
 
 const ARTICLE_ROOT = path.join(process.cwd(), 'content', 'articles')
 const WORDS_PER_MINUTE = 220
@@ -29,7 +34,17 @@ async function renderMarkdown(markdown: string) {
     .use(rehypeStringify)
     .process(markdown)
 
-  return String(result)
+  const html = String(result)
+  const headings: ArticleHeading[] = []
+  const headingPattern = /<h(2|3) id="([^"]+)">([\s\S]*?)<\/h\1>/gu
+  for (const match of html.matchAll(headingPattern)) {
+    headings.push({
+      level: Number(match[1]) as 2 | 3,
+      id: match[2],
+      text: match[3].replace(/<[^>]+>/gu, '').trim(),
+    })
+  }
+  return { html, headings }
 }
 
 function readingMinutes(markdown: string) {
@@ -121,7 +136,7 @@ export async function getArticle(
   if (!indexed) return null
   return {
     ...summary,
-    html: await renderMarkdown(indexed.markdown),
+    ...(await renderMarkdown(indexed.markdown)),
   }
 }
 

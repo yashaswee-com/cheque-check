@@ -26,6 +26,20 @@ describe('Markdown article repository', () => {
     )
     expect(article?.html).toContain('<table>')
     expect(article?.html).not.toContain('<script')
+    expect(article?.headings).toEqual(
+      expect.arrayContaining([
+        {
+          id: 'user-content-the-simplest-difference',
+          text: 'The simplest difference',
+          level: 2,
+        },
+        {
+          id: 'user-content-mixing-the-party-and-the-bank',
+          text: 'Mixing the party and the bank',
+          level: 3,
+        },
+      ]),
+    )
     await expect(getArticle('hi', 'issued-vs-received-cheques')).resolves.toBe(
       null,
     )

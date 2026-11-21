@@ -27,6 +27,13 @@ export type ArticleSummary = ArticleFrontmatter & {
 
 export type Article = ArticleSummary & {
   html: string
+  headings: ArticleHeading[]
+}
+
+export type ArticleHeading = {
+  id: string
+  text: string
+  level: 2 | 3
 }
 
 export const ARTICLE_HREFLANG: Record<ArticleLocale, string> = {

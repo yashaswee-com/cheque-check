@@ -53,11 +53,26 @@
   font-size: 14px;
 }
 
+.articleLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 780px) 240px;
+  gap: 64px;
+  align-items: start;
+}
+
+.articleMain {
+  min-width: 0;
+}
+
 .articleBody {
   max-width: 760px;
   margin-top: 48px;
   font-size: 18px;
   line-height: 1.8;
+}
+
+.articleBody :is(h2, h3) {
+  scroll-margin-top: 112px;
 }
 
 .articleBody > :first-child h1:first-child,
@@ -149,6 +164,59 @@
   color: #ffffff;
   font-weight: 700;
   text-decoration: none;
+}
+
+.articleToc {
+  position: sticky;
+  top: 104px;
+  margin-top: 48px;
+  border-left: 1px solid #dfe3e7;
+  padding-left: 22px;
+}
+
+.articleToc h2 {
+  margin: 0 0 14px;
+  color: #1d1d1f;
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.articleToc ol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.articleToc a {
+  display: block;
+  color: #5d626a;
+  font-size: 14px;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.articleToc a:hover,
+.articleToc a:focus-visible {
+  color: #0066cc;
+}
+
+.articleTocNested {
+  padding-left: 14px;
+}
+
+@media (max-width: 1023px) {
+  .articleLayout {
+    display: block;
+  }
+
+  .articleToc {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {
