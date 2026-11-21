@@ -9,7 +9,7 @@ title: 'Issued vs Received Cheques: A Practical Business Workflow'
 description: Learn how issued and received cheques differ, what details to record for each, and how to create a reliable follow-up workflow for your business.
 publishedAt: 2026-11-21
 updatedAt: 2026-11-21
-author: Cheque Check Editorial
+author: Cheque Check Editor
 reviewStatus: editorial-reviewed
 ---
 

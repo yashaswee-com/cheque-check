@@ -14,6 +14,16 @@ import {
 import { JsonLd } from '@/components/json-ld'
 import styles from '@/components/public-site/article.module.css'
 import { SITE_NAME, SITE_URL, publicPageMetadata } from '@/lib/seo'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  Calendar03Icon,
+  Clock01Icon,
+  PencilEdit01Icon,
+  LabelIcon,
+  UserIcon,
+} from '@hugeicons/core-free-icons'
+import { articleDateParts } from '@/features/articles/lib/date'
+import { ArticleHeader } from '@/features/articles/components/article-header'
 
 type Params = Promise<{ locale: string; slug: string }>
 const TOC_LABELS = {
@@ -21,6 +31,16 @@ const TOC_LABELS = {
   hi: 'इस पेज पर',
   'hi-en': 'Is page par',
 } as const
+
+function ArticleDate({ value }: { value: string }) {
+  const { day, suffix, month, year } = articleDateParts(value)
+  return (
+    <span>
+      {day}
+      <sup>{suffix}</sup> {month}, {year}
+    </span>
+  )
+}
 
 export async function generateStaticParams() {
   const articles = await listAllPublishedArticles()
@@ -119,20 +139,39 @@ export default async function ArticlePage({ params }: { params: Params }) {
       <JsonLd data={articleData} />
       <JsonLd data={breadcrumbData} />
       <article className={styles.shell}>
-        <nav aria-label="Breadcrumb">
-          <Link href={`/${locale}/articles`}>← Articles</Link>
-        </nav>
+        <ArticleHeader locale={locale} />
         <header className={styles.articleHeader}>
           <p className={styles.eyebrow}>
+            <HugeiconsIcon icon={LabelIcon} size={14} aria-hidden="true" />
             {article.category.replaceAll('-', ' ')}
           </p>
           <h1>{article.title}</h1>
           <p className={styles.articleDescription}>{article.description}</p>
           <div className={styles.articleMeta}>
-            <span>By {article.author}</span>
-            <span>Published {article.publishedAt}</span>
-            <span>Updated {article.updatedAt}</span>
-            <span>{article.readingMinutes} min read</span>
+            <span className={styles.articleMetaPill}>
+              <HugeiconsIcon icon={Clock01Icon} size={16} aria-hidden="true" />
+              {article.readingMinutes} min read
+            </span>
+            <span className={styles.articleMetaPill}>
+              <HugeiconsIcon icon={UserIcon} size={16} aria-hidden="true" />
+              {article.author}
+            </span>
+            <span className={styles.articleMetaPill}>
+              <HugeiconsIcon
+                icon={Calendar03Icon}
+                size={16}
+                aria-hidden="true"
+              />
+              Published <ArticleDate value={article.publishedAt} />
+            </span>
+            <span className={styles.articleMetaPill}>
+              <HugeiconsIcon
+                icon={PencilEdit01Icon}
+                size={16}
+                aria-hidden="true"
+              />
+              Updated <ArticleDate value={article.updatedAt} />
+            </span>
           </div>
         </header>
         <div className={styles.articleLayout}>
