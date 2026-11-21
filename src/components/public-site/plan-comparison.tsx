@@ -27,7 +27,7 @@ export function PlanComparison({
     <span
       role="img"
       aria-label={t('included')}
-      className="inline-flex text-green-700"
+      className="inline-flex text-green-700 dark:text-green-400"
     >
       <HugeiconsIcon icon={Tick02Icon} size={22} aria-hidden="true" />
     </span>
@@ -36,7 +36,7 @@ export function PlanComparison({
     <span
       role="img"
       aria-label={t('notIncluded')}
-      className="inline-flex text-red-600"
+      className="inline-flex text-red-600 dark:text-red-400"
     >
       <HugeiconsIcon icon={Cancel01Icon} size={22} aria-hidden="true" />
     </span>
@@ -56,14 +56,14 @@ export function PlanComparison({
   return (
     <div className="space-y-8 text-left">
       <div className="grid gap-5 md:grid-cols-2">
-        <article className="flex flex-col gap-5 rounded-[18px] border border-primary/15 bg-white p-6 sm:p-8">
+        <article className="flex flex-col gap-5 rounded-[18px] border border-primary/15 bg-card p-6 sm:p-8">
           <PlanHeading className="font-heading text-2xl font-bold">
             {t('free')}
           </PlanHeading>
-          <p className="text-4xl font-semibold">₹0</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="-mt-3 text-sm font-normal text-muted-foreground">
             {t('freeDescription')}
           </p>
+          <p className="text-4xl font-semibold">₹0</p>
           <ul className="space-y-2 text-sm">
             <li className="flex items-center gap-2">
               {included}
@@ -90,7 +90,7 @@ export function PlanComparison({
             </AppEntryLink>
           )}
         </article>
-        <article className="relative flex flex-col gap-5 rounded-[18px] border border-primary/30 bg-blue-50/60 p-6 sm:p-8">
+        <article className="relative flex flex-col gap-5 rounded-[18px] border border-primary/30 bg-primary/5 p-6 sm:p-8 dark:bg-primary/10">
           <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold tracking-wide text-white uppercase">
             {t('recommended')}
           </span>
@@ -119,7 +119,7 @@ export function PlanComparison({
               {t('premiumDescription')}
             </p>
           )}
-          <p className="w-fit rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-semibold text-primary">
+          <p className="w-fit rounded-full border border-primary/20 bg-background px-3 py-1 text-xs font-semibold text-primary">
             {t('lifetimeValue')}
           </p>
           <ul className="space-y-2 text-sm">
@@ -181,7 +181,7 @@ export function PlanComparison({
         </article>
       </div>
       {!compact && (
-        <aside className="rounded-xl border border-primary/15 bg-white p-4 text-sm leading-relaxed">
+        <aside className="rounded-xl border border-primary/15 bg-card p-4 text-sm leading-relaxed">
           <p>{t('offer')}</p>
           <Link
             href="/contact"
@@ -199,10 +199,10 @@ export function PlanComparison({
           aria-label={t('tableTitle')}
         >
           <table className="w-full min-w-[560px] border-collapse text-sm">
-            <caption className="bg-white p-5 text-left font-heading text-xl font-bold">
+            <caption className="bg-card p-5 text-left font-heading text-xl font-bold">
               {t('tableTitle')}
             </caption>
-            <thead className="bg-blue-50">
+            <thead className="bg-primary/5 dark:bg-primary/10">
               <tr>
                 <th scope="col" className="w-1/2 p-4 text-left">
                   {t('feature')}
@@ -216,14 +216,14 @@ export function PlanComparison({
               </tr>
             </thead>
             <tbody>
-              <tr className="border-t border-primary/10 bg-white">
+              <tr className="border-t border-primary/10 bg-card">
                 <th scope="row" className="p-4 text-left font-medium">
                   {t('cheques')}
                 </th>
                 <td className="p-4 text-center">{t('freeLimit')}</td>
                 <td className="p-4 text-center">{t('unlimited')}</td>
               </tr>
-              <tr className="border-t border-primary/10 bg-white">
+              <tr className="border-t border-primary/10 bg-card">
                 <th scope="row" className="p-4 text-left font-medium">
                   {t('core')}
                 </th>
@@ -233,7 +233,7 @@ export function PlanComparison({
               {features.map((feature) => (
                 <tr
                   key={feature}
-                  className="border-t border-primary/10 bg-white"
+                  className="border-t border-primary/10 bg-card"
                 >
                   <th scope="row" className="p-4 text-left font-medium">
                     {premium(`features.${feature}`)}
@@ -245,7 +245,7 @@ export function PlanComparison({
                   <td className="p-4 text-center">{included}</td>
                 </tr>
               ))}
-              <tr className="border-t border-primary/10 bg-white">
+              <tr className="border-t border-primary/10 bg-card">
                 <th scope="row" className="p-4 text-left font-medium">
                   {t('metered')}
                 </th>

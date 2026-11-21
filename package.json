@@ -71,6 +71,7 @@
     "gray-matter": "^4.0.3",
     "input-otp": "^1.5.0",
     "jspdf": "^4.2.1",
+    "lenis": "1.3.17",
     "libphonenumber-js": "^1.13.14",
     "next": "16.4.6",
     "next-intl": "^4.13.5",

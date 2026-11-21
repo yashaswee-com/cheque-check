@@ -64,10 +64,7 @@ Your first Lifetime Premium purchase is covered by a 30-day money-back guarantee
 
 ## Referrals and credits
 
-## Referrals and credits
-
-> > > > > > > 318a512 (docs(help): refresh guides for current features)
-> > > > > > > A paid Lifetime owner can share a referral link. A referred user can apply the code before the first Lifetime checkout for the current referral discount. After verified payment, the eligible referrer receives the documented reward as wallet credit.
+A paid Lifetime owner can share a referral link. A referred user can apply the code before the first Lifetime checkout for the current referral discount. After verified payment, the eligible referrer receives the documented reward as wallet credit.
 
 Wallet credit:
 
