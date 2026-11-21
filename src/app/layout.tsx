@@ -104,6 +104,8 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <link rel="ard" href="/.well-known/ard.json" />
+        <link rel="describedby" href="/llms.txt" type="text/plain" />
         <script
           id="appearance-bootstrap"
           dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOTSTRAP }}

@@ -12,7 +12,13 @@ const PUBLIC_PAGE_PATHS = new Set([
 const PUBLIC_API_PATHS = new Set(['/api/contact', '/api/analytics/events'])
 
 const PUBLIC_STATIC_PATHS = new Set([
+  '/.well-known/ai-catalog.json',
+  '/.well-known/ard.json',
   '/.well-known/security.txt',
+  '/agent-skills/cheque-bounce-timeline.md',
+  '/agent-skills/cheque-workflow.md',
+  '/ai-catalog.json',
+  '/llms.txt',
   '/opengraph-image',
   '/robots.txt',
   '/sitemap.xml',

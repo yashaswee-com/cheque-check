@@ -180,7 +180,7 @@ describe('public site pages', () => {
       }
       for (const key of ['refund', 'plans', 'limit'] as const) {
         const question = screen.getByRole('button', {
-          name: catalog.PublicSite.landing.faq[`${key}Question`],
+          name: `${catalog.PublicSite.landing.faq[`${key}Question`]} ${catalog.PublicSite.landing.faq[`${key}Quick`]}`,
         })
         await userEvent.click(question)
         expect(question).toHaveAttribute('aria-expanded', 'true')
@@ -722,7 +722,7 @@ describe('public site pages', () => {
     expect(screen.getAllByText('Cheque Check')).toHaveLength(3)
     expect(
       within(screen.getByRole('banner'))
-        .getByRole('link', { name: 'Cheque Check' })
+        .getByRole('link', { name: 'Cheque Check home' })
         .querySelector('img'),
     ).toHaveAttribute(
       'src',
@@ -928,7 +928,7 @@ describe('public site pages', () => {
       expect(screen.getByText(copy.scenarios[`${key}Business`])).toBeVisible()
     }
     const faqButton = screen.getByRole('button', {
-      name: copy.faq.accountingQuestion,
+      name: `${copy.faq.accountingQuestion} ${copy.faq.accountingQuick}`,
     })
     const answer = screen.getByText(copy.faq.accountingAnswer).closest('[id]')
     expect(faqButton).toHaveAttribute('aria-expanded', 'false')
@@ -969,7 +969,7 @@ describe('public site pages', () => {
     const faq = screen.getByRole('region', { name: copy.faqTitle })
     expect(within(faq).getAllByRole('button')).toHaveLength(12)
     const question = within(faq).getByRole('button', {
-      name: copy.faq.bounceQuestion,
+      name: `${copy.faq.bounceQuestion} ${copy.faq.bounceQuick}`,
     })
     await userEvent.click(question)
     expect(question).toHaveAttribute('aria-expanded', 'true')
