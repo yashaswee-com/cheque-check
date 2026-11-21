@@ -177,7 +177,7 @@ describe('public site pages', () => {
           screen.getByText(caption, { selector: 'figcaption' }),
         ).toBeVisible()
       }
-      for (const key of ['plans', 'limit'] as const) {
+      for (const key of ['refund', 'plans', 'limit'] as const) {
         const question = screen.getByRole('button', {
           name: catalog.PublicSite.landing.faq[`${key}Question`],
         })
@@ -201,6 +201,29 @@ describe('public site pages', () => {
         screen.getByRole('heading', {
           name: catalog.PublicSite.comparison.premium,
         }),
+      ).toBeVisible()
+      const guarantee = screen.getByRole('region', {
+        name: catalog.PublicSite.landing.guaranteeTitle,
+      })
+      expect(
+        within(guarantee).getByText(
+          catalog.PublicSite.landing.guaranteeDescription,
+        ),
+      ).toBeVisible()
+      expect(
+        within(guarantee).getByRole('link', {
+          name: catalog.PublicSite.landing.guaranteeCta,
+        }),
+      ).toHaveAttribute('href', '/pricing')
+      expect(
+        within(guarantee).getByRole('link', {
+          name: catalog.PublicSite.landing.guaranteeContact,
+        }),
+      ).toHaveAttribute('href', '/contact')
+      expect(
+        within(guarantee).getByText(
+          catalog.PublicSite.landing.guaranteeFinePrint,
+        ),
       ).toBeVisible()
       expect(screen.queryByRole('table')).not.toBeInTheDocument()
       expect(screen.getByText('₹300.00')).toBeVisible()
@@ -865,9 +888,11 @@ describe('public site pages', () => {
       copy.securityTitle,
       copy.sectionTitle,
       copy.pricingTitle,
+      copy.guaranteeTitle,
       copy.faqTitle,
       copy.installTitle,
       copy.scenarioTitle,
+      copy.facebookTitle,
       copy.ctaTitle,
     ])
     expect(screen.getByRole('button', { name: copy.videoPlay })).toBeVisible()
@@ -927,7 +952,7 @@ describe('public site pages', () => {
       screen.getByRole('region', { name: copy.title }).querySelector('ul'),
     ).toBeInTheDocument()
     const faq = screen.getByRole('region', { name: copy.faqTitle })
-    expect(within(faq).getAllByRole('button')).toHaveLength(11)
+    expect(within(faq).getAllByRole('button')).toHaveLength(12)
     const question = within(faq).getByRole('button', {
       name: copy.faq.bounceQuestion,
     })

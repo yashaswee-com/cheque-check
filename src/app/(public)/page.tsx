@@ -162,6 +162,7 @@ export default async function LandingPage() {
     'different',
     'privacy',
     'payment',
+    'refund',
     'plans',
     'limit',
   ] as const
@@ -543,6 +544,57 @@ export default async function LandingPage() {
             {t('pricingCta')}
             {arrow}
           </Link>
+        </div>
+      </section>
+
+      <section
+        className={`${styles.section} ${styles.guaranteeSection}`}
+        aria-labelledby="guarantee-title"
+      >
+        <div className={styles.guaranteeCard}>
+          <div className={styles.guaranteeBadge} aria-hidden="true">
+            <strong>30</strong>
+            <span>{t('guaranteeDays')}</span>
+          </div>
+          <div className={styles.guaranteeCopy}>
+            <p className={styles.eyebrow}>{t('guaranteeEyebrow')}</p>
+            <h2 id="guarantee-title">{t('guaranteeTitle')}</h2>
+            <p>{t('guaranteeDescription')}</p>
+            <ul className={styles.guaranteePoints}>
+              <li>
+                <HugeiconsIcon
+                  icon={Shield01Icon}
+                  size={18}
+                  aria-hidden="true"
+                />
+                <span>{t('guaranteeCoverage')}</span>
+              </li>
+              <li>
+                <HugeiconsIcon
+                  icon={Payment01Icon}
+                  size={18}
+                  aria-hidden="true"
+                />
+                <span>{t('guaranteeRefund')}</span>
+              </li>
+              <li>
+                <HugeiconsIcon icon={File02Icon} size={18} aria-hidden="true" />
+                <span>{t('guaranteeRequest')}</span>
+              </li>
+            </ul>
+            <div className={styles.guaranteeActions}>
+              <Link href="/pricing" className={styles.primaryCta}>
+                {t('guaranteeCta')}
+                {arrow}
+              </Link>
+              <Link href="/contact" className={styles.guaranteeLink}>
+                {t('guaranteeContact')}
+              </Link>
+            </div>
+            <p className={styles.guaranteeFinePrint}>
+              {t('guaranteeFinePrint')}
+            </p>
+          </div>
         </div>
       </section>
 
